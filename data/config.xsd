@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Configuration schema for validation
+  Geoff Johnson <geoff.jay@gmail.com>
+  2011-01-28
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://app/lib/cld"
+           xmlns="http://app/lib/cld"
+           elementFormDefault="qualified">
+
+    <!-- root element definition -->
+    <xs:element name="cld">
+        <xs:complexType>
+            <xs:all>
+                <xs:element name="name" type="xs:token"/>
+            </xs:all>
+            <xs:sequence>
+                <xs:element name="daq" type="daq"/>
+                <xs:element name="logs" type="logs"/>
+                <xs:element name="views" type="views"/>
+                <xs:element name="control" type="control"/>
+                <xs:element name="calibrations" type="calibrations"/>
+                <xs:element name="channels" type="channels"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!--
+      simple type definitions
+    -->
+    <xs:simpleType name="rate">
+        <xs:restriction base="xs:float">
+            <xs:minExclusive value="0.0"/>
+            <xs:maxInclusive value="10000.0"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- 
+      complex type definitions 
+    -->
+
+    <!-- base level types -->
+    <xs:complexType name="daq">
+        <xs:all>
+            <xs:element name="rate" type="rate"/>
+        </xs:all>
+        <xs:sequence>
+            <xs:element name="device" type="device"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="logs">
+        <xs:sequence>
+            <xs:element name="log" type="log"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="views">
+        <xs:sequence>
+            <xs:element name="view" type="view"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="control">
+        <xs:sequence>
+            <xs:element name="pid" type="pid"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="calibrations">
+        <xs:sequence>
+            <xs:element name="calibration" type="calibration"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="channels">
+        <xs:sequence>
+            <xs:element name="channel" type="channel"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- inner types inside of base types -->
+    <xs:complexType name="device">
+        <xs:all>
+            <xs:element name="" type=""/>
+            <xs:element name="" type=""/>
+        </xs:all>
+    </xs:complexType>
+
+</xs:schema>

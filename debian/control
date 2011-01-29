@@ -1,0 +1,9 @@
+Package: libcld
+Version: 0.1
+Section: extra
+Priority: extra
+Architecture: all
+Installed-Size: `du -ks usr|cut -f 1`
+Maintainer: Geoff Johnson <geoff.jay@gmail.com>
+Depends: libglib2.0-dev, libgee-dev, libxml2-dev, pkg-config
+Description: Library used in control, logging, and data acquisition applications

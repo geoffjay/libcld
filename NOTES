@@ -1,0 +1,22 @@
+
+libcld
+-------
+- daq
+- device
+- log
+- control
+- pid
+- calibration
+- channel
+
+steps used to merge branch changes
+----------------------------------
+
+# add files/folders, eg.
+# test
+# test/file
+git add test
+git commit -m "added test code"
+git push origin master:refs/heads/testbranch
+# ssh into remote host that has head branch
+git merge testbranch 

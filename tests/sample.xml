@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+  Sample configuration file
+  Geoff Johnson <geoff.jay@gmail.com>
+  2011-01-28
+-->
+<cld xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:noNamespaceSchemaLocation="config.xsd">
+
+    <!-- name of the application using this configuration -->
+    <name>CRDC</name>
+
+    <!-- daq hardware configuration -->
+    <daq>
+        <!-- daq rate in hz -->
+        <rate>10.0</rate>
+        <device id="dev0" type="input" driver="comedi">
+            <name>PCI-1713</name>
+            <file>/dev/comedi0</file>
+        </device>
+        <device id="dev1" type="output" driver="comedi">
+            <name>PCI-1720</name>
+            <file>/dev/comedi1</file>
+        </device>
+        <!-- virtual device to handle virtual channels -->
+        <device id="vdev0" type="input" driver="virtual">
+            <name>VDEV-0</name>
+            <!-- wonder if it's possible to use a pipe for this -->
+            <file>/dev/null</file>
+        </device>
+    </daq>
+
+    <!-- log files configuration -->
+    <logs>
+        <log id="log0">
+            <!-- path should end in / for now -->
+            <name>Data Log</name>
+            <path>/mnt/data/cld2/</path>
+            <file>log.dat</file>
+            <!-- log rate in hz -->
+            <rate>10.000</rate>
+            <columns>
+                <column ref="ai0"/>
+                <column ref="ao0"/>
+                <column ref="di0"/>
+                <column ref="do0"/>
+            </columns>
+        </log>
+    </logs>
+
+    <!-- special display configuration - all colors are 16 bit RGBA -->
+    <views>
+        <!-- sample stripchart -->
+        <view id="chart0" type="stripchart" widget_color="#B333B333B333FFFF" bg_color="#CCCCCCCCCCCCFFFF" grid_color="#666666666666FFFF" border_color="#000000000000FFFF">
+            <title>Sample Chart</title>
+            <traces>
+                <trace id="trace0" color="#000000000000FFFF" ref="ai0"/>
+            </traces>
+        </view>
+        <!-- sample bar graph -->
+        <view id="bar0" type="bargraph">
+            <title>Bar Graph</title>
+            <bars>
+                <bar id="bar0" color="#0000FFFF0000FFFF" ref="ao0"/>
+            </bars>
+        </view>
+    </views>
+
+    <!-- pid control loop configuration -->
+    <control>
+        <pid id="pid0">
+            <sp>0.000000</sp>
+            <kp>0.100000</kp>
+            <ki>0.100000</ki>
+            <kd>0.100000</kd>
+            <input id="in0" ref="ai0"/>
+            <output id="out0" ref="ao0"/>
+        </pid>
+    </control>
+
+    <!-- channel calibrations for scaling process values -->
+    <calibrations>
+        <calibration id="cal0">
+            <!-- number of coefficients determines the order -->
+            <units>Volts</units>
+            <coefficients>
+                <!-- n determines the exponent - y = a[1]*x^1 + a[0]*x^0 -->
+                <coefficient n="0">0.000</coefficient>
+                <coefficient n="1">1.000</coefficient>
+            </coefficients>
+        </calibration>
+        <calibration>
+            <units>Volts</units>
+            <coefficients>
+                <coefficient n="0">0.000</coefficient>
+                <coefficient n="1">1.000</coefficient>
+            </coefficients>
+        </calibration>
+    </calibrations>
+
+    <!-- daq channels configuration -->
+    <channels>
+        <!-- analog channel definitions -->
+        <channel id="ai0"
+                 ref="dev0"
+                 type="analog"
+                 direction="input">
+            <tag>IN0</tag>
+            <desc>Sample Input</desc>
+            <num>0</num>
+            <existence>physical</existence>
+            <calibration ref="cal0"/>
+        </channel>
+        <channel id="ai1"
+                 ref="dev0"
+                 type="analog"
+                 direction="input">
+            <tag>IN1</tag>
+            <desc>Sample Input</desc>
+            <num>1</num>
+            <existence>physical</existence>
+            <calibration ref="cal1"/>
+        </channel>
+        <!-- virtual channels combine channels with simple math -->
+        <channel id="vai0"
+                 ref="vdev0"
+                 type="analog"
+                 direction="input">
+            <tag>VIN0</tag>
+            <desc>Sample Virtual Input</desc>
+            <num>2</num>
+            <existence>virtual</existence>
+            <expression>(ai0)+(ai1)</expression>
+        </channel>
+        <channel id="ao0"
+                 ref="dev1"
+                 type="analog"
+                 direction="output">
+            <tag>OUT0</tag>
+            <desc>Sample Output</desc>
+            <num>0</num>
+            <existence>physical</existence>
+        </channel>
+
+        <!-- digital channel definitions -->
+        <channel id="di0"
+                 devref="dev0"
+                 type="digital"
+                 direction="input">
+            <tag>IN0</tag>
+            <desc>Sample Input</desc>
+            <num>0</num>
+            <existence>physical</existence>
+        </channel>
+        <channel id="do0"
+                 devref="dev1"
+                 type="digital"
+                 direction="output">
+            <tag>OUT0</tag>
+            <desc>Sample Output</desc>
+            <num>0</num>
+            <existence>physical</existence>
+        </channel>
+    </channels>
+</cld>

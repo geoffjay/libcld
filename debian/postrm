@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [ "$1" = remove ]; then
+    # example:
+    #for f in file1 file2; do
+    #   dpkg-divert --package libcld --rename --remove /usr/share/libcld/$f
+    #done
+    echo "No post-removal steps yet"
+fi

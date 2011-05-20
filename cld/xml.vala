@@ -110,11 +110,35 @@ namespace Cld {
 
         public Xml.XPath.NodeSet * nodes_from_xpath (string xpath) {
             xpath_object = xpath_context.eval_expression (xpath);
+
             /* throw an error if the xpath is invalid */
             if (xpath_object == null)
                 throw new XmlError.INVALID_XPATH_EXPR ("the xpath expression %s is invalid", xpath);
 
             return xpath_object.nodesetval;
+        }
+
+        public string value_at_xpath (string xpath) {
+//            int i, size;
+            Xml.Node *node;
+            Xml.XPath.NodeSet *nodes;
+
+            xpath_object = xpath_context.eval_expression (xpath);
+
+            /* throw an error if the xpath is invalid */
+            if (xpath_object == null)
+                throw new XmlError.INVALID_XPATH_EXPR ("the xpath expression %s is invalid", xpath);
+
+            nodes = xpath_object.nodesetval;
+            node = nodes->item (0);
+
+//            size = nodes->length ();
+//            for (i = size - 1; i >= 0; i--) {
+//                if (node->type != Xml.ElementType.NAMESPACE_DECL)
+//                    node = null;
+//            }
+
+            return node->get_content ();
         }
     }
 }

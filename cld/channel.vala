@@ -163,6 +163,7 @@ namespace Cld {
          * fc: cutoff frequency, for our case = RC
          */
         public void lowpass (double R, double C, double fc) {
+            double dt = 0.1;
             double a = dt / (dt + fc);
             double yc, yp, y;
 

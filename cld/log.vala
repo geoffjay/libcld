@@ -159,7 +159,7 @@ namespace Cld {
             uchar[] data = new uchar[0];
             for (int ctr = 0; ctr < str.length; ctr++)
                 data += (uchar) str[ctr];
-           
+
             return data;
         }
     }

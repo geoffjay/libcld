@@ -43,6 +43,7 @@ namespace Cld {
         string units = "";
         string color = "";
         string value = "";
+        Cld.AnalogInputChannel chan;
 
         if (node->type == Xml.ElementType.ELEMENT_NODE) {
             id = node->get_prop ("id");
@@ -74,7 +75,10 @@ namespace Cld {
             }
         }
 
-        return new Cld.AnalogInputChannel (id, tag, desc, num, slope, yint, units, color);
+        chan = new Cld.AnalogInputChannel (id, tag, desc, num, slope, yint, units, color);
+        chan.devref = devref;
+
+        return chan;
     }
 
     /***
@@ -87,11 +91,15 @@ namespace Cld {
         string id = "";
         string tag = "";
         string desc = "";
+        string devref = "";
         int num = 0;
         string value = "";
+        Cld.AnalogOutputChannel chan;
 
-        if (node->type == Xml.ElementType.ELEMENT_NODE)
+        if (node->type == Xml.ElementType.ELEMENT_NODE) {
             id = node->get_prop ("id");
+            devref = node->get_prop ("devref");
+        }
 
         for (Xml.Node *child = node->children; child != null; child = child->next) {
             if (child->type != Xml.ElementType.ELEMENT_NODE) {
@@ -109,7 +117,10 @@ namespace Cld {
         }
 
         /* constructor for ao channel expects existence which hasn't been implemented yet, just dummy for now */
-        return new Cld.AnalogOutputChannel (num, id, tag, desc, 0);
+        chan = new Cld.AnalogOutputChannel (num, id, tag, desc, 0);
+        chan.devref = devref;
+
+        return chan;
     }
 
     /***

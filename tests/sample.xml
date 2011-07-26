@@ -111,7 +111,7 @@
             <existence>physical</existence>
             <calibration ref="cal0"/>
         </channel>
-        <channel id="ai1" 
+        <channel id="ai1"
                  ref="dev0"
                  type="analog"
                  direction="input">
@@ -122,7 +122,7 @@
             <calibration ref="cal1"/>
         </channel>
         <!-- virtual channels combine channels with simple math -->
-        <channel id="vai0" 
+        <channel id="vai0"
                  ref="vdev0"
                  type="analog"
                  direction="input">
@@ -132,7 +132,7 @@
             <existence>virtual</existence>
             <expression>(ai0)+(ai1)</expression>
         </channel>
-        <channel id="ao0" 
+        <channel id="ao0"
                  ref="dev1"
                  type="analog"
                  direction="output">
@@ -142,8 +142,8 @@
             <existence>physical</existence>
         </channel>
 
-        <!-- digital channel definitions  -->
-        <channel id="di0" 
+        <!-- digital channel definitions -->
+        <channel id="di0"
                  devref="dev0"
                  type="digital"
                  direction="input">
@@ -152,7 +152,7 @@
             <num>0</num>
             <existence>physical</existence>
         </channel>
-        <channel id="do0" 
+        <channel id="do0"
                  devref="dev1"
                  type="digital"
                  direction="output">

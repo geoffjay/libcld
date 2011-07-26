@@ -34,9 +34,9 @@ namespace Cld {
         [Property(nick = "", blurb = "")]
         public string file_name { get; set; }
 
-        private Xml.Doc xml_doc;
-        private Xml.XPath.Context xpath_context;
-        private Xml.XPath.Object xpath_object;
+        private Xml.Doc *doc;
+        private Xml.XPath.Context *ctx;
+        private Xml.XPath.Object *obj;
 
         /* constructor */
         public XmlConfig (string file_name) {
@@ -44,13 +44,13 @@ namespace Cld {
             Object (file_name: file_name);
 
             /* load XML document */
-            xml_doc = Xml.Parser.parse_file (file_name);
-            if (xml_doc == null) {
+            doc = Xml.Parser.parse_file (file_name);
+            if (doc == null) {
                 throw new XmlError.FILE_NOT_FOUND ("file %s not found or permissions missing", file_name);
             }
 
             /* create xpath evaluation context */
-            xpath_context = new Xml.XPath.Context (xml_doc);
+            ctx = new Xml.XPath.Context (doc);
         }
 
         public void print_indent (string node_name,
@@ -61,14 +61,14 @@ namespace Cld {
         }
 
         public int child_element_count (string xpath) {
-            xpath_object = xpath_context.eval_expression (xpath);
+            obj = ctx->eval_expression (xpath);
             /* throw an error if the xpath is invalid */
-            if (xpath_object == null)
+            if (obj == null)
                 throw new XmlError.INVALID_XPATH_EXPR ("the xpath expression %s is invalid", xpath);
 
-            //var nodes = new XPath.NodeSet (xpath_object.nodesetval);
+            //var nodes = new XPath.NodeSet (obj.nodesetval);
 
-            return (xpath_object.nodesetval)->length ();
+            return (obj->nodesetval)->length ();
         }
 
         public void edit_node (string path,
@@ -82,13 +82,13 @@ namespace Cld {
             else
                 xpath = "%s[@id=\"%s\"]/%s".printf (path, id, child);
 
-            xpath_object = xpath_context.eval_expression (xpath);
+            obj = ctx->eval_expression (xpath);
             /* throw an error if the xpath is invalid */
-            if (xpath_object == null)
+            if (obj == null)
                 throw new XmlError.INVALID_XPATH_EXPR ("the xpath expression %s is invalid", xpath);
 
             /* update the selected nodes */
-            update_xpath_nodes (xpath_object.nodesetval, value);
+            update_xpath_nodes (obj->nodesetval, value);
         }
 
         public void update_xpath_nodes (Xml.XPath.NodeSet *nodes, string value) {
@@ -105,16 +105,16 @@ namespace Cld {
         }
 
         public void save () {
-            xml_doc.save_file (file_name);
+            doc->save_file (file_name);
         }
 
         public Xml.XPath.NodeSet * nodes_from_xpath (string xpath) {
-            xpath_object = xpath_context.eval_expression (xpath);
+            obj = ctx->eval_expression (xpath);
             /* throw an error if the xpath is invalid */
-            if (xpath_object == null)
+            if (obj == null)
                 throw new XmlError.INVALID_XPATH_EXPR ("the xpath expression %s is invalid", xpath);
 
-            return xpath_object.nodesetval;
+            return obj->nodesetval;
         }
     }
 }

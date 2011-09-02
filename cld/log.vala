@@ -66,7 +66,6 @@ namespace Cld {
             string filename;
             time_t ts = time_t (null);
             var t = Time.local (ts);
-            //TimeVal time = TimeVal ();
 
             /* original implementation checked for the existence of requested
              * file and posted error message if it it, reimplement that later */
@@ -78,21 +77,16 @@ namespace Cld {
             file_stream = FileStream.open (filename, "w+");
             is_open = true;
             /* add the header */
-            //time.get_current_time ();
             file_stream.printf ("Log file: %s created at %s\n\n",
                                 name, t.to_string ());
-//                                name, time.to_iso8601 ());
         }
 
         public void file_close () {
             time_t ts = time_t (null);
             var t = Time.local (ts);
-            //TimeVal time = TimeVal ();
             /* add the footer */
-            //time.get_current_time ();
             file_stream.printf ("\nLog file: %s closed at %s",
                                 name, t.to_string ());
-//                                name, time.to_iso8601 ());
             /* setting a GLib.FileStream object to null apparently forces a
              * call to stdlib's close () */
             file_stream = null;

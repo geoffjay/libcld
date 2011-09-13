@@ -122,13 +122,13 @@ namespace Cld {
             Xml.Node *node;
             Xml.XPath.NodeSet *nodes;
 
-            xpath_object = xpath_context.eval_expression (xpath);
+            obj = ctx->eval_expression (xpath);
 
             /* throw an error if the xpath is invalid */
-            if (xpath_object == null)
+            if (obj == null)
                 throw new XmlError.INVALID_XPATH_EXPR ("the xpath expression %s is invalid", xpath);
 
-            nodes = xpath_object.nodesetval;
+            nodes = obj->nodesetval;
             node = nodes->item (0);
 
 //            size = nodes->length ();

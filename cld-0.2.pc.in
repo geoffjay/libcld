@@ -8,4 +8,4 @@ Description: Library controls and data for DAQ and control application developme
 Requires: glib-2.0 gee-1.0
 Version: @VERSION@
 Libs: -L${libdir} -lcld
-Cflags: -I${includedir}/cld-0.1 -I${libdir}/cld-0.1/include
+Cflags: -I${includedir}/cld-0.2 -I${libdir}/cld-0.2/include

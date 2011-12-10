@@ -1,1 +1,5 @@
 EXTRA_DIST =
+TEST_PROGS =
+
+# useful constants
+NULL =

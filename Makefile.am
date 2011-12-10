@@ -1,12 +1,26 @@
 include $(top_srcdir)/Makefile.decl
-NULL =
+AUTOMAKE_OPTIONS = subdir-objects
+ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = \
 	cld \
+	vapi \
 	$(NULL)
 
-cld_configdir = $(libdir)/cld-0.1/include
+cld_configdir = $(libdir)/cld-0.2/include
 cld_config_DATA = config.h
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = cld-0.1.pc
+pkgconfig_DATA = cld-0.2.pc
+
+dist-hook: gen-ChangeLog
+
+gen_start_date = 2011-07-11
+.PHONY: gen-ChangeLog
+gen-ChangeLog:
+	if test -d .git; then \
+	  $(top_srcdir)/gitlog-to-changelog \
+		--since=$(gen_start_date) > $(distdir)/cl-t; \
+	  rm -f $(distdir)/ChangeLog; \
+	  mv $(distdir)/cl-t $(distdir)/ChangeLog; \
+	fi

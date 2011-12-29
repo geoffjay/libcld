@@ -7,6 +7,7 @@ AM_INIT_AUTOMAKE(cld, 0.1.0)
 # create a config.h file
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_MACRO_DIR(m4)
+AM_INIT_AUTOMAKE(dist-bzip2)
 
 AM_MAINTAINER_MODE
 
@@ -50,10 +51,17 @@ AC_CHECK_HEADERS(   \
 AC_C_CONST
 AC_TYPE_SIZE_T
 
+GETTEXT_PACKAGE=libcld
+AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE], ["$GETTEXT_PACKAGE"], [Gettext Package])
+AC_SUBST(GETTEXT_PACKAGE)
+AM_GNU_GETTEXT_VERSION([1.11])
+AM_GLIB_GNU_GETTEXT
+
 AC_CONFIG_FILES([
-    Makefile
-    cld-0.1.pc
-    cld/Makefile
-    vapi/Makefile
+	Makefile
+	cld-0.2.pc
+	po/Makefile.in
+	cld/Makefile
+	vapi/Makefile
 ])
 AC_OUTPUT

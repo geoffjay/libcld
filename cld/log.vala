@@ -1,28 +1,28 @@
-/*
-** Copyright (C) 2010 Geoff Johnson <geoff.jay@gmail.com>
-**
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2 of the License, or
-** (at your option) any later version.
-**
-** This program is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
-** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*/
-
-using GLib;
+/**
+ * Copyright (C) 2010 Geoff Johnson <geoff.jay@gmail.com>
+ *
+ * This file is part of libcld.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
 
 namespace Cld {
     public class Log : Object {
         /* properties */
         [Property(nick = "ID", blurb = "Log ID")]
-        public string id { get; set; }
+        public override string id { get; set; }
 
         [Property(nick = "Name", blurb = "Log Name")]
         public string name { get; set; }
@@ -46,13 +46,14 @@ namespace Cld {
         public bool is_open;
 
         /* constructor */
-        public Log (string id, string name, string path, string file, double rate) {
+        public Log (string id, string name, string path,
+                    string file, double rate) {
             /* instantiate object */
-            Object (id: id,
-                    name: name,
-                    path: path,
-                    file: file,
-                    rate: rate);
+            GLib.Object (id: id,
+                         name: name,
+                         path: path,
+                         file: file,
+                         rate: rate);
 
             this.active = false;
             this.is_open = false;
@@ -107,10 +108,12 @@ namespace Cld {
             /* call to close writes the footer and sets the stream to null */
             file_close ();
 
-            /* generate new file name to move to based on date and existing name */
+            /* generate new file name to move to based on date and
+               existing name */
             disassemble_filename (file, out dest_name, out dest_ext);
-            dest = "%s%s-%d%02d%02d-%02dh%02dm%02ds.%s".printf (path, dest_name,
-                        t.year, t.month+1, t.day, t.hour, t.minute, t.second, dest_ext);
+            dest = "%s%s-%d%02d%02d-%02dh%02dm%02ds.%s".printf (path,
+                        dest_name, t.year, t.month+1, t.day, t.hour,
+                        t.minute, t.second, dest_ext);
             if (path.has_suffix ("/"))
                 src = "%s%s".printf (path, file);
             else
@@ -118,8 +121,8 @@ namespace Cld {
 
             /* rename the file */
             if (FileUtils.rename (src, dest) < 0)
-                stderr.printf ("An error occurred while renaming the file: %s%s",
-                               path, file);
+                stderr.printf ("An error occurred while renaming "
+                               "the file: %s%s", path, file);
 
             /* and recreate the original file if requested */
             if (reopen)
@@ -127,11 +130,19 @@ namespace Cld {
         }
 
         public void print (FileStream f) {
-            f.printf ("Log:\n id - %s\n name - %s\n path - %s\n file - %s\n rate - %.3f\n",
+            f.printf ("Log:\n id - %s\n name - %s\n path - %s\n "
+                      "file - %s\n rate - %.3f\n",
                       id, name, path, file, rate);
         }
 
-        /***
+        public override string to_string () {
+            string str_data = "[%s] : Log file %s with file %s%s "
+                              "with rate %.3f\n".printf (id, name,
+                                    path, file, rate);
+            return str_data;
+        }
+
+        /**
          * these methods directly pilfered from shotwell's util.vala file
          */
 
@@ -144,7 +155,9 @@ namespace Cld {
             return -1;
         }
 
-        private void disassemble_filename (string basename, out string name, out string ext) {
+        private void disassemble_filename (string basename,
+                                           out string name,
+                                           out string ext) {
             long offset = find_last_offset (basename, '.');
             if (offset <= 0) {
                 name = basename;

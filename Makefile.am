@@ -4,6 +4,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = \
 	cld \
+	po \
 	vapi \
 	$(NULL)
 
@@ -24,3 +25,18 @@ gen-ChangeLog:
 	  rm -f $(distdir)/ChangeLog; \
 	  mv $(distdir)/cl-t $(distdir)/ChangeLog; \
 	fi
+
+EXTRA_DIST += \
+	gitlog-to-changelog \
+	MAINTAINERS \
+	cld-0.2.pc.in \
+	intltool-extract.in \
+	intltool-merge.in \
+	intltool-update.in \
+	$(NULL)
+
+DISTCLEANFILES = \
+	intltool-extract \
+	intltool-merge \
+	intltool-update \
+	$(NULL)

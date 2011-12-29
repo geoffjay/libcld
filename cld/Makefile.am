@@ -1,12 +1,10 @@
 include $(top_srcdir)/Makefile.decl
 
-BUILT_SOURCES = cld.vala.stamp
-
 lib_LTLIBRARIES = \
 	libcld.la \
 	$(NULL)
 
-libcld_la_VALASOURCES = \
+libcld_la_SOURCES = \
 	calibration.vala \
 	channel.vala \
 	cld.vala \
@@ -16,11 +14,6 @@ libcld_la_VALASOURCES = \
 	log.vala \
 	pid.vala \
 	xml.vala \
-	$(NULL)
-
-libcld_la_SOURCES = \
-	cld.vala.stamp \
-	$(libcld_la_VALASOURCES:.vala=.c) \
 	$(NULL)
 
 INCLUDES = \
@@ -57,13 +50,13 @@ libcld_la_LIBADD = \
 libcld_la_LDFLAGS = \
 	$(NULL)
 
-cldincludedir = $(includedir)/cld-0.1
+cldincludedir = $(includedir)/cld-0.2
 
 cldinclude_HEADERS = \
 	cld.h \
 	$(NULL)
 
-library_includedir = $(includedir)/cld-0.1/cld
+library_includedir = $(includedir)/cld-0.2/cld
 
 library_include_HEADERS = \
 	common.h \
@@ -72,30 +65,30 @@ library_include_HEADERS = \
 vapidir = $(datadir)/vala/vapi
 
 dist_vapi_DATA = \
-	cld-0.1.vapi \
+	cld-0.2.vapi \
 	$(NULL)
 
 if HAVE_INTROSPECTION
 girdir = @INTROSPECTION_GIRDIR@
 
 gir_DATA = \
-	Cld-0.1.gir \
+	Cld-0.2.gir \
 	$(NULL)
 
 typelibdir = @INTROSPECTION_TYPELIBDIR@
 typelib_DATA = \
-	Cld-0.1.typelib \
+	Cld-0.2.typelib \
 	$(NULL)
 
-Cld-0.1.typelib: Cld-0.1.gir
+Cld-0.2.typelib: Cld-0.2.gir
 	@INTROSPECTION_COMPILER@ --shared-library=libcld -o $@ $^
 endif
 
-Cld-0.1.gir cld-internals-0.1.vapi cld-0.1.vapi: libcld.la
+Cld-0.2.gir cld-internals-0.2.vapi cld-0.2.vapi: libcld.la
 
 CLEANFILES = \
-	cld-0.1.vapi \
-	cld-internals-0.1.vapi \
-	Cld-0.1.typelib \
-	Cld-0.1.gir \
+	cld-0.2.vapi \
+	cld-internals-0.2.vapi \
+	Cld-0.2.typelib \
+	Cld-0.2.gir \
 	$(NULL)

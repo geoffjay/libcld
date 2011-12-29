@@ -7,7 +7,7 @@ AC_INIT([libcld], [0.2.0], [geoff.jay@gmail.com], [libcld])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_MACRO_DIR(m4)
-AM_INIT_AUTOMAKE(cld, 0.2.0)
+AM_INIT_AUTOMAKE(dist-bzip2)
 
 LIBCLD_VERSION="0:2:0"
 AC_SUBST(LIBCLD_LT_VERSION)
@@ -120,9 +120,16 @@ dnl ---------------------------------------------------------------------------
 AC_C_CONST
 AC_TYPE_SIZE_T
 
+GETTEXT_PACKAGE=libcld
+AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE], ["$GETTEXT_PACKAGE"], [Gettext Package])
+AC_SUBST(GETTEXT_PACKAGE)
+AM_GNU_GETTEXT_VERSION([1.11])
+AM_GLIB_GNU_GETTEXT
+
 AC_CONFIG_FILES([
 	Makefile
 	cld-0.2.pc
+	po/Makefile.in
 	cld/Makefile
 	vapi/Makefile
 ])

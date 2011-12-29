@@ -1,0 +1,10 @@
+[encoding: UTF-8]
+cld/calibration.vala
+cld/channel.vala
+cld/cld.vala
+cld/control.vala
+cld/daq.vala
+cld/device.vala
+cld/log.vala
+cld/pid.vala
+cld/xml.vala

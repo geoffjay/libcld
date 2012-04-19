@@ -5,7 +5,7 @@ includedir=@includedir@
 
 Name: libcld
 Description: Library controls and data for DAQ and control application development.
-Requires: glib-2.0 gee-1.0
+Requires: glib-2.0 gee-1.0 libxml-2.0
 Version: @VERSION@
-Libs: -L${libdir} -lcld
-Cflags: -I${includedir}/cld-0.1 -I${libdir}/cld-0.1/include
+Libs: -L${libdir} -lcld -lxml2
+Cflags: -I${includedir}/cld-0.1 -I${libdir}/cld-0.1/include -I/usr/include/libxml2

@@ -28,14 +28,34 @@ namespace Cld {
         VIRTUAL = 0,
         COMEDI,
         MCCHID,
-        ADVANTECH
+        ADVANTECH;
+
+        public string to_string () {
+            switch (this) {
+                case VIRTUAL:   return "Virtual";
+                case COMEDI:    return "Comedi";
+                case MCCHID:    return "Measurement Computing";
+                case ADVANTECH: return "Advantech";
+                default:        assert_not_reached ();
+            }
+        }
     }
 
     enum HardwareType {
         INPUT = 0,
         OUTPUT,
         COUNTER,
-        MULTIFUNCTION
+        MULTIFUNCTION;
+
+        public string to_string () {
+            switch (this) {
+                case INPUT:         return "Input";
+                case OUTPUT:        return "Output";
+                case COUNTER:       return "Counter";
+                case MULTIFUNCTION: return "Multi-function";
+                default:            assert_not_reached ();
+            }
+        }
     }
 
     public abstract class Object : GLib.Object {
@@ -44,5 +64,22 @@ namespace Cld {
 
         /* overridable methods */
         public abstract string to_string ();
+
+        /* virtual methods */
+        public virtual bool equal (Cld.Object a, Cld.Object b) {
+            return a.id == b.id;
+        }
+
+        public virtual int compare (Cld.Object a) {
+            if (id == a.id) {
+                return 0;
+            } else {
+                return 1;
+            }
+        }
+
+        public virtual void print (FileStream f) {
+            f.printf ("%s\n", to_string ());
+        }
     }
 }

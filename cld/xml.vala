@@ -33,6 +33,9 @@ namespace Cld {
         [Property(nick = "", blurb = "")]
         public string file_name { get; set; }
 
+        /* properties - Object */
+        public override string id {get; set; }
+
         private Xml.Doc *doc;
         private Xml.XPath.Context *ctx;
         private Xml.XPath.Object *obj;
@@ -41,6 +44,8 @@ namespace Cld {
         public XmlConfig (string file_name) {
             /* instantiate object */
             GLib.Object (file_name: file_name);
+
+            id = "xml0";
 
             /* load XML document */
             doc = Xml.Parser.parse_file (file_name);
@@ -137,6 +142,12 @@ namespace Cld {
 //            }
 
             return node->get_content ();
+        }
+
+        public override string to_string () {
+            string str_data = "[%s] : XML Configuration (%s)\n".printf (
+                                id, file_name);
+            return str_data;
         }
     }
 }

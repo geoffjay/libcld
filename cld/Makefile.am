@@ -5,12 +5,14 @@ lib_LTLIBRARIES = \
 	$(NULL)
 
 libcld_la_SOURCES = \
+	builder.vala \
 	calibration.vala \
 	channel.vala \
 	cld.vala \
 	control.vala \
 	daq.vala \
 	device.vala \
+	interfaces.vala \
 	log.vala \
 	pid.vala \
 	xml.vala \
@@ -39,7 +41,6 @@ cld-0.1.vapi cld.vala.stamp: $(libcld_la_VALASOURCES)
 
 libcld_la_LIBADD = \
 	$(GLIB_LIBS) \
-	$(GTK_LIBS) \
 	$(GEE_LIBS) \
 	$(XML_LIBS) \
 	$(NULL)

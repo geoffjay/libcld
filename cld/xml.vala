@@ -1,23 +1,22 @@
-/*
-** Copyright (C) 2010 Geoff Johnson <geoff.jay@gmail.com>
-**
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2 of the License, or
-** (at your option) any later version.
-**
-** This program is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
-** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*/
-
-using GLib;
-using Xml;
+/**
+ * Copyright (C) 2010 Geoff Johnson <geoff.jay@gmail.com>
+ *
+ * This file is part of libcld.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
 
 namespace Cld {
 
@@ -34,6 +33,9 @@ namespace Cld {
         [Property(nick = "", blurb = "")]
         public string file_name { get; set; }
 
+        /* properties - Object */
+        public override string id {get; set; }
+
         private Xml.Doc *doc;
         private Xml.XPath.Context *ctx;
         private Xml.XPath.Object *obj;
@@ -41,7 +43,9 @@ namespace Cld {
         /* constructor */
         public XmlConfig (string file_name) {
             /* instantiate object */
-            Object (file_name: file_name);
+            GLib.Object (file_name: file_name);
+
+            id = "xml0";
 
             /* load XML document */
             doc = Xml.Parser.parse_file (file_name);
@@ -138,6 +142,12 @@ namespace Cld {
 //            }
 
             return node->get_content ();
+        }
+
+        public override string to_string () {
+            string str_data = "[%s] : XML Configuration (%s)\n".printf (
+                                id, file_name);
+            return str_data;
         }
     }
 }

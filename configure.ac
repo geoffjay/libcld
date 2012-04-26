@@ -1,59 +1,136 @@
-# configure.ac
-# process this file with autoconf to produce a configure script
+dnl ---------------------------------------------------------------------------
+dnl configure.ac
+dnl process this file with autoconf to produce a configure script
+dnl ---------------------------------------------------------------------------
 
-AC_INIT(libcld, 0.1.0, geoff.jay@gmail.com)
-AM_INIT_AUTOMAKE(cld, 0.1.0)
-
-# create a config.h file
+AC_INIT([libcld], [0.2.0], [geoff.jay@gmail.com], [libcld])
+AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_MACRO_DIR(m4)
+AM_INIT_AUTOMAKE(dist-bzip2)
 
-AM_MAINTAINER_MODE
+LIBCLD_VERSION="0:2:0"
+AC_SUBST(LIBCLD_LT_VERSION)
 
-# checks for programs
+dnl ---------------------------------------------------------------------------
+dnl Programs
+dnl ---------------------------------------------------------------------------
 AC_PROG_CC
-AC_PROG_CPP
-AC_PROG_INSTALL
-AC_PROG_LN_S
-AC_PROG_MAKE_SET
-dnl AM_PROG_LIBTOOL
-AM_PROG_VALAC([0.7.0])
+AM_PROG_CC_C_O
+dnl AC_PROG_CPP
+dnl AC_PROG_INSTALL
+dnl AC_PROG_LN_S
+dnl AC_PROG_MAKE_SET
+AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
+IT_PROG_INTLTOOL([0.35])
 
-LIBCLD_VERSION="0:1:0"
-AC_SUBST(LIBCLD_VERSION)
+AM_PROG_VALAC([0.7.0])
+AC_SUBST(VALAC)
 
-AC_SUBST(VALAFLAGS)
-AC_SUBST(CFLAGS)
-AC_SUBST(CPPFLAGS)
-AC_SUBST(LDFLAGS)
+dnl ---------------------------------------------------------------------------
+dnl Declare Variables
+dnl ---------------------------------------------------------------------------
+AC_SUBST(VALAFLAGS,"")
+AC_SUBST(CLD_CFLAGS,"")
+AC_SUBST(CLD_LIBS,"")
+dnl AC_SUBST(CLD_PACKAGES,"")
 
-# checks for libraries
-pkg_modules="glib-2.0 >= 2.0.0 gee-1.0 >= 0.1.0 libxml-2.0 >= 2.0.0"
-CLD_PACKAGES="--pkg glib-2.0 --pkg gee-1.0 --pkg libxml-2.0"
-PKG_CHECK_MODULES(CLD, [$pkg_modules])
-AC_SUBST(CLD_CFLAGS)
-AC_SUBST(CLD_LIBS)
-AC_SUBST(CLD_PACKAGES)
+dnl ---------------------------------------------------------------------------
+dnl Mandatory Libraries
+dnl ---------------------------------------------------------------------------
+PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.2 gobject-2.0 >= 2.2 gthread-2.0 >= 2.2],,
+	[AC_MSG_ERROR([glib-2.2 is required])])
+AC_SUBST(GLIB_CFLAGS)
+AC_SUBST(GLIB_LIBS)
 
-# checks for header files
+PKG_CHECK_MODULES([GTK], [gtk+-2.0 > 2.2.0],,
+	[AC_MSG_ERROR([gtk-2.2 is required])])
+AC_SUBST(GTK_CFLAGS)
+AC_SUBST(GTK_LIBS)
+
+PKG_CHECK_MODULES([GEE], [gee-1.0],,
+	[AC_MSG_ERROR([gee-1.0 is required])])
+AC_SUBST(GEE_CFLAGS)
+AC_SUBST(GEE_LIBS)
+
+PKG_CHECK_MODULES([XML], [libxml-2.0],,
+	[AC_MSG_ERROR([libxml2 is required])])
+AC_SUBST(XML_CFLAGS)
+AC_SUBST(XML_LIBS)
+
+GOBJECT_INTROSPECTION_CHECK([0.9.0])
+
+dnl ---------------------------------------------------------------------------
+dnl libc Features
+dnl ---------------------------------------------------------------------------
 AC_HEADER_STDC
-AC_CHECK_HEADERS(   \
-    stdlib.h          \
-    time.h            \
-    string.h          \
-    unistd.h          \
-    glib.h
+AC_CHECK_HEADERS( \
+	stdlib.h \
+	time.h \
+	string.h \
+	unistd.h \
+	glib.h
 )
 
-# checks for typedefs, structures, and compiler characteristics
+dnl ---------------------------------------------------------------------------
+dnl CFLAGS
+dnl ---------------------------------------------------------------------------
+dnl if test x$GCC = xyes
+dnl then
+dnl CLD_CHECK_FLAG([-g])
+dnl CLD_CHECK_FLAG([-Wall])
+dnl CLD_CHECK_FLAG([-Wextra])
+dnl CLD_CHECK_FLAG([-Wno-deprecated-declarations])
+dnl CLD_CHECK_FLAG([-Wmissing-prototypes])
+dnl CLD_CHECK_FLAG([-Wshadow])
+dnl CLD_CHECK_FLAG([-Wpointer-arith])
+dnl CLD_CHECK_FLAG([-Wstrict-prototypes])
+dnl CLD_CHECK_FLAG([-Wcast-qual])
+dnl CLD_CHECK_FLAG([-Wwrite-strings])
+dnl CLD_CHECK_FLAG([-pedantic])
+dnl fi
+
+dnl ---------------------------------------------------------------------------
+dnl Build Options
+dnl ---------------------------------------------------------------------------
+AC_ARG_ENABLE(debug,
+	AS_HELP_STRING([--enable-debug],
+		[enable debugging (default: disabled)]),,
+	enable_debug=no)
+
+if test "x$enable_debug" = xyes; then
+	AM_CFLAGS="$AM_CFLAGS -DDEBUG"
+fi
+
+AC_ARG_ENABLE(test,
+	AS_HELP_STRING([--enable-test],
+		[build the test programs (default: disabled)]),,
+	enable_test=no)
+
+if test "x$enable_test" = xyes; then
+	CLD_CFLAGS="$CLD_CFLAGS -Icld/"
+fi
+
+AM_CONDITIONAL(ENABLE_TEST, test "x$enable_test" = xyes)
+
+dnl ---------------------------------------------------------------------------
+dnl Checks for typedefs, structures, and compiler characteristics
+dnl ---------------------------------------------------------------------------
 AC_C_CONST
 AC_TYPE_SIZE_T
 
+GETTEXT_PACKAGE=libcld
+AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE], ["$GETTEXT_PACKAGE"], [Gettext Package])
+AC_SUBST(GETTEXT_PACKAGE)
+AM_GNU_GETTEXT_VERSION([1.11])
+AM_GLIB_GNU_GETTEXT
+
 AC_CONFIG_FILES([
-    Makefile
-    cld-0.1.pc
-    cld/Makefile
-    vapi/Makefile
+	Makefile
+	cld-0.2.pc
+	po/Makefile.in
+	cld/Makefile
+	vapi/Makefile
 ])
 AC_OUTPUT

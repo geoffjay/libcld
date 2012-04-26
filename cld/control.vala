@@ -31,10 +31,8 @@ namespace Cld {
         }
 
         public ProcessValue.from_xml_node (Xml.Node *node) {
-            id = "";
-            chref = "";
-
-            if (node->type == Xml.ElementType.ELEMENT_NODE) {
+            if (node->type == Xml.ElementType.ELEMENT_NODE &&
+                node->type != Xml.ElementType.COMMENT_NODE) {
                 id = node->get_prop ("id");
                 chref = node->get_prop ("chref");
             }
@@ -70,14 +68,15 @@ namespace Cld {
         }
 
         public Control.from_xml_node (Xml.Node *node) {
-            id = "";
             objects = new Gee.TreeMap<string, Cld.Object> ();
 
             if (node->type == Xml.ElementType.ELEMENT_NODE &&
-                node->type != Xml.ElementType.ELEMENT_NODE) {
+                node->type != Xml.ElementType.COMMENT_NODE) {
                 id = node->get_prop ("id");
                 /* iterate through node children */
-                for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
+                for (Xml.Node *iter = node->children;
+                     iter != null;
+                     iter = iter->next) {
                     if (iter->name == "property") {
                         /* no defined properties yet */
                         switch (iter->get_prop ("name")) {

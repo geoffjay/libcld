@@ -5,12 +5,14 @@ lib_LTLIBRARIES = \
 	$(NULL)
 
 libcld_la_SOURCES = \
+	builder.vala \
 	calibration.vala \
 	channel.vala \
 	cld.vala \
 	control.vala \
 	daq.vala \
 	device.vala \
+	interfaces.vala \
 	log.vala \
 	pid.vala \
 	xml.vala \

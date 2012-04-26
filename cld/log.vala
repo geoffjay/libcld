@@ -59,11 +59,45 @@ namespace Cld {
             this.is_open = false;
         }
 
+        public Log.from_xml_node (Xml.Node *node) {
+            string value;
+
+            if (node->type == Xml.ElementType.ELEMENT_NODE &&
+                node->type != Xml.ElementType.COMMENT_NODE) {
+                id = node->get_prop ("id");
+
+                /* iterate through node children */
+                for (Xml.Node *iter = node->children;
+                     iter != null;
+                     iter = iter->next) {
+                    if (iter->name == "property") {
+                        switch (iter->get_prop ("name")) {
+                            case "title":
+                                name = node->get_content ();
+                                break;
+                            case "path":
+                                path = node->get_content ();
+                                break;
+                            case "file":
+                                file = node->get_content ();
+                                break;
+                            case "rate":
+                                value = iter->get_content ();
+                                rate = double.parse (value);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
         public void file_print (string toprint) {
             file_stream.printf ("%s", toprint);
         }
 
-        public void file_open () {
+        public bool file_open () {
             string filename;
             TimeVal time = TimeVal ();
             /* original implementation checked for the existence of requested
@@ -74,11 +108,18 @@ namespace Cld {
                 filename = "%s/%s".printf (path, file);
 
             file_stream = FileStream.open (filename, "w+");
-            is_open = true;
-            /* add the header */
-            time.get_current_time ();
-            file_stream.printf ("Log file: %s created at %s\n\n",
-                                name, time.to_iso8601 ());
+            if (file_stream == null)
+                is_open = false;
+            else
+            {
+                is_open = true;
+                /* add the header */
+                time.get_current_time ();
+                file_stream.printf ("Log file: %s created at %s\n\n",
+                   name, time.to_iso8601 ());
+            }
+
+            return is_open;
         }
 
         public void file_close () {
@@ -121,7 +162,7 @@ namespace Cld {
 
             /* rename the file */
             if (FileUtils.rename (src, dest) < 0)
-                stderr.printf ("An error occurred while renaming "
+                stderr.printf ("An error occurred while renaming " +
                                "the file: %s%s", path, file);
 
             /* and recreate the original file if requested */
@@ -129,16 +170,10 @@ namespace Cld {
                 file_open ();
         }
 
-        public void print (FileStream f) {
-            f.printf ("Log:\n id - %s\n name - %s\n path - %s\n "
-                      "file - %s\n rate - %.3f\n",
-                      id, name, path, file, rate);
-        }
-
         public override string to_string () {
-            string str_data = "[%s] : Log file %s with file %s%s "
-                              "with rate %.3f\n".printf (id, name,
-                                    path, file, rate);
+            string str_data  = "[%s] : Log file %s\n".printf (id, name);
+                   str_data += "\tFile on disk: %s%s\n".printf (path, file);
+                   str_data += "\tRate %.3f\n".printf (rate);
             return str_data;
         }
 

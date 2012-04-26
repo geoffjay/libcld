@@ -82,12 +82,7 @@ namespace Cld {
          * Construction using an xml node
          */
         public Pid.from_xml_node (Xml.Node *node) {
-            string value = "";
-            id = "";
-            sp = 0.0;
-            kp = 0.0;
-            ki = 0.0;
-            kd = 0.0;
+            string value;
 
             process_values = new Gee.TreeMap<string, Cld.Object> ();
 
@@ -136,16 +131,12 @@ namespace Cld {
             _process_values = val;
         }
 
-        public void print (FileStream f) {
-            f.printf ("PID:\n id - %s\n sp - %.3f\n kp - %.3f\n "
-                      "ki - %.3f\n kd - %.3f\n",
-                      id, sp, kp, ki, kd);
-        }
-
         public override string to_string () {
-            string str_data = "[%s] : PID control object with "
-                              "(sp: %.3f, kp: %.3f, ki: %.3f, "
-                              "kd: %.3f)\n".printf (id, sp, kp, ki, kd);
+            string str_data  = "[%s] : PID Object:";
+                   str_data += "\tSP %.3f\n".printf (sp);
+                   str_data += "\tKp %.3f\n".printf (kp);
+                   str_data += "\tKi %.3f\n".printf (ki);
+                   str_data += "\tKd %.3f\n".printf (kd);
             /* add iteration to print process values later during testing */
             return str_data;
         }

@@ -88,69 +88,41 @@
             </object>
         </object>
 
-        <!-- daq channels configuration -->
-        <channels>
-            <!-- analog channel definitions -->
-            <channel id="ai0"
-                    ref="dev0"
-                    type="analog"
-                    direction="input">
-                <tag>IN0</tag>
-                <desc>Sample Input</desc>
-                <num>0</num>
-                <existence>physical</existence>
-                <calibration ref="cal0"/>
-            </channel>
-            <channel id="ai1"
-                    ref="dev0"
-                    type="analog"
-                    direction="input">
-                <tag>IN1</tag>
-                <desc>Sample Input</desc>
-                <num>1</num>
-                <existence>physical</existence>
-                <calibration ref="cal1"/>
-            </channel>
-            <!-- virtual channels combine channels with simple math -->
-            <channel id="vai0"
-                    ref="vdev0"
-                    type="calculation"
-                    direction="input">
-                <tag>VIN0</tag>
-                <desc>Sample Virtual Input</desc>
-                <num>2</num>
-                <existence>virtual</existence>
-                <expression>(ai0)+(ai1)</expression>
-            </channel>
-            <channel id="ao0"
-                    ref="dev1"
-                    type="analog"
-                    direction="output">
-                <tag>OUT0</tag>
-                <desc>Sample Output</desc>
-                <num>0</num>
-                <existence>physical</existence>
-            </channel>
-
-            <!-- digital channel definitions  -->
-            <channel id="di0"
-                    devref="dev0"
-                    type="digital"
-                    direction="input">
-                <tag>IN0</tag>
-                <desc>Sample Input</desc>
-                <num>0</num>
-                <existence>physical</existence>
-            </channel>
-            <channel id="do0"
-                    devref="dev1"
-                    type="digital"
-                    direction="output">
-                <tag>OUT0</tag>
-                <desc>Sample Output</desc>
-                <num>0</num>
-                <existence>physical</existence>
-            </channel>
-        </channels>
+        <!-- analog channel definitions -->
+        <object id="ai0" type="channel" ref="dev0" ctype="analog" direction="input">
+            <property name="tag">IN0</property>
+            <property name="desc">Sample Input</property>
+            <property name="num">0</property>
+            <property name="calref">cal0</property>
+        </object>
+        <object id="ai1" type="channel" ref="dev0" ctype="analog" direction="input">
+            <property name="tag">IN1</property>
+            <property name="desc">Sample Input</property>
+            <property name="num">1</property>
+            <property name="calref">cal1</property>
+        </object>
+        <object id="ao0" type="channel" ref="dev1" ctype="analog" direction="output">
+            <property name="tag">OUT0</property>
+            <property name="desc">Sample Output</property>
+            <property name="num">0</property>
+        </object>
+        <!-- virtual channels combine channels with simple math -->
+        <object id="vai0" type="channel" ref="vdev0" ctype="calculation" direction="input">
+            <property name="tag">VIN0</property>
+            <property name="desc">Sample Virtual Input</property>
+            <property name="num">2</property>
+            <property name="expression">(ai0)+(ai1)</property>
+        </object>
+        <!-- digital channel definitions -->
+        <object id="di0" type="channel" ref="dev0" ctype="digital" direction="input">
+            <property name="tag">IN0</property>
+            <property name="desc">Sample Input</property>
+            <property name="num">0</property>
+        </object>
+        <object id="do0" type="channel" ref="dev1" ctype="digital" direction="output">
+            <property name="tag">OUT0</property>
+            <property name="desc">Sample Output</property>
+            <property name="num">0</property>
+        </object>
     </objects>
 </cld>

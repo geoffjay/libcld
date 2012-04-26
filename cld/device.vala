@@ -65,11 +65,6 @@ namespace Cld {
          * Construction using an xml node
          */
         public Device.from_xml_node (Xml.Node *node) {
-            id = "";
-            hw_type = 0;
-            driver = 0;
-            name = "";
-            file = "";
 
             if (node->type == Xml.ElementType.ELEMENT_NODE &&
                 node->type != Xml.ElementType.COMMENT_NODE) {
@@ -115,15 +110,9 @@ namespace Cld {
             }
         }
 
-        public void print (FileStream f) {
-            f.printf ("Device:\n id - %s\n hw - %d\n driver - %d\n "
-                      "name - %s\n file - %s\n",
-                      id, hw_type, driver, name, file);
-        }
-
         public override string to_string () {
-            string str_data = "[%s] : Device %s with file %s\n".printf (id,
-                                    name, file);
+            string str_data = "[%s] : Device %s with file %s\n".printf (
+                                id, name, file);
             /* add the hardware and driver types later */
             return str_data;
         }

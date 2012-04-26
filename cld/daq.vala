@@ -44,10 +44,7 @@ namespace Cld {
          * Construction using an xml node
          */
         public Daq.from_xml_node (Xml.Node *node) {
-            string value = "";
-            id = "";
-            driver = "";
-            rate = 0.0;
+            string value;
 
             devices = new Gee.TreeMap<string, Cld.Object> ();
 
@@ -80,17 +77,13 @@ namespace Cld {
             _devices = val;
         }
 
-        public void print (FileStream f) {
-            f.printf ("DAQ:\n rate - %.3f\n", rate);
-            if (!devices.is_empty) {
-                foreach (var dev in devices.values)
-                    dev.print (f);
-            }
-        }
-
         public override string to_string () {
             string str_data = "[%s] : DAQ with rate %.3f\n".printf (id, rate);
             /* copy the device print iteration here later in testing */
+            if (!devices.is_empty) {
+                foreach (var dev in devices.values)
+                    str_data += "  %s".printf (dev.to_string ());
+            }
             return str_data;
         }
     }

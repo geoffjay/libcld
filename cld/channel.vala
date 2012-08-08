@@ -19,7 +19,7 @@
  */
 
 namespace Cld {
-    public abstract class Channel : Object {
+    public abstract class Channel : Cld.Object {
         /* inherited properties */
         public override string id     { get; set; }
 
@@ -36,6 +36,17 @@ namespace Cld {
             devref = "dev0";
             tag = "CH0";
             desc = "Channel";
+        }
+
+        public override string to_string () {
+            string str_data  = "CldChannel\n";
+                   str_data += "──┬───────\n";
+                   str_data += "  ├ [id  ] : %s\n".printf (id);
+                   str_data += "  ├ [num ] : %d\n".printf (num);
+                   str_data += "  ├ [dev ] : %s\n".printf (devref);
+                   str_data += "  ├ [tag ] : %s\n".printf (tag);
+                   str_data += "  ├ [desc] : %s\n".printf (desc);
+            return str_data;
         }
 
 //        public Channel (int    num,
@@ -130,6 +141,10 @@ namespace Cld {
      */
     public interface OChannel : Channel {
     }
+
+    /* REVIEW:
+     * inheriting Channel interface might be redundant when the object is
+     * also already inheriting other interfaces that inherit it as well */
 
     /**
      * AIChannel:
@@ -251,8 +266,7 @@ namespace Cld {
         }
 
         public override string to_string () {
-            string str_data = "[%s]\n".printf (id);
-            return str_data;
+            return base.to_string ();
         }
     }
 
@@ -323,8 +337,7 @@ namespace Cld {
         }
 
         public override string to_string () {
-            string str_data = "[%s]\n".printf (id);
-            return str_data;
+            return base.to_string ();
         }
     }
 
@@ -390,8 +403,7 @@ namespace Cld {
         }
 
         public override string to_string () {
-            string str_data = "[%s]\n".printf (id);
-            return str_data;
+            return base.to_string ();
         }
     }
 
@@ -457,8 +469,7 @@ namespace Cld {
         }
 
         public override string to_string () {
-            string str_data = "[%s]\n".printf (id);
-            return str_data;
+            return base.to_string ();
         }
     }
 
@@ -526,8 +537,7 @@ namespace Cld {
         }
 
         public override string to_string () {
-            string str_data = "[%s]\n".printf (id);
-            return str_data;
+            return base.to_string ();
         }
     }
 }

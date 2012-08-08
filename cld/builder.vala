@@ -34,15 +34,90 @@ namespace Cld {
             set { update_objects (value); }
         }
 
+        private Cld.Daq _default_daq;
+        public Cld.Daq default_daq {
+            /* return the first available daq object */
+            get {
+                foreach (var object in objects.values) {
+                    if (object is Daq) {
+                        _default_daq = (object as Daq);
+                        break;
+                    }
+                }
+                return _default_daq;
+            }
+        }
+
+        private Cld.Control _default_control;
+        public Cld.Control default_control {
+            /* return the first available control object */
+            get {
+                foreach (var object in objects.values) {
+                    if (object is Control) {
+                        _default_control = (object as Control);
+                        break;
+                    }
+                }
+                return _default_control;
+            }
+        }
+
+        /* it might be wrong here to use null here because it might prevent
+         * the user from adding objects manually after the first get and having
+         * their changes be reflected in the list they hold - test and change
+         * if that's the case */
+
+        private Gee.Map<string, Cld.Object>? _calibrations = null;
+        public Gee.Map<string, Cld.Object>? calibrations {
+            get {
+                if (_calibrations == null) {
+                    _calibrations = new Gee.TreeMap<string, Cld.Object> ();
+                    foreach (var object in objects.values) {
+                        if (object is Calibration)
+                            _calibrations.set (object.id, object);
+                    }
+                }
+                return _calibrations;
+            }
+        }
+
+        private Gee.Map<string, Cld.Object>? _channels = null;
+        public Gee.Map<string, Cld.Object>? channels {
+            get {
+                if (_channels == null) {
+                    _channels = new Gee.TreeMap<string, Cld.Object> ();
+                    foreach (var object in objects.values) {
+                        if (object is Channel)
+                            _channels.set (object.id, object);
+                    }
+                }
+                return _channels;
+            }
+        }
+
+        private Gee.Map<string, Cld.Object>? _logs = null;
+        public Gee.Map<string, Cld.Object>? logs {
+            get {
+                if (_logs == null) {
+                    _logs = new Gee.TreeMap<string, Cld.Object> ();
+                    foreach (var object in objects.values) {
+                        if (object is Log)
+                            _logs.set (object.id, object);
+                    }
+                }
+                return _logs;
+            }
+        }
+
         public Builder.from_file (string filename) {
             xml = new Cld.XmlConfig (filename);
-            objects = new Gee.TreeMap<string, Cld.Object> ();
+            _objects = new Gee.TreeMap<string, Cld.Object> ();
             build_object_map ();
         }
 
         public Builder.from_xml_config (Cld.XmlConfig xml) {
             GLib.Object (xml: xml);
-            objects = new Gee.TreeMap<string, Cld.Object> ();
+            _objects = new Gee.TreeMap<string, Cld.Object> ();
             build_object_map ();
         }
 
@@ -171,13 +246,13 @@ namespace Cld {
             int i;
             string str_data;
 
-            str_data = "\nCLD Builder Contents\n";
+            str_data = "CldBuilder\n";
             for (i = 0; i < 80; i++)
                 str_data += "-";
             str_data += "\n";
 
             foreach (var object in objects.values) {
-                str_data += "%s".printf (object.to_string ());
+                str_data += "%s\n".printf (object.to_string ());
             }
 
             for (i = 0; i < 80; i++)

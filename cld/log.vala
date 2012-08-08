@@ -73,13 +73,13 @@ namespace Cld {
                     if (iter->name == "property") {
                         switch (iter->get_prop ("name")) {
                             case "title":
-                                name = node->get_content ();
+                                name = iter->get_content ();
                                 break;
                             case "path":
-                                path = node->get_content ();
+                                path = iter->get_content ();
                                 break;
                             case "file":
-                                file = node->get_content ();
+                                file = iter->get_content ();
                                 break;
                             case "rate":
                                 value = iter->get_content ();
@@ -99,8 +99,7 @@ namespace Cld {
 
         public bool file_open () {
             string filename;
-            time_t ts = time_t (null);
-            var t = Time.local (ts);
+            TimeVal time = TimeVal ();
 
             /* original implementation checked for the existence of requested
              * file and posted error message if it it, reimplement that later */
@@ -125,11 +124,12 @@ namespace Cld {
         }
 
         public void file_close () {
-            time_t ts = time_t (null);
-            var t = Time.local (ts);
+            TimeVal time = TimeVal ();
+
             /* add the footer */
+            time.get_current_time ();
             file_stream.printf ("\nLog file: %s closed at %s",
-                                name, t.to_string ());
+                                name, time.to_iso8601 ());
             /* setting a GLib.FileStream object to null apparently forces a
              * call to stdlib's close () */
             file_stream = null;
@@ -173,9 +173,13 @@ namespace Cld {
         }
 
         public override string to_string () {
-            string str_data  = "[%s] : Log file %s\n".printf (id, name);
-                   str_data += "\tFile on disk: %s%s\n".printf (path, file);
-                   str_data += "\tRate %.3f\n".printf (rate);
+            string str_data  = "CldLog\n";
+                   str_data += "──┬───\n";
+                   str_data += "  ├ [id  ] : %s\n".printf (id);
+                   str_data += "  ├ [name] : %s\n".printf (name);
+                   str_data += "  ├ [path] : %s\n".printf (path);
+                   str_data += "  ├ [file] : %s\n".printf (file);
+                   str_data += "  ├ [rate] : %.3f\n".printf (rate);
             return str_data;
         }
 
@@ -209,8 +213,26 @@ namespace Cld {
             uchar[] data = new uchar[0];
             for (int ctr = 0; ctr < str.length; ctr++)
                 data += (uchar) str[ctr];
-
             return data;
+        }
+
+        /**
+         * A log file entry class which will be pushed onto the tail of the
+         * buffer for log file writes.
+         **/
+        public class Entry : GLib.Object {
+            private string _as_string;
+            public string as_string {
+                get { return _as_string; }
+                set { _as_string = value; }
+            }
+        }
+
+        /**
+         * A log file buffer class to use to be able to write data to a log
+         * file without using a rate timer.
+         **/
+        public class Buffer<G> : GLib.Queue<G> {
         }
     }
 }

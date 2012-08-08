@@ -8,8 +8,9 @@ AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_MACRO_DIR(m4)
 AM_INIT_AUTOMAKE(dist-bzip2)
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
-LIBCLD_VERSION="0:2:0"
+LIBCLD_LT_VERSION="0:2:0"
 AC_SUBST(LIBCLD_LT_VERSION)
 
 dnl ---------------------------------------------------------------------------
@@ -17,24 +18,19 @@ dnl Programs
 dnl ---------------------------------------------------------------------------
 AC_PROG_CC
 AM_PROG_CC_C_O
-dnl AC_PROG_CPP
-dnl AC_PROG_INSTALL
-dnl AC_PROG_LN_S
-dnl AC_PROG_MAKE_SET
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 IT_PROG_INTLTOOL([0.35])
 
-AM_PROG_VALAC([0.7.0])
+AC_PATH_PROG(VALAC, valac, valac)
 AC_SUBST(VALAC)
+AC_SUBST(VALAFLAGS)
 
 dnl ---------------------------------------------------------------------------
 dnl Declare Variables
 dnl ---------------------------------------------------------------------------
-AC_SUBST(VALAFLAGS,"")
 AC_SUBST(CLD_CFLAGS,"")
 AC_SUBST(CLD_LIBS,"")
-dnl AC_SUBST(CLD_PACKAGES,"")
 
 dnl ---------------------------------------------------------------------------
 dnl Mandatory Libraries
@@ -43,11 +39,6 @@ PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.2 gobject-2.0 >= 2.2 gthread-2.0 >= 2.2
 	[AC_MSG_ERROR([glib-2.2 is required])])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
-
-PKG_CHECK_MODULES([GTK], [gtk+-2.0 > 2.2.0],,
-	[AC_MSG_ERROR([gtk-2.2 is required])])
-AC_SUBST(GTK_CFLAGS)
-AC_SUBST(GTK_LIBS)
 
 PKG_CHECK_MODULES([GEE], [gee-1.0],,
 	[AC_MSG_ERROR([gee-1.0 is required])])
@@ -94,6 +85,8 @@ dnl fi
 dnl ---------------------------------------------------------------------------
 dnl Build Options
 dnl ---------------------------------------------------------------------------
+
+dnl Debugging
 AC_ARG_ENABLE(debug,
 	AS_HELP_STRING([--enable-debug],
 		[enable debugging (default: disabled)]),,
@@ -103,6 +96,7 @@ if test "x$enable_debug" = xyes; then
 	AM_CFLAGS="$AM_CFLAGS -DDEBUG"
 fi
 
+dnl Test programs
 AC_ARG_ENABLE(test,
 	AS_HELP_STRING([--enable-test],
 		[build the test programs (default: disabled)]),,
@@ -113,6 +107,19 @@ if test "x$enable_test" = xyes; then
 fi
 
 AM_CONDITIONAL(ENABLE_TEST, test "x$enable_test" = xyes)
+
+dnl Documentation
+AC_ARG_ENABLE(doc,
+	AS_HELP_STRING([--enable-doc],
+		[Enable documentation generation]), enable_doc=$enableval,
+	enable_doc=no)
+AM_CONDITIONAL(ENABLE_DOC, test x$enable_doc = xyes)
+
+AS_IF([test "x$enable_doc" != xno],
+	[AC_PATH_PROG(VALADOC, valadoc, :)
+	 AC_SUBST(VALADOC)
+	 AS_IF([test "$VALADOC" = :],
+		[AC_MSG_ERROR([valadoc not found])])])
 
 dnl ---------------------------------------------------------------------------
 dnl Checks for typedefs, structures, and compiler characteristics

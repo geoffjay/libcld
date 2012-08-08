@@ -37,14 +37,12 @@ libcld_la_VALAFLAGS = \
 
 libcld_la_CPPFLAGS = \
 	$(GLIB_CFLAGS) \
-	$(GTK_CFLAGS) \
 	$(GEE_CFLAGS) \
 	$(XML_CFLAGS) \
 	$(NULL)
 
 libcld_la_LIBADD = \
 	$(GLIB_LIBS) \
-	$(GTK_LIBS) \
 	$(GEE_LIBS) \
 	$(XML_LIBS) \
 	$(NULL)

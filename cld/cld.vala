@@ -28,14 +28,34 @@ namespace Cld {
         VIRTUAL = 0,
         COMEDI,
         MCCHID,
-        ADVANTECH
+        ADVANTECH;
+
+        public string to_string () {
+            switch (this) {
+                case VIRTUAL:   return "Virtual";
+                case COMEDI:    return "Comedi";
+                case MCCHID:    return "Measurement Computing";
+                case ADVANTECH: return "Advantech";
+                default:        assert_not_reached ();
+            }
+        }
     }
 
     enum HardwareType {
         INPUT = 0,
         OUTPUT,
         COUNTER,
-        MULTIFUNCTION
+        MULTIFUNCTION;
+
+        public string to_string () {
+            switch (this) {
+                case INPUT:         return "Input";
+                case OUTPUT:        return "Output";
+                case COUNTER:       return "Counter";
+                case MULTIFUNCTION: return "Multi-function";
+                default:            assert_not_reached ();
+            }
+        }
     }
 
     public abstract class Object : GLib.Object {

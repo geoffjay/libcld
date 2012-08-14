@@ -3,3 +3,18 @@
 *.o
 *.lo
 *.swp
+
+# files required by setup/build
+m4/libtool.m4
+m4/lt*.m4
+
+# files that get generated automatically
+cld-0.2.pc
+compile
+INSTALL
+Makefile
+Makefile.in
+install-sh
+intltool-*.in
+libtool
+ltmain.sh

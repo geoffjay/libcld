@@ -15,19 +15,29 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-/**
- * Container:
- *
- * Interface inherited by any object that has its own list of sub objects.
- * - consider changing the name to ObjectContainer for clarity?
- */
-public interface Cld.Container : GLib.Object {
-    public abstract Gee.Map<string, Object> objects { get; set; }
+using GLib;
+using Cld;
 
-    public abstract void add (Object object);
-    public abstract void update_objects (Gee.Map<string, Object> val);
-    public abstract Object? get_object (string id);
+public abstract class ObjectTests : Cld.TestCase {
+
+    public ObjectTests (string name) {
+        base (name);
+        add_test ("[Object] selected functions", test_selected_functions);
+    }
+
+    protected Cld.Object test_object;
+
+    public void test_selected_functions () {
+        var test = test_object as Cld.Object;
+
+        // Check the object exists
+        assert (test != null);
+    }
+
+    // To add other test methods just perform tasks and assert on the expected
+    // values that should have resulted
+
 }

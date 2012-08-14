@@ -1,0 +1,35 @@
+include $(top_srcdir)/Makefile.decl
+
+SRC_DIR = $(top_srcdir)/cld
+
+docdir=$(datadir)/devhelp/references/cld-0.2
+innerdocdir=$(datadir)/devhelp/references/cld-0.2/cld-0.2
+imgdir=$(datadir)/devhelp/references/cld-0.2/cld-0.2/img
+
+doc_data = \
+	cld-0.2/*.css \
+	cld-0.2/*.png \
+	$(NULL)
+
+doc_DATA = \
+	cld-0.2/index.html \
+	$(doc_data) \
+	$(NULL)
+
+innerdoc_DATA = \
+	cld-0.2/cld-0.2/index.htm \
+	cld-0.2/cld-0.2/*.html \
+	$(NULL)
+
+img_DATA = \
+	cld-0.2/cld-0.2/img/*.png \
+	$(NULL)
+
+$(doc_data) $(innerdoc_DATA) $(img_DATA): cld-0.2/index.html
+
+cld-0.2/index.html:
+	$(VALADOC) -o cld-0.2/ --wiki ./ --force -b $(top_srcdir) $(SRC_DIR)/*.vala
+
+EXTRA_DIST += \
+	index.wiki \
+	$(NULL)

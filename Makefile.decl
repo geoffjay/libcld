@@ -1,1 +1,7 @@
+# GLIB - Library of useful C routines
+
+GTESTER = gtester
+GTESTER_REPORT = gtester-report
+
+# initialize variables for unconditional += appending
 EXTRA_DIST =

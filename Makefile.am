@@ -1,10 +1,17 @@
 include $(top_srcdir)/Makefile.decl
 NULL =
 
+if ENABLE_DOC
+DOC_SUBDIR = \
+	doc \
+	$(NULL)
+endif
+
 SUBDIRS = \
 	cld \
-	po \
+	tests \
 	vapi \
+	$(DOC_SUBDIR) \
 	$(NULL)
 
 cld_configdir = $(libdir)/cld-0.1/include
@@ -29,13 +36,4 @@ EXTRA_DIST += \
 	gitlog-to-changelog \
 	MAINTAINERS \
 	cld-0.2.pc.in \
-	intltool-extract.in \
-	intltool-merge.in \
-	intltool-update.in \
-	$(NULL)
-
-DISTCLEANFILES = \
-	intltool-extract \
-	intltool-merge \
-	intltool-update \
 	$(NULL)

@@ -1,20 +1,34 @@
 include $(top_srcdir)/Makefile.decl
 
 lib_LTLIBRARIES = \
-	libcld.la \
+	libcld-0.2.la \
 	$(NULL)
 
-libcld_la_SOURCES = \
+libcld_0_2_la_SOURCES = \
+	abstractchannel.vala \
+	abstractfilter.vala \
+	abstractobject.vala \
+	abstractport.vala \
+	aichannel.vala \
+	aochannel.vala \
 	builder.vala \
 	calibration.vala \
 	channel.vala \
 	cld.vala \
+	coefficient.vala \
 	control.vala \
 	daq.vala \
 	device.vala \
+	dichannel.vala \
+	dochannel.vala \
+	filter.vala \
 	interfaces.vala \
 	log.vala \
+	object.vala \
 	pid.vala \
+	port.vala \
+	serialport.vala \
+	vchannel.vala \
 	xml.vala \
 	$(NULL)
 
@@ -39,13 +53,15 @@ cld-0.1.vapi cld.vala.stamp: $(libcld_la_VALASOURCES)
 	$(VALAC) -C $(AM_VALAFLAGS) $^
 	touch $@
 
-libcld_la_LIBADD = \
+libcld_0_2_la_LIBADD = \
 	$(GLIB_LIBS) \
 	$(GEE_LIBS) \
 	$(XML_LIBS) \
 	$(NULL)
 
-libcld_la_LDFLAGS = \
+libcld_0_2_la_LDFLAGS = \
+	-version-info $(LIBCLD_LT_VERSION) \
+	-no-undefined \
 	$(NULL)
 
 cldincludedir = $(includedir)/cld-0.2
@@ -81,7 +97,7 @@ Cld-0.2.typelib: Cld-0.2.gir
 	@INTROSPECTION_COMPILER@ --shared-library=libcld -o $@ $^
 endif
 
-Cld-0.2.gir cld-internals-0.2.vapi cld-0.2.vapi: libcld.la
+Cld-0.2.gir cld-internals-0.2.vapi cld-0.2.vapi: libcld-0.2.la
 
 CLEANFILES = \
 	cld-0.2.vapi \

@@ -2,10 +2,18 @@ include $(top_srcdir)/Makefile.decl
 AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 
+if ENABLE_DOC
+DOC_SUBDIR = \
+	doc \
+	$(NULL)
+endif
+
 SUBDIRS = \
 	cld \
 	po \
+	tests \
 	vapi \
+	$(DOC_SUBDIR) \
 	$(NULL)
 
 cld_configdir = $(libdir)/cld-0.2/include

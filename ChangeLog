@@ -1,6 +1,44 @@
+2012-08-07  Geoff Johnson  <geoff.johnson@coanda.ca>
+
+	Autotools edits for v0.2 as well as minor changes to object to_string methods.
+
+2012-04-25  Geoff Johnson  <geoff.johnson@coanda.ca>
+
+	Merging v0.2 into dev branch
+
+	Updated library to include new XML config changes and builder
+
+2012-04-18  Geoff Johnson  <geoff.johnson@coanda.ca>
+
+	Fix pkg-config file
+
+2012-03-10  Geoff Johnson  <geoff.jay@gmail.com>
+
+	Merge branch 'v0.2' of gitorious.org:cld/libcld into v0.2
+
+	Initial import
+
+2011-12-29  Geoff Johnson  <geoff.johnson@coanda.ca>
+
+	code restructuring and addition of xml based object construction
+
+2011-12-09  Geoff Johnson  <geoff.johnson@coanda.ca>
+
+	updated the autotools setup to fix some issues
+
 2011-09-12  Geoff Johnson  <geoff.jay@gmail.com>
 
+	Merge branch 'master' of gitorious.org:libcld/libcld
+
 	change Xml objects to pointers to make newer versions of vala happy
+
+2011-09-01  Geoff Johnson  <geoff.johnson@coanda.ca>
+
+	fix the method used to write the time to the log file header
+
+2011-08-10  Geoff Johnson  <geoff.johnson@coanda.ca>
+
+	fixed log file header and footer to use local time instead of iso8601
 
 2011-07-25  Geoff Johnson  <geoff.jay@gmail.com>
 

@@ -96,18 +96,6 @@ if test "x$enable_debug" = xyes; then
 	AM_CFLAGS="$AM_CFLAGS -DDEBUG"
 fi
 
-dnl Test programs
-AC_ARG_ENABLE(test,
-	AS_HELP_STRING([--enable-test],
-		[build the test programs (default: disabled)]),,
-	enable_test=no)
-
-if test "x$enable_test" = xyes; then
-	CLD_CFLAGS="$CLD_CFLAGS -Icld/"
-fi
-
-AM_CONDITIONAL(ENABLE_TEST, test "x$enable_test" = xyes)
-
 dnl Documentation
 AC_ARG_ENABLE(doc,
 	AS_HELP_STRING([--enable-doc],
@@ -138,6 +126,7 @@ AC_CONFIG_FILES([
 	cld-0.2.pc
 	po/Makefile.in
 	cld/Makefile
+	tests/Makefile
 	vapi/Makefile
 ])
 AC_OUTPUT

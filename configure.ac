@@ -27,26 +27,21 @@ AC_SUBST(VALAC)
 AC_SUBST(VALAFLAGS)
 
 dnl ---------------------------------------------------------------------------
-dnl Declare Variables
-dnl ---------------------------------------------------------------------------
-AC_SUBST(CLD_CFLAGS,"")
-AC_SUBST(CLD_LIBS,"")
-
-dnl ---------------------------------------------------------------------------
 dnl Mandatory Libraries
 dnl ---------------------------------------------------------------------------
-PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.2 gobject-2.0 >= 2.2 gthread-2.0 >= 2.2],,
-	[AC_MSG_ERROR([glib-2.2 is required])])
+GLIB_REQUIRED=2.12.0
+PKG_CHECK_MODULES(GLIB, glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED gthread-2.0 >= $GLIB_REQUIRED,,
+	AC_MSG_ERROR(glib-2.2 is required))
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
-PKG_CHECK_MODULES([GEE], [gee-1.0],,
-	[AC_MSG_ERROR([gee-1.0 is required])])
+PKG_CHECK_MODULES(GEE, gee-1.0,,
+	AC_MSG_ERROR(gee-1.0 is required))
 AC_SUBST(GEE_CFLAGS)
 AC_SUBST(GEE_LIBS)
 
-PKG_CHECK_MODULES([XML], [libxml-2.0],,
-	[AC_MSG_ERROR([libxml2 is required])])
+PKG_CHECK_MODULES(XML, libxml-2.0,,
+	AC_MSG_ERROR(libxml2 is required))
 AC_SUBST(XML_CFLAGS)
 AC_SUBST(XML_LIBS)
 
@@ -61,7 +56,6 @@ AC_CHECK_HEADERS( \
 	time.h \
 	string.h \
 	unistd.h \
-	glib.h
 )
 
 dnl ---------------------------------------------------------------------------

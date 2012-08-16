@@ -5,7 +5,7 @@
  *
  * libcld is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 2.1 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -15,32 +15,26 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
 using Cld;
 
-public class ObjectTests : TestCase {
+public abstract class ObjectTests : Cld.TestCase {
 
-	public ObjectTests () {
-		base ("Object");
-		add_test ("[Object] selected functions", test_selected_functions);
-	}
+    public ObjectTests (string name) {
+        base (name);
+        add_test ("[Object] selected functions", test_selected_functions);
+    }
 
-	public override void set_up () {
-		test_object = new Object ();
-	}
+    protected Cld.Object test_object;
 
-	public override void tear_down () {
-		test_object = null;
-	}
+    public void test_selected_functions () {
+        var test = test_object as Cld.Object;
 
-	public void test_selected_functions () {
-		var test = test_object as Object;
-
-		// Check the object exists
-		assert (test != null);
-	}
+        // Check the object exists
+        assert (test != null);
+    }
 
     // To add other test methods just perform tasks and assert on the expected
     // values that should have resulted

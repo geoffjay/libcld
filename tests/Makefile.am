@@ -17,7 +17,7 @@ tests_DEPENDENCIES = \
 tests_VALAFLAGS = \
 	--basedir $(top_srcdir) \
 	--vapidir $(top_srcdir)/cld \
-	--pkg cld-0.2 \
+	--pkg cld-0.2 --pkg gee-1.0 --pkg libxml-2.0 \
 	$(NULL)
 
 tests_CPPFLAGS = \

@@ -5,7 +5,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 2.1 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -15,20 +15,34 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 namespace Cld {
 
-    public errordomain CalibrationError {
+    public errordomain Cld.CalibrationError {
         KEY_NOT_FOUND
     }
+
+    public errordomain Cld.XmlError {
+        FILE_NOT_FOUND,
+        XML_DOCUMENT_EMPTY,
+        INVALID_XPATH_EXPR
+    }
+
+    /**
+     * Future plan is to incorporate more device-specific setup and features
+     * including information about the hardware, eg. bit count of a DAC or
+     * maximum sampling rate of an ADC.
+     */
 
     enum DeviceType {
         VIRTUAL = 0,
         COMEDI,
         MCCHID,
-        ADVANTECH;
+        ADVANTECH,
+        ARDUINO,
+        TSARM;
 
         public string to_string () {
             switch (this) {
@@ -36,6 +50,8 @@ namespace Cld {
                 case COMEDI:    return "Comedi";
                 case MCCHID:    return "Measurement Computing";
                 case ADVANTECH: return "Advantech";
+                case ARDUINO:   return "Arduino";
+                case TSARM:     return "Technologic Systems";
                 default:        assert_not_reached ();
             }
         }
@@ -55,31 +71,6 @@ namespace Cld {
                 case MULTIFUNCTION: return "Multi-function";
                 default:            assert_not_reached ();
             }
-        }
-    }
-
-    public abstract class Object : GLib.Object {
-        /* properties */
-        public abstract string id { get; set; }
-
-        /* overridable methods */
-        public abstract string to_string ();
-
-        /* virtual methods */
-        public virtual bool equal (Cld.Object a, Cld.Object b) {
-            return a.id == b.id;
-        }
-
-        public virtual int compare (Cld.Object a) {
-            if (id == a.id) {
-                return 0;
-            } else {
-                return 1;
-            }
-        }
-
-        public virtual void print (FileStream f) {
-            f.printf ("%s\n", to_string ());
         }
     }
 }

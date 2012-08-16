@@ -5,6 +5,7 @@ lib_LTLIBRARIES = \
 	$(NULL)
 
 libcld_la_SOURCES = \
+	abstractobject.vala \
 	builder.vala \
 	calibration.vala \
 	channel.vala \
@@ -14,6 +15,7 @@ libcld_la_SOURCES = \
 	device.vala \
 	interfaces.vala \
 	log.vala \
+	object.vala \
 	pid.vala \
 	xml.vala \
 	$(NULL)

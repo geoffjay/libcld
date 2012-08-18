@@ -1,9 +1,7 @@
 /**
- * Copyright (C) 2010 Geoff Johnson <geoff.jay@gmail.com>
+ * Copyright (C) 2010 Geoff Johnson
  *
- * This file is part of libcld.
- *
- * libcld is free software; you can redistribute it and/or modify
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * (at your option) any later version.
@@ -16,6 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ * Author:
+ *  Geoff Johnson <geoff.jay@gmail.com>
  */
 
 /**
@@ -24,7 +25,7 @@
 public class Cld.Builder : GLib.Object, Container {
 
     /* properties */
-    public Cld.Xml xml { get; set; }
+    public XmlConfig xml { get; set; }
 
     private Gee.Map<string, Object> _objects;
     public Gee.Map<string, Object> objects {
@@ -108,12 +109,12 @@ public class Cld.Builder : GLib.Object, Container {
     }
 
     public Builder.from_file (string filename) {
-        xml = new Cld.Xml (filename);
+        xml = new XmlConfig (filename);
         _objects = new Gee.TreeMap<string, Object> ();
         build_object_map ();
     }
 
-    public Builder.from_xml_config (Cld.Xml xml) {
+    public Builder.from_xml_config (XmlConfig xml) {
         GLib.Object (xml: xml);
         _objects = new Gee.TreeMap<string, Object> ();
         build_object_map ();

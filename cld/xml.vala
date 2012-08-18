@@ -1,7 +1,5 @@
 /**
- * Copyright (C) 2010 Geoff Johnson <geoff.jay@gmail.com>
- *
- * This file is part of libcld.
+ * Copyright (C) 2010 Geoff Johnson
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,34 +14,50 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ * Author:
+ *  Geoff Johnson <geoff.jay@gmail.com>
  */
 
-/* changed class name to Cld.Xml and did not test, might have to revert if
- * compiler doesn't like it */
-public class Cld.Xml : GLib.Object {
+namespace Cld {
+    /**
+     * Error types for XML configurations.
+     */
+    public errordomain XmlError {
+        FILE_NOT_FOUND,
+        XML_DOCUMENT_EMPTY,
+        INVALID_XPATH_EXPR
+    }
+}
 
-    /* properties */
+/**
+ * XML configuration used to build objects in collections using the
+ * builder class.
+ */
+public class Cld.XmlConfig : GLib.Object {
+
+    /**
+     * The configuration file to use.
+     */
     public string file_name { get; set; }
 
     private Xml.Doc *doc;
     private Xml.XPath.Context *ctx;
     private Xml.XPath.Object *obj;
 
-    public errordomain Error {
-        FILE_NOT_FOUND,
-        XML_DOCUMENT_EMPTY,
-        INVALID_XPATH_EXPR
-    }
-
-    /* constructor */
-    public Xml (string file_name) {
+    /**
+     * Constructs a new configuration using the file name provided.
+     *
+     * @param file_name the name of the file on disk to use
+     */
+    public XmlConfig (string file_name) {
         /* instantiate object */
         GLib.Object (file_name: file_name);
 
         /* load XML document */
         doc = Xml.Parser.parse_file (file_name);
         if (doc == null) {
-            throw new Cld.Xml.Error.FILE_NOT_FOUND (
+            throw new Cld.XmlError.FILE_NOT_FOUND (
                     "file %s not found or permissions missing", file_name
                 );
         }
@@ -52,6 +66,9 @@ public class Cld.Xml : GLib.Object {
         ctx = new Xml.XPath.Context (doc);
     }
 
+    /**
+     * Left over function from who knows when. Not used, consider removal.
+     */
     public void print_indent (string node_name,
                               string node_content,
                               char token = '+') {
@@ -64,7 +81,7 @@ public class Cld.Xml : GLib.Object {
         obj = ctx->eval_expression (xpath);
         /* throw an error if the xpath is invalid */
         if (obj == null)
-            throw new Cld.Xml.Error.INVALID_XPATH_EXPR (
+            throw new Cld.XmlError.INVALID_XPATH_EXPR (
                     "the xpath expression %s is invalid", xpath
                 );
 
@@ -87,7 +104,7 @@ public class Cld.Xml : GLib.Object {
         obj = ctx->eval_expression (xpath);
         /* throw an error if the xpath is invalid */
         if (obj == null)
-            throw new Cld.Xml.Error.INVALID_XPATH_EXPR (
+            throw new Cld.XmlError.INVALID_XPATH_EXPR (
                     "the xpath expression %s is invalid", xpath
                 );
 
@@ -116,7 +133,7 @@ public class Cld.Xml : GLib.Object {
         obj = ctx->eval_expression (xpath);
         /* throw an error if the xpath is invalid */
         if (obj == null)
-            throw new Cld.Xml.Error.INVALID_XPATH_EXPR (
+            throw new Cld.XmlError.INVALID_XPATH_EXPR (
                     "the xpath expression %s is invalid", xpath
                 );
 
@@ -132,7 +149,7 @@ public class Cld.Xml : GLib.Object {
 
         /* throw an error if the xpath is invalid */
         if (obj == null)
-            throw new Cld.Xml.Error.INVALID_XPATH_EXPR (
+            throw new Cld.XmlError.INVALID_XPATH_EXPR (
                     "the xpath expression %s is invalid", xpath
                 );
 

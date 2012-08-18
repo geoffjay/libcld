@@ -121,6 +121,14 @@ public class Cld.Calibration : AbstractObject, Container {
         objects.set (id, coefficient);
     }
 
+    public Coefficient get_coefficient (int index) {
+        foreach (var coefficient in objects.values) {
+            if ((coefficient as Coefficient).n == index)
+                return coefficient;
+        }
+        return null;
+    }
+
     public void add_coefficient (int index, double val) {
         foreach (var coefficient in objects.values) {
             if ((coefficient as Coefficient).n == index)

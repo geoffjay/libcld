@@ -24,6 +24,7 @@ public class CalibrationTests : ObjectTests {
 
     public CalibrationTests () {
         base ("Calibration");
+        add_test ("[Calibration] default scale factors", test_default_scale);
     }
 
     public override void set_up () {
@@ -32,5 +33,16 @@ public class CalibrationTests : ObjectTests {
 
     public override void tear_down () {
         test_object = null;
+    }
+
+    private void test_default_scale () {
+        var test_calibration = test_object as Calibration;
+
+        // Check the calibration exists
+        assert (test_calibration != null);
+
+        test_calibration.set_default ();
+        assert (test_calibration.get_coefficient (0).value == 0.0);
+        assert (test_calibration.get_coefficient (1).value == 1.0);
     }
 }

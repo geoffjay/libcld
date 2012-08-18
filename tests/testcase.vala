@@ -22,7 +22,7 @@
  * TestCase was pilfered from libgee
  */
 
-public abstract class Cld.TestCase : Object {
+public abstract class Cld.TestCase : GLib.Object {
 
 	private GLib.TestSuite suite;
 	private Adaptor[] adaptors = new Adaptor[0];
@@ -60,10 +60,10 @@ public abstract class Cld.TestCase : Object {
 		private TestCase test_case;
 
 		public Adaptor (string name,
-		                TestMethod test,
+		                owned TestMethod test,
 		                TestCase test_case) {
 			this.name = name;
-			this.test = test;
+			this.test = (owned)test;
 			this.test_case = test_case;
 		}
 

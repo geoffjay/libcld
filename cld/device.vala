@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-using Gee;
-
 public class Cld.Device : AbstractObject {
     /* properties */
     [Property(nick = "ID", blurb = "Device ID")]

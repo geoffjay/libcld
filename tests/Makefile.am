@@ -5,6 +5,7 @@ noinst_PROGRAMS = $(TEST_PROGS)
 TEST_PROGS += tests
 
 tests_SOURCES = \
+	testcalibration.vala \
 	testcase.vala \
 	testmain.vala \
 	testobject.vala \
@@ -23,8 +24,13 @@ tests_VALAFLAGS = \
 tests_CPPFLAGS = \
 	-I$(top_srcdir)/cld \
 	$(GLIB_CFLAGS) \
+	$(GEE_CFLAGS) \
+	$(XML_CFLAGS) \
 	$(NULL)
 
 tests_LDADD = \
-	$(GLIB_LIBS) ../cld/libcld.la \
+	../cld/libcld-0.2.la \
+	$(GLIB_LIBS) \
+	$(GEE_LIBS) \
+	$(XML_LIBS) \
 	$(NULL)

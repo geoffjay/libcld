@@ -20,9 +20,8 @@ AC_PROG_CC
 AM_PROG_CC_C_O
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
-IT_PROG_INTLTOOL([0.35])
 
-AC_PATH_PROG(VALAC, valac, valac)
+AM_PROG_VALAC([0.14.0])
 AC_SUBST(VALAC)
 AC_SUBST(VALAFLAGS)
 
@@ -30,33 +29,31 @@ dnl ---------------------------------------------------------------------------
 dnl Mandatory Libraries
 dnl ---------------------------------------------------------------------------
 GLIB_REQUIRED=2.12.0
-PKG_CHECK_MODULES(GLIB, glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED gthread-2.0 >= $GLIB_REQUIRED,,
-	AC_MSG_ERROR(glib-2.2 is required))
+PKG_CHECK_MODULES([GLIB], glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED gthread-2.0 >= $GLIB_REQUIRED,,
+	AC_MSG_ERROR(glib-2.12 is required))
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
-PKG_CHECK_MODULES(GEE, gee-1.0,,
+PKG_CHECK_MODULES([GEE], gee-1.0,,
 	AC_MSG_ERROR(gee-1.0 is required))
 AC_SUBST(GEE_CFLAGS)
 AC_SUBST(GEE_LIBS)
 
-PKG_CHECK_MODULES(XML, libxml-2.0,,
+PKG_CHECK_MODULES([XML], libxml-2.0,,
 	AC_MSG_ERROR(libxml2 is required))
 AC_SUBST(XML_CFLAGS)
 AC_SUBST(XML_LIBS)
 
-GOBJECT_INTROSPECTION_CHECK([0.9.0])
-
 dnl ---------------------------------------------------------------------------
 dnl libc Features
 dnl ---------------------------------------------------------------------------
-AC_HEADER_STDC
-AC_CHECK_HEADERS( \
-	stdlib.h \
-	time.h \
-	string.h \
-	unistd.h \
-)
+dnl AC_HEADER_STDC
+dnl AC_CHECK_HEADERS( \
+dnl 	stdlib.h \
+dnl 	time.h \
+dnl 	string.h \
+dnl 	unistd.h \
+dnl )
 
 dnl ---------------------------------------------------------------------------
 dnl CFLAGS
@@ -83,7 +80,7 @@ dnl ---------------------------------------------------------------------------
 dnl Debugging
 AC_ARG_ENABLE(debug,
 	AS_HELP_STRING([--enable-debug],
-		[enable debugging (default: disabled)]),,
+		[Enable debugging (default: disabled)]),,
 	enable_debug=no)
 
 if test "x$enable_debug" = xyes; then
@@ -106,21 +103,14 @@ AS_IF([test "x$enable_doc" != xno],
 dnl ---------------------------------------------------------------------------
 dnl Checks for typedefs, structures, and compiler characteristics
 dnl ---------------------------------------------------------------------------
-AC_C_CONST
-AC_TYPE_SIZE_T
+dnl AC_C_CONST
+dnl AC_TYPE_SIZE_T
 
-GETTEXT_PACKAGE=libcld
-AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE], ["$GETTEXT_PACKAGE"], [Gettext Package])
-AC_SUBST(GETTEXT_PACKAGE)
-AM_GNU_GETTEXT_VERSION([1.11])
-AM_GLIB_GNU_GETTEXT
+GOBJECT_INTROSPECTION_CHECK([0.9.0])
 
-AC_CONFIG_FILES([
-	Makefile
-	cld-0.2.pc
-	po/Makefile.in
-	cld/Makefile
-	tests/Makefile
-	vapi/Makefile
-])
-AC_OUTPUT
+AC_OUTPUT([Makefile
+           cld-0.2.pc
+           cld/Makefile
+           doc/Makefile
+           tests/Makefile
+           vapi/Makefile])

@@ -10,7 +10,6 @@ endif
 
 SUBDIRS = \
 	cld \
-	po \
 	tests \
 	vapi \
 	$(DOC_SUBDIR) \
@@ -38,13 +37,4 @@ EXTRA_DIST += \
 	gitlog-to-changelog \
 	MAINTAINERS \
 	cld-0.2.pc.in \
-	intltool-extract.in \
-	intltool-merge.in \
-	intltool-update.in \
-	$(NULL)
-
-DISTCLEANFILES = \
-	intltool-extract \
-	intltool-merge \
-	intltool-update \
 	$(NULL)

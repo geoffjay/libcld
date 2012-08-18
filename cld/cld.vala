@@ -20,11 +20,11 @@
 
 namespace Cld {
 
-    public errordomain Cld.CalibrationError {
+    public errordomain CalibrationError {
         KEY_NOT_FOUND
     }
 
-    public errordomain Cld.XmlError {
+    public errordomain XmlError {
         FILE_NOT_FOUND,
         XML_DOCUMENT_EMPTY,
         INVALID_XPATH_EXPR
@@ -36,7 +36,7 @@ namespace Cld {
      * maximum sampling rate of an ADC.
      */
 
-    enum DeviceType {
+    public enum DeviceType {
         VIRTUAL = 0,
         COMEDI,
         MCCHID,
@@ -57,7 +57,7 @@ namespace Cld {
         }
     }
 
-    enum HardwareType {
+    public enum HardwareType {
         INPUT = 0,
         OUTPUT,
         COUNTER,

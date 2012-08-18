@@ -5,7 +5,12 @@ lib_LTLIBRARIES = \
 	$(NULL)
 
 libcld_0_2_la_SOURCES = \
+	abstractchannel.vala \
+	abstractfilter.vala \
 	abstractobject.vala \
+	abstractport.vala \
+	aichannel.vala \
+	aochannel.vala \
 	builder.vala \
 	calibration.vala \
 	channel.vala \
@@ -14,10 +19,16 @@ libcld_0_2_la_SOURCES = \
 	control.vala \
 	daq.vala \
 	device.vala \
+	dichannel.vala \
+	dochannel.vala \
+	filter.vala \
 	interfaces.vala \
 	log.vala \
 	object.vala \
 	pid.vala \
+	port.vala \
+	serialport.vala \
+	vchannel.vala \
 	xml.vala \
 	$(NULL)
 

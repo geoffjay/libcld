@@ -24,7 +24,7 @@
 public class Cld.Builder : GLib.Object, Container {
 
     /* properties */
-    public XmlConfig xml { get; set; }
+    public Cld.Xml xml { get; set; }
 
     private Gee.Map<string, Object> _objects;
     public Gee.Map<string, Object> objects {
@@ -108,12 +108,12 @@ public class Cld.Builder : GLib.Object, Container {
     }
 
     public Builder.from_file (string filename) {
-        xml = new XmlConfig (filename);
+        xml = new Cld.Xml (filename);
         _objects = new Gee.TreeMap<string, Object> ();
         build_object_map ();
     }
 
-    public Builder.from_xml_config (XmlConfig xml) {
+    public Builder.from_xml_config (Cld.Xml xml) {
         GLib.Object (xml: xml);
         _objects = new Gee.TreeMap<string, Object> ();
         build_object_map ();

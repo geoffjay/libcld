@@ -18,30 +18,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-/* didn't try having class name Xml because I assumed that would conflict,
- * or at the very least confuse */
-public class Cld.XmlConfig : AbstractObject {
+/* changed class name to Cld.Xml and did not test, might have to revert if
+ * compiler doesn't like it */
+public class Cld.Xml : GLib.Object {
+
     /* properties */
     public string file_name { get; set; }
-
-    /* properties - Object */
-    public override string id {get; set; }
 
     private Xml.Doc *doc;
     private Xml.XPath.Context *ctx;
     private Xml.XPath.Object *obj;
 
+    public errordomain Error {
+        FILE_NOT_FOUND,
+        XML_DOCUMENT_EMPTY,
+        INVALID_XPATH_EXPR
+    }
+
     /* constructor */
-    public XmlConfig (string file_name) {
+    public Xml (string file_name) {
         /* instantiate object */
         GLib.Object (file_name: file_name);
-
-        id = "xml0";
 
         /* load XML document */
         doc = Xml.Parser.parse_file (file_name);
         if (doc == null) {
-            throw new Cld.XmlError.FILE_NOT_FOUND ("file %s not found or permissions missing", file_name);
+            throw new Cld.Xml.Error.FILE_NOT_FOUND (
+                    "file %s not found or permissions missing", file_name
+                );
         }
 
         /* create xpath evaluation context */
@@ -52,14 +56,17 @@ public class Cld.XmlConfig : AbstractObject {
                               string node_content,
                               char token = '+') {
         string str_indent = string.nfill (4, ' ');
-        stdout.printf ("%s%c%s: %s\n", str_indent, token, node_name, node_content);
+        stdout.printf ("%s%c%s: %s\n",
+                       str_indent, token, node_name, node_content);
     }
 
     public int child_element_count (string xpath) {
         obj = ctx->eval_expression (xpath);
         /* throw an error if the xpath is invalid */
         if (obj == null)
-            throw new Cld.XmlError.INVALID_XPATH_EXPR ("the xpath expression %s is invalid", xpath);
+            throw new Cld.Xml.Error.INVALID_XPATH_EXPR (
+                    "the xpath expression %s is invalid", xpath
+                );
 
         //var nodes = new XPath.NodeSet (obj.nodesetval);
 
@@ -80,7 +87,9 @@ public class Cld.XmlConfig : AbstractObject {
         obj = ctx->eval_expression (xpath);
         /* throw an error if the xpath is invalid */
         if (obj == null)
-            throw new Cld.XmlError.INVALID_XPATH_EXPR ("the xpath expression %s is invalid", xpath);
+            throw new Cld.Xml.Error.INVALID_XPATH_EXPR (
+                    "the xpath expression %s is invalid", xpath
+                );
 
         /* update the selected nodes */
         update_xpath_nodes (obj->nodesetval, value);
@@ -107,7 +116,9 @@ public class Cld.XmlConfig : AbstractObject {
         obj = ctx->eval_expression (xpath);
         /* throw an error if the xpath is invalid */
         if (obj == null)
-            throw new Cld.XmlError.INVALID_XPATH_EXPR ("the xpath expression %s is invalid", xpath);
+            throw new Cld.Xml.Error.INVALID_XPATH_EXPR (
+                    "the xpath expression %s is invalid", xpath
+                );
 
         return obj->nodesetval;
     }
@@ -121,7 +132,9 @@ public class Cld.XmlConfig : AbstractObject {
 
         /* throw an error if the xpath is invalid */
         if (obj == null)
-            throw new Cld.XmlError.INVALID_XPATH_EXPR ("the xpath expression %s is invalid", xpath);
+            throw new Cld.Xml.Error.INVALID_XPATH_EXPR (
+                    "the xpath expression %s is invalid", xpath
+                );
 
         nodes = obj->nodesetval;
         node = nodes->item (0);
@@ -133,11 +146,5 @@ public class Cld.XmlConfig : AbstractObject {
 //        }
 
         return node->get_content ();
-    }
-
-    public override string to_string () {
-        string str_data = "[%s] : XML Configuration (%s)\n".printf (
-                            id, file_name);
-        return str_data;
     }
 }

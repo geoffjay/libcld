@@ -24,12 +24,6 @@ namespace Cld {
         KEY_NOT_FOUND
     }
 
-    public errordomain XmlError {
-        FILE_NOT_FOUND,
-        XML_DOCUMENT_EMPTY,
-        INVALID_XPATH_EXPR
-    }
-
     /**
      * Future plan is to incorporate more device-specific setup and features
      * including information about the hardware, eg. bit count of a DAC or
@@ -42,20 +36,29 @@ namespace Cld {
         MCCHID,
         ADVANTECH,
         ARDUINO,
-        TSARM;
+        EMBARM,
+        BEAGLEBOARD,
+        PANDABOARD;
 
         public string to_string () {
             switch (this) {
-                case VIRTUAL:   return "Virtual";
-                case COMEDI:    return "Comedi";
-                case MCCHID:    return "Measurement Computing";
-                case ADVANTECH: return "Advantech";
-                case ARDUINO:   return "Arduino";
-                case TSARM:     return "Technologic Systems";
+                case VIRTUAL:     return "Virtual";
+                case COMEDI:      return "Comedi";
+                case MCCHID:      return "Measurement Computing";
+                case ADVANTECH:   return "Advantech";
+                case ARDUINO:     return "Arduino";
+                case EMBARM:      return "Technologic Systems";
+                case BEAGLEBOARD: return "BeagleBoard";
+                case PANDABOARD:  return "PandaBoard";
                 default:        assert_not_reached ();
             }
         }
     }
+
+    /**
+     * Possibly useless. Used once as indication for determining hardware that
+     * was in a system.
+     */
 
     public enum HardwareType {
         INPUT = 0,

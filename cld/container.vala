@@ -20,7 +20,14 @@
  */
 
 /**
- * An object to use with UART and FTDI type serial ports.
+ * A common interface inherited by any object that has its own list of sub
+ * objects.
  */
-public class Cld.SerialPort : AbstractPort {
+[GenericAccessors]
+public interface Cld.Container : Cld.Object {
+    public abstract Gee.Map<string, Object> objects { get; set; }
+
+    public abstract void add (Object object);
+    public abstract void update_objects (Gee.Map<string, Object> val);
+    public abstract Object? get_object (string id);
 }

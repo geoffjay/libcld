@@ -5,10 +5,27 @@ noinst_PROGRAMS = $(TEST_PROGS)
 TEST_PROGS += tests
 
 tests_SOURCES = \
+	testaichannel.vala \
+	testaochannel.vala \
+	testbuilder.vala \
 	testcalibration.vala \
 	testcase.vala \
+	testchannel.vala \
+	testcoefficient.vala \
+	testcontrol.vala \
+	testdaq.vala \
+	testdevice.vala \
+	testdichannel.vala \
+	testdochannel.vala \
+	testfilter.vala \
+	testlog.vala \
 	testmain.vala \
 	testobject.vala \
+	testpid.vala \
+	testport.vala \
+	testserialport.vala \
+	testvchannel.vala \
+	testxml.vala \
 	$(NULL)
 
 tests_DEPENDENCIES = \

@@ -1,8 +1,0 @@
-#!/bin/bash
-
-tests='calibration channel control daq device log pid xml'
-
-for t in $tests; do
-    echo $t
-    #./test-object $t
-done

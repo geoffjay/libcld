@@ -1,9 +1,7 @@
 /**
- * Copyright (C) 2010 Geoff Johnson <geoff.jay@gmail.com>
+ * Copyright (C) 2010 Geoff Johnson
  *
- * This file is part of libcld.
- *
- * libcld is free software; you can redistribute it and/or modify
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * (at your option) any later version.
@@ -16,6 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ * Author:
+ *  Geoff Johnson <geoff.jay@gmail.com>
  */
 
 /**
@@ -121,10 +122,10 @@ public class Cld.Calibration : AbstractObject, Container {
         objects.set (id, coefficient);
     }
 
-    public Coefficient get_coefficient (int index) {
+    public Coefficient? get_coefficient (int index) {
         foreach (var coefficient in objects.values) {
             if ((coefficient as Coefficient).n == index)
-                return coefficient;
+                return coefficient as Coefficient;
         }
         return null;
     }

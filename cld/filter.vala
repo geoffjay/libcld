@@ -1,7 +1,5 @@
 /**
- * Copyright (C) 2010 Geoff Johnson <geoff.jay@gmail.com>
- *
- * This file is part of libcld.
+ * Copyright (C) 2010 Geoff Johnson
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ * Author:
+ *  Geoff Johnson <geoff.jay@gmail.com>
  */
 
+/**
+ * Filter class for digital signal processing.
+ */
 public class Cld.Filter : AbstractObject {
     /* properties */
     public override string id { get; set; }
@@ -40,6 +44,7 @@ public class Cld.Filter : AbstractObject {
      * fc: cutoff frequency, for our case = RC
      */
     public static void low_pass (double R, double C, double fc) {
+        /*
         double dt = 0.1;
         double a = dt / (dt + fc);
         double yc, yp, y;
@@ -51,9 +56,10 @@ public class Cld.Filter : AbstractObject {
                 yp = raw_value_list.get (i+1);
                 y = a * yc + ((1-a) * yp);
                 raw_value_list.set (i, y);
-                stdout.printf ("%f, ", y);//raw_value_list.get (i-1));
+                stdout.printf ("%f, ", y);
             }
             stdout.printf ("\n");
         }
+        */
     }
 }

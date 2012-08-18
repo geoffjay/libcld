@@ -20,7 +20,10 @@
  */
 
 /**
- * An object to use with UART and FTDI type serial ports.
+ * Skeletal implementation of the {@link Container} interface.
+ *
+ * Contains common code shared by all container implementations.
  */
-public class Cld.SerialPort : AbstractPort {
+public abstract class Cld.AbstractContainer : AbstractObject, Container {
+
 }

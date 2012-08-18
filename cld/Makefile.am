@@ -6,6 +6,7 @@ lib_LTLIBRARIES = \
 
 libcld_0_2_la_SOURCES = \
 	abstractchannel.vala \
+	abstractcontainer.vala \
 	abstractfilter.vala \
 	abstractobject.vala \
 	abstractport.vala \
@@ -16,13 +17,13 @@ libcld_0_2_la_SOURCES = \
 	channel.vala \
 	cld.vala \
 	coefficient.vala \
+	container.vala \
 	control.vala \
 	daq.vala \
 	device.vala \
 	dichannel.vala \
 	dochannel.vala \
 	filter.vala \
-	interfaces.vala \
 	log.vala \
 	object.vala \
 	pid.vala \

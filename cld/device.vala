@@ -19,6 +19,9 @@
  *  Geoff Johnson <geoff.jay@gmail.com>
  */
 
+/**
+ * Hardware device information and settings.
+ */
 public class Cld.Device : AbstractObject {
     /* properties */
     [Property(nick = "ID", blurb = "Device ID")]

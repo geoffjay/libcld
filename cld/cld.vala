@@ -19,6 +19,9 @@
  *  Geoff Johnson <geoff.jay@gmail.com>
  */
 
+/**
+ * Control Logging and Data Acquisition library
+ */
 namespace Cld {
 
     public errordomain CalibrationError {

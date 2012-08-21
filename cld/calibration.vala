@@ -20,8 +20,6 @@
  */
 
 /**
- * Calibration:
- *
  * Perhaps not the most accurate naming here, this object represents a set
  * of coefficients used to scale a process value from a raw measurement to
  * a real life measurement such as LPM, MPH, etc.

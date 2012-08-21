@@ -19,6 +19,10 @@
  *  Geoff Johnson <geoff.jay@gmail.com>
  */
 
+/**
+ * Process value object for use with control objects, typically associated with
+ * input and output measurements.
+ */
 public class Cld.ProcessValue : AbstractObject {
     /* properties */
     public override string id { get; set; }
@@ -44,6 +48,9 @@ public class Cld.ProcessValue : AbstractObject {
     }
 }
 
+/**
+ * Control object to calculate an output process value.
+ */
 public class Cld.Control : AbstractObject {
     /* property backing fields
      * - using a backing field is carryover from another library where

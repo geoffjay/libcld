@@ -125,7 +125,7 @@ public class Cld.Builder : GLib.Object {
     /**
      * Add a object to the array list of objects
      *
-     * @param object object object to add to the list
+     * @param object object to add to the list
      */
     public void add (Object object) {
         objects.set (object.id, object);

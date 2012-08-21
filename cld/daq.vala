@@ -19,6 +19,9 @@
  *  Geoff Johnson <geoff.jay@gmail.com>
  */
 
+/**
+ * Hardware definition class.
+ */
 public class Cld.Daq : AbstractObject {
     /* property backing fields */
     private Gee.Map<string, Object> _devices;

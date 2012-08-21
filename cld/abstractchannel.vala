@@ -25,17 +25,26 @@
  * Contains common code shared by all channel implementations.
  */
 public abstract class Cld.AbstractChannel : AbstractObject, Channel {
-    /* inherited properties */
-    public override string id     { get; set; }
 
-    /* default constructor */
-    public Channel () {
-        id = "ch0";
-        num = 0;
-        devref = "dev0";
-        tag = "CH0";
-        desc = "Channel";
-    }
+    /**
+     * {@inheritDoc}
+     */
+    public abstract int num { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract string devref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract string tag { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract string desc { get; set; }
 
     public override string to_string () {
         string str_data  = "CldChannel\n";

@@ -23,27 +23,66 @@
  * A common interface for the various channel types.
  */
 public interface Cld.Channel : Cld.Object {
-    /* inheritable properties */
-    public abstract int num       { get; set; }
+
+    /**
+     *
+     */
+    public abstract int num { get; set; }
+
+    /**
+     *
+     */
     public abstract string devref { get; set; }
-    public abstract string tag    { get; set; }
-    public abstract string desc   { get; set; }
+
+    /**
+     *
+     */
+    public abstract string tag { get; set; }
+
+    /**
+     *
+     */
+    public abstract string desc { get; set; }
 }
 
 /**
  * Analog channel interface class.
  */
 public interface Cld.AChannel : AbstractChannel, Channel {
-    public abstract Calibration cal     { get; set; }
-    public abstract double value        { get; set; }
+    /**
+     *
+     */
+    public abstract Calibration cal { get; set; }
+
+    /**
+     *
+     */
+    public abstract string calref { get; set; }
+
+    /**
+     *
+     */
+    public abstract double value { get; set; }
+
+    /**
+     *
+     */
     public abstract double scaled_value { get; set; }
-    public abstract double avg_value    { get; set; }
+
+    /**
+     *
+     */
+    public abstract double avg_value { get; set; }
 }
 
 /**
  * Digital channel interface class.
  */
 public interface Cld.DChannel : AbstractChannel, Channel {
+
+    /**
+     *
+     */
     public abstract bool state { get; set; }
 }
 

@@ -26,4 +26,7 @@
  */
 public abstract class Cld.AbstractPort : AbstractObject {
 
+    public override string to_string () {
+        return "Port";
+    }
 }

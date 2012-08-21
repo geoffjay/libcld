@@ -25,9 +25,24 @@
  */
 [GenericAccessors]
 public interface Cld.Container : Cld.Object {
+
+    /**
+     *
+     */
     public abstract Gee.Map<string, Object> objects { get; set; }
 
+    /**
+     *
+     */
     public abstract void add (Object object);
+
+    /**
+     *
+     */
     public abstract void update_objects (Gee.Map<string, Object> val);
+
+    /**
+     *
+     */
     public abstract Object? get_object (string id);
 }

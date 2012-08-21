@@ -9,12 +9,20 @@ m4/libtool.m4
 m4/lt*.m4
 
 # files that get generated automatically
+aclocal.m4
+autom4te.cache/
 cld-0.2.pc
 compile
 INSTALL
-Makefile
-Makefile.in
 install-sh
-intltool-*.in
 libtool
 ltmain.sh
+Makefile
+Makefile.in
+
+cld/.deps/
+cld/.libs/
+cld/Cld-0.2.gir
+cld/Cld-0.2.typelib
+
+tests/*.c

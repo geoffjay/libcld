@@ -22,16 +22,37 @@
 /**
  * Digital input channel used in control and logging.
  */
-public class Cld.DIChannel : AbstractChannel, Channel, DChannel, IChannel {
-    /* properties - from Object */
+public class Cld.DIChannel : AbstractChannel, DChannel, IChannel {
+
+    /**
+     * {@inheritDoc}
+     */
     public override string id { get; set; }
-    /* properties - from Channel */
-    public override int num             { get; set; }
-    public override string devref       { get; set; }
-    public override string tag          { get; set; }
-    public override string desc         { get; set; }
-    /* properties */
-    public bool state { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override int num { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string devref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string tag { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string desc { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual bool state { get; set; }
 
     /* default constructor */
     public DIChannel (int    num,

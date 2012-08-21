@@ -22,26 +22,69 @@
 /**
  * Analog input channel used with measurements and other control functions.
  */
-public class Cld.AIChannel : AbstractChannel, Channel, AChannel, IChannel {
-    /* properties - from Object */
-    public override string id           { get; set; }
-    /* properties - from Channel */
-    public override int num             { get; set; }
-    public override string devref       { get; set; }
-    public override string tag          { get; set; }
-    public override string desc         { get; set; }
-    /* properties - from AChannel */
-    public Calibration cal              { get; set; }
-    public string calref                { get; set; }
-    public double value                 { get; set; }
-    public double scaled_value          { get; set; }
-    public double avg_value             { get; set; }
-    /* properties */
-    public double slope                 { get; set; }
-    public double yint                  { get; set; }
-    public string units                 { get; set; }
-    public string color                 { get; set; }
-    public int raw_value_list_size      { get; set; }    /* redundant */
+public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string id { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override int num { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string devref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string tag { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string desc { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual Calibration cal { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual string calref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual double value { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual double scaled_value { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual double avg_value { get; set; }
+
+    /**
+     * These properties will go away when the Calibration implementation is
+     * complete.
+     */
+    public double slope { get; set; }
+
+    public double yint { get; set; }
+
+    public string units { get; set; }
+
+    public int raw_value_list_size { get; set; }    /* redundant */
 
     public Gee.LinkedList<double?> raw_value_list;
 
@@ -54,7 +97,6 @@ public class Cld.AIChannel : AbstractChannel, Channel, AChannel, IChannel {
         this.slope = slope;
         this.yint = yint;
         this.units = units;
-        this.color = color;
 
         /* set defaults */
         this.num = 0;

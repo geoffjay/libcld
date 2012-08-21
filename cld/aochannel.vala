@@ -22,21 +22,62 @@
 /**
  * Analog output channel used for control and logging.
  */
-public class Cld.AOChannel : AbstractChannel, Channel, AChannel, OChannel {
-    /* properties - from Object */
-    public override string id           { get; set; }
-    /* properties - from Channel */
-    public override int num             { get; set; }
-    public override string devref       { get; set; }
-    public override string tag          { get; set; }
-    public override string desc         { get; set; }
-    /* properties - from AChannel */
-    public Calibration cal              { get; set; }
-    public double value                 { get; set; }
-    public double scaled_value          { get; set; }
-    public double avg_value             { get; set; }
-    /* properties */
-    public bool manual                  { get; set; }
+public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string id { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override int num { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string devref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string tag { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string desc { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual Calibration cal { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual string calref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual double value { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual double scaled_value { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual double avg_value { get; set; }
+
+    /**
+     *
+     */
+    public bool manual { get; set; }
 
     /* default constructor */
     public AOChannel (int    num,

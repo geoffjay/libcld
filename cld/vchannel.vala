@@ -22,16 +22,37 @@
 /**
  * Virtual channel to be used to execute expressions.
  */
-public class Cld.VChannel : Channel {
-    /* properties */
-    public override string id       { get; set; }
-    /* properties - from Channel */
-    public override int num         { get; set; }
-    public override string devref   { get; set; }
-    public override string tag      { get; set; }
-    public override string desc     { get; set; }
+public class Cld.VChannel : AbstractChannel {
 
-    public string expression        { get; set; }
+    /**
+     * {@inheritDoc}
+     */
+    public override string id { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override int num { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string devref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string tag { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string desc { get; set; }
+
+    /**
+     *
+     */
+    public string expression { get; set; }
 
     /* default constructor */
     public VChannel (int    num,

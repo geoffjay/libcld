@@ -23,4 +23,10 @@
  * An object to use with UART and FTDI type serial ports.
  */
 public class Cld.SerialPort : AbstractPort {
+
+    public override string id { get; set; }
+
+    public override string to_string () {
+        return base.to_string ();
+    }
 }

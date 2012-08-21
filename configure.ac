@@ -45,17 +45,6 @@ AC_SUBST(XML_CFLAGS)
 AC_SUBST(XML_LIBS)
 
 dnl ---------------------------------------------------------------------------
-dnl libc Features
-dnl ---------------------------------------------------------------------------
-dnl AC_HEADER_STDC
-dnl AC_CHECK_HEADERS( \
-dnl 	stdlib.h \
-dnl 	time.h \
-dnl 	string.h \
-dnl 	unistd.h \
-dnl )
-
-dnl ---------------------------------------------------------------------------
 dnl CFLAGS
 dnl ---------------------------------------------------------------------------
 dnl if test x$GCC = xyes

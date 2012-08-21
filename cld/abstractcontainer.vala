@@ -26,4 +26,23 @@
  */
 public abstract class Cld.AbstractContainer : AbstractObject, Container {
 
+    /**
+     * {@inheritDoc}
+     */
+    public abstract Gee.Map<string, Object> objects { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract void add (Object object);
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract void update_objects (Gee.Map<string, Object> val);
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract Object? get_object (string id);
 }

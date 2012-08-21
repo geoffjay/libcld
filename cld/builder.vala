@@ -20,11 +20,13 @@
  */
 
 /**
- * class to build objects from xml data
+ * Class use to build objects from configuration data.
  */
-public class Cld.Builder : GLib.Object, Container {
+public class Cld.Builder : GLib.Object {
 
-    /* properties */
+    /**
+     * The XML configuration to use for building
+     */
     public XmlConfig xml { get; set; }
 
     private Gee.Map<string, Object> _objects;

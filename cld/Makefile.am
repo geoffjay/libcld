@@ -35,7 +35,6 @@ libcld_0_2_la_SOURCES = \
 
 INCLUDES = \
 	-include common.h \
-	-DLOCALEDIR=\""$(localedir)"\" \
 	-DPKGDATADIR=\""$(pkgdatadir)"\" \
 	-DPKGLIBDIR=\""$(pkglibdir)"\" \
 	$(NULL)

@@ -19,6 +19,9 @@
  *  Geoff Johnson <geoff.jay@gmail.com>
  */
 
+/**
+ * Hardware device information and settings.
+ */
 public class Cld.Device : AbstractObject {
     /* properties */
     [Property(nick = "ID", blurb = "Device ID")]
@@ -36,22 +39,11 @@ public class Cld.Device : AbstractObject {
     [Property(nick = "File", blurb = "Device File")]
     public string file { get; set; }
 
-    /* constructor */
-    public Device (string id,
-                   int    hw_type,
-                   int    driver,
-                   string name,
-                   string file) {
-        GLib.Object (id:      id,
-                     hw_type: hw_type,
-                     driver:  driver,
-                     name:    name,
-                     file:    file);
-    }
-
-    public Device.with_defaults (string id) {
-        GLib.Object (id: id);
-
+    /**
+     * Default construction
+     */
+    public Device () {
+        id = "dev0";
         hw_type = 0;
         driver = 0;
         name = "device";

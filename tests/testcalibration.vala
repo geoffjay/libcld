@@ -1,9 +1,7 @@
 /**
- * Copyright (C) 2010 Geoff Johnson <geoff.jay@gmail.com>
+ * Copyright (C) 2010 Geoff Johnson
  *
- * This file is part of libcld.
- *
- * libcld is free software; you can redistribute it and/or modify
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * (at your option) any later version.
@@ -15,7 +13,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ * Author:
+ *  Geoff Johnson <geoff.jay@gmail.com>
  */
 
 using Cld;
@@ -41,6 +42,8 @@ public class CalibrationTests : ObjectTests {
         // Check the calibration exists
         assert (test_calibration != null);
 
+        test_calibration.add (new Coefficient.with_data ("cft0", 0, 0.0));
+        test_calibration.add (new Coefficient.with_data ("cft1", 1, 0.0));
         test_calibration.set_default ();
         assert (test_calibration.get_coefficient (0).value == 0.0);
         assert (test_calibration.get_coefficient (1).value == 1.0);

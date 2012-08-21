@@ -42,6 +42,11 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
     /**
      * {@inheritDoc}
      */
+    public override weak Device device { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public override string tag { get; set; }
 
     /**
@@ -52,52 +57,96 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
     /**
      * {@inheritDoc}
      */
-    public virtual Calibration cal { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
     public virtual string calref { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public virtual double value { get; set; }
+    public virtual weak Calibration calibration { get; set; }
+
+    /**
+     * Property backing fields to allow the channels to have a short history
+     * for use with control loop calculations.
+     */
+    private double[] _raw_value = { 0.0, 0.0, 0.0 };
+    private double[] _avg_value = { 0.0, 0.0, 0.0 };
+    private double[] _scaled_value = { 0.0, 0.0, 0.0 };
 
     /**
      * {@inheritDoc}
      */
-    public virtual double scaled_value { get; set; }
+    public virtual double raw_value {
+        get {
+            return _raw_value[0];
+        }
+        /* XXX consider getting rid of the call to add_raw_value to pack it
+               onto the list and just use this setter */
+        set {
+            _raw_value[2] = _raw_value[1];
+            _raw_value[1] = _raw_value[0];
+            _raw_value[0] = value;
+        }
+    }
 
     /**
      * {@inheritDoc}
      */
-    public virtual double avg_value { get; set; }
+    public virtual double avg_value {
+        get {
+            double sum = 0.0;
+
+            if (raw_value_list.size > 0) {
+                foreach (double value in raw_value_list) {
+                    /* XXX for now assume 16 bit with 0-10V range, fix later */
+                    value = (value / 65535.0) * 10.0;
+                    sum += value;
+                }
+
+                avg_value = sum / raw_value_list.size;
+            }
+            return _avg_value[0];
+        }
+        set {
+            _avg_value[2] = _avg_value[1];
+            _avg_value[1] = _avg_value[0];
+            _avg_value[0] = value;
+        }
+    }
 
     /**
-     * These properties will go away when the Calibration implementation is
-     * complete.
+     * {@inheritDoc}
      */
-    public double slope { get; set; }
+    public virtual double scaled_value {
+        get {
+            scaled_value = calibration.apply (avg_value);
+            return _scaled_value[0];
+        }
+        set {
+            _scaled_value[2] = _scaled_value[1];
+            _scaled_value[1] = _scaled_value[0];
+            _scaled_value[0] = value;
+        }
+    }
 
-    public double yint { get; set; }
+    /**
+     * Read only previous scaled value, used with control loops and filters.
+     * XXX Consider name change.
+     */
+    public double pr_scaled_value { get { return _scaled_value[1]; } }
 
-    public string units { get; set; }
+    /**
+     * Read only previous previous scaled value, used with control loops and
+     * filters.
+     * XXX Consider name change.
+     */
+    public double ppr_scaled_value { get { return _scaled_value[2]; } }
 
-    public int raw_value_list_size { get; set; }    /* redundant */
+    public int raw_value_list_size { get; set; }    /* redundant ? */
 
-    public Gee.LinkedList<double?> raw_value_list;
+    private Gee.LinkedList<double?> raw_value_list;
 
     /* default constructor */
-    public AIChannel (string id, string tag, string desc,
-                      int num, double slope, double yint,
-                      string units, string color) {
-        /* fill with available parameters */
-//        base (num, id, tag, desc);
-        this.slope = slope;
-        this.yint = yint;
-        this.units = units;
-
+    public AIChannel () {
         /* set defaults */
         this.num = 0;
         this.devref = "dev0";
@@ -107,9 +156,6 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
         /* create list for raw data */
         raw_value_list = new Gee.LinkedList<double?> ();
         raw_value_list_size = 0;
-
-        /* create calibration object */
-        cal = new Calibration ();
     }
 
     public AIChannel.from_xml_node (Xml.Node *node) {
@@ -146,6 +192,9 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
                 }
             }
         }
+
+        /* create list for raw data */
+        raw_value_list = new Gee.LinkedList<double?> ();
     }
 
     public void add_raw_value (double value) {
@@ -155,10 +204,12 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
         conv = (conv > 10.0) ? 10.0 : conv;
         conv = (conv / 10.0) * 65535.0;  /* assume 0-10V range */
 
-//        raw_value_list.insert (0, conv);
+        /* for now add it to the list and the raw value array */
         raw_value_list.add (conv);
+        raw_value = conv;
+
         if (raw_value_list.size > raw_value_list_size) {
-//            conv = raw_value_list.poll_tail ();
+            /* throw away the value */
             conv = raw_value_list.poll_head ();
         }
     }
@@ -178,6 +229,9 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public override string to_string () {
         return base.to_string ();
     }

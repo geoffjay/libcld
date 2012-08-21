@@ -37,6 +37,11 @@ public interface Cld.Channel : Cld.Object {
     /**
      *
      */
+    public abstract weak Device device { get; set; }
+
+    /**
+     *
+     */
     public abstract string tag { get; set; }
 
     /**
@@ -49,10 +54,6 @@ public interface Cld.Channel : Cld.Object {
  * Analog channel interface class.
  */
 public interface Cld.AChannel : AbstractChannel, Channel {
-    /**
-     *
-     */
-    public abstract Calibration cal { get; set; }
 
     /**
      *
@@ -62,7 +63,12 @@ public interface Cld.AChannel : AbstractChannel, Channel {
     /**
      *
      */
-    public abstract double value { get; set; }
+    public abstract weak Calibration calibration { get; set; }
+
+    /**
+     *
+     */
+    public abstract double raw_value { get; set; }
 
     /**
      *

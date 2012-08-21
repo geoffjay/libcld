@@ -7,11 +7,18 @@ DOC_SUBDIR = \
 	$(NULL)
 endif
 
+if ENABLE_EXAMPLES
+EXAMPLES_SUBDIR = \
+	examples \
+	$(NULL)
+endif
+
 SUBDIRS = \
 	cld \
 	tests \
 	vapi \
 	$(DOC_SUBDIR) \
+	$(EXAMPLES_SUBDIR) \
 	$(NULL)
 
 cld_configdir = $(libdir)/cld-0.1/include

@@ -49,17 +49,14 @@ public class Cld.Log : AbstractObject {
     public bool is_open;
 
     /* constructor */
-    public Log (string id, string name, string path,
-                string file, double rate) {
-        /* instantiate object */
-        GLib.Object (id: id,
-                     name: name,
-                     path: path,
-                     file: file,
-                     rate: rate);
-
-        this.active = false;
-        this.is_open = false;
+    public Log () {
+        id = "log0";
+        name = "Log File";
+        path = "/tmp/";
+        file = "log.csv";
+        rate = 10.0;          /* Hz */
+        active = false;
+        is_open = false;
     }
 
     public Log.from_xml_node (Xml.Node *node) {

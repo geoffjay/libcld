@@ -19,6 +19,9 @@
  *  Geoff Johnson <geoff.jay@gmail.com>
  */
 
+/**
+ * Control Logging and Data Acquisition library
+ */
 namespace Cld {
 
     public errordomain CalibrationError {
@@ -51,7 +54,7 @@ namespace Cld {
                 case EMBARM:      return "Technologic Systems";
                 case BEAGLEBOARD: return "BeagleBoard";
                 case PANDABOARD:  return "PandaBoard";
-                default:        assert_not_reached ();
+                default:          assert_not_reached ();
             }
         }
     }

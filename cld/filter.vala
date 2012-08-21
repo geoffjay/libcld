@@ -26,8 +26,8 @@ public class Cld.Filter : AbstractObject {
     /* properties */
     public override string id { get; set; }
 
-    public Filter (string id) {
-        GLib.Object (id: id);
+    public Filter () {
+        id = "flt0";
     }
 
     public Filter.from_xml_node (Xml.Node *node) {

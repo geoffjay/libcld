@@ -19,15 +19,68 @@
  *  Geoff Johnson <geoff.jay@gmail.com>
  */
 
+/**
+ * Process value object for use with control objects, typically associated with
+ * input and output measurements.
+ */
 public class Cld.ProcessValue : AbstractObject {
-    /* properties */
+
+    /**
+     * {@inheritDoc}
+     */
     public override string id { get; set; }
-    public string chref       { get; set; }
+
+    /**
+     * ID reference of the channel associated with this process value.
+     */
+    public string chref { get; set; }
+
+    /**
+     * Read only property for the type (direction) of channel that the process
+     * value represents, input is a process measurement, output is a
+     * manipulated variable.
+     */
+    private int _chtype;
+    public int chtype {
+        get {
+            if (channel is IChannel)
+                _chtype = Type.INPUT;
+            else if (channel is OChannel)
+                _chtype = Type.OUTPUT;
+            else
+                _chtype = Type.INVALID;
+            //stdout.printf ("[%s] Channel (%s) type: %d\n", id, chref, _chtype);
+            return _chtype;
+        }
+    }
+
+    /**
+     * Referenced channel to use.
+     */
+    public weak Channel channel { get; set; }
+
+    /**
+     * Type options to use for channel direction.
+     */
+    public enum Type {
+        INPUT = 0,
+        OUTPUT,
+        INVALID;
+
+        public string to_string () {
+            switch (this) {
+                case INPUT:   return "Input";
+                case OUTPUT:  return "Output";
+                case INVALID: return "Invalid";
+                default:      assert_not_reached ();
+            }
+        }
+    }
 
     /* constructor */
-    public ProcessValue (string id, string chref) {
-        GLib.Object (id:    id,
-                     chref: chref);
+    public ProcessValue () {
+        id = "pv0";
+        chref = "ch0";
     }
 
     public ProcessValue.from_xml_node (Xml.Node *node) {
@@ -39,31 +92,31 @@ public class Cld.ProcessValue : AbstractObject {
     }
 
     public override string to_string () {
-        string str_data = "[%s] : Process value with channel reference %s\n".printf (id, chref);
+        string str_data  = "[%s] : Process value\n".printf (id);
+               str_data += "\tchref %s\n\n".printf (chref);
         return str_data;
     }
 }
 
-public class Cld.Control : AbstractObject {
-    /* property backing fields
-     * - using a backing field is carryover from another library where
-     *   performing a refresh was required on update so this may not be
-     *   necessary anymore, review later */
-    private Gee.Map<string, Object> _objects;
+/**
+ * Control object to calculate an output process value.
+ */
+public class Cld.Control : AbstractContainer {
 
-    /* properties */
+    /**
+     * {@inheritDoc}
+     */
     public override string id { get; set; }
 
-    public Gee.Map<string, Object> objects {
+    private Gee.Map<string, Object> _objects;
+    public override Gee.Map<string, Object> objects {
         get { return (_objects); }
         set { update_objects (value); }
     }
 
     /* constructor */
-    public Control (string id) {
-        /* instantiate object */
-        GLib.Object (id: id);
-
+    public Control () {
+        id = "ctl0";
         objects = new Gee.TreeMap<string, Object> ();
     }
 
@@ -93,12 +146,48 @@ public class Cld.Control : AbstractObject {
         }
     }
 
-    public void update_objects (Gee.Map<string, Object> val) {
+    /**
+     * {@inheritDoc}
+     */
+    public override void update_objects (Gee.Map<string, Object> val) {
         _objects = val;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override void add (Object object) {
+        objects.set (object.id, object);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override Object? get_object (string id) {
+        Object? result = null;
+
+        if (objects.has_key (id)) {
+            result = objects.get (id);
+        } else {
+            foreach (var object in objects.values) {
+                if (object is Container) {
+                    result = (object as Container).get_object (id);
+                    if (result != null) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return result;
     }
 
     public override string to_string () {
         string str_data = "[%s] : Control object\n".printf (id);
+        if (!objects.is_empty) {
+            foreach (var dev in objects.values)
+                str_data += "  %s".printf (dev.to_string ());
+        }
         return str_data;
     }
 }

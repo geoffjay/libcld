@@ -30,7 +30,7 @@ libcld_0_2_la_SOURCES = \
 	port.vala \
 	serialport.vala \
 	vchannel.vala \
-	xml.vala \
+	xmlconfig.vala \
 	$(NULL)
 
 INCLUDES = \
@@ -45,7 +45,7 @@ AM_VALAFLAGS = \
 	--internal-vapi cld-internals-0.1.vapi \
 	--library cld-0.1 --gir Cld-0.1.gir \
 	--vapidir=$(srcdir)/../vapi --pkg config \
-	--pkg glib-2.0 --pkg gee-1.0 --pkg libxml-2.0 \
+	--pkg glib-2.0 --pkg gee-1.0 --pkg libxml-2.0 --pkg json-glib-1.0 \
 	$(VALAFLAGS) \
 	$(NULL)
 
@@ -57,6 +57,7 @@ libcld_0_2_la_LIBADD = \
 	$(GLIB_LIBS) \
 	$(GEE_LIBS) \
 	$(XML_LIBS) \
+	$(JSON_LIBS) \
 	$(NULL)
 
 libcld_0_2_la_LDFLAGS = \

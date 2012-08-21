@@ -42,6 +42,11 @@ public class Cld.DIChannel : AbstractChannel, DChannel, IChannel {
     /**
      * {@inheritDoc}
      */
+    public override weak Device device { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public override string tag { get; set; }
 
     /**
@@ -55,16 +60,12 @@ public class Cld.DIChannel : AbstractChannel, DChannel, IChannel {
     public virtual bool state { get; set; }
 
     /* default constructor */
-    public DIChannel (int    num,
-                      string id,
-                      string tag,
-                      string desc) {
-        /* pass on to base class constructor */
-//        base (num, id, tag, desc);
-        GLib.Object (num:  num,
-                     id:   id,
-                     tag:  tag,
-                     desc: desc);
+    public DIChannel () {
+        /* set defaults */
+        this.num = 0;
+        this.devref = "dev0";
+        this.tag = "CH0";
+        this.desc = "Output Channel";
         state = false;
     }
 

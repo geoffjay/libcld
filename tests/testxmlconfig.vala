@@ -21,29 +21,29 @@
 
 using Cld;
 
-public class VChannelTests : ChannelTests {
+public class XmlConfigTests : ObjectTests {
 
-    public VChannelTests () {
-        base ("VChannel");
-        add_test ("[VChannel] ...", test_foo);
+    public XmlConfigTests () {
+        base ("XmlConfig");
+//        add_test ("[XmlConfig] ...", test_foo);
     }
 
     public override void set_up () {
-        test_object = new VChannel ();
+//        test_object = new XmlConfig ();
     }
 
     public override void tear_down () {
-        test_object = null;
+//        test_object = null;
     }
 
     private void test_foo () {
-        var test_channel = test_object as VChannel;
+//        var test_config = test_object as XmlConfig;
 
-        // Check the VChannel exists
-        assert (test_channel != null);
+        // Check the config exists
+//        assert (test_config != null);
 
-//        test_channel.do_something ();
-//        assert (test_channel. == );
-//        assert (test_channel. == );
+//        test_config.do_something ();
+//        assert (test_config. == );
+//        assert (test_config. == );
     }
 }

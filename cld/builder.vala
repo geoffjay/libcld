@@ -111,21 +111,23 @@ public class Cld.Builder : GLib.Object {
     }
 
     public Builder.from_file (string filename) {
-        xml = new XmlConfig (filename);
+        xml = new XmlConfig.with_file_name (filename);
         _objects = new Gee.TreeMap<string, Object> ();
         build_object_map ();
+        setup_references ();
     }
 
     public Builder.from_xml_config (XmlConfig xml) {
-        GLib.Object (xml: xml);
+        this.xml = xml;
         _objects = new Gee.TreeMap<string, Object> ();
         build_object_map ();
+        setup_references ();
     }
 
     /**
      * Add a object to the array list of objects
      *
-     * @param object object object to add to the list
+     * @param object object to add to the list
      */
     public void add (Object object) {
         objects.set (object.id, object);
@@ -177,7 +179,7 @@ public class Cld.Builder : GLib.Object {
     }
 
     /**
-     * build_object_map
+     * Constructs the object tree using the top level object types.
      */
     private void build_object_map () {
         string type;
@@ -233,7 +235,61 @@ public class Cld.Builder : GLib.Object {
                             object = null;
                             break;
                     }
-                    add (object);
+
+                    /* no point adding an object type that isn't recognized */
+                    if (object != null)
+                        add (object);
+                }
+            }
+        }
+    }
+
+    /**
+     * Sets up all of the weak references between the objects in the tree that
+     * require it.
+     */
+    private void setup_references () {
+        string ref_id;
+        foreach (var object in objects.values) {
+            /* Setup the device references for all of the channel types */
+            if (object is Channel) {
+                ref_id = (object as Channel).devref;
+                var device = get_object (ref_id);
+                if (device != null && device is Device)
+                    (object as Channel).device = (device as Device);
+            }
+
+            /* Analog channels reference a calibration object */
+            if (object is AChannel) {
+                ref_id = (object as AChannel).calref;
+                if (ref_id != null) {
+                    var calibration = get_object (ref_id);
+                    if (calibration != null && calibration is Calibration)
+                        (object as AChannel).calibration =
+                                                (calibration as Calibration);
+                }
+            }
+
+            /* XXX Too much nesting, should break into individual methods. */
+            if (object is Control) {
+                foreach (var control_object in
+                            (object as Container).objects.values) {
+                    if (control_object is Pid) {
+                        foreach (var process_value in
+                                    (control_object as Pid).process_values.values) {
+                            /* Process values reference a channel */
+                            if (process_value is ProcessValue) {
+                                ref_id = (process_value as ProcessValue).chref;
+                                if (ref_id != null) {
+                                    var channel = get_object (ref_id);
+                                    if (channel != null && channel is Channel) {
+                                        (process_value as ProcessValue).channel
+                                            = (channel as Channel);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

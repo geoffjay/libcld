@@ -39,6 +39,11 @@ public abstract class Cld.AbstractChannel : AbstractObject, Channel {
     /**
      * {@inheritDoc}
      */
+    public abstract weak Device device { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public abstract string tag { get; set; }
 
     /**

@@ -25,7 +25,7 @@ tests_SOURCES = \
 	testport.vala \
 	testserialport.vala \
 	testvchannel.vala \
-	testxml.vala \
+	testxmlconfig.vala \
 	$(NULL)
 
 tests_DEPENDENCIES = \
@@ -43,11 +43,12 @@ tests_CPPFLAGS = \
 	$(GLIB_CFLAGS) \
 	$(GEE_CFLAGS) \
 	$(XML_CFLAGS) \
+	$(JSON_CFLAGS) \
 	$(NULL)
 
 tests_LDADD = \
 	../cld/libcld-0.2.la \
 	$(GLIB_LIBS) \
 	$(GEE_LIBS) \
-	$(XML_LIBS) \
+	$(JSON_LIBS) \
 	$(NULL)

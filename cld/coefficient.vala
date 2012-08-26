@@ -34,11 +34,10 @@ public class Cld.Coefficient : AbstractObject {
         value = 0.0;
     }
 
-    public Coefficient.with_id (string id) {
-        GLib.Object (id: id);
-        /* defaults */
-        n = 0;
-        value = 0.0;
+    public Coefficient.with_data (string id, int n, double value) {
+        this.id = id;
+        this.n = n;
+        this.value = value;
     }
 
     public Coefficient.from_xml_node (Xml.Node *node) {

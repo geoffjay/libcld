@@ -6,6 +6,7 @@ GTESTER_REPORT = gtester-report
 # initialize variables for unconditional += appending
 EXTRA_DIST =
 TEST_PROGS =
+EXAMPLE_PROGS =
 
 # useful constants
 NULL =

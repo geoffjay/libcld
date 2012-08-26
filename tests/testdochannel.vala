@@ -23,4 +23,27 @@ using Cld;
 
 public class DOChannelTests : ChannelTests {
 
+    public DOChannelTests () {
+        base ("DOChannel");
+        add_test ("[DOChannel] ...", test_foo);
+    }
+
+    public override void set_up () {
+        test_object = new DOChannel ();
+    }
+
+    public override void tear_down () {
+        test_object = null;
+    }
+
+    private void test_foo () {
+        var test_channel = test_object as DOChannel;
+
+        // Check the DOChannel exists
+        assert (test_channel != null);
+
+//        test_channel.do_something ();
+//        assert (test_channel. == );
+//        assert (test_channel. == );
+    }
 }

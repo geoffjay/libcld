@@ -21,6 +21,9 @@
 
 using Cld;
 
-public class PortTests : ObjectTests {
+public abstract class PortTests : ObjectTests {
 
+    public PortTests (string name) {
+        base (name);
+    }
 }

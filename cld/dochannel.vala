@@ -55,16 +55,12 @@ public class Cld.DOChannel : AbstractChannel, DChannel, OChannel {
     public virtual bool state { get; set; }
 
     /* default constructor */
-    public DOChannel (int    num,
-                      string id,
-                      string tag,
-                      string desc) {
-        /* pass on to base class constructor */
-//        base (num, id, tag, desc);
-        GLib.Object (num:  num,
-                     id:   id,
-                     tag:  tag,
-                     desc: desc);
+    public DOChannel () {
+        /* set defaults */
+        this.num = 0;
+        this.devref = "dev0";
+        this.tag = "CH0";
+        this.desc = "Output Channel";
         state = false;
     }
 

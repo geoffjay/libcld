@@ -32,7 +32,9 @@ public interface Cld.Container : Cld.Object {
     public abstract Gee.Map<string, Object> objects { get; set; }
 
     /**
+     * Add a object to the array list of objects
      *
+     * @param object object object to add to the list
      */
     public abstract void add (Object object);
 
@@ -42,7 +44,10 @@ public interface Cld.Container : Cld.Object {
     public abstract void update_objects (Gee.Map<string, Object> val);
 
     /**
+     * Search the object list for the object with the given ID
      *
+     * @param id ID of the object to retrieve
+     * @return The object if found, null otherwise
      */
     public abstract Object? get_object (string id);
 }

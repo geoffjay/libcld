@@ -30,7 +30,7 @@ libcld_0_2_la_SOURCES = \
 	port.vala \
 	serialport.vala \
 	vchannel.vala \
-	xml.vala \
+	xmlconfig.vala \
 	$(NULL)
 
 INCLUDES = \

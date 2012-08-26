@@ -23,4 +23,27 @@ using Cld;
 
 public class FilterTests : ObjectTests {
 
+    public FilterTests () {
+        base ("Filter");
+        add_test ("[Filter] ...", test_foo);
+    }
+
+    public override void set_up () {
+        test_object = new Filter ();
+    }
+
+    public override void tear_down () {
+        test_object = null;
+    }
+
+    private void test_foo () {
+        var test_filter = test_object as Filter;
+
+        // Check the Filter exists
+        assert (test_filter != null);
+
+//        test_filter.do_something ();
+//        assert (test_filter. == );
+//        assert (test_filter. == );
+    }
 }

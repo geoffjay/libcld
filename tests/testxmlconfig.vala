@@ -23,4 +23,27 @@ using Cld;
 
 public class XmlConfigTests : ObjectTests {
 
+    public XmlConfigTests () {
+        base ("XmlConfig");
+//        add_test ("[XmlConfig] ...", test_foo);
+    }
+
+    public override void set_up () {
+//        test_object = new XmlConfig ();
+    }
+
+    public override void tear_down () {
+//        test_object = null;
+    }
+
+    private void test_foo () {
+//        var test_config = test_object as XmlConfig;
+
+        // Check the config exists
+//        assert (test_config != null);
+
+//        test_config.do_something ();
+//        assert (test_config. == );
+//        assert (test_config. == );
+    }
 }

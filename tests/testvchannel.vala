@@ -23,4 +23,27 @@ using Cld;
 
 public class VChannelTests : ChannelTests {
 
+    public VChannelTests () {
+        base ("VChannel");
+        add_test ("[VChannel] ...", test_foo);
+    }
+
+    public override void set_up () {
+        test_object = new VChannel ();
+    }
+
+    public override void tear_down () {
+        test_object = null;
+    }
+
+    private void test_foo () {
+        var test_channel = test_object as VChannel;
+
+        // Check the VChannel exists
+        assert (test_channel != null);
+
+//        test_channel.do_something ();
+//        assert (test_channel. == );
+//        assert (test_channel. == );
+    }
 }

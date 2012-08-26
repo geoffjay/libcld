@@ -25,7 +25,7 @@ tests_SOURCES = \
 	testport.vala \
 	testserialport.vala \
 	testvchannel.vala \
-	testxml.vala \
+	testxmlconfig.vala \
 	$(NULL)
 
 tests_DEPENDENCIES = \

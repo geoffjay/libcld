@@ -23,4 +23,27 @@ using Cld;
 
 public class CoefficientTests : ObjectTests {
 
+    public CoefficientTests () {
+        base ("Coefficient");
+        add_test ("[Coefficient] ...", test_foo);
+    }
+
+    public override void set_up () {
+        test_object = new Coefficient ();
+    }
+
+    public override void tear_down () {
+        test_object = null;
+    }
+
+    private void test_foo () {
+        var test_coefficient = test_object as Coefficient;
+
+        // Check the Coefficient exists
+        assert (test_coefficient != null);
+
+//        test_coefficient.do_something ();
+//        assert (test_coefficient. == );
+//        assert (test_coefficient. == );
+    }
 }

@@ -60,23 +60,26 @@ public class Cld.Pid : AbstractObject {
     /**
      * Default constructor
      */
-    public Pid (string id,
-                double sp,
-                double kp,
-                double ki,
-                double kd,
-                double p_err = 0.0,
-                double i_err = 0.0,
-                double d_err = 0.0) {
-        /* instantiate object */
-        GLib.Object (id:    id,
-                     sp:    sp,
-                     kp:    kp,
-                     ki:    ki,
-                     kd:    kd,
-                     p_err: p_err,
-                     i_err: i_err,
-                     d_err: d_err);
+    public Pid () {
+        id = "pid0";
+        kp = 0.0;
+        ki = 0.0;
+        kd = 0.0;
+        p_err = 0.0;
+        i_err = 0.0;
+        d_err = 0.0;
+
+        process_values = new Gee.TreeMap<string, Object> ();
+    }
+
+    public Pid.with_constants (double kp, double ki, double kd) {
+        id = "pid0";
+        this.kp = kp;
+        this.ki = ki;
+        this.kd = kd;
+        p_err = 0.0;
+        i_err = 0.0;
+        d_err = 0.0;
 
         process_values = new Gee.TreeMap<string, Object> ();
     }

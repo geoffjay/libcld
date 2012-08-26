@@ -89,6 +89,13 @@ AS_IF([test "x$enable_doc" != xno],
 	 AS_IF([test "$VALADOC" = :],
 		[AC_MSG_ERROR([valadoc not found])])])
 
+dnl Examples
+AC_ARG_ENABLE(examples,
+	AS_HELP_STRING([--enable-examples],
+		[Enable example programs generation]), enable_examples=$enableval,
+	enable_examples=no)
+AM_CONDITIONAL(ENABLE_EXAMPLES, test x$enable_examples = xyes)
+
 dnl ---------------------------------------------------------------------------
 dnl Checks for typedefs, structures, and compiler characteristics
 dnl ---------------------------------------------------------------------------
@@ -101,5 +108,6 @@ AC_OUTPUT([Makefile
            cld-0.2.pc
            cld/Makefile
            doc/Makefile
+           examples/Makefile
            tests/Makefile
            vapi/Makefile])

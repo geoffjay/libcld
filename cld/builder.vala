@@ -111,13 +111,13 @@ public class Cld.Builder : GLib.Object {
     }
 
     public Builder.from_file (string filename) {
-        xml = new XmlConfig (filename);
+        xml = new XmlConfig.with_file_name (filename);
         _objects = new Gee.TreeMap<string, Object> ();
         build_object_map ();
     }
 
     public Builder.from_xml_config (XmlConfig xml) {
-        GLib.Object (xml: xml);
+        this.xml = xml;
         _objects = new Gee.TreeMap<string, Object> ();
         build_object_map ();
     }

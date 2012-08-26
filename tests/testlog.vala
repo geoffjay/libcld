@@ -23,4 +23,27 @@ using Cld;
 
 public class LogTests : ObjectTests {
 
+    public LogTests () {
+        base ("Log");
+        add_test ("[Log] ...", test_foo);
+    }
+
+    public override void set_up () {
+        test_object = new Cld.Log ();
+    }
+
+    public override void tear_down () {
+        test_object = null;
+    }
+
+    private void test_foo () {
+        var test_log = test_object as Cld.Log;
+
+        // Check the Log exists
+        assert (test_log != null);
+
+//        test_log.do_something ();
+//        assert (test_log. == );
+//        assert (test_log. == );
+    }
 }

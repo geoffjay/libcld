@@ -78,26 +78,18 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      * These properties will go away when the Calibration implementation is
      * complete.
      */
-    public double slope { get; set; }
+    public double slope { get; set; default = 1.0; }
 
-    public double yint { get; set; }
+    public double yint { get; set; default = 0.0; }
 
-    public string units { get; set; }
+    public string units { get; set; default = "Volts"; }
 
     public int raw_value_list_size { get; set; }    /* redundant */
 
     public Gee.LinkedList<double?> raw_value_list;
 
     /* default constructor */
-    public AIChannel (string id, string tag, string desc,
-                      int num, double slope, double yint,
-                      string units, string color) {
-        /* fill with available parameters */
-//        base (num, id, tag, desc);
-        this.slope = slope;
-        this.yint = yint;
-        this.units = units;
-
+    public AIChannel () {
         /* set defaults */
         this.num = 0;
         this.devref = "dev0";

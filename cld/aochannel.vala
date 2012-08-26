@@ -80,16 +80,13 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
     public bool manual { get; set; }
 
     /* default constructor */
-    public AOChannel (int    num,
-                      string id,
-                      string tag,
-                      string desc) {
-        /* pass on to base class constructor */
-//        base (num, id, tag, desc);
-        GLib.Object (num:  num,
-                     id:   id,
-                     tag:  tag,
-                     desc: desc);
+    public AOChannel () {
+        /* set defaults */
+        this.num = 0;
+        this.devref = "dev0";
+        this.tag = "CH0";
+        this.desc = "Output Channel";
+
         value = 0.0;
     }
 

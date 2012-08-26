@@ -29,7 +29,7 @@
  *
  *   y = a[0]*x^0 + a[1]*x^1
  */
-public class Cld.Calibration : AbstractObject, Container {
+public class Cld.Calibration : AbstractContainer {
 
     /* property backing fields */
     private Gee.Map<string, Object> _objects;
@@ -39,7 +39,7 @@ public class Cld.Calibration : AbstractObject, Container {
     public override string id { get; set; }
 
     /* needs to be a map instead of a list to allow for gaps in the list */
-    public Gee.Map<string, Object> objects {
+    public override Gee.Map<string, Object> objects {
         get { return (_objects); }
         set { update_objects (value); }
     }
@@ -92,13 +92,18 @@ public class Cld.Calibration : AbstractObject, Container {
         return objects.size;
     }
 
-    public Coefficient nth_coefficient (int index) {
+    public Coefficient? nth_coefficient (int index) {
         foreach (var coefficient in objects.values) {
             if ((coefficient as Coefficient).n == index)
                 return coefficient as Coefficient;
         }
+
         /* if we made it here the index requested doesn't exist */
-        throw new Cld.CalibrationError.KEY_NOT_FOUND ("The selected value does not exist");
+        //throw new Cld.CalibrationError.KEY_NOT_FOUND (
+        //        "The selected value does not exist"
+        //    );
+
+        return null;
     }
 
     public void set_nth_coefficient (int index, double val) {
@@ -154,35 +159,34 @@ public class Cld.Calibration : AbstractObject, Container {
      * output - a slope of 1 and y intercept of 0.
      */
     public void set_default () {
-        add_coefficient (0, 0.0);
-        add_coefficient (1, 1.0);
+        Coefficient coefficient;
+
+        coefficient = get_coefficient (0);
+        coefficient.value = 0.0;
+        set_coefficient (coefficient.id, coefficient);
+        coefficient = get_coefficient (1);
+        coefficient.value = 1.0;
+        set_coefficient (coefficient.id, coefficient);
     }
 
     /**
-     * Update property backing field for objects list.
-     *
-     * @param event Array list to update property variable
+     * {@inheritDoc}
      */
-    private void update_objects (Gee.Map<string, Object> val) {
+    public override void update_objects (Gee.Map<string, Object> val) {
         _objects = val;
     }
 
     /**
-     * Add a object to the array list of objects
-     *
-     * @param object object object to add to the list
+     * {@inheritDoc}
      */
-    public void add (Object object) {
+    public override void add (Object object) {
         objects.set (object.id, object);
     }
 
     /**
-     * Search the object list for the object with the given ID
-     *
-     * @param id ID of the object to retrieve
-     * @return The object if found, null otherwise
+     * {@inheritDoc}
      */
-    public Object? get_object (string id) {
+    public override Object? get_object (string id) {
         Object? result = null;
 
         if (objects.has_key (id)) {
@@ -202,8 +206,7 @@ public class Cld.Calibration : AbstractObject, Container {
     }
 
     /**
-     * Print the contents of the Calibration including any items in its
-     * coefficient list.
+     * {@inheritDoc}
      */
     public override string to_string () {
         string str_data = "[%s] : y = ".printf (id);

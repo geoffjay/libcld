@@ -42,6 +42,8 @@ public class CalibrationTests : ObjectTests {
         // Check the calibration exists
         assert (test_calibration != null);
 
+        test_calibration.add (new Coefficient.with_data ("cft0", 0, 0.0));
+        test_calibration.add (new Coefficient.with_data ("cft1", 1, 0.0));
         test_calibration.set_default ();
         assert (test_calibration.get_coefficient (0).value == 0.0);
         assert (test_calibration.get_coefficient (1).value == 1.0);

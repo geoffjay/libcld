@@ -23,4 +23,27 @@ using Cld;
 
 public class DeviceTests : ObjectTests {
 
+    public DeviceTests () {
+        base ("Device");
+        add_test ("[Device] ...", test_foo);
+    }
+
+    public override void set_up () {
+        test_object = new Device ();
+    }
+
+    public override void tear_down () {
+        test_object = null;
+    }
+
+    private void test_foo () {
+        var test_device = test_object as Device;
+
+        // Check the Device exists
+        assert (test_device != null);
+
+//        test_device.do_something ();
+//        assert (test_device. == );
+//        assert (test_device. == );
+    }
 }

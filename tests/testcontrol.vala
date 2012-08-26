@@ -23,4 +23,27 @@ using Cld;
 
 public class ControlTests : ObjectTests {
 
+    public ControlTests () {
+        base ("Control");
+        add_test ("[Control] ...", test_foo);
+    }
+
+    public override void set_up () {
+        test_object = new Control ();
+    }
+
+    public override void tear_down () {
+        test_object = null;
+    }
+
+    private void test_foo () {
+        var test_control = test_object as Control;
+
+        // Check the Control exists
+        assert (test_control != null);
+
+//        test_control.do_something ();
+//        assert (test_control. == );
+//        assert (test_control. == );
+    }
 }

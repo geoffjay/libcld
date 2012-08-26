@@ -23,4 +23,27 @@ using Cld;
 
 public class DaqTests : ObjectTests {
 
+    public DaqTests () {
+        base ("Daq");
+        add_test ("[Daq] ...", test_foo);
+    }
+
+    public override void set_up () {
+        test_object = new Daq ();
+    }
+
+    public override void tear_down () {
+        test_object = null;
+    }
+
+    private void test_foo () {
+        var test_daq = test_object as Daq;
+
+        // Check the Daq exists
+        assert (test_daq != null);
+
+//        test_daq.do_something ();
+//        assert (test_daq. == );
+//        assert (test_daq. == );
+    }
 }

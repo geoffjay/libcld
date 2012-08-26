@@ -55,16 +55,12 @@ public class Cld.VChannel : AbstractChannel {
     public string expression { get; set; }
 
     /* default constructor */
-    public VChannel (int    num,
-                     string id,
-                     string tag,
-                     string desc) {
-        /* pass on to base class constructor */
-//        base (num, id, tag, desc);
-        GLib.Object (num:  num,
-                     id:   id,
-                     tag:  tag,
-                     desc: desc);
+    public VChannel () {
+        /* set defaults */
+        this.num = 0;
+        this.devref = "dev0";
+        this.tag = "CH0";
+        this.desc = "Output Channel";
     }
 
     public VChannel.from_xml_node (Xml.Node *node) {

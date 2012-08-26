@@ -39,10 +39,10 @@ public class AIChannelTests : ChannelTests {
     private void test_foo () {
         var test_channel = test_object as AIChannel;
 
-        // Check the calibration exists
+        // Check the Channel exists
         assert (test_channel != null);
 
-//        test_channel.do_somethin ();
+//        test_channel.do_something ();
 //        assert (test_channel. == );
 //        assert (test_channel. == );
     }

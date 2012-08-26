@@ -23,4 +23,27 @@ using Cld;
 
 public class PidTests : ObjectTests {
 
+    public PidTests () {
+        base ("Pid");
+        add_test ("[Pid] ...", test_foo);
+    }
+
+    public override void set_up () {
+        test_object = new Cld.Pid ();
+    }
+
+    public override void tear_down () {
+        test_object = null;
+    }
+
+    private void test_foo () {
+        var test_pid = test_object as Cld.Pid;
+
+        // Check the Pid exists
+        assert (test_pid != null);
+
+//        test_pid.do_something ();
+//        assert (test_pid. == );
+//        assert (test_pid. == );
+    }
 }

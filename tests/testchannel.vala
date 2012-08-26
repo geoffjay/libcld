@@ -21,6 +21,9 @@
 
 using Cld;
 
-public class ChannelTests : ObjectTests {
+public abstract class ChannelTests : ObjectTests {
 
+    public ChannelTests (string name) {
+        base (name);
+    }
 }

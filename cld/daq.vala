@@ -36,10 +36,13 @@ public class Cld.Daq : AbstractObject {
         set { update_devices (value); }
     }
 
-    /* constructor */
-    public Daq (double rate) {
-        /* instantiate object */
-        GLib.Object (rate: rate);
+    public Daq () {
+        rate = 10.0;    /* Hz */
+        devices = new Gee.TreeMap<string, Object> ();
+    }
+
+    public Daq.with_rate (double rate) {
+        this.rate = rate;
         devices = new Gee.TreeMap<string, Object> ();
     }
 

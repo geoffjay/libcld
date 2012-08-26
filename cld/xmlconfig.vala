@@ -46,14 +46,24 @@ public class Cld.XmlConfig : GLib.Object {
     private Xml.XPath.Object *obj;
 
     /**
+     * Default construction
+     */
+    public XmlConfig () {
+        file_name = "cld.xml";
+        load_document (this.file_name);
+    }
+
+    /**
      * Constructs a new configuration using the file name provided.
      *
      * @param file_name the name of the file on disk to use
      */
-    public XmlConfig (string file_name) {
-        /* instantiate object */
-        GLib.Object (file_name: file_name);
+    public XmlConfig.with_file_name (string file_name) {
+        this.file_name = file_name;
+        load_document (this.file_name);
+    }
 
+    void load_document (string file_name) {
         /* load XML document */
         doc = Xml.Parser.parse_file (file_name);
         if (doc == null) {

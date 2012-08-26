@@ -29,9 +29,9 @@ public class Cld.ProcessValue : AbstractObject {
     public string chref       { get; set; }
 
     /* constructor */
-    public ProcessValue (string id, string chref) {
-        GLib.Object (id:    id,
-                     chref: chref);
+    public ProcessValue () {
+        id = "pv0";
+        chref = "ch0";
     }
 
     public ProcessValue.from_xml_node (Xml.Node *node) {
@@ -67,10 +67,8 @@ public class Cld.Control : AbstractObject {
     }
 
     /* constructor */
-    public Control (string id) {
-        /* instantiate object */
-        GLib.Object (id: id);
-
+    public Control () {
+        id = "ctl0";
         objects = new Gee.TreeMap<string, Object> ();
     }
 

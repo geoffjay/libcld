@@ -23,4 +23,27 @@ using Cld;
 
 public class SerialPortTests : PortTests {
 
+    public SerialPortTests () {
+        base ("SerialPort");
+        add_test ("[SerialPort] ...", test_foo);
+    }
+
+    public override void set_up () {
+        test_object = new SerialPort ();
+    }
+
+    public override void tear_down () {
+        test_object = null;
+    }
+
+    private void test_foo () {
+        var test_port = test_object as SerialPort;
+
+        // Check the SerialPort exists
+        assert (test_port != null);
+
+//        test_port.do_something ();
+//        assert (test_port. == );
+//        assert (test_port. == );
+    }
 }

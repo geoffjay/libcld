@@ -23,4 +23,27 @@ using Cld;
 
 public class BuilderTests : ObjectTests {
 
+    public BuilderTests () {
+        base ("Builder");
+//        add_test ("[Builder] ...", test_foo);
+    }
+
+    public override void set_up () {
+//        test_object = new Cld.Builder ();
+    }
+
+    public override void tear_down () {
+//        test_object = null;
+    }
+
+    private void test_foo () {
+//        var test_builder = test_object as Cld.Builder;
+
+        // Check the Builder exists
+//        assert (test_builder != null);
+
+//        test_builder.do_something ();
+//        assert (test_builder. == );
+//        assert (test_builder. == );
+    }
 }

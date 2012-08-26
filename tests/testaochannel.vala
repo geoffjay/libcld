@@ -23,4 +23,27 @@ using Cld;
 
 public class AOChannelTests : ChannelTests {
 
+    public AOChannelTests () {
+        base ("AOChannel");
+        add_test ("[AOChannel] ...", test_foo);
+    }
+
+    public override void set_up () {
+        test_object = new AOChannel ();
+    }
+
+    public override void tear_down () {
+        test_object = null;
+    }
+
+    private void test_foo () {
+        var test_channel = test_object as AOChannel;
+
+        // Check the channel exists
+        assert (test_channel != null);
+
+//        test_channel.do_something ();
+//        assert (test_channel. == );
+//        assert (test_channel. == );
+    }
 }

@@ -42,6 +42,11 @@ public class Cld.VChannel : AbstractChannel {
     /**
      * {@inheritDoc}
      */
+    public override weak Device device { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public override string tag { get; set; }
 
     /**

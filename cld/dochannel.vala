@@ -42,6 +42,11 @@ public class Cld.DOChannel : AbstractChannel, DChannel, OChannel {
     /**
      * {@inheritDoc}
      */
+    public override weak Device device { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public override string tag { get; set; }
 
     /**

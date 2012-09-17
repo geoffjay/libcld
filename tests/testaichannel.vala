@@ -25,7 +25,9 @@ public class AIChannelTests : ChannelTests {
 
     public AIChannelTests () {
         base ("AIChannel");
-        add_test ("[AIChannel] ...", test_foo);
+        add_test ("[AIChannel] Test backend array for value average property", test_avg_value);
+        add_test ("[AIChannel] Test backend array for measured values property", test_raw_value);
+        add_test ("[AIChannel] Test backend array for scaled value property", test_scaled_value);
     }
 
     public override void set_up () {
@@ -36,14 +38,53 @@ public class AIChannelTests : ChannelTests {
         test_object = null;
     }
 
-    private void test_foo () {
+    private void test_avg_value () {
         var test_channel = test_object as AIChannel;
 
-        // Check the Channel exists
+        /* Check the Channel exists */
         assert (test_channel != null);
 
-//        test_channel.do_something ();
-//        assert (test_channel. == );
-//        assert (test_channel. == );
+        assert (test_channel.avg_value == 0.0);
+        test_channel.avg_value = 1.0;
+        assert (test_channel.avg_value == 1.0);
+    }
+
+    private void test_raw_value () {
+        var test_channel = test_object as AIChannel;
+
+        /* Check the Channel exists */
+        assert (test_channel != null);
+
+        assert (test_channel.raw_value == 0.0);
+        test_channel.raw_value_list_size = 10;
+        test_channel.add_raw_value (1.0);
+        test_channel.add_raw_value (2.0);
+        test_channel.add_raw_value (3.0);
+        assert (test_channel.avg_value == 2.0);
+    }
+
+    private void test_scaled_value () {
+        var test_channel = test_object as AIChannel;
+
+        /* Check the Channel exists */
+        assert (test_channel != null);
+
+        Calibration cal = new Calibration ();
+        test_channel.calibration = cal;
+
+        test_channel.raw_value_list_size = 10;
+        test_channel.add_raw_value (1.0);
+        test_channel.add_raw_value (2.0);
+        test_channel.add_raw_value (3.0);
+
+        assert (test_channel.scaled_value == 2.0);
+        Coefficient coefficient;
+        coefficient = cal.get_coefficient (0);
+        coefficient.value = 1.0;
+        cal.set_coefficient (coefficient.id, coefficient);
+        coefficient = cal.get_coefficient (1);
+        coefficient.value = 2.0;
+        cal.set_coefficient (coefficient.id, coefficient);
+        assert (test_channel.scaled_value == 5.0);
     }
 }

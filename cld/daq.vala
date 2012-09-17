@@ -22,28 +22,27 @@
 /**
  * Hardware definition class.
  */
-public class Cld.Daq : AbstractObject {
-    /* property backing fields */
-    private Gee.Map<string, Object> _devices;
+public class Cld.Daq : AbstractContainer {
 
     /* properties */
     public override string id   { get; set; }
     public double rate          { get; set; }
     public string driver        { get; set; }
 
-    public Gee.Map<string, Object> devices {
-        get { return (_devices); }
-        set { update_devices (value); }
+    private Gee.Map<string, Object> _objects;
+    public override Gee.Map<string, Object> objects {
+        get { return (_objects); }
+        set { update_objects (value); }
     }
 
     public Daq () {
         rate = 10.0;    /* Hz */
-        devices = new Gee.TreeMap<string, Object> ();
+        objects = new Gee.TreeMap<string, Object> ();
     }
 
     public Daq.with_rate (double rate) {
         this.rate = rate;
-        devices = new Gee.TreeMap<string, Object> ();
+        objects = new Gee.TreeMap<string, Object> ();
     }
 
     /**
@@ -52,7 +51,7 @@ public class Cld.Daq : AbstractObject {
     public Daq.from_xml_node (Xml.Node *node) {
         string value;
 
-        devices = new Gee.TreeMap<string, Object> ();
+        objects = new Gee.TreeMap<string, Object> ();
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -72,22 +71,57 @@ public class Cld.Daq : AbstractObject {
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "device") {
                         var dev = new Device.from_xml_node (iter);
-                        devices.set (dev.id, dev);
+                        objects.set (dev.id, dev);
                     }
                 }
             }
         }
     }
 
-    public void update_devices (Gee.Map<string, Object> val) {
-        _devices = val;
+    /**
+     * {@inheritDoc}
+     */
+    public override void update_objects (Gee.Map<string, Object> val) {
+        _objects = val;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public override void add (Object object) {
+        objects.set (object.id, object);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override Object? get_object (string id) {
+        Object? result = null;
+
+        if (objects.has_key (id)) {
+            result = objects.get (id);
+        } else {
+            foreach (var object in objects.values) {
+                if (object is Container) {
+                    result = (object as Container).get_object (id);
+                    if (result != null) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public override string to_string () {
         string str_data = "[%s] : DAQ with rate %.3f\n".printf (id, rate);
         /* copy the device print iteration here later in testing */
-        if (!devices.is_empty) {
-            foreach (var dev in devices.values)
+        if (!objects.is_empty) {
+            foreach (var dev in objects.values)
                 str_data += "  %s".printf (dev.to_string ());
         }
         return str_data;

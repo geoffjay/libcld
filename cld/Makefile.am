@@ -45,7 +45,7 @@ libcld_0_2_la_VALAFLAGS = \
 	--internal-vapi cld-internals-0.2.vapi \
 	--library cld-0.2 --gir Cld-0.2.gir \
 	--vapidir=$(srcdir)/../vapi --pkg config \
-	--pkg glib-2.0 --pkg gee-1.0 --pkg libxml-2.0 \
+	--pkg glib-2.0 --pkg gee-1.0 --pkg libxml-2.0 --pkg json-glib-1.0 \
 	$(VALAFLAGS) \
 	$(NULL)
 
@@ -53,12 +53,14 @@ libcld_0_2_la_CPPFLAGS = \
 	$(GLIB_CFLAGS) \
 	$(GEE_CFLAGS) \
 	$(XML_CFLAGS) \
+	$(JSON_CFLAGS) \
 	$(NULL)
 
 libcld_0_2_la_LIBADD = \
 	$(GLIB_LIBS) \
 	$(GEE_LIBS) \
 	$(XML_LIBS) \
+	$(JSON_LIBS) \
 	$(NULL)
 
 libcld_0_2_la_LDFLAGS = \

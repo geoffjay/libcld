@@ -31,14 +31,12 @@
  */
 public class Cld.Calibration : AbstractContainer {
 
-    /* property backing fields */
-    private Gee.Map<string, Object> _objects;
-
     /* properties */
     public string units       { get; set; }
     public override string id { get; set; }
 
     /* needs to be a map instead of a list to allow for gaps in the list */
+    private Gee.Map<string, Object> _objects;
     public override Gee.Map<string, Object> objects {
         get { return (_objects); }
         set { update_objects (value); }
@@ -50,11 +48,14 @@ public class Cld.Calibration : AbstractContainer {
         units = "Volts";
         id = "cal0";
         objects = new Gee.TreeMap<string, Object> ();
+        /* set defaults */
+        add (new Coefficient.with_data ("cft0", 0, 0.0));
+        add (new Coefficient.with_data ("cft1", 1, 1.0));
     }
 
     public Calibration.with_units (string units) {
         /* instantiate object */
-        GLib.Object (units: units);
+        this.units = units;
         id = "cal0";
         objects = new Gee.TreeMap<string, Object> ();
     }
@@ -167,6 +168,21 @@ public class Cld.Calibration : AbstractContainer {
         coefficient = get_coefficient (1);
         coefficient.value = 1.0;
         set_coefficient (coefficient.id, coefficient);
+    }
+
+    /**
+     * Apply the calibration coefficients to the measurement value passed in.
+     *
+     * @param value Process measurement to apply the calibration/scale to
+     * @return Result of the calibration/scale calculation
+     */
+    public double apply (double value) {
+        double result = 0.0;
+        foreach (var coefficient in objects.values) {
+            result += Math.pow (value, (coefficient as Coefficient).n)
+                        * (coefficient as Coefficient).value;
+        }
+        return result;
     }
 
     /**

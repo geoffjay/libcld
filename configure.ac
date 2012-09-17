@@ -44,6 +44,11 @@ PKG_CHECK_MODULES([XML], libxml-2.0,,
 AC_SUBST(XML_CFLAGS)
 AC_SUBST(XML_LIBS)
 
+PKG_CHECK_MODULES([JSON], json-glib-1.0,,
+	AC_MSG_ERROR(json-glib-1.0 is required))
+AC_SUBST(JSON_CFLAGS)
+AC_SUBST(JSON_LIBS)
+
 dnl ---------------------------------------------------------------------------
 dnl CFLAGS
 dnl ---------------------------------------------------------------------------

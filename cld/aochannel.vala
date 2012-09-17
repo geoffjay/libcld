@@ -42,6 +42,11 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
     /**
      * {@inheritDoc}
      */
+    public override weak Device device { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public override string tag { get; set; }
 
     /**
@@ -52,17 +57,17 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
     /**
      * {@inheritDoc}
      */
-    public virtual Calibration cal { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
     public virtual string calref { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public virtual double value { get; set; }
+    public virtual weak Calibration calibration { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual double raw_value { get; set; }
 
     /**
      * {@inheritDoc}
@@ -87,7 +92,7 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
         this.tag = "CH0";
         this.desc = "Output Channel";
 
-        value = 0.0;
+        raw_value = 0.0;
     }
 
     public AOChannel.from_xml_node (Xml.Node *node) {

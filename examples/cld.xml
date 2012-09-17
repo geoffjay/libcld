@@ -57,6 +57,7 @@
                 <property name="kp">0.100000</property>
                 <property name="ki">0.100000</property>
                 <property name="kd">0.100000</property>
+                <property name="dt">100.000</property>
                 <object id="pv0" type="process_value" chref="ai0"/>
                 <object id="pv1" type="process_value" chref="ao0"/>
             </object>

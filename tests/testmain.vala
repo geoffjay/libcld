@@ -23,6 +23,7 @@ void main (string[] args) {
 	Test.init (ref args);
 
 	TestSuite.get_root ().add_suite (new CalibrationTests ().get_suite ());
+	TestSuite.get_root ().add_suite (new AIChannelTests ().get_suite ());
 
 	Test.run ();
 }

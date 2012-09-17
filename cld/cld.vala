@@ -54,7 +54,7 @@ namespace Cld {
                 case EMBARM:      return "Technologic Systems";
                 case BEAGLEBOARD: return "BeagleBoard";
                 case PANDABOARD:  return "PandaBoard";
-                default:        assert_not_reached ();
+                default:          assert_not_reached ();
             }
         }
     }

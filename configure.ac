@@ -28,9 +28,12 @@ AC_SUBST(VALAFLAGS)
 dnl ---------------------------------------------------------------------------
 dnl Mandatory Libraries
 dnl ---------------------------------------------------------------------------
-GLIB_REQUIRED=2.12.0
-PKG_CHECK_MODULES([GLIB], glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED gthread-2.0 >= $GLIB_REQUIRED,,
-	AC_MSG_ERROR(glib-2.12 is required))
+GLIB_REQUIRED=2.32.0
+PKG_CHECK_MODULES([GLIB], glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED gthread-2.0 >= $GLIB_REQUIRED,
+	[AC_DEFINE(HAVE_GLIB232, [], [GLib 2.32 available])],
+	[PKG_CHECK_MODULES([GLIB], [glib-2.0 gobject-2.0 gthread-2.0],,
+		[AC_MSG_ERROR(glib-2.12 is required)])
+	])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 

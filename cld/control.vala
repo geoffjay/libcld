@@ -83,6 +83,12 @@ public class Cld.ProcessValue : AbstractObject {
         chref = "ch0";
     }
 
+    public ProcessValue.full (string id, Channel channel) {
+        this.id = id;
+        this.chref = channel.id;
+        this.channel = channel;
+    }
+
     public ProcessValue.from_xml_node (Xml.Node *node) {
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {

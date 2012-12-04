@@ -20,33 +20,114 @@
  */
 
 /**
- * A CSV style log file.
+ * Column class to reference channels to log.
  */
-public class Cld.Log : AbstractObject {
-    /* properties */
-    [Property(nick = "ID", blurb = "Log ID")]
+public class Cld.Column : AbstractObject {
+
+    /**
+     * {@inheritDoc}
+     */
     public override string id { get; set; }
 
-    [Property(nick = "Name", blurb = "Log Name")]
+    /**
+     * ID reference of the channel associated with this column.
+     */
+    public string chref { get; set; }
+
+    /**
+     * Referenced channel to use.
+     */
+    public weak Channel channel { get; set; }
+
+    /**
+     * Default constructor.
+     */
+    public Column () {
+        id = "col0";
+        chref = "ch0";
+    }
+
+    public Column.from_xml_node (Xml.Node *node) {
+        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+            node->type != Xml.ElementType.COMMENT_NODE) {
+            id = node->get_prop ("id");
+            chref = node->get_prop ("chref");
+        }
+    }
+
+    public override string to_string () {
+        string str_data  = "[%s] : Column\n".printf (id);
+               str_data += "\tchref %s\n\n".printf (chref);
+        return str_data;
+    }
+}
+
+/**
+ * A CSV style log file.
+ */
+public class Cld.Log : AbstractContainer {
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string id { get; set; }
+
+    /**
+     *
+     */
     public string name { get; set; }
 
-    [Property(nick = "Path", blurb = "Log Path")]
+    /**
+     *
+     */
     public string path { get; set; }
 
-    [Property(nick = "File", blurb = "Log File")]
+    /**
+     *
+     */
     public string file { get; set; }
 
-    [Property(nick = "Rate", blurb = "Log Rate")]
+    /**
+     *
+     */
     public double rate { get; set; }
 
-    [Property(nick = "Active", blurb = "Is the log file active")]
-    public bool active { get; set; }
+    /**
+     * Time between iterations in milliseconds.
+     */
+    public int dt { get { return (int)(1e3 / rate); } }
 
-    [Property(nick = "Header", blurb = "Log File Header")]
+    /**
+     * Whether or not the log file is currently active.
+     */
+    public bool active { get; set; default = false; }
+
+    /**
+     *
+     */
     public string header { get; set; }
 
-    public FileStream file_stream;
-    public bool is_open;
+    /**
+     *
+     */
+    public bool is_open { get; set; }
+
+    private Gee.Map<string, Object> _objects;
+    public override Gee.Map<string, Object> objects {
+        get { return (_objects); }
+        set { update_objects (value); }
+    }
+
+    /**
+     * Internal thread data for log file output handling.
+     */
+    private unowned Thread<void *> thread;
+    private Mutex mutex = new Mutex ();
+
+    /**
+     * File stream to use as output.
+     */
+    private FileStream file_stream;
 
     /* constructor */
     public Log () {
@@ -57,10 +138,14 @@ public class Cld.Log : AbstractObject {
         rate = 10.0;          /* Hz */
         active = false;
         is_open = false;
+
+        objects = new Gee.TreeMap<string, Object> ();
     }
 
     public Log.from_xml_node (Xml.Node *node) {
         string value;
+
+        objects = new Gee.TreeMap<string, Object> ();
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -88,21 +173,36 @@ public class Cld.Log : AbstractObject {
                         default:
                             break;
                     }
+                } else if (iter->name == "object") {
+                    if (iter->get_prop ("type") == "column") {
+                        var column = new Column.from_xml_node (iter);
+                        objects.set (column.id, column);
+                    }
                 }
             }
         }
     }
 
+    /**
+     * Print a string to the log file.
+     *
+     * @param toprint The string to print
+     */
     public void file_print (string toprint) {
         file_stream.printf ("%s", toprint);
     }
 
+    /**
+     * Open the file for logging.
+     *
+     * @return On successful open true, false otherwise.
+     */
     public bool file_open () {
         string filename;
         TimeVal time = TimeVal ();
 
         /* original implementation checked for the existence of requested
-         * file and posted error message if it it, reimplement that later */
+         * file and posted error message if it is, reimplement that later */
         if (path.has_suffix ("/"))
             filename = "%s%s".printf (path, file);
         else
@@ -172,15 +272,95 @@ public class Cld.Log : AbstractObject {
             file_open ();
     }
 
-    public override string to_string () {
-        string str_data  = "CldLog\n";
-               str_data += "──┬───\n";
-               str_data += "  ├ [id  ] : %s\n".printf (id);
-               str_data += "  ├ [name] : %s\n".printf (name);
-               str_data += "  ├ [path] : %s\n".printf (path);
-               str_data += "  ├ [file] : %s\n".printf (file);
-               str_data += "  ├ [rate] : %.3f\n".printf (rate);
-        return str_data;
+    public void write_header () {
+        string tags = "Time";
+        string units = "[HH:MM:SS.mmm]";
+        string cals = "Channel Calibrations\n";
+
+        foreach (var object in objects.values) {
+            stdout.printf ("Found object [%s]\n", object.id);
+            if (object is Column) {
+                var channel = ((object as Column).channel as Channel);
+                Type type = (channel as GLib.Object).get_type ();
+                stdout.printf ("Received object is Column - %s\n", type.name ());
+
+                if (channel is AChannel) {
+                    stdout.printf ("Column channel reference is analog\n");
+                    var calibration = (channel as AChannel).calibration;
+                    cals += "\n:\ty = ";
+
+                    foreach (var coefficient in (calibration as Container).objects.values) {
+                        cals += "%.3f * x^%d + ".printf (
+                                (coefficient as Coefficient).value,
+                                (coefficient as Coefficient).n
+                            );
+                    }
+
+                    cals += "\t(%s)\n".printf (channel.desc);
+                    units += "\t[%s]".printf (calibration.units);
+                    tags += "\t%s".printf (channel.tag);
+                }
+            }
+        }
+
+        header = "%s\n\nLogging rate: %.2f Hz\n\n%s\n%s\n".printf (cals, rate, tags, units);
+
+        file_print (header);
+    }
+
+    public void write_next_line () {
+        string line = "";
+
+        foreach (var object in objects.values) {
+            line = "00:00:00.000\t";
+            if (object is Column) {
+                var channel = ((object as Column).channel as Channel);
+                if (channel is AChannel) {
+                    line += "%f\t".printf ((channel as AChannel).scaled_value);
+                } else if (channel is DChannel) {
+                    line += ((channel as DChannel).state) ? "on\t" : "off\t";
+                }
+            }
+            line += "\n";
+        }
+
+        file_print (line);
+    }
+
+    /**
+     * Run the log file output as a thread.
+     */
+    public void run () {
+        if (!Thread.supported ()) {
+            stderr.printf ("Cannot run logging without thread support.\n");
+            active = false;
+            return;
+        }
+
+        if (!active) {
+            var log_thread = new LogThread (this);
+
+            try {
+                active = true;
+                write_header ();
+                /* TODO create is deprecated, check compiler warnings */
+                thread = Thread.create<void *> (log_thread.run, true);
+            } catch (ThreadError e) {
+                stderr.printf ("%s\n", e.message);
+                active = false;
+                return;
+            }
+        }
+    }
+
+    /**
+     * Stop a PID control loop that is executing.
+     */
+    public void stop () {
+        if (active) {
+            active = false;
+            thread.join ();
+        }
     }
 
     /**
@@ -214,6 +394,96 @@ public class Cld.Log : AbstractObject {
         for (int ctr = 0; ctr < str.length; ctr++)
             data += (uchar) str[ctr];
         return data;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override void update_objects (Gee.Map<string, Object> val) {
+        _objects = val;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override void add (Object object) {
+        objects.set (object.id, object);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override Object? get_object (string id) {
+        Object? result = null;
+
+        if (objects.has_key (id)) {
+            result = objects.get (id);
+        } else {
+            foreach (var object in objects.values) {
+                if (object is Container) {
+                    result = (object as Container).get_object (id);
+                    if (result != null) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string to_string () {
+        string str_data  = "CldLog\n";
+               str_data += "\tid:   %s\n".printf (id);
+               str_data += "\tname: %s\n".printf (name);
+               str_data += "\tpath: %s\n".printf (path);
+               str_data += "\tfile: %s\n".printf (file);
+               str_data += "\trate: %.3f\n".printf (rate);
+        return str_data;
+    }
+
+    public class LogThread {
+        unowned Log log;
+
+        public LogThread (Log log) {
+            this.log = log;
+        }
+
+        public void * run () {
+            Mutex mutex = new Mutex ();
+            Cond cond = new Cond ();
+#if HAVE_GLIB232
+            int64 end_time;
+#else
+            TimeVal next_time = TimeVal ();
+            next_time.get_current_time ();
+#endif
+
+            while (log.active) {
+                log.write_next_line ();
+
+                /* XXX add if DEBUG later for this
+                stdout.printf ("%ld, %ld, %ld\n",
+                               (long)get_monotonic_time (),
+                               (long)TimeSpan.SECOND,
+                               (long)TimeSpan.MILLISECOND);
+                */
+                mutex.lock ();
+#if HAVE_GLIB232
+                end_time = get_monotonic_time () + log.dt * TimeSpan.MILLISECOND;
+                while (cond.wait_until (mutex, end_time))
+#else
+                next_time.add (log.dt * (long)TimeSpan.MILLISECOND);
+                while (cond.timed_wait (mutex, next_time))
+#endif
+                    ; /* do nothing */
+                mutex.unlock ();
+            }
+            return null;
+        }
     }
 }
 

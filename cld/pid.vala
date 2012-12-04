@@ -285,6 +285,10 @@ public class Cld.Pid : AbstractObject {
         _process_values = val;
     }
 
+    public void add_process_value (ProcessValue pv) {
+        process_values.set (pv.id, pv);
+    }
+
     /**
      * Run the PID control loop as a thread.
      */
@@ -314,6 +318,7 @@ public class Cld.Pid : AbstractObject {
             /* calculate the initial error values, effectively a `bumpless`
              * transfer mode */
             p_err = sp - pv.pr_scaled_value;
+            /* XXX this is incorrect, it needs to divide by dt */
             d_err = pv.pr_scaled_value - pv.ppr_scaled_value;
             i_err = (mv.scaled_value - (kp * p_err) - (kd * d_err)) / ki;
 
@@ -467,12 +472,16 @@ public class Cld.Pid : AbstractObject {
         public void * run () {
             Mutex mutex = new Mutex ();
             Cond cond = new Cond ();
+#if HAVE_GLIB232
             int64 end_time;
+#else
+            TimeVal next_time = TimeVal ();
+            next_time.get_current_time ();
+#endif
 
             while (pid.running) {
                 pid.update ();
 
-                end_time = get_monotonic_time () + pid.dt * TimeSpan.MILLISECOND;
                 /* XXX add if DEBUG later for this
                 stdout.printf ("%ld, %ld, %ld\n",
                                (long)get_monotonic_time (),
@@ -480,7 +489,13 @@ public class Cld.Pid : AbstractObject {
                                (long)TimeSpan.MILLISECOND);
                 */
                 mutex.lock ();
+#if HAVE_GLIB232
+                end_time = get_monotonic_time () + pid.dt * TimeSpan.MILLISECOND;
                 while (cond.wait_until (mutex, end_time))
+#else
+                next_time.add (pid.dt * (long)TimeSpan.MILLISECOND);
+                while (cond.timed_wait (mutex, next_time))
+#endif
                     ; /* do nothing */
                 mutex.unlock ();
             }

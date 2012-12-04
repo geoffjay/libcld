@@ -5,6 +5,7 @@ int main (string[] args) {
     XmlConfig xml;
     Builder builder;
     Cld.Object pid;
+    Cld.Object log;
 
     Xml.Parser.init ();
 
@@ -24,10 +25,17 @@ int main (string[] args) {
     (channel as AIChannel).add_raw_value (2.0);
     (channel as AIChannel).add_raw_value (3.0);
 
+    log = builder.get_object ("log0");
+    (log as Cld.Log).file_open ();
+    (log as Cld.Log).run ();
+
     pid = builder.get_object ("pid0");
     (pid as Cld.Pid).run ();
     sleep (1);
     (pid as Cld.Pid).stop ();
+
+    (log as Cld.Log).stop ();
+    (log as Cld.Log).file_mv_and_date (false);
 
     GLib.stdout.printf ("\njson:\n\n%s\n", (pid as Cld.Pid).to_json ());
     GLib.stdout.printf ("\nxml:\n\n%s\n", (pid as Cld.Pid).to_xml ());

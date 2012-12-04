@@ -250,6 +250,7 @@ public class Cld.Builder : GLib.Object {
      */
     private void setup_references () {
         string ref_id;
+
         foreach (var object in objects.values) {
             /* Setup the device references for all of the channel types */
             if (object is Channel) {
@@ -287,6 +288,20 @@ public class Cld.Builder : GLib.Object {
                                             = (channel as Channel);
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (object is Cld.Log) {
+                foreach (var column in (object as Container).objects.values) {
+                    if (column is Column) {
+                        ref_id = (column as Column).chref;
+                        if (ref_id != null) {
+                            var channel = get_object (ref_id);
+                            if (channel != null && channel is Channel) {
+                                (column as Column).channel = (channel as Channel);
                             }
                         }
                     }

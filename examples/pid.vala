@@ -2,7 +2,21 @@ using Cld;
 using Posix;
 
 int main (string[] args) {
-    Cld.Pid pid = new Cld.Pid ();
+    var pid = new Cld.Pid ();
+    var ai = new AIChannel ();
+    var ao = new AOChannel ();
+
+    ai.id = "ai0";
+    ao.id = "ao0";
+
+    var cal = new Calibration ();
+    ai.calibration = cal;
+
+    var pv = new ProcessValue.full ("pv0", ai);
+    var mv = new ProcessValue.full ("pv1", ao);
+
+    pid.add_process_value (pv);
+    pid.add_process_value (mv);
 
     pid.dt = 1;
     pid.run ();

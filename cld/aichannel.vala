@@ -95,14 +95,18 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
         get {
             double sum = 0.0;
 
-            if (raw_value_list.size > 0) {
-                foreach (double value in raw_value_list) {
-                    /* XXX for now assume 16 bit with 0-10V range, fix later */
-                    value = (value / 65535.0) * 10.0;
-                    sum += value;
-                }
+            //debug ("Raw value list size: %d", raw_value_list.size);
 
-                avg_value = sum / raw_value_list.size;
+            lock (raw_value_list) {
+                if (raw_value_list.size > 0) {
+                    foreach (double value in raw_value_list) {
+                        /* XXX for now assume 16 bit with 0-10V range, fix later */
+                        value = (value / 65535.0) * 10.0;
+                        sum += value;
+                    }
+
+                    avg_value = sum / raw_value_list.size;
+                }
             }
             return _avg_value[0];
         }
@@ -141,9 +145,9 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      */
     public double ppr_scaled_value { get { return _scaled_value[2]; } }
 
-    public int raw_value_list_size { get; set; }    /* redundant ? */
-
-    private Gee.LinkedList<double?> raw_value_list;
+    /* XXX should be max list size, naming is confusing */
+    public int raw_value_list_size { get; set; default = 1; }
+    private Gee.LinkedList<double?> raw_value_list = new Gee.LinkedList<double?> ();
 
     /* default constructor */
     public AIChannel () {
@@ -152,10 +156,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
         this.devref = "dev0";
         this.tag = "CH0";
         this.desc = "Input Channel";
-
-        /* create list for raw data */
-        raw_value_list = new Gee.LinkedList<double?> ();
-        raw_value_list_size = 0;
+        preload_raw_value_list ();
     }
 
     public AIChannel.from_xml_node (Xml.Node *node) {
@@ -181,9 +182,13 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
                             val = iter->get_content ();
                             num = int.parse (val);
                             break;
+                        case "naverage":
+                            val = iter->get_content ();
+                            raw_value_list_size = int.parse (val);
+                            break;
                         case "calref":
                             /* this should maybe be an object property,
-                             * fix later maybe */
+                             * possibly fix later */
                             calref = iter->get_content ();
                             break;
                         default:
@@ -193,8 +198,17 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
             }
         }
 
-        /* create list for raw data */
-        raw_value_list = new Gee.LinkedList<double?> ();
+        preload_raw_value_list ();
+    }
+
+    /**
+     * The previous version had some issues where the list size was 0 to begin
+     * with, this is just to avoid that.
+     */
+    private void preload_raw_value_list () {
+        for (int i = 0; i < raw_value_list_size; i++) {
+            add_raw_value (0.0);
+        }
     }
 
     public void add_raw_value (double value) {
@@ -204,13 +218,17 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
         conv = (conv > 10.0) ? 10.0 : conv;
         conv = (conv / 10.0) * 65535.0;  /* assume 0-10V range */
 
-        /* for now add it to the list and the raw value array */
-        raw_value_list.add (conv);
-        raw_value = conv;
+        //debug ("Adding raw value for %s: %f", id, conv);
 
-        if (raw_value_list.size > raw_value_list_size) {
-            /* throw away the value */
-            conv = raw_value_list.poll_head ();
+        lock (raw_value_list) {
+            /* for now add it to the list and the raw value array */
+            raw_value_list.add (conv);
+            raw_value = conv;
+
+            if (raw_value_list.size > raw_value_list_size) {
+                /* throw away the value */
+                conv = raw_value_list.poll_head ();
+            }
         }
     }
 

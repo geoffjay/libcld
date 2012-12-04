@@ -42,6 +42,20 @@ public class Cld.Calibration : AbstractContainer {
         set { update_objects (value); }
     }
 
+    private Gee.Map<string, Object>? _coefficients = null;
+    public Gee.Map<string, Object> coefficients {
+        get {
+            if (_coefficients == null) {
+                _coefficients = new Gee.TreeMap<string, Object> ();
+                foreach (var object in objects.values) {
+                    if (object is Coefficient)
+                        _coefficients.set (object.id, object);
+                }
+            }
+            return _coefficients;
+        }
+    }
+
     /* constructor */
     public Calibration () {
         /* set defaults */
@@ -145,14 +159,6 @@ public class Cld.Calibration : AbstractContainer {
         c.n = index;
         c.value = val;
         objects.set (c.id, c);
-    }
-
-    /**
-     * Redundant method to return the list of objects that represent the
-     * calibration coefficients.
-     */
-    public Gee.Map<string, Object> get_coefficients () {
-        return _objects;
     }
 
     /**

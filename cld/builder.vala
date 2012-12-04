@@ -216,17 +216,13 @@ public class Cld.Builder : GLib.Object {
                             direction = iter->get_prop ("direction");
                             if (ctype == "analog" && direction == "input")
                                 object = new AIChannel.from_xml_node (iter);
-                            else if (ctype == "analog" &&
-                                     direction == "output")
+                            else if (ctype == "analog" && direction == "output")
                                 object = new AOChannel.from_xml_node (iter);
-                            else if (ctype == "digital" &&
-                                     direction == "input")
+                            else if (ctype == "digital" && direction == "input")
                                 object = new DIChannel.from_xml_node (iter);
-                            else if (ctype == "digital" &&
-                                     direction == "output")
+                            else if (ctype == "digital" && direction == "output")
                                 object = new DOChannel.from_xml_node (iter);
-                            else if (ctype == "calculation" ||
-                                     ctype == "virtual")
+                            else if (ctype == "calculation" || ctype == "virtual")
                                 object = new VChannel.from_xml_node (iter);
                             else
                                 object = null;
@@ -250,6 +246,7 @@ public class Cld.Builder : GLib.Object {
      */
     private void setup_references () {
         string ref_id;
+
         foreach (var object in objects.values) {
             /* Setup the device references for all of the channel types */
             if (object is Channel) {
@@ -287,6 +284,21 @@ public class Cld.Builder : GLib.Object {
                                             = (channel as Channel);
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (object is Cld.Log) {
+                foreach (var column in (object as Container).objects.values) {
+                    if (column is Column) {
+                        ref_id = (column as Column).chref;
+                        if (ref_id != null) {
+                            var channel = get_object (ref_id);
+                            if (channel != null && channel is Channel) {
+                                stdout.printf ("Assigning channel %s to column %s\n", channel.id, column.id);
+                                (column as Column).channel = (channel as Channel);
                             }
                         }
                     }

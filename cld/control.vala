@@ -83,6 +83,12 @@ public class Cld.ProcessValue : AbstractObject {
         chref = "ch0";
     }
 
+    public ProcessValue.full (string id, Channel channel) {
+        this.id = id;
+        this.chref = channel.id;
+        this.channel = channel;
+    }
+
     public ProcessValue.from_xml_node (Xml.Node *node) {
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -182,6 +188,9 @@ public class Cld.Control : AbstractContainer {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public override string to_string () {
         string str_data = "[%s] : Control object\n".printf (id);
         if (!objects.is_empty) {
@@ -190,4 +199,10 @@ public class Cld.Control : AbstractContainer {
         }
         return str_data;
     }
+
+    /**
+     * Perform the control loop calculation.
+     * XXX create an AbstractControl class and move this to it
+     */
+    //public abstract void update ();
 }

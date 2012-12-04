@@ -26,6 +26,9 @@
  */
 public abstract class Cld.AbstractPort : AbstractObject {
 
+    /**
+     * {@inheritDoc}
+     */
     public override string to_string () {
         return "Port";
     }

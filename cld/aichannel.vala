@@ -183,7 +183,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
                             break;
                         case "calref":
                             /* this should maybe be an object property,
-                             * fix later maybe */
+                             * possibly fix later */
                             calref = iter->get_content ();
                             break;
                         default:

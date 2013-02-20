@@ -42,13 +42,14 @@
             <property name="title">Data Log</property>
             <property name="path">./</property>
             <property name="file">log.dat</property>
+            <property name="format">%F-%T</property>
             <!-- log rate in hz -->
             <property name="rate">10.000</property>
             <object id="col0" type="column" chref="ai0"/>
-            <object id="col0" type="column" chref="ai1"/>
-            <object id="col1" type="column" chref="ao0"/>
-            <object id="col2" type="column" chref="di0"/>
-            <object id="col3" type="column" chref="do0"/>
+            <object id="col1" type="column" chref="ai1"/>
+            <object id="col2" type="column" chref="ao0"/>
+            <object id="col3" type="column" chref="di0"/>
+            <object id="col4" type="column" chref="do0"/>
         </object>
 
         <!-- pid control loop configuration -->
@@ -129,12 +130,12 @@
         </object>
         <!-- digital channel definitions -->
         <object id="di0" type="channel" ref="dev0" ctype="digital" direction="input">
-            <property name="tag">IN0</property>
+            <property name="tag">DIN0</property>
             <property name="desc">Sample Input</property>
             <property name="num">0</property>
         </object>
         <object id="do0" type="channel" ref="dev1" ctype="digital" direction="output">
-            <property name="tag">OUT0</property>
+            <property name="tag">DOUT0</property>
             <property name="desc">Sample Output</property>
             <property name="num">0</property>
         </object>

@@ -69,10 +69,19 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
      */
     public virtual double raw_value { get; set; }
 
+    private double _scaled_value;
+
     /**
      * {@inheritDoc}
      */
-    public virtual double scaled_value { get; set; }
+    public virtual double scaled_value {
+        get {
+            if (calibration != null)
+                _scaled_value = calibration.apply (raw_value);
+            return _scaled_value;
+        }
+        set { _scaled_value = value; }
+    }
 
     /**
      * {@inheritDoc}
@@ -80,7 +89,7 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
     public virtual double avg_value { get; set; }
 
     /**
-     *
+     * Wrong spot to store information about control loop, should move it.
      */
     public bool manual { get; set; }
 
@@ -117,6 +126,11 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
                         case "num":
                             val = iter->get_content ();
                             num = int.parse (val);
+                            break;
+                        case "calref":
+                            /* this should maybe be an object property,
+                             * possibly fix later */
+                            calref = iter->get_content ();
                             break;
                         default:
                             break;

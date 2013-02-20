@@ -112,6 +112,11 @@ public class Cld.Log : AbstractContainer {
      */
     public bool is_open { get; set; }
 
+    /**
+     * Date/Time format to use when renaming the file on close.
+     */
+    public string date_format { get; set; }
+
     private Gee.Map<string, Object> _objects;
     public override Gee.Map<string, Object> objects {
         get { return (_objects); }
@@ -128,6 +133,11 @@ public class Cld.Log : AbstractContainer {
      * File stream to use as output.
      */
     private FileStream file_stream;
+
+    /**
+     * DateTime data to use for time stamping log entries.
+     */
+    private DateTime start_time;
 
     /* constructor */
     public Log () {
@@ -170,6 +180,9 @@ public class Cld.Log : AbstractContainer {
                             value = iter->get_content ();
                             rate = double.parse (value);
                             break;
+                        case "format":
+                            date_format = iter->get_content ();
+                            break;
                         default:
                             break;
                     }
@@ -199,7 +212,7 @@ public class Cld.Log : AbstractContainer {
      */
     public bool file_open () {
         string filename;
-        TimeVal time = TimeVal ();
+        DateTime time = new DateTime.now_local ();
 
         /* original implementation checked for the existence of requested
          * file and posted error message if it is, reimplement that later */
@@ -214,26 +227,26 @@ public class Cld.Log : AbstractContainer {
         else
         {
             is_open = true;
+            start_time = new DateTime.now_local ();
             /* add the header */
-            time.get_current_time ();
             file_stream.printf ("Log file: %s created at %s\n\n",
-               name, time.to_iso8601 ());
+               name, time.format ("%F %T"));
         }
 
         return is_open;
     }
 
     public void file_close () {
-        TimeVal time = TimeVal ();
+        DateTime time = new DateTime.now_local ();
 
         /* add the footer */
-        time.get_current_time ();
         file_stream.printf ("\nLog file: %s closed at %s",
-                            name, time.to_iso8601 ());
+                            name, time.format ("%F %T"));
         /* setting a GLib.FileStream object to null apparently forces a
          * call to stdlib's close () */
         file_stream = null;
         is_open = false;
+        start_time = null;
     }
 
     public bool file_is_open () {
@@ -245,8 +258,11 @@ public class Cld.Log : AbstractContainer {
         string dest;
         string dest_name;
         string dest_ext;
-        time_t tm = time_t ();
-        var t = Time.local (tm);
+        DateTime time = new DateTime.now_local ();
+//        time_t tm = time_t ();
+//        var t = Time.local (tm);
+
+        /* XXX give log class a format string to use for tagging file names */
 
         /* call to close writes the footer and sets the stream to null */
         file_close ();
@@ -254,9 +270,10 @@ public class Cld.Log : AbstractContainer {
         /* generate new file name to move to based on date and
            existing name */
         disassemble_filename (file, out dest_name, out dest_ext);
-        dest = "%s%s-%d%02d%02d-%02dh%02dm%02ds.%s".printf (path,
-                    dest_name, t.year, t.month+1, t.day, t.hour,
-                    t.minute, t.second, dest_ext);
+//        dest = "%s%s-%d%02d%02d-%02dh%02dm%02ds.%s".printf (path,
+//                    dest_name, t.year, t.month+1, t.day, t.hour,
+//                    t.minute, t.second, dest_ext);
+        dest = "%s%s-%s.%s".printf (path, dest_name, time.format (date_format), dest_ext);
         if (path.has_suffix ("/"))
             src = "%s%s".printf (path, file);
         else
@@ -274,8 +291,9 @@ public class Cld.Log : AbstractContainer {
 
     public void write_header () {
         string tags = "Time";
-        string units = "[HH:MM:SS.mmm]";
-        string cals = "Channel Calibrations\n";
+        //string units = "[HH:MM:SS.mmm]";
+        string units = "[ms]";
+        string cals = "Channel Calibrations:\n\n";
 
         foreach (var object in objects.values) {
             stdout.printf ("Found object [%s]\n", object.id);
@@ -287,7 +305,7 @@ public class Cld.Log : AbstractContainer {
                 if (channel is AChannel) {
                     stdout.printf ("Column channel reference is analog\n");
                     var calibration = (channel as AChannel).calibration;
-                    cals += "\n:\ty = ";
+                    cals += "%s:\ty = ".printf (channel.id);
 
                     foreach (var coefficient in (calibration as Container).objects.values) {
                         cals += "%.3f * x^%d + ".printf (
@@ -296,6 +314,7 @@ public class Cld.Log : AbstractContainer {
                             );
                     }
 
+                    cals = cals.substring (0, cals.length - 3);
                     cals += "\t(%s)\n".printf (channel.desc);
                     units += "\t[%s]".printf (calibration.units);
                     tags += "\t%s".printf (channel.tag);
@@ -303,27 +322,40 @@ public class Cld.Log : AbstractContainer {
             }
         }
 
-        header = "%s\n\nLogging rate: %.2f Hz\n\n%s\n%s\n".printf (cals, rate, tags, units);
+        header = "%s\nLogging rate: %.2f Hz\n\n%s\n%s\n".printf (cals, rate, tags, units);
 
         file_print (header);
     }
 
     public void write_next_line () {
         string line = "";
+        char sep = '\t';
+        DateTime curr_time = new DateTime.now_local ();
+        TimeSpan diff = curr_time.difference (start_time);
+        //int h = (int)diff / 3600000000;
+        //int m = (int)diff / 60000000 - (h * 60);
+        //int s = (int)diff / 1000000 - (h * 3600 + m * 60);
+        //int ms = (int)diff % 1000000;
+
+        //line = "%02d:%02d:%02d.%03d\t".printf (h, m, s, ms);
+        line = "%lld\t".printf ((int64)diff);
 
         foreach (var object in objects.values) {
-            line = "00:00:00.000\t";
             if (object is Column) {
                 var channel = ((object as Column).channel as Channel);
                 if (channel is AChannel) {
-                    line += "%f\t".printf ((channel as AChannel).scaled_value);
+                    line += "%f%c".printf ((channel as AChannel).scaled_value, sep);
                 } else if (channel is DChannel) {
-                    line += ((channel as DChannel).state) ? "on\t" : "off\t";
+                    if ((channel as DChannel).state)
+                        line += "on%c".printf (sep);
+                    else
+                        line += "off%c".printf (sep);
                 }
             }
-            line += "\n";
         }
 
+        line = line.substring (0, line.length - 1);
+        line += "\n";
         file_print (line);
     }
 

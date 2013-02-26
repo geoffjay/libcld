@@ -230,7 +230,7 @@ public class Cld.Log : AbstractContainer {
             start_time = new DateTime.now_local ();
             /* add the header */
             file_stream.printf ("Log file: %s created at %s\n\n",
-               name, time.format ("%F %T"));
+                                name, time.format ("%F %T"));
         }
 
         return is_open;
@@ -239,14 +239,16 @@ public class Cld.Log : AbstractContainer {
     public void file_close () {
         DateTime time = new DateTime.now_local ();
 
-        /* add the footer */
-        file_stream.printf ("\nLog file: %s closed at %s",
-                            name, time.format ("%F %T"));
-        /* setting a GLib.FileStream object to null apparently forces a
-         * call to stdlib's close () */
-        file_stream = null;
-        is_open = false;
-        start_time = null;
+        if (is_open) {
+            /* add the footer */
+            file_stream.printf ("\nLog file: %s closed at %s",
+                                name, time.format ("%F %T"));
+            /* setting a GLib.FileStream object to null apparently forces a
+            * call to stdlib's close () */
+            file_stream = null;
+            is_open = false;
+            start_time = null;
+        }
     }
 
     public bool file_is_open () {
@@ -259,8 +261,6 @@ public class Cld.Log : AbstractContainer {
         string dest_name;
         string dest_ext;
         DateTime time = new DateTime.now_local ();
-//        time_t tm = time_t ();
-//        var t = Time.local (tm);
 
         /* XXX give log class a format string to use for tagging file names */
 
@@ -270,9 +270,6 @@ public class Cld.Log : AbstractContainer {
         /* generate new file name to move to based on date and
            existing name */
         disassemble_filename (file, out dest_name, out dest_ext);
-//        dest = "%s%s-%d%02d%02d-%02dh%02dm%02ds.%s".printf (path,
-//                    dest_name, t.year, t.month+1, t.day, t.hour,
-//                    t.minute, t.second, dest_ext);
         dest = "%s%s-%s.%s".printf (path, dest_name, time.format (date_format), dest_ext);
         if (path.has_suffix ("/"))
             src = "%s%s".printf (path, file);
@@ -292,7 +289,7 @@ public class Cld.Log : AbstractContainer {
     public void write_header () {
         string tags = "Time";
         //string units = "[HH:MM:SS.mmm]";
-        string units = "[ms]";
+        string units = "[us]";
         string cals = "Channel Calibrations:\n\n";
 
         foreach (var object in objects.values) {

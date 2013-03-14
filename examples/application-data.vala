@@ -69,7 +69,14 @@ public class ApplicationData : GLib.Object {
      * a HashMap so that one thread per device could be done.
      */
     private bool _acq_active = false;
-    public bool acq_active { get { return _acq_active; } }
+    public bool acq_active {
+        get {
+            return _acq_active;
+        }
+        set {
+            _acq_active = value;
+        }
+    }
 
     private unowned Thread<void *> thread;
     private Mutex acq_mutex = new Mutex ();
@@ -124,12 +131,16 @@ public class ApplicationData : GLib.Object {
         }
 
         public void * run () {
-            acq_func (data);
-            //while (data.acq_active) {
-            //    Thread.usleep (1000000);
-            //    debug ("acquiring...");
-            //}
-            return null;
+            Mutex mutex = new Mutex ();
+//            acq_func (data);
+//            while (data.acq_active) {
+            while (true) {
+                mutex.lock ();
+                Thread.usleep (1000000);
+                debug ("acquiring...");
+                mutex.unlock ();
+            }
+//            return null;
         }
     }
 }

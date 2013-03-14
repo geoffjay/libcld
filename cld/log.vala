@@ -126,7 +126,7 @@ public class Cld.Log : AbstractContainer {
     /**
      * Internal thread data for log file output handling.
      */
-    private unowned Thread<void *> thread;
+    private unowned GLib.Thread<void *> thread;
     private Mutex mutex = new Mutex ();
 
     /**
@@ -360,20 +360,19 @@ public class Cld.Log : AbstractContainer {
      * Run the log file output as a thread.
      */
     public void run () {
-        if (!Thread.supported ()) {
+        if (!GLib.Thread.supported ()) {
             stderr.printf ("Cannot run logging without thread support.\n");
             active = false;
             return;
         }
 
         if (!active) {
-            var log_thread = new LogThread (this);
+            var log_thread = new Thread (this);
 
             try {
                 active = true;
                 write_header ();
-                /* TODO create is deprecated, check compiler warnings */
-                thread = Thread.create<void *> (log_thread.run, true);
+                thread = GLib.Thread.create<void *> (log_thread.run, true);
             } catch (ThreadError e) {
                 stderr.printf ("%s\n", e.message);
                 active = false;
@@ -474,10 +473,10 @@ public class Cld.Log : AbstractContainer {
         return str_data;
     }
 
-    public class LogThread {
-        unowned Log log;
+    public class Thread {
+        private Log log;
 
-        public LogThread (Log log) {
+        public Thread (Log log) {
             this.log = log;
         }
 
@@ -492,24 +491,23 @@ public class Cld.Log : AbstractContainer {
 #endif
 
             while (log.active) {
-                log.write_next_line ();
+                lock (log) {
+                    log.write_next_line ();
+                }
 
-                /* XXX add if DEBUG later for this
-                stdout.printf ("%ld, %ld, %ld\n",
-                               (long)get_monotonic_time (),
-                               (long)TimeSpan.SECOND,
-                               (long)TimeSpan.MILLISECOND);
-                */
                 mutex.lock ();
+                try {
 #if HAVE_GLIB232
-                end_time = get_monotonic_time () + log.dt * TimeSpan.MILLISECOND;
-                while (cond.wait_until (mutex, end_time))
+                    end_time = get_monotonic_time () + log.dt * TimeSpan.MILLISECOND;
+                    while (cond.wait_until (mutex, end_time))
 #else
-                next_time.add (log.dt * (long)TimeSpan.MILLISECOND);
-                while (cond.timed_wait (mutex, next_time))
+                    next_time.add (log.dt * (long)TimeSpan.MILLISECOND);
+                    while (cond.timed_wait (mutex, next_time))
 #endif
-                    ; /* do nothing */
-                mutex.unlock ();
+                        ; /* do nothing */
+                } finally {
+                    mutex.unlock ();
+                }
             }
             return null;
         }

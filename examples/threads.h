@@ -6,7 +6,7 @@
 
 //BEGIN_C_DECLS
 
-void threads_acq_func (GObject *data);
+void * threads_acq_func (GObject *data);
 
 //END_C_DECLS
 

@@ -2,5 +2,5 @@
 namespace Threads {
     [Compact]
     [CCode (cname = "threads_acq_func")]
-    public void acq_func (GLib.Object? data = null);
+    public void * acq_func (GLib.Object? data = null);
 }

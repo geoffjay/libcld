@@ -68,10 +68,9 @@ public class Cld.Pid : AbstractObject {
     public bool running { get; set; default = false; }
 
     /**
-     * Internal thread data for control loop execution.
+     * A description of the PID control.
      */
-    private unowned Thread<void *> thread;
-    private Mutex mutex = new Mutex ();
+    public string desc { get; set; default = "PID Control"; }
 
     /**
      * XXX Consider changing the three error variables to a single one that is
@@ -110,9 +109,46 @@ public class Cld.Pid : AbstractObject {
     }
 
     /* XXX For now these are just analog channels, possible use digital as
-        *     well later on. */
-    private AIChannel pv;
-    private AOChannel mv;
+     *     well later on. */
+    private AIChannel? _pv = null;
+    private AIChannel pv {
+        get {
+            if (_pv == null) {
+                foreach (var object in process_values.values) {
+                    if ((object as ProcessValue).chtype == ProcessValue.Type.INPUT)
+                        _pv = ((object as ProcessValue).channel as AIChannel);
+                }
+            }
+            return _pv;
+        }
+        set { _pv = value; }
+    }
+
+    private AOChannel? _mv = null;
+    private AOChannel mv {
+        get {
+            if (_mv == null) {
+                foreach (var object in process_values.values) {
+                    if ((object as ProcessValue).chtype == ProcessValue.Type.OUTPUT)
+                        _mv = ((object as ProcessValue).channel as AOChannel);
+                }
+            }
+            return _mv;
+        }
+        set { _mv = value; }
+    }
+
+    public string? pv_id {
+        get {
+            return pv.id;
+        }
+    }
+
+    public string? mv_id {
+        get {
+            return mv.id;
+        }
+    }
 
     /**
      * Available parameters provided by this control object.
@@ -196,6 +232,8 @@ public class Cld.Pid : AbstractObject {
         }
     }
 
+    private Mutex mutex = new Mutex ();
+
     /**
      * Default constructor.
      */
@@ -263,6 +301,9 @@ public class Cld.Pid : AbstractObject {
                             value = iter->get_content ();
                             kd = double.parse (value);
                             break;
+                        case "desc":
+                            desc = iter->get_content ();
+                            break;
                         default:
                             break;
                     }
@@ -290,66 +331,23 @@ public class Cld.Pid : AbstractObject {
     }
 
     /**
-     * Run the PID control loop as a thread.
+     * Calculate the initial error values, effectively produces a `bumpless`
+     * transfer when switched to automatic mode as part of a control loop.
      */
-    public void run () {
-        if (!Thread.supported ()) {
-            stderr.printf ("Cannot run PID control without thread support.\n");
-            running = false;
-            return;
-        }
-
-        if (!running) {
-            var pid_thread = new PidThread (this);
-
-            /* Just use first available input or output channel that is found. */
-            foreach (var object in process_values.values) {
-                if ((object as ProcessValue).chtype == ProcessValue.Type.INPUT)
-                    pv = ((object as ProcessValue).channel as AIChannel);
-                else if ((object as ProcessValue).chtype == ProcessValue.Type.OUTPUT)
-                    mv = ((object as ProcessValue).channel as AOChannel);
-                else
-                {
-                    stderr.printf ("Invalid channels were provided.\n");
-                    return;
-                }
-            }
-
-            /* calculate the initial error values, effectively a `bumpless`
-             * transfer mode */
-            p_err = sp - pv.pr_scaled_value;
-            /* XXX this is incorrect, it needs to divide by dt */
-            d_err = pv.pr_scaled_value - pv.ppr_scaled_value;
-            i_err = (mv.scaled_value - (kp * p_err) - (kd * d_err)) / ki;
-
-            try {
-                running = true;
-                /* TODO create is deprecated, check compiler warnings */
-                thread = Thread.create<void *> (pid_thread.run, true);
-            } catch (ThreadError e) {
-                stderr.printf ("%s\n", e.message);
-                running = false;
-                return;
-            }
-        }
+    public void calculate_preload_bias () {
+        p_err = sp - pv.pr_scaled_value;
+        /* XXX this is incorrect, it needs to divide by dt */
+        d_err = pv.pr_scaled_value - pv.ppr_scaled_value;
+        i_err = (mv.scaled_value - (kp * p_err) - (kd * d_err)) / ki;
     }
 
     /**
-     * Stop a PID control loop that is executing.
-     */
-    public void stop () {
-        if (running) {
-            running = false;
-            thread.join ();
-        }
-    }
-
-    /**
-     * Performs the PID calculation.
+     * This should - @inheritDoc - but this class doesn't use the Control yet as
+     * its base class.
      */
     public void update () {
-        stdout.printf ("(%ld) Executing PID thread every %d ms\n",
-                       (long)get_monotonic_time (), dt);
+        debug ("(%ld) Executing PID thread every %d ms",
+               (long)get_monotonic_time (), dt);
 
         /* do the calculation */
         mutex.lock ();
@@ -462,10 +460,11 @@ public class Cld.Pid : AbstractObject {
         return root->get_content ();
     }
 
-    public class PidThread {
-        unowned Pid pid;
+    public class Thread {
 
-        public PidThread (Pid pid) {
+        private Pid pid;
+
+        public Thread (Pid pid) {
             this.pid = pid;
         }
 
@@ -478,6 +477,8 @@ public class Cld.Pid : AbstractObject {
             TimeVal next_time = TimeVal ();
             next_time.get_current_time ();
 #endif
+
+            debug ("PID run called");
 
             while (pid.running) {
                 pid.update ();
@@ -499,6 +500,9 @@ public class Cld.Pid : AbstractObject {
                     ; /* do nothing */
                 mutex.unlock ();
             }
+
+            debug ("PID run thread complete");
+
             return null;
         }
     }

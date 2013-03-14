@@ -3,7 +3,7 @@
 #include "threads.h"
 #include "application-data.h"
 
-void
+void *
 threads_acq_func (GObject *data)
 {
     ApplicationData *app_data = (ApplicationData *)data;
@@ -14,4 +14,6 @@ threads_acq_func (GObject *data)
         g_debug ("Test acquisition thread.");
         usleep (1000000);
     }
+
+    return NULL;
 }

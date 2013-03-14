@@ -13,24 +13,26 @@
 #define true 1
 #define false 0
 
-gboolean btn_toggled_cb (GtkWidget *widget, gpointer data);
+gboolean btn_toggled_cb (GtkWidget *widget, gpointer cbdata);
 
-//CldXmlConfig* xml = NULL;
-//CldBuilder* builder = NULL;
+//ApplicationData *data = NULL;
+
+CldXmlConfig* xml = NULL;
+CldBuilder* builder = NULL;
 
 gint
 main (gint argc, gchar *argv[])
 {
-    ApplicationData *data;
+    //ApplicationData *data;
     GtkWidget *window;
     GtkWidget *button;
     GtkWidget *box;
 
     g_type_init ();
 
-    data = application_data_new_with_xml_file ("cld.xml");
-    //xml = cld_xml_config_new_with_file_name ("cld.xml");
-	//builder = cld_builder_new_from_xml_config (xml);
+    //data = application_data_new_with_xml_file ("cld.xml");
+    xml = cld_xml_config_new_with_file_name ("cld.xml");
+	builder = cld_builder_new_from_xml_config (xml);
 
     gtk_init (&argc, &argv);
 
@@ -45,13 +47,15 @@ main (gint argc, gchar *argv[])
     button = gtk_toggle_button_new_with_label ("Log");
     g_signal_connect (button, "toggled",
                       G_CALLBACK (btn_toggled_cb),
-                      data);
+                      NULL);
     gtk_box_pack_start (GTK_BOX (box), button, true, true, 5);
 
     gtk_widget_show_all (window);
 
     gdk_threads_enter ();
+    //application_data_run_acquisition (data);
     gtk_main ();
+    //application_data_stop_acquisition (data);
     gdk_threads_leave ();
 
     g_thread_exit (NULL);
@@ -60,10 +64,11 @@ main (gint argc, gchar *argv[])
 }
 
 gboolean
-btn_toggled_cb (GtkWidget *widget, gpointer data)
+btn_toggled_cb (GtkWidget *widget, gpointer cbdata)
 {
-    ApplicationData *app_data = APPLICATION_DATA (data);
-    CldBuilder *builder = CLD_BUILDER (application_data_get_builder (APPLICATION_DATA (app_data)));
+    //ApplicationData *app_data = APPLICATION_DATA (data);
+    //CldBuilder *builder = CLD_BUILDER (application_data_get_builder (APPLICATION_DATA (app_data)));
+    //CldBuilder *builder = CLD_BUILDER (application_data_get_builder (APPLICATION_DATA (data)));
     GeeMap *logs = cld_builder_get_logs (builder);
     GeeMapIterator *it = gee_map_map_iterator (logs);
 	CldObject* log = cld_builder_get_object (builder, "log0");

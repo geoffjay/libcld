@@ -122,6 +122,19 @@ public class Cld.XmlConfig : GLib.Object {
         update_xpath_nodes (obj->nodesetval, value);
     }
 
+    public void edit_node_content (string xpath,
+                                   string value) {
+        obj = ctx->eval_expression (xpath);
+        /* throw an error if the xpath is invalid */
+        if (obj == null)
+            throw new Cld.XmlError.INVALID_XPATH_EXPR (
+                    "the xpath expression %s is invalid", xpath
+                );
+
+        /* update the selected nodes */
+        update_xpath_nodes (obj->nodesetval, value);
+    }
+
     public void update_xpath_nodes (Xml.XPath.NodeSet *nodes, string value) {
         int i;
         int size = nodes->length ();

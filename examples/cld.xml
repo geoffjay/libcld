@@ -5,7 +5,7 @@
   2011-01-28
 -->
 <cld xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:noNamespaceSchemaLocation="config.xsd">
+     xsi:noNamespaceSchemaLocation="cld.xsd">
 
     <!-- name of the application using this configuration -->
     <property name="app">CRDC</property>

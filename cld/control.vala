@@ -188,6 +188,9 @@ public class Cld.Control : AbstractContainer {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public override string to_string () {
         string str_data = "[%s] : Control object\n".printf (id);
         if (!objects.is_empty) {
@@ -196,4 +199,10 @@ public class Cld.Control : AbstractContainer {
         }
         return str_data;
     }
+
+    /**
+     * Perform the control loop calculation.
+     * XXX create an AbstractControl class and move this to it
+     */
+    //public abstract void update ();
 }

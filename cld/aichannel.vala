@@ -214,13 +214,17 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
         conv = (conv > 10.0) ? 10.0 : conv;
         conv = (conv / 10.0) * 65535.0;  /* assume 0-10V range */
 
-        /* for now add it to the list and the raw value array */
-        raw_value_list.add (conv);
-        raw_value = conv;
+        //debug ("Adding raw value for %s: %f", id, conv);
 
-        if (raw_value_list.size > raw_value_list_size) {
-            /* throw away the value */
-            conv = raw_value_list.poll_head ();
+        lock (raw_value_list) {
+            /* for now add it to the list and the raw value array */
+            raw_value_list.add (conv);
+            raw_value = conv;
+
+            if (raw_value_list.size > raw_value_list_size) {
+                /* throw away the value */
+                conv = raw_value_list.poll_head ();
+            }
         }
     }
 

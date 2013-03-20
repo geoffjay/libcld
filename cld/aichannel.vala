@@ -95,14 +95,18 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
         get {
             double sum = 0.0;
 
-            if (raw_value_list.size > 0) {
-                foreach (double value in raw_value_list) {
-                    /* XXX for now assume 16 bit with 0-10V range, fix later */
-                    value = (value / 65535.0) * 10.0;
-                    sum += value;
-                }
+            //debug ("Raw value list size: %d", raw_value_list.size);
 
-                avg_value = sum / raw_value_list.size;
+            lock (raw_value_list) {
+                if (raw_value_list.size > 0) {
+                    foreach (double value in raw_value_list) {
+                        /* XXX for now assume 16 bit with 0-10V range, fix later */
+                        value = (value / 65535.0) * 10.0;
+                        sum += value;
+                    }
+
+                    avg_value = sum / raw_value_list.size;
+                }
             }
             return _avg_value[0];
         }

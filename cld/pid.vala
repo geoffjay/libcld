@@ -346,8 +346,8 @@ public class Cld.Pid : AbstractObject {
      * its base class.
      */
     public void update () {
-        debug ("(%ld) Executing PID thread every %d ms",
-               (long)get_monotonic_time (), dt);
+        //debug ("(%ld) Executing PID thread every %d ms",
+        //       (long)get_monotonic_time (), dt);
 
         /* do the calculation */
         mutex.lock ();
@@ -355,7 +355,10 @@ public class Cld.Pid : AbstractObject {
         p_err = sp - pv.pr_scaled_value;
         i_err += p_err;
         d_err = pv.scaled_value - pv.pr_scaled_value;
-        mv.scaled_value = (kp * p_err) + (ki * i_err) + (kd * d_err);
+        mv.raw_value = (kp * p_err) + (ki * i_err) + (kd * d_err);
+
+        debug ("SP: %.2f, MV: %.2f, PV: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
+               sp, mv.scaled_value, pv.scaled_value, p_err, i_err, d_err);
 
         /* XXX Not sure whether or not to raise an output event here, or simple
          *     write out for channel, or just let an external thread handle the

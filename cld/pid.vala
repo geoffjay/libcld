@@ -335,9 +335,9 @@ public class Cld.Pid : AbstractObject {
      * transfer when switched to automatic mode as part of a control loop.
      */
     public void calculate_preload_bias () {
-        p_err = sp - pv.pr_scaled_value;
+        p_err = sp - pv.previous_value;
         /* XXX this is incorrect, it needs to divide by dt */
-        d_err = pv.pr_scaled_value - pv.ppr_scaled_value;
+        d_err = pv.previous_value - pv.past_previous_value;
         i_err = (mv.scaled_value - (kp * p_err) - (kd * d_err)) / ki;
     }
 
@@ -352,13 +352,16 @@ public class Cld.Pid : AbstractObject {
         /* do the calculation */
         mutex.lock ();
 
-        p_err = sp - pv.pr_scaled_value;
+        p_err = sp - pv.previous_value;
         i_err += p_err;
-        d_err = pv.scaled_value - pv.pr_scaled_value;
-        mv.raw_value = (kp * p_err) + (ki * i_err) + (kd * d_err);
+        d_err = pv.current_value - pv.previous_value;
 
-        debug ("SP: %.2f, MV: %.2f, PV: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
-               sp, mv.scaled_value, pv.scaled_value, p_err, i_err, d_err);
+        lock (mv) {
+            mv.raw_value = (kp * p_err) + (ki * i_err) + (kd * d_err);
+        }
+
+        debug ("SP: %.2f, MV: %.2f, PV: %.2f, PVPR: %.2f, PVPPR: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
+               sp, mv.scaled_value, pv.current_value, pv.previous_value, pv.past_previous_value, p_err, i_err, d_err);
 
         /* XXX Not sure whether or not to raise an output event here, or simple
          *     write out for channel, or just let an external thread handle the

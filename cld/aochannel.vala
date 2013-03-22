@@ -80,13 +80,13 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
                 _scaled_value = calibration.apply (raw_value);
             return _scaled_value;
         }
-        set { _scaled_value = value; }
+        private set { _scaled_value = value; }
     }
 
     /**
      * {@inheritDoc}
      */
-    public virtual double avg_value { get; set; }
+    public virtual double avg_value { get; private set; }
 
     /**
      * Wrong spot to store information about control loop, should move it.

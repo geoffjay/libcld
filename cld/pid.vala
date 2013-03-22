@@ -45,11 +45,15 @@ public class Cld.Pid : AbstractObject {
      */
     public double kp { get; set; }
 
+    private double _ki;
     /**
-     * Integral gain: Larger values imply steady state errors are eliminated
-     * faster but can trade off with a larger overshoot.
+     * Integral gain: Larger values imply that steady state errors are
+     * eliminated faster but can trade off with a larger overshoot.
      */
-    public double ki { get; set; }
+    public double ki {
+        get { return _ki; }
+        set { _ki = (value == 0.0) ? 0.000001 : value; }
+    }
 
     /**
      * Derivitive gain: Larger values decrease overshoot.
@@ -337,8 +341,10 @@ public class Cld.Pid : AbstractObject {
     public void calculate_preload_bias () {
         p_err = sp - pv.previous_value;
         /* XXX this is incorrect, it needs to divide by dt */
-        d_err = pv.previous_value - pv.past_previous_value;
         i_err = (mv.scaled_value - (kp * p_err) - (kd * d_err)) / ki;
+        d_err = pv.previous_value - pv.past_previous_value;
+        //i_err = 0;
+        //d_err = 0;
     }
 
     /**
@@ -355,13 +361,15 @@ public class Cld.Pid : AbstractObject {
         p_err = sp - pv.previous_value;
         i_err += p_err;
         d_err = pv.current_value - pv.previous_value;
+        //i_err = 0;
+        //d_err = 0;
 
         lock (mv) {
             mv.raw_value = (kp * p_err) + (ki * i_err) + (kd * d_err);
         }
 
-        debug ("SP: %.2f, MV: %.2f, PV: %.2f, PVPR: %.2f, PVPPR: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
-               sp, mv.scaled_value, pv.current_value, pv.previous_value, pv.past_previous_value, p_err, i_err, d_err);
+        //debug ("SP: %.2f, MV: %.2f, PV: %.2f, PVPR: %.2f, PVPPR: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
+        //       sp, mv.scaled_value, pv.current_value, pv.previous_value, pv.past_previous_value, p_err, i_err, d_err);
 
         /* XXX Not sure whether or not to raise an output event here, or simple
          *     write out for channel, or just let an external thread handle the

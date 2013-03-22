@@ -101,7 +101,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
                 if (raw_value_list.size > 0) {
                     foreach (double value in raw_value_list) {
                         /* XXX for now assume 16 bit with 0-10V range, fix later */
-                        value = (value / 65535.0) * 10.0;
+                        //value = (value / 65535.0) * 10.0;
                         sum += value;
                     }
 
@@ -138,7 +138,10 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      */
     public double current_value {
         get {
-            return calibration.apply (raw_value_list.get (raw_value_list.size - 1));
+            /* XXX for now assume 16 bit with 0-10V range, fix later */
+            double value = calibration.apply (raw_value_list.get (raw_value_list.size - 1));
+            //value = (value / 65535.0) * 10.0;
+            return value;
         }
     }
 
@@ -148,7 +151,10 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      */
     public double previous_value {
         get {
-            return calibration.apply (raw_value_list.get (raw_value_list.size - 2));
+            /* XXX for now assume 16 bit with 0-10V range, fix later */
+            double value = calibration.apply (raw_value_list.get (raw_value_list.size - 2));
+            //value = (value / 65535.0) * 10.0;
+            return value;
         }
     }
 
@@ -159,7 +165,10 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      */
     public double past_previous_value {
         get {
-            return calibration.apply (raw_value_list.get (raw_value_list.size - 3));
+            /* XXX for now assume 16 bit with 0-10V range, fix later */
+            double value = calibration.apply (raw_value_list.get (raw_value_list.size - 3));
+            //value = (value / 65535.0) * 10.0;
+            return value;
         }
     }
 
@@ -244,7 +253,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
         /* clip the input */
         conv = (conv <  0.0) ?  0.0 : conv;
         conv = (conv > 10.0) ? 10.0 : conv;
-        conv = (conv / 10.0) * 65535.0;  /* assume 0-10V range */
+        //conv = (conv / 10.0) * 65535.0;  /* assume 0-10V range */
 
         //debug ("Adding raw value for %s: %f", id, conv);
 
@@ -266,8 +275,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
         if (raw_value_list.size > 0) {
             foreach (double value in raw_value_list) {
                 /* !!! for now assume 16 bit with 0-10V range - fix later */
-//                value = ((value / 65535.0) * 10.0) * slope + yint;
-                value = (value / 65535.0) * 10.0;
+                //value = (value / 65535.0) * 10.0;
                 sum += value;
             }
 

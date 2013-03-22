@@ -138,7 +138,10 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      */
     public double current_value {
         get {
-            return calibration.apply (raw_value_list.get (raw_value_list.size - 1));
+            /* XXX for now assume 16 bit with 0-10V range, fix later */
+            double value = calibration.apply (raw_value_list.get (raw_value_list.size - 1));
+            value = (value / 65535.0) * 10.0;
+            return value;
         }
     }
 
@@ -148,7 +151,10 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      */
     public double previous_value {
         get {
-            return calibration.apply (raw_value_list.get (raw_value_list.size - 2));
+            /* XXX for now assume 16 bit with 0-10V range, fix later */
+            double value = calibration.apply (raw_value_list.get (raw_value_list.size - 2));
+            value = (value / 65535.0) * 10.0;
+            return value;
         }
     }
 
@@ -159,7 +165,10 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      */
     public double past_previous_value {
         get {
-            return calibration.apply (raw_value_list.get (raw_value_list.size - 3));
+            /* XXX for now assume 16 bit with 0-10V range, fix later */
+            double value = calibration.apply (raw_value_list.get (raw_value_list.size - 3));
+            value = (value / 65535.0) * 10.0;
+            return value;
         }
     }
 

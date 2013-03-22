@@ -45,11 +45,15 @@ public class Cld.Pid : AbstractObject {
      */
     public double kp { get; set; }
 
+    private double _ki;
     /**
      * Integral gain: Larger values imply steady state errors are eliminated
      * faster but can trade off with a larger overshoot.
      */
-    public double ki { get; set; }
+    public double ki {
+        get { return _ki; }
+        set { _ki = (value == 0.0) ? 0.000001 : value; }
+    }
 
     /**
      * Derivitive gain: Larger values decrease overshoot.

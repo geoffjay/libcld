@@ -73,12 +73,12 @@ public interface Cld.AChannel : AbstractChannel, Channel {
     /**
      *
      */
-    public abstract double scaled_value { get; set; }
+    public abstract double scaled_value { get; private set; }
 
     /**
      *
      */
-    public abstract double avg_value { get; set; }
+    public abstract double avg_value { get; private set; }
 }
 
 /**

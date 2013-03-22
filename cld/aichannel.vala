@@ -110,7 +110,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
             }
             return _avg_value[0];
         }
-        set {
+        private set {
             _avg_value[2] = _avg_value[1];
             _avg_value[1] = _avg_value[0];
             _avg_value[0] = value;
@@ -122,10 +122,10 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      */
     public virtual double scaled_value {
         get {
-            scaled_value = calibration.apply (avg_value);
+            _scaled_value[0] = calibration.apply (avg_value);
             return _scaled_value[0];
         }
-        set {
+        private set {
             _scaled_value[2] = _scaled_value[1];
             _scaled_value[1] = _scaled_value[0];
             _scaled_value[0] = value;
@@ -133,21 +133,49 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
     }
 
     /**
-     * Read only previous scaled value, used with control loops and filters.
+     * Read only current unaveraged value, used with control loops and filters.
      * XXX Consider name change.
      */
-    public double pr_scaled_value { get { return _scaled_value[1]; } }
+    public double current_value {
+        get {
+            return calibration.apply (raw_value_list.get (raw_value_list.size - 1));
+        }
+    }
 
     /**
-     * Read only previous previous scaled value, used with control loops and
+     * Read only previous unaveraged value, used with control loops and filters.
+     * XXX Consider name change.
+     */
+    public double previous_value {
+        get {
+            return calibration.apply (raw_value_list.get (raw_value_list.size - 2));
+        }
+    }
+
+    /**
+     * Read only previous previous unaveraged value, used with control loops and
      * filters.
      * XXX Consider name change.
      */
-    public double ppr_scaled_value { get { return _scaled_value[2]; } }
+    public double past_previous_value {
+        get {
+            return calibration.apply (raw_value_list.get (raw_value_list.size - 3));
+        }
+    }
 
     /* XXX should be max list size, naming is confusing */
-    public int raw_value_list_size { get; set; default = 1; }
-    private Gee.LinkedList<double?> raw_value_list = new Gee.LinkedList<double?> ();
+    private int _raw_value_list_size = 3;
+    public int raw_value_list_size {
+        get { return _raw_value_list_size; }
+        set {
+            if (value < 3)
+                _raw_value_list_size = 3;
+            else
+                _raw_value_list_size = value;
+        }
+    }
+
+    private Gee.List<double?> raw_value_list = new Gee.LinkedList<double?> ();
 
     /* default constructor */
     public AIChannel () {
@@ -227,7 +255,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
 
             if (raw_value_list.size > raw_value_list_size) {
                 /* throw away the value */
-                conv = raw_value_list.poll_head ();
+                conv = (raw_value_list as Gee.LinkedList<double?>).poll_head ();
             }
         }
     }

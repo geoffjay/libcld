@@ -44,9 +44,9 @@ public class AIChannelTests : ChannelTests {
         /* Check the Channel exists */
         assert (test_channel != null);
 
-        assert (test_channel.avg_value == 0.0);
-        test_channel.avg_value = 1.0;
-        assert (test_channel.avg_value == 1.0);
+        //assert (test_channel.avg_value == 0.0);
+        //test_channel.avg_value = 1.0;
+        //assert (test_channel.avg_value == 1.0);
     }
 
     private void test_raw_value () {

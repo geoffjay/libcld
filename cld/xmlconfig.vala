@@ -119,11 +119,10 @@ public class Cld.XmlConfig : GLib.Object {
                 );
 
         /* update the selected nodes */
-        update_xpath_nodes (obj->nodesetval, value);
+        update_xpath_nodeset (obj->nodesetval, value);
     }
 
-    public void edit_node_content (string xpath,
-                                   string value) {
+    public void edit_node_content (string xpath, string value) {
         obj = ctx->eval_expression (xpath);
         /* throw an error if the xpath is invalid */
         if (obj == null)
@@ -132,10 +131,10 @@ public class Cld.XmlConfig : GLib.Object {
                 );
 
         /* update the selected nodes */
-        update_xpath_nodes (obj->nodesetval, value);
+        update_xpath_nodeset (obj->nodesetval, value);
     }
 
-    public void update_xpath_nodes (Xml.XPath.NodeSet *nodes, string value) {
+    public void update_xpath_nodeset (Xml.XPath.NodeSet *nodes, string value) {
         int i;
         int size = nodes->length ();
 
@@ -143,6 +142,31 @@ public class Cld.XmlConfig : GLib.Object {
         for (i = size - 1; i >= 0; i--) {
             Xml.Node *node = nodes->item (0);
             node->set_content (value);
+            if (node->type != Xml.ElementType.NAMESPACE_DECL)
+                node = null;
+        }
+    }
+
+    public void edit_node_attribute (string xpath, string name, string value) {
+        obj = ctx->eval_expression (xpath);
+        /* throw an error if the xpath is invalid */
+        if (obj == null)
+            throw new Cld.XmlError.INVALID_XPATH_EXPR (
+                    "the xpath expression %s is invalid", xpath
+                );
+
+        /* update the selected nodes */
+        update_xpath_nodeset_attribute (obj->nodesetval, name, value);
+    }
+
+    public void update_xpath_nodeset_attribute (Xml.XPath.NodeSet *nodes, string name, string value) {
+        int i;
+        int size = nodes->length ();
+
+        /* loop over nodes */
+        for (i = size - 1; i >= 0; i--) {
+            Xml.Node *node = nodes->item (0);
+            node->set_prop (name, value);
             if (node->type != Xml.ElementType.NAMESPACE_DECL)
                 node = null;
         }

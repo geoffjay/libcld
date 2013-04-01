@@ -94,14 +94,9 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
     public virtual double avg_value {
         get {
             double sum = 0.0;
-
-            //debug ("Raw value list size: %d", raw_value_list.size);
-
             lock (raw_value_list) {
                 if (raw_value_list.size > 0) {
                     foreach (double value in raw_value_list) {
-                        /* XXX for now assume 16 bit with 0-10V range, fix later */
-                        //value = (value / 65535.0) * 10.0;
                         sum += value;
                     }
 
@@ -134,26 +129,28 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
 
     /**
      * Read only current unaveraged value, used with control loops and filters.
-     * XXX Consider name change.
+     * XXX consider name change
      */
     public double current_value {
         get {
-            /* XXX for now assume 16 bit with 0-10V range, fix later */
-            double value = calibration.apply (raw_value_list.get (raw_value_list.size - 1));
-            //value = (value / 65535.0) * 10.0;
+            double value;
+            lock (raw_value_list) {
+                value = calibration.apply (raw_value_list.get (raw_value_list.size - 1));
+            }
             return value;
         }
     }
 
     /**
      * Read only previous unaveraged value, used with control loops and filters.
-     * XXX Consider name change.
+     * XXX consider name change
      */
     public double previous_value {
         get {
-            /* XXX for now assume 16 bit with 0-10V range, fix later */
-            double value = calibration.apply (raw_value_list.get (raw_value_list.size - 2));
-            //value = (value / 65535.0) * 10.0;
+            double value;
+            lock (raw_value_list) {
+                value = calibration.apply (raw_value_list.get (raw_value_list.size - 2));
+            }
             return value;
         }
     }
@@ -161,18 +158,28 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
     /**
      * Read only previous previous unaveraged value, used with control loops and
      * filters.
-     * XXX Consider name change.
+     * XXX consider name change
      */
     public double past_previous_value {
         get {
-            /* XXX for now assume 16 bit with 0-10V range, fix later */
-            double value = calibration.apply (raw_value_list.get (raw_value_list.size - 3));
-            //value = (value / 65535.0) * 10.0;
+            double value;
+            lock (raw_value_list) {
+                value = calibration.apply (raw_value_list.get (raw_value_list.size - 3));
+            }
             return value;
         }
     }
 
-    /* XXX should be max list size, naming is confusing */
+    /**
+     * Controls the size of the list that holds raw values and is used as the
+     * size of the window for the moving average.
+     *
+     * XXX should be max list size, naming is confusing
+     * XXX if value != current the list should be resized to reflect the change
+     * XXX having a minimum size of 3 isn't ideal, instead the getters on the
+     *     values that index the list size should check there and handle
+     *     appropriately
+     */
     private int _raw_value_list_size = 3;
     public int raw_value_list_size {
         get { return _raw_value_list_size; }
@@ -186,7 +193,9 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
 
     private Gee.List<double?> raw_value_list = new Gee.LinkedList<double?> ();
 
-    /* default constructor */
+    /**
+     * Default construction.
+     */
     public AIChannel () {
         /* set defaults */
         this.num = 0;
@@ -196,6 +205,9 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
         preload_raw_value_list ();
     }
 
+    /**
+     * Alternate construction that uses an XML node to set the object up.
+     */
     public AIChannel.from_xml_node (Xml.Node *node) {
         string val;
 
@@ -253,9 +265,6 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
         /* clip the input */
         conv = (conv <  0.0) ?  0.0 : conv;
         conv = (conv > 10.0) ? 10.0 : conv;
-        //conv = (conv / 10.0) * 65535.0;  /* assume 0-10V range */
-
-        //debug ("Adding raw value for %s: %f", id, conv);
 
         lock (raw_value_list) {
             /* for now add it to the list and the raw value array */
@@ -269,13 +278,17 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
         }
     }
 
+    /**
+     * Update the value for the running average that represents the contents
+     * of the raw data list.
+     *
+     * @deprecated The getter for avg_value performs the same functionality.
+     */
     public void update_avg_value () {
         double sum = 0.0;
 
         if (raw_value_list.size > 0) {
             foreach (double value in raw_value_list) {
-                /* !!! for now assume 16 bit with 0-10V range - fix later */
-                //value = (value / 65535.0) * 10.0;
                 sum += value;
             }
 

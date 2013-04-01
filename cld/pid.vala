@@ -324,14 +324,26 @@ public class Cld.Pid : AbstractObject {
     /**
      * Update property backing field for process values list
      *
-     * @param event Array list to update property variable
+     * @param val Array list to update process variables.
      */
     private void update_process_values (Gee.Map<string, Object> val) {
         _process_values = val;
     }
 
+    /**
+     * Add a process value object to be used as either the process variable for
+     * feedback, or the manipulated variable that is being controlled.
+     *
+     * @param pv Process value to add to the control loop.
+     */
     public void add_process_value (ProcessValue pv) {
         process_values.set (pv.id, pv);
+    }
+
+    public void print_process_values () {
+        foreach (var process_value in process_values.values) {
+            debug ("PV: %s", process_value.id);
+        }
     }
 
     /**
@@ -343,8 +355,6 @@ public class Cld.Pid : AbstractObject {
         /* XXX this is incorrect, it needs to divide by dt */
         i_err = (mv.scaled_value - (kp * p_err) - (kd * d_err)) / ki;
         d_err = pv.previous_value - pv.past_previous_value;
-        //i_err = 0;
-        //d_err = 0;
     }
 
     /**
@@ -352,17 +362,12 @@ public class Cld.Pid : AbstractObject {
      * its base class.
      */
     public void update () {
-        //debug ("(%ld) Executing PID thread every %d ms",
-        //       (long)get_monotonic_time (), dt);
-
         /* do the calculation */
         mutex.lock ();
 
         p_err = sp - pv.previous_value;
         i_err += p_err;
         d_err = pv.current_value - pv.previous_value;
-        //i_err = 0;
-        //d_err = 0;
 
         lock (mv) {
             mv.raw_value = (kp * p_err) + (ki * i_err) + (kd * d_err);
@@ -395,9 +400,11 @@ public class Cld.Pid : AbstractObject {
      * Returns the JSON representation of the object, a kind of crude first
      * pass just to try the JSON bindings, not much to it.
      *
+     * @param pretty Control niceness of output formatting.
+     *
      * @return JSON representation of the object as a string.
      */
-    public string to_json () {
+    public string to_json (bool pretty = true) {
         Json.Builder builder = new Json.Builder ();
         Json.Generator gen = new Json.Generator ();
         Json.Node root;
@@ -423,7 +430,7 @@ public class Cld.Pid : AbstractObject {
 
         root = builder.get_root ();
         gen.set_root (root);
-        gen.pretty = true;
+        gen.pretty = pretty;
 
         return gen.to_data (null);
     }

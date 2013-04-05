@@ -25,27 +25,31 @@
 public interface Cld.Channel : Cld.Object {
 
     /**
-     *
+     * The channel number, which sometimes refers to its hardware pin number.
      */
     public abstract int num { get; set; }
 
     /**
-     *
+     * A reference to the device that this channel belongs to, this may be a
+     * backwards approach and should be replaced with a Device containing a list
+     * of channels.
      */
     public abstract string devref { get; set; }
 
     /**
-     *
+     * A reference to the device that the channel belongs to, same comments
+     * apply here as they did to the devref.
      */
     public abstract weak Device device { get; set; }
 
     /**
-     *
+     * String name of the channel, could be considered to be the channel's
+     * PNID label.
      */
     public abstract string tag { get; set; }
 
     /**
-     *
+     * Description of the channel's purpose.
      */
     public abstract string desc { get; set; }
 }

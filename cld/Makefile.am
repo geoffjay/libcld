@@ -46,6 +46,7 @@ AM_VALAFLAGS = \
 	--library cld-0.1 --gir Cld-0.1.gir \
 	--vapidir=$(srcdir)/../vapi --pkg config \
 	--pkg glib-2.0 --pkg gee-1.0 --pkg libxml-2.0 --pkg json-glib-1.0 \
+	--pkg linux --pkg posix \
 	$(VALAFLAGS) \
 	$(NULL)
 

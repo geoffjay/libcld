@@ -46,11 +46,11 @@ public interface Cld.Port : Cld.Object {
             }
         }
 
-        public LineEnd[] all () {
+        public static LineEnd[] all () {
             return { CRLF, CR, LF, TAB, ESC, NONE };
         }
 
-        public LineEnd parse (string value) {
+        public static LineEnd parse (string value) {
             try {
                 var regex_crlf = new Regex ("cr(+|&)*lf", RegexCompileFlags.CASELESS);
                 var regex_cr   = new Regex ("cr", RegexCompileFlags.CASELESS);

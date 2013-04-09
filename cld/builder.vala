@@ -183,7 +183,6 @@ public class Cld.Builder : GLib.Object {
      */
     private void build_object_map () {
         string type;
-        string ctype;
         string direction;
         string xpath = "/cld/objects/object";
 
@@ -212,7 +211,7 @@ public class Cld.Builder : GLib.Object {
                             object = new Calibration.from_xml_node (iter);
                             break;
                         case "channel":
-                            ctype = iter->get_prop ("ctype");
+                            var ctype = iter->get_prop ("ctype");
                             direction = iter->get_prop ("direction");
                             if (ctype == "analog" && direction == "input")
                                 object = new AIChannel.from_xml_node (iter);
@@ -224,6 +223,13 @@ public class Cld.Builder : GLib.Object {
                                 object = new DOChannel.from_xml_node (iter);
                             else if (ctype == "calculation" || ctype == "virtual")
                                 object = new VChannel.from_xml_node (iter);
+                            else
+                                object = null;
+                            break;
+                        case "port":
+                            var ptype = iter->get_prop ("ptype");
+                            if (ptype == "serial")
+                                object = new SerialPort.from_xml_node (iter);
                             else
                                 object = null;
                             break;
@@ -256,13 +262,24 @@ public class Cld.Builder : GLib.Object {
                     (object as Channel).device = (device as Device);
             }
 
-            /* Analog channels reference a calibration object */
             if (object is AChannel) {
+                /* Analog channels reference a calibration object */
                 ref_id = (object as AChannel).calref;
                 if (ref_id != null) {
                     var calibration = get_object (ref_id);
                     if (calibration != null && calibration is Calibration)
                         (object as AChannel).calibration =
+                                                (calibration as Calibration);
+                }
+            }
+
+            if (object is VChannel) {
+                /* For now virtual channels do too */
+                ref_id = (object as VChannel).calref;
+                if (ref_id != null) {
+                    var calibration = get_object (ref_id);
+                    if (calibration != null && calibration is Calibration)
+                        (object as VChannel).calibration =
                                                 (calibration as Calibration);
                 }
             }

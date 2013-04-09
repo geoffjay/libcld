@@ -60,11 +60,11 @@ public class Cld.SerialPort : AbstractPort {
             }
         }
 
-        public Parity[] all () {
+        public static Parity[] all () {
             return { NONE, ODD, EVEN, MARK, SPACE };
         }
 
-        public Parity parse (string value) {
+        public static Parity parse (string value) {
             try {
                 var regex_none  = new Regex ("none", RegexCompileFlags.CASELESS);
                 var regex_odd   = new Regex ("odd", RegexCompileFlags.CASELESS);
@@ -111,11 +111,11 @@ public class Cld.SerialPort : AbstractPort {
             }
         }
 
-        public Handshake[] all () {
+        public static Handshake[] all () {
             return { NONE, HARDWARE, SOFTWARE, BOTH };
         }
 
-        public Handshake parse (string value) {
+        public static Handshake parse (string value) {
             try {
                 var regex_none     = new Regex ("none", RegexCompileFlags.CASELESS);
                 var regex_hardware = new Regex ("hardware", RegexCompileFlags.CASELESS);
@@ -157,11 +157,11 @@ public class Cld.SerialPort : AbstractPort {
             }
         }
 
-        public AccessMode[] all () {
+        public static AccessMode[] all () {
             return { READWRITE, READONLY, WRITEONLY };
         }
 
-        public AccessMode parse (string value) {
+        public static AccessMode parse (string value) {
             try {
                 var regex_rw = new Regex ("rw|read(\\040and\\040)*write", RegexCompileFlags.CASELESS);
                 var regex_ro = new Regex ("ro|read(\\040)*only", RegexCompileFlags.CASELESS);
@@ -192,6 +192,7 @@ public class Cld.SerialPort : AbstractPort {
     private bool _connected = false;
     private ulong _tx_count = 0;
     private ulong _rx_count = 0;
+    private uint _baud_rate = Posix.B9600;
 
     /**
      * {@inheritDoc}
@@ -224,13 +225,77 @@ public class Cld.SerialPort : AbstractPort {
 
     public AccessMode access_mode { get; set; default = AccessMode.READWRITE; }
 
-    public int baud_rate { get; set; default = 1200; }
+    public uint baud_rate {
+        get {
+            return _baud_rate;
+        }
+
+        set {
+            switch (value) {
+                case 300:
+                    _baud_rate = Posix.B300;
+                    break;
+                case 600:
+                    _baud_rate = Posix.B600;
+                    break;
+                case 1200:
+                    _baud_rate = Posix.B1200;
+                    break;
+                case 2400:
+                    _baud_rate = Posix.B2400;
+                    break;
+                case 4800:
+                    _baud_rate = Posix.B4800;
+                    break;
+                case 9600:
+                    _baud_rate = Posix.B9600;
+                    break;
+                case 19200:
+                    _baud_rate = Posix.B19200;
+                    break;
+                case 38400:
+                    _baud_rate = Posix.B38400;
+                    break;
+                case 57600:
+                    _baud_rate = Posix.B57600;
+                    break;
+                case 115200:
+                    _baud_rate = Posix.B115200;
+                    break;
+                case 230400:
+                    _baud_rate = Posix.B230400;
+                    break;
+                case 460800:
+                    _baud_rate = Linux.Termios.B460800;
+                    break;
+                case 576000:
+                    _baud_rate = Linux.Termios.B576000;
+                    break;
+                case 921600:
+                    _baud_rate = Linux.Termios.B921600;
+                    break;
+                case 1000000:
+                    _baud_rate = Linux.Termios.B1000000;
+                    break;
+                case 2000000:
+                    _baud_rate = Linux.Termios.B2000000;
+                    break;
+                default:
+                    _baud_rate = Posix.B9600;
+                    break;
+            }
+        }
+    }
 
     public int data_bits { get; set; default = 8; }
 
     public int stop_bits { get; set; default = 1; }
 
+    public ulong non_printable { get; set; default = 0; }
+
     public bool echo { get; set; default = false; }
+
+    public bool last_rx_was_cr { get; set; default = false; }
 
     /**
      * Private serial port specific variables.
@@ -240,24 +305,34 @@ public class Cld.SerialPort : AbstractPort {
     private int fd = -1;
     private GLib.IOChannel fd_channel;
     private int flags = 0;
-    private int bufsz = 128;
+    private const int bufsz = 1024;
+    private uint? source_id;
 
     /**
-     * Signal for new data arrival.
+     * Used when new data arrives.
      */
     public signal void new_data (uchar[] data, int size);
 
     /**
+     * Used when a setting has been changed.
+     */
+    public signal void settings_changed ();
+
+    /**
      * Default construction.
      */
-    public SerialPort () { }
+    public SerialPort () {
+        this.settings_changed.connect (update_settings);
+    }
 
     /**
      * Full construction using available settings.
      */
-    public SerialPort.full (string device, int baud_rate, int data_bits,
-                            int stop_bits, Parity parity, Handshake handshake,
-                            AccessMode access_mode, bool echo) {
+    public SerialPort.full (string id, string device, int baud_rate,
+                            int data_bits, int stop_bits, Parity parity,
+                            Handshake handshake, AccessMode access_mode,
+                            bool echo) {
+        this.id = id;
         this.device = device;
         this.baud_rate = baud_rate;
         this.data_bits = data_bits;
@@ -266,6 +341,8 @@ public class Cld.SerialPort : AbstractPort {
         this.handshake = handshake;
         this.access_mode = access_mode;
         this.echo = echo;
+
+        this.settings_changed.connect (update_settings);
     }
 
     /**
@@ -326,38 +403,191 @@ public class Cld.SerialPort : AbstractPort {
      * {@inheritDoc}
      */
     public override bool open () {
-        return false;
+
+        if (access_mode == AccessMode.READWRITE)
+            flags = Posix.O_RDWR;
+        else if (access_mode == AccessMode.READONLY)
+            flags = Posix.O_RDONLY;
+        else
+            flags = Posix.O_WRONLY;
+
+        /* Make non-blocking */
+        if ((fd = Posix.open (device, flags | Posix.O_NONBLOCK | Posix.O_NOCTTY)) < 0) {
+            fd = -1;
+            return false;
+        }
+
+        /* Save the current setup */
+        Posix.tcflush (fd, Posix.TCIOFLUSH);
+        tcgetattr (fd, out oldtio);
+        settings_changed ();
+        tcsetattr (fd, Posix.TCSANOW, newtio);
+
+        _connected = true;
+
+        fd_channel = new GLib.IOChannel.unix_new (fd);
+        source_id = fd_channel.add_watch (GLib.IOCondition.IN, this.read_bytes);
+
+        return true;
     }
 
     /**
      * {@inheritDoc}
      */
     public override void close () {
+        if (connected) {
+            GLib.Source.remove (source_id);
+            source_id = null;
+            try {
+                fd_channel.shutdown (true);
+            } catch (GLib.IOChannelError e) {
+                warning ("%s", e.message);
+            }
+            non_printable = 0;
+            last_rx_was_cr = false;
+            fd_channel = null;
+            _connected = false;
+            _tx_count = 0;
+            _rx_count = 0;
+            tcsetattr (fd, Posix.TCSANOW, newtio);
+            Posix.close (fd);
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     public override void send_byte (uchar byte) {
+        if (connected) {
+            uchar[] b = new uchar[1];
+            b[0] = byte;
+            size_t n = Posix.write (fd, b, 1);
+            _tx_count += n;
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     public override void send_bytes (char[] bytes, size_t size) {
+        if (connected) {
+            size_t n = Posix.write (fd, bytes, size);
+            Posix.tcdrain (fd);
+            _tx_count += n;
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     public override bool read_bytes (GLib.IOChannel source, GLib.IOCondition condition) {
-        return false;
+        uchar[] buf = new uchar[bufsz];
+        int nread = (int)Posix.read (fd, buf, bufsz);
+        _rx_count += (ulong)nread;
+
+        if (nread < 0)
+            return false;
+
+        uchar[] sized_buf = new uchar[nread];
+
+        for (int i = 0; i < nread; i++) {
+            sized_buf[i] = buf[i];
+        }
+
+        new_data (sized_buf, nread);
+        if (echo)
+            send_bytes ((char[])sized_buf, nread);
+
+        return connected;
     }
 
     /**
      * {@inheritDoc}
      */
     public override string to_string () {
-        return base.to_string ();
+        string r;
+        r  = "SerialPort [%s]\n".printf (id);
+        r += " connected:      %s\n".printf ((connected) ? "Yes" : "No");
+        r += " bytes received: %lu\n".printf (rx_count);
+        r += " bytes sent:     %lu\n".printf (tx_count);
+        r += " device:         %s\n".printf (device);
+        r += " baud rate:      %u\n".printf (baud_rate);
+        r += " data bits:      %d\n".printf (data_bits);
+        r += " stop bits:      %d\n".printf (stop_bits);
+        r += " parity:         %s\n".printf (parity.to_string ());
+        r += " handshake:      %s\n".printf (handshake.to_string ());
+        r += " access mode:    %s\n".printf (access_mode.to_string ());
+        return r;
+    }
+
+    /**
+     * Update the TTY settings.
+     */
+    private void update_settings () {
+        Posix.cfsetospeed (ref newtio, baud_rate);
+        Posix.cfsetispeed (ref newtio, baud_rate);
+
+        /* Data bits */
+
+        /* Will need to generate mark and space parity */
+        if (data_bits == 7 && (parity == Parity.MARK || parity == Parity.SPACE))
+            data_bits = 8;
+
+        switch (data_bits) {
+            case 5:
+                newtio.c_cflag = (newtio.c_cflag & ~Posix.CSIZE) | Posix.CS5;
+                break;
+            case 6:
+                newtio.c_cflag = (newtio.c_cflag & ~Posix.CSIZE) | Posix.CS6;
+                break;
+            case 7:
+                newtio.c_cflag = (newtio.c_cflag & ~Posix.CSIZE) | Posix.CS7;
+                break;
+            case 8:
+            default:
+                newtio.c_cflag = (newtio.c_cflag & ~Posix.CSIZE) | Posix.CS8;
+                break;
+        }
+        newtio.c_cflag |= Posix.CLOCAL | Posix.CREAD;
+
+        /* Parity */
+        newtio.c_cflag &= ~(Posix.PARENB | Posix.PARODD);
+        if (parity == Parity.EVEN)
+            newtio.c_cflag |= Posix.PARENB;
+        else if (parity == Parity.ODD)
+            newtio.c_cflag |= (Posix.PARENB | Posix.PARODD);
+
+        newtio.c_cflag &= ~Linux.Termios.CRTSCTS;
+
+        /* Stop Bits */
+        if (stop_bits == 2)
+            newtio.c_cflag |= Posix.CSTOPB;
+        else
+            newtio.c_cflag &= ~Posix.CSTOPB;
+
+        /* Input settings */
+        newtio.c_iflag = Posix.IGNBRK;
+
+        /* Handshake */
+        if (handshake == Handshake.SOFTWARE || handshake == Handshake.BOTH)
+            newtio.c_iflag |= Posix.IXON | Posix.IXOFF;
+        else
+            newtio.c_iflag &= ~(Posix.IXON | Posix.IXOFF | Posix.IXANY);
+
+        newtio.c_lflag = 0;
+        newtio.c_oflag = 0;
+        newtio.c_cc[Posix.VTIME] = 1;
+        newtio.c_cc[Posix.VMIN] = 1;
+        newtio.c_lflag &= ~(Posix.ECHONL|Posix.NOFLSH);
+
+        int mcs=0;
+        Posix.ioctl (fd, Linux.Termios.TIOCMGET, out mcs);
+        mcs |= Linux.Termios.TIOCM_RTS;
+        Posix.ioctl (fd, Linux.Termios.TIOCMSET, out mcs);
+
+        if (handshake == Handshake.HARDWARE || handshake == Handshake.BOTH)
+            newtio.c_cflag |= Linux.Termios.CRTSCTS;
+        else
+            newtio.c_cflag &= ~Linux.Termios.CRTSCTS;
     }
 }

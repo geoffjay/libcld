@@ -305,7 +305,7 @@ public class Cld.SerialPort : AbstractPort {
     private int fd = -1;
     private GLib.IOChannel fd_channel;
     private int flags = 0;
-    private const int bufsz = 128;
+    private const int bufsz = 1024;
     private uint? source_id;
 
     /**
@@ -412,7 +412,7 @@ public class Cld.SerialPort : AbstractPort {
             flags = Posix.O_WRONLY;
 
         /* Make non-blocking */
-        if ((fd = Posix.open (device, flags | Posix.O_NONBLOCK)) < 0) {
+        if ((fd = Posix.open (device, flags | Posix.O_NONBLOCK | Posix.O_NOCTTY)) < 0) {
             fd = -1;
             return false;
         }
@@ -581,9 +581,9 @@ public class Cld.SerialPort : AbstractPort {
         newtio.c_lflag &= ~(Posix.ECHONL|Posix.NOFLSH);
 
         int mcs=0;
-        Posix.ioctl(fd, Linux.Termios.TIOCMGET, out mcs);
+        Posix.ioctl (fd, Linux.Termios.TIOCMGET, out mcs);
         mcs |= Linux.Termios.TIOCM_RTS;
-        Posix.ioctl(fd, Linux.Termios.TIOCMSET, out mcs);
+        Posix.ioctl (fd, Linux.Termios.TIOCMSET, out mcs);
 
         if (handshake == Handshake.HARDWARE || handshake == Handshake.BOTH)
             newtio.c_cflag |= Linux.Termios.CRTSCTS;

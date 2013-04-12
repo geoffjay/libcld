@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<cld xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:noNamespaceSchemaLocation="cld.xsd">
+    <objects>
+        <object id="sp0" type="port" ptype="serial">
+            <property name="device">/dev/ttyUSB0</property>
+            <property name="baudrate">115200</property>
+            <property name="databits">8</property>
+            <property name="stopbits">1</property>
+            <property name="parity">none</property>
+            <property name="handshake">hardware</property>
+            <property name="accessmode">rw</property>
+            <property name="echo">false</property>
+        </object>
+    </objects>
+</cld>

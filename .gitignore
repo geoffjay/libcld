@@ -56,9 +56,12 @@ examples/*.stamp
 examples/.deps/
 examples/.libs/
 examples/builder
+examples/builder_vala.stamp-t
 examples/pid
 examples/gtk-log
 examples/application-data.h
+examples/serialport
+examples/serialport-xml
 
 # Test programs
 tests/.deps/

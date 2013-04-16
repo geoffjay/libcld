@@ -5,8 +5,8 @@ class Cld.SerialPortExample : GLib.Object {
     public string received = "";
 
     public void run () {
-        var port = new SerialPort ();
         var loop = new MainLoop();
+        var port = new SerialPort ();
 
         port.id = "ser0";
         port.device = "/dev/ttyUSB0";

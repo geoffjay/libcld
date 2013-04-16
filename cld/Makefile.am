@@ -8,6 +8,7 @@ libcld_0_2_la_SOURCES = \
 	abstractchannel.vala \
 	abstractcontainer.vala \
 	abstractfilter.vala \
+	abstractmodule.vala \
 	abstractobject.vala \
 	abstractport.vala \
 	aichannel.vala \
@@ -24,7 +25,9 @@ libcld_0_2_la_SOURCES = \
 	dichannel.vala \
 	dochannel.vala \
 	filter.vala \
+	licormodule.vala \
 	log.vala \
+	module.vala \
 	object.vala \
 	pid.vala \
 	port.vala \

@@ -20,7 +20,8 @@
  */
 
 /**
- * Virtual channel to be used to execute expressions.
+ * Virtual channel to be used to execute expressions or just as a dummy channel
+ * with a settable value.
  */
 public class Cld.VChannel : AbstractChannel {
 
@@ -55,9 +56,27 @@ public class Cld.VChannel : AbstractChannel {
     public override string desc { get; set; }
 
     /**
-     *
+     * Mathematical expression to be used to evaluate the channel value.
      */
     public string expression { get; set; }
+
+    /* Property backing fields. */
+    private double _scaled_value = 0.0;
+
+    /**
+     * Calculate value if expression exists or placeholder for dummy channel.
+     */
+    public double raw_value { get; set; }
+    public double scaled_value {
+        get { return calibration.apply (raw_value); }
+        private set { _scaled_value = value; }
+    }
+
+    /**
+     * Calibration should maybe be rethought.
+     */
+    public string calref { get; set; }
+    public weak Calibration calibration { get; set; }
 
     /* default constructor */
     public VChannel () {
@@ -93,6 +112,9 @@ public class Cld.VChannel : AbstractChannel {
                         case "num":
                             value = iter->get_content ();
                             num = int.parse (value);
+                            break;
+                        case "calref":
+                            calref = iter->get_content ();
                             break;
                         default:
                             break;

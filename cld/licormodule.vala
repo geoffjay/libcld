@@ -109,7 +109,8 @@ public class Cld.LicorModule : AbstractModule {
                 received = received.chomp ();
                 string[] tokens = received.split ("\t");
                 var x = 0;
-                foreach (string token in tokens) {
+                /* First token is DATAM, slice to remove */
+                foreach (string token in tokens[1:tokens.length]) {
                     var id = "lc%d".printf (x++);
                     /* Assign the channel the value that was received */
                     var channel = channels.get (id);

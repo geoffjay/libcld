@@ -33,6 +33,7 @@ libcld_0_2_la_SOURCES = \
 	port.vala \
 	serialport.vala \
 	vchannel.vala \
+	velmexmodule.vala \
 	xmlconfig.vala \
 	$(NULL)
 

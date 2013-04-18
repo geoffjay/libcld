@@ -29,6 +29,11 @@ public abstract class Cld.AbstractModule : AbstractObject, Module {
     /**
      * {@inheritDoc}
      */
+    public abstract bool loaded { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public abstract bool load ();
 
     /**

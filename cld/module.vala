@@ -25,6 +25,8 @@
 [GenericAccessors]
 public interface Cld.Module : Cld.Object {
 
+    public abstract bool loaded { get; set; }
+
     /**
      * Load the module and take care of any required setup.
      */

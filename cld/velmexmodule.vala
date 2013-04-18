@@ -26,16 +26,13 @@
  * XXX should be a container.
  * XXX should be buildable using XML.
  */
-public class Cld.LicorModule : AbstractModule {
+public class Cld.VelmexModule : AbstractModule {
 
     /**
      * {@inheritDoc}
      */
     public override string id { get; set; }
 
-    /**
-     * {@inheritDoc}
-     */
     public override bool loaded { get; set; default = false; }
 
     /**
@@ -44,39 +41,27 @@ public class Cld.LicorModule : AbstractModule {
     public Port port { get; set; }
 
     /**
-     * The list of channels to fill with received data.
+     * The program commands to be executed on apply_program.
      */
-    public Gee.Map<string, Object> channels { get; set; }
-
-    private string received = "";
-
-    private bool saw_event = false;
-
-    /**
-     * Signal to indicate that an error was seen via the diagnostic signal.
-     */
-    public signal void diagnostic_event (int event);
-
-    public signal void diagnostic_reset ();
+    public string program { get; set; }
 
     /**
      * Default construction.
      */
-    public LicorModule () { }
+    public VelmexModule () { }
 
     /**
      * Full construction using available settings.
      */
-    public LicorModule.full (string id, Port port, Gee.Map<string, Object> channels) {
+    public VelmexModule.full (string id, Port port) {
         this.id = id;
         this.port = port;
-        this.channels = channels;
     }
 
     /**
      * Alternate construction that uses an XML node to populate the settings.
      */
-    public LicorModule.from_xml_node (Xml.Node *node) {
+    public VelmexModule.from_xml_node (Xml.Node *node) {
         string val;
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
@@ -102,56 +87,24 @@ public class Cld.LicorModule : AbstractModule {
     }
 
     /**
-     * Callback event that handles new data seen on the serial port.
+     * Execute the program that is stored in the corresponding variable.
+     * XXX verbose method would check port tx bytes and return false on fail.
      */
-    private void new_data_cb (SerialPort port, uchar[] data, int size) {
+    public void store_program () {
+        port.send_bytes (program.to_utf8 (), program.length);
+    }
 
-        for (int i = 0; i < size; i++) {
-            unichar c = "%c".printf (data[i]).get_char ();
-            string s = "%c".printf (data[i]);
-
-            /* Ignore LF if last char was CR (CRLF terminator) */
-            if (!(port.last_rx_was_cr && (c == '\n'))) {
-                received += "%s".printf (s);
-            }
-
-            port.last_rx_was_cr = (c == '\r');
-
-            /* This should occur for each line of data */
-            if (c == '\n') {
-                received = received.chug ();
-                received = received.chomp ();
-                string[] tokens = received.split ("\t");
-                var x = 0;
-                /* First token is DATAM, slice to remove */
-                foreach (string token in tokens[1:tokens.length]) {
-                    var id = "lc%d".printf (x++);
-                    /* Assign the channel the value that was received */
-                    var channel = channels.get (id);
-                    (channel as VChannel).raw_value = double.parse (token);
-                }
-
-                if (tokens[tokens.length] != "0") {
-                    diagnostic_event (int.parse (tokens[tokens.length]));
-                    saw_event = true;
-                } else {
-                    if (saw_event) {
-                        diagnostic_reset ();
-                        saw_event = false;
-                    }
-                }
-
-                received = "";
-            }
-        }
+    /**
+     * Run whatever program the device currently has stored.
+     */
+    public void run_stored_program () {
+        port.send_byte ('R');
     }
 
     /**
      * {@inheritDoc}
      */
     public override bool load () {
-        (port as SerialPort).new_data.connect (new_data_cb);
-
         if (!port.open ())
             return false;
 
@@ -164,7 +117,6 @@ public class Cld.LicorModule : AbstractModule {
      * {@inheritDoc}
      */
     public override void unload () {
-        //(port as SerialPort.new_data.disconnect ();
         port.close ();
     }
 
@@ -173,7 +125,7 @@ public class Cld.LicorModule : AbstractModule {
      */
     public override string to_string () {
         string r;
-        r  = "LicorModule [%s]\n".printf (id);
+        r  = "VelmexModule [%s]\n".printf (id);
         return r;
     }
 }

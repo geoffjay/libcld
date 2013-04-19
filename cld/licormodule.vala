@@ -131,8 +131,8 @@ public class Cld.LicorModule : AbstractModule {
                     (channel as VChannel).raw_value = double.parse (token);
                 }
 
-                if (tokens[tokens.length] != "0") {
-                    diagnostic_event (int.parse (tokens[tokens.length]));
+                if (tokens[tokens.length - 1] != "0") {
+                    diagnostic_event (int.parse (tokens[tokens.length - 1]));
                     saw_event = true;
                 } else {
                     if (saw_event) {

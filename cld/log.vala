@@ -196,9 +196,16 @@ public class Cld.Log : AbstractContainer {
         }
     }
 
-        public void file_print (string toprint) {
+    /**
+     * Print a string to the log file.
+     *
+     * @param toprint The string to print
+     */
+    public void file_print (string toprint) {
+        if (is_open) {
             file_stream.printf ("%s", toprint);
         }
+    }
 
         public bool file_open () {
             string filename;

@@ -202,7 +202,9 @@ public class Cld.Log : AbstractContainer {
      * @param toprint The string to print
      */
     public void file_print (string toprint) {
-        file_stream.printf ("%s", toprint);
+        if (is_open) {
+            file_stream.printf ("%s", toprint);
+        }
     }
 
     /**

@@ -62,6 +62,8 @@ examples/gtk-log
 examples/application-data.h
 examples/serialport
 examples/serialport-xml
+examples/licor
+examples/velmex
 
 # Test programs
 tests/.deps/

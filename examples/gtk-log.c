@@ -19,6 +19,7 @@ gboolean btn_toggled_cb (GtkWidget *widget, gpointer cbdata);
 
 CldXmlConfig* xml = NULL;
 CldBuilder* builder = NULL;
+CldObject* log = NULL;
 
 gint
 main (gint argc, gchar *argv[])
@@ -33,6 +34,7 @@ main (gint argc, gchar *argv[])
     //data = application_data_new_with_xml_file ("cld.xml");
     xml = cld_xml_config_new_with_file_name ("cld.xml");
 	builder = cld_builder_new_from_xml_config (xml);
+	log = cld_builder_get_object (builder, "log0");
 
     gtk_init (&argc, &argv);
 
@@ -69,24 +71,28 @@ btn_toggled_cb (GtkWidget *widget, gpointer cbdata)
     //ApplicationData *app_data = APPLICATION_DATA (data);
     //CldBuilder *builder = CLD_BUILDER (application_data_get_builder (APPLICATION_DATA (app_data)));
     //CldBuilder *builder = CLD_BUILDER (application_data_get_builder (APPLICATION_DATA (data)));
-    GeeMap *logs = cld_builder_get_logs (builder);
-    GeeMapIterator *it = gee_map_map_iterator (logs);
-	CldObject* log = cld_builder_get_object (builder, "log0");
 
-    gee_map_iterator_first (it);
-    log = gee_map_iterator_get_value (it);
+    //GeeMap *logs = cld_builder_get_logs (builder);
+    //GeeMapIterator *it = gee_map_map_iterator (logs);
+
+    //gee_map_iterator_first (it);
+    //log = gee_map_iterator_get_value (it);
 
     if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))
     {
-        g_debug ("start");
         cld_log_file_open (CLD_LOG (log));
         cld_log_run (CLD_LOG (log));
+        if (cld_log_get_active (CLD_LOG (log)))
+            g_message ("log started");
     }
     else
     {
-        g_debug ("stop");
-        cld_log_stop (CLD_LOG (log));
-        cld_log_file_mv_and_date (CLD_LOG (log), false);
+        if (cld_log_get_active (CLD_LOG (log)))
+        {
+            g_message ("log stopping");
+            cld_log_stop (CLD_LOG (log));
+            cld_log_file_mv_and_date (CLD_LOG (log), false);
+        }
     }
 
     return false;

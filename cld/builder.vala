@@ -226,6 +226,13 @@ public class Cld.Builder : GLib.Object {
                             else
                                 object = null;
                             break;
+                        case "module":
+                            var mtype = iter->get_prop ("mtype");
+                            if (mtype == "velmex")
+                                object = new VelmexModule.from_xml_node (iter);
+                            else
+                                object = null;
+                            break;
                         case "port":
                             var ptype = iter->get_prop ("ptype");
                             if (ptype == "serial")

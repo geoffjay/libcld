@@ -36,7 +36,7 @@ public class Cld.VelmexModule : AbstractModule {
     public override bool loaded { get; set; default = false; }
 
     /**
-     * The port to connect to the Licor with.
+     * The port to connect to the Velmex with.
      */
     public Port port { get; set; }
 
@@ -73,11 +73,9 @@ public class Cld.VelmexModule : AbstractModule {
                  iter = iter->next) {
                 if (iter->name == "property") {
                     switch (iter->get_prop ("name")) {
-                        /*
-                         *case "":
-                         *     = iter->get_content ();
-                         *    break;
-                         */
+                         case "program":
+                             program = iter->get_content ();
+                             break;
                         default:
                             break;
                     }

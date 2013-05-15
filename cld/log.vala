@@ -128,6 +128,7 @@ public class Cld.Log : AbstractContainer {
      */
     private unowned GLib.Thread<void *> thread;
     private Mutex mutex = new Mutex ();
+    private Thread log_thread;
 
     /**
      * File stream to use as output.
@@ -203,7 +204,9 @@ public class Cld.Log : AbstractContainer {
      */
     public void file_print (string toprint) {
         if (is_open) {
-            file_stream.printf ("%s", toprint);
+            lock (file_stream) {
+                file_stream.printf ("%s", toprint);
+            }
         }
     }
 
@@ -377,7 +380,7 @@ public class Cld.Log : AbstractContainer {
         }
 
         if (!active) {
-            var log_thread = new Thread (this);
+            log_thread = new Thread (this);
 
             try {
                 active = true;
@@ -519,6 +522,7 @@ public class Cld.Log : AbstractContainer {
                     mutex.unlock ();
                 }
             }
+
             return null;
         }
     }

@@ -3,14 +3,28 @@ dnl configure.ac
 dnl process this file with autoconf to produce a configure script
 dnl ---------------------------------------------------------------------------
 
-AC_INIT([libcld], [0.2.0], [geoff.jay@gmail.com], [libcld])
+AC_INIT([libcld], [0.2.2], [geoff.jay@gmail.com], [libcld])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_MACRO_DIR(m4)
 AM_INIT_AUTOMAKE(dist-bzip2)
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
-LIBCLD_LT_VERSION="0:2:0"
+m4_define([package_major_version], [0])
+m4_define([package_minor_version], [2])
+m4_define([package_micro_version], [2])
+m4_define([package_version], [package_major_version.package_minor_version.package_micro_version])
+
+# Make sure the right substitution is done
+[LIBCLD_MAJOR_VERSION]=package_major_version
+[LIBCLD_MINOR_VERSION]=package_minor_version
+[LIBCLD_MICRO_VERSION]=package_micro_version
+AC_SUBST([LIBCLD_MAJOR_VERSION])
+AC_SUBST([LIBCLD_MINOR_VERSION])
+AC_SUBST([LIBCLD_MICRO_VERSION])
+
+dnl For libtool current:revision:age where age <= current
+LIBCLD_LT_VERSION=0:2:0
 AC_SUBST(LIBCLD_LT_VERSION)
 
 dnl ---------------------------------------------------------------------------

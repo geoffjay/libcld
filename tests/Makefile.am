@@ -18,13 +18,16 @@ tests_SOURCES = \
 	testdichannel.vala \
 	testdochannel.vala \
 	testfilter.vala \
+	testlicormodule.vala \
 	testlog.vala \
 	testmain.vala \
+	testmodule.vala \
 	testobject.vala \
 	testpid.vala \
 	testport.vala \
 	testserialport.vala \
 	testvchannel.vala \
+	testvelmexmodule.vala \
 	testxmlconfig.vala \
 	$(NULL)
 
@@ -50,5 +53,6 @@ tests_LDADD = \
 	../cld/libcld-0.2.la \
 	$(GLIB_LIBS) \
 	$(GEE_LIBS) \
+	$(XML_LIBS) \
 	$(JSON_LIBS) \
 	$(NULL)

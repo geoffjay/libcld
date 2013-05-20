@@ -25,6 +25,7 @@ public class AIChannelTests : ChannelTests {
 
     public AIChannelTests () {
         base ("AIChannel");
+        add_test ("[AIChannel] Test construction from XML node string", test_xml_construct);
         add_test ("[AIChannel] Test backend array for value average property", test_avg_value);
         add_test ("[AIChannel] Test backend array for measured values property", test_raw_value);
         add_test ("[AIChannel] Test backend array for scaled value property", test_scaled_value);
@@ -36,6 +37,30 @@ public class AIChannelTests : ChannelTests {
 
     public override void tear_down () {
         test_object = null;
+    }
+
+    private void test_xml_construct () {
+        var xml = """
+            <object id="ai0"
+                    type="channel"
+                    ref="dev0"
+                    ctype="analog"
+                    direction="input">
+                <property name="tag">IN0</property>
+                <property name="desc">Test Input</property>
+                <property name="num">0</property>
+                <property name="calref">cal0</property>
+            </object>
+        """;
+
+        Xml.Doc *doc = Xml.Parser.parse_memory (xml, xml.length);
+        Xml.XPath.Context *ctx = new Xml.XPath.Context (doc);
+        Xml.XPath.Object *obj = ctx->eval_expression ("//object");
+        Xml.Node *node = obj->nodesetval->item (0);
+
+        /* XXX doesn't seem inline with using set_up and test_object */
+        var test_channel = new AIChannel.from_xml_node (node);
+        assert (test_channel.id == "ai0");
     }
 
     private void test_avg_value () {

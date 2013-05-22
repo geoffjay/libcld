@@ -60,6 +60,7 @@ public class AIChannelTests : ChannelTests {
 
         /* XXX doesn't seem inline with using set_up and test_object */
         var test_channel = new AIChannel.from_xml_node (node);
+        assert (test_channel != null);
         assert (test_channel.id == "ai0");
     }
 
@@ -69,9 +70,12 @@ public class AIChannelTests : ChannelTests {
         /* Check the Channel exists */
         assert (test_channel != null);
 
-        //assert (test_channel.avg_value == 0.0);
-        //test_channel.avg_value = 1.0;
-        //assert (test_channel.avg_value == 1.0);
+        assert (test_channel.avg_value == 0.0);
+        test_channel.raw_value_list_size = 10;
+        test_channel.add_raw_value (1.0);
+        test_channel.add_raw_value (2.0);
+        test_channel.add_raw_value (3.0);
+        assert (test_channel.avg_value == 2.0);
     }
 
     private void test_raw_value () {
@@ -80,12 +84,10 @@ public class AIChannelTests : ChannelTests {
         /* Check the Channel exists */
         assert (test_channel != null);
 
-        assert (test_channel.raw_value == 0.0);
         test_channel.raw_value_list_size = 10;
+        assert (test_channel.raw_value == 0.0);
         test_channel.add_raw_value (1.0);
-        test_channel.add_raw_value (2.0);
-        test_channel.add_raw_value (3.0);
-        assert (test_channel.avg_value == 2.0);
+        assert (test_channel.raw_value == 1.0);
     }
 
     private void test_scaled_value () {

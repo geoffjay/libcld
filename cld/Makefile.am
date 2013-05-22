@@ -32,6 +32,7 @@ libcld_0_2_la_SOURCES = \
 	pid.vala \
 	port.vala \
 	serialport.vala \
+	socketport.vala \
 	vchannel.vala \
 	velmexmodule.vala \
 	xmlconfig.vala \
@@ -50,13 +51,14 @@ libcld_0_2_la_VALAFLAGS = \
 	--library cld-0.2 --gir Cld-0.2.gir \
 	--vapidir=$(srcdir)/../vapi --pkg config \
 	--pkg glib-2.0 --pkg gee-1.0 --pkg libxml-2.0 --pkg json-glib-1.0 \
-	--pkg linux --pkg posix \
+	--pkg gio-2.0 --pkg linux --pkg posix \
 	$(VALAFLAGS) \
 	$(NULL)
 
 libcld_0_2_la_CPPFLAGS = \
 	$(GLIB_CFLAGS) \
 	$(GEE_CFLAGS) \
+	$(GIO_CFLAGS) \
 	$(XML_CFLAGS) \
 	$(JSON_CFLAGS) \
 	$(NULL)
@@ -64,6 +66,7 @@ libcld_0_2_la_CPPFLAGS = \
 libcld_0_2_la_LIBADD = \
 	$(GLIB_LIBS) \
 	$(GEE_LIBS) \
+	$(GIO_LIBS) \
 	$(XML_LIBS) \
 	$(JSON_LIBS) \
 	$(NULL)

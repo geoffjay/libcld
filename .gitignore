@@ -62,6 +62,7 @@ examples/gtk-log
 examples/application-data.h
 examples/serialport
 examples/serialport-xml
+examples/socketport
 examples/licor
 examples/velmex
 

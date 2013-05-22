@@ -35,8 +35,69 @@ dnl AM_PROG_LIBTOOL
 AM_PROG_VALAC([0.7.0])
 AC_PROG_LIBTOOL
 
-LIBCLD_VERSION="0:1:0"
-AC_SUBST(LIBCLD_VERSION)
+AM_PROG_VALAC([0.14.0])
+AC_SUBST(VALAC)
+AC_SUBST(VALAFLAGS)
+
+dnl ---------------------------------------------------------------------------
+dnl Mandatory Libraries
+dnl ---------------------------------------------------------------------------
+GLIB_REQUIRED=2.32.0
+PKG_CHECK_MODULES([GLIB], glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED gthread-2.0 >= $GLIB_REQUIRED,
+	[AC_DEFINE(HAVE_GLIB232, [], [GLib 2.32 available])],
+	[PKG_CHECK_MODULES([GLIB], [glib-2.0 gobject-2.0 gthread-2.0],,
+		[AC_MSG_ERROR(glib-2.12 is required)])
+	])
+AC_SUBST(GLIB_CFLAGS)
+AC_SUBST(GLIB_LIBS)
+
+PKG_CHECK_MODULES([GEE], gee-1.0,,
+	AC_MSG_ERROR(gee-1.0 is required))
+AC_SUBST(GEE_CFLAGS)
+AC_SUBST(GEE_LIBS)
+
+PKG_CHECK_MODULES([GIO], gio-2.0,,
+	AC_MSG_ERROR(gio-2.0 is required))
+AC_SUBST(GIO_CFLAGS)
+AC_SUBST(GIO_LIBS)
+
+PKG_CHECK_MODULES([XML], libxml-2.0,,
+	AC_MSG_ERROR(libxml2 is required))
+AC_SUBST(XML_CFLAGS)
+AC_SUBST(XML_LIBS)
+
+PKG_CHECK_MODULES([JSON], json-glib-1.0,,
+	AC_MSG_ERROR(json-glib-1.0 is required))
+AC_SUBST(JSON_CFLAGS)
+AC_SUBST(JSON_LIBS)
+
+dnl ---------------------------------------------------------------------------
+dnl CFLAGS
+dnl ---------------------------------------------------------------------------
+dnl if test x$GCC = xyes
+dnl then
+dnl CLD_CHECK_FLAG([-g])
+dnl CLD_CHECK_FLAG([-Wall])
+dnl CLD_CHECK_FLAG([-Wextra])
+dnl CLD_CHECK_FLAG([-Wno-deprecated-declarations])
+dnl CLD_CHECK_FLAG([-Wmissing-prototypes])
+dnl CLD_CHECK_FLAG([-Wshadow])
+dnl CLD_CHECK_FLAG([-Wpointer-arith])
+dnl CLD_CHECK_FLAG([-Wstrict-prototypes])
+dnl CLD_CHECK_FLAG([-Wcast-qual])
+dnl CLD_CHECK_FLAG([-Wwrite-strings])
+dnl CLD_CHECK_FLAG([-pedantic])
+dnl fi
+
+dnl ---------------------------------------------------------------------------
+dnl Build Options
+dnl ---------------------------------------------------------------------------
+
+dnl Debugging
+AC_ARG_ENABLE(debug,
+	AS_HELP_STRING([--enable-debug],
+		[Enable debugging (default: disabled)]),,
+	enable_debug=no)
 
 AC_SUBST(VALAFLAGS)
 AC_SUBST(CFLAGS)

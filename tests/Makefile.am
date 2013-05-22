@@ -26,6 +26,7 @@ tests_SOURCES = \
 	testpid.vala \
 	testport.vala \
 	testserialport.vala \
+	testsocketport.vala \
 	testvchannel.vala \
 	testvelmexmodule.vala \
 	testxmlconfig.vala \

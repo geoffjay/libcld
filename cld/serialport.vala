@@ -397,6 +397,8 @@ public class Cld.SerialPort : AbstractPort {
                 }
             }
         }
+
+        this.settings_changed.connect (update_settings);
     }
 
     /**

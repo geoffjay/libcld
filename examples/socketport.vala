@@ -11,8 +11,8 @@ class Cld.SocketPortExample : GLib.Object {
             <object id="sock0"
                     type="port"
                     ptype="socket">
-                <property name="host">127.0.0.1</property>
-                <property name="port">4444</property>
+                <property name="host">10.0.1.77</property>
+                <property name="port">502</property>
             </object>
         """;
 
@@ -32,8 +32,22 @@ class Cld.SocketPortExample : GLib.Object {
 
         port.open ();
 
-        string command = "test";
-        port.send_bytes (command.to_utf8 (), command.length);
+//        string command = "test";
+//        port.send_bytes (command.to_utf8 (), command.length);
+        char[] command = new char[12];
+        command[0]  = 0x00;
+        command[1]  = 0x00;
+        command[2]  = 0x00;
+        command[3]  = 0x00;
+        command[4]  = 0x00;
+        command[5]  = 0x06;
+        command[6]  = 0x98;
+        command[7]  = 0x03;
+        command[8]  = 0x00;
+        command[9]  = 0x10;
+        command[10] = 0x00;
+        command[11] = 0x10;
+        port.send_bytes (command, 12);
         message ("\n\n%s", port.to_string ());
 
         loop.run ();
@@ -53,11 +67,21 @@ class Cld.SocketPortExample : GLib.Object {
                 received += "%s".printf (s);
             }
 
-            if (c == '\n') {
-                stdout.printf ("%s\n", received);
-                received = "";
-            }
+            //if (c == '\n') {
+            //    stdout.printf ("%s\n", received);
+            //    received = "";
+            //}
         }
+
+        foreach (var c in received.to_utf8 ()) {
+            stdout.printf ("%X\n", c);
+        }
+        stdout.printf ("\n\n");
+
+        message ("\n\n%s", port.to_string ());
+
+        //stdout.printf ("%s\n", received);
+        received = "";
     }
 }
 

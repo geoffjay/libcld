@@ -210,7 +210,12 @@ public class Cld.SocketPort : AbstractPort {
         if (connected) {
             uchar[] b = new uchar[1];
             b[0] = byte;
-            size_t n = Posix.write (fd, b, 1);
+            size_t n;
+            string command = "";
+            foreach (var c in b) {
+                command += "%c".printf (c);
+            }
+            connection.output_stream.write_all (command.data, out n);
             _tx_count += n;
         }
     }

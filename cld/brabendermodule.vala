@@ -19,13 +19,56 @@
  */
 
 /**
- * This is very much intended to service an immediate specific need and will not
- * be suitable for a generic scenario.
+ * Brabender ISC-CM Plus implementing TCP/IP Modbus
  *
  * XXX should be a container.
  * XXX should be buildable using XML.
  */
 public class Cld.BrabenderModule : AbstractModule {
+
+    /**
+     * Operating Mode.
+     */
+    public enum Mode {
+        FREE0,
+        GF,
+        VR,
+        VS,
+        DI,
+        CM,
+        GD,
+        VF,
+        FREE1,
+        AT,
+        FREE2,
+        GM,
+        BF,
+        BM,
+        FREE3,
+        FREE4
+
+        public string to_string () {
+            switch (this) {
+                case NONE:  return "None";
+                case FREE0: return "Free(0)";
+                case GF:    return "Gravimetric Feed";
+                case VR:    return "Volumetric Regulation";
+                case VS:    return "Volumetric Setting";
+                case DI:    return "Discharge";
+                case CM:    return "Check max. output";
+                case GD:    return "Gravimetric Discharge";
+                case VF:    return "Volumetric Feeding";
+                case FREE1: return "Free(1)";
+                case AT:    return "Auto-tare";
+                case FREE2: return "Free(2)";
+                case GM:    return "Gravimetric Measuring";
+                case BF:    return "Batch Feeding";
+                case BM:    return "Batch Measuring";
+                case FREE3: return "Free(3)";
+                case FREE4: return "Free(4)";
+            }
+        }
+    }
 
     /**
      * {@inheritDoc}
@@ -35,9 +78,17 @@ public class Cld.BrabenderModule : AbstractModule {
     public override bool loaded { get; set; default = false; }
 
     /**
-     * The port to connect to the Velmex with.
+     * The port to connect to the Brabender with.
      */
     public Port port { get; set; }
+
+    public Gee.Map<string, Object> channels { get; set; }
+
+    /**
+     * The operating mode.
+     */
+    public Mode mode { get; set; default = Mode.GF; }
+
 
     /**
      * Default construction.
@@ -98,13 +149,33 @@ public class Cld.BrabenderModule : AbstractModule {
     }
 
     /**
-     * Read the Actual values (Input data addresses 10H through 22H,
-     * and 40H through 4AH
+     * Callback event that handles new data seen on the modbus port.
      */
+    private void new_data_cb (ModbusPort port, /* some data */) {
+    }
 
-     public Brabender
+    /**
+     * Set the operating mode.
+     */
+    public bool set_operating_mode (ModbusPort port, Mode mode) {
+     }
 
+    /**
+     * Set the set point
+     */
+    public bool set_set_point (ModbusPort port, double sp) {
+    }
 
+    /**
+     * Set the speed
+     */
+    public bool set_speed (ModbusPort port, double speed) {
+    }
+
+    /**
+    *
+    */
+    public bool
     /**
      * {@inheritDoc}
      */

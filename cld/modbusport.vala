@@ -15,13 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
- * Author:
+ * Authors:
  *  Geoff Johnson <geoff.jay@gmail.com>
+ *  Stephen Roy <sroy1966@gmail.com>
  */
 
-using Linux;
-using Posix;
-
+using Modbus;
 /**
  * An object to use with UART and FTDI type serial ports. Pretty much pilfered
  * the code from the moserial application.
@@ -32,6 +31,11 @@ public class Cld.ModbusPort : AbstractPort {
      * {@inheritDoc}
      */
     public override string id { get; set; }
+
+    /**
+     * The TCP/IP address of the ModbusPort
+     */
+    public string ip_address { get; set; }
 
     /* property backing fields */
     private bool _connected = false;
@@ -65,7 +69,7 @@ public class Cld.ModbusPort : AbstractPort {
     /**
      * Alternate construction that uses an XML node to populate the settings.
      */
-    public SerialPort.from_xml_node (Xml.Node *node) {
+    public ModbusPort.from_xml_node (Xml.Node *node) {
         string val;
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
@@ -95,29 +99,9 @@ public class Cld.ModbusPort : AbstractPort {
      */
     public override bool open () {
 
-        if (access_mode == AccessMode.READWRITE)
-            flags = Posix.O_RDWR;
-        else if (access_mode == AccessMode.READONLY)
-            flags = Posix.O_RDONLY;
-        else
-            flags = Posix.O_WRONLY;
-
-        /* Make non-blocking */
-        if ((fd = Posix.open (device, flags | Posix.O_NONBLOCK | Posix.O_NOCTTY)) < 0) {
-            fd = -1;
-            return false;
-        }
-
-        /* Save the current setup */
-        Posix.tcflush (fd, Posix.TCIOFLUSH);
-        tcgetattr (fd, out oldtio);
-        settings_changed ();
-        tcsetattr (fd, Posix.TCSANOW, newtio);
-
-        _connected = true;
-
-        fd_channel = new GLib.IOChannel.unix_new (fd);
-        source_id = fd_channel.add_watch (GLib.IOCondition.IN, this.read_bytes);
+        private Context ctx;
+        ctx = new Context.as_tcp (ip_address, TcpAttributes.DEFAULT_PORT);
+        open (ip_address);
 
         return true;
     }
@@ -144,5 +128,8 @@ public class Cld.ModbusPort : AbstractPort {
             Posix.close (fd);
         }
     }
+
+    /**
+     *
 
 

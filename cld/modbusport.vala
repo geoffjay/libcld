@@ -99,11 +99,11 @@ public class Cld.ModbusPort : AbstractPort {
      */
     public override bool open () {
 
-        private Context ctx;
-        ctx = new Context.as_tcp (ip_address, TcpAttributes.DEFAULT_PORT);
-        open (ip_address);
+//        private Context ctx;
 
-        return true;
+//        ctx = new Context.as_tcp (ip_address, TcpAttributes.DEFAULT_PORT);
+
+       return true;
     }
 
     /**
@@ -128,8 +128,4 @@ public class Cld.ModbusPort : AbstractPort {
             Posix.close (fd);
         }
     }
-
-    /**
-     *
-
-
+}

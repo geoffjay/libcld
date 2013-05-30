@@ -45,11 +45,10 @@ public class Cld.BrabenderModule : AbstractModule {
         BF,
         BM,
         FREE3,
-        FREE4
+        FREE4;
 
         public string to_string () {
             switch (this) {
-                case NONE:  return "None";
                 case FREE0: return "Free(0)";
                 case GF:    return "Gravimetric Feed";
                 case VR:    return "Volumetric Regulation";
@@ -66,6 +65,7 @@ public class Cld.BrabenderModule : AbstractModule {
                 case BM:    return "Batch Measuring";
                 case FREE3: return "Free(3)";
                 case FREE4: return "Free(4)";
+                default:    return "default";
             }
         }
     }
@@ -107,29 +107,29 @@ public class Cld.BrabenderModule : AbstractModule {
      * Alternate construction that uses an XML node to populate the settings.
      */
 
-    public BrabenderModule.from_xml_node (Xml.Node *node) {
-        string val;
-
-        if (node->type == Xml.ElementType.ELEMENT_NODE &&
-            node->type != Xml.ElementType.COMMENT_NODE) {
-            id = node->get_prop ("id");
-            /* iterate through node children */
-            for (Xml.Node *iter = node->children;
-                 iter != null;
-                 iter = iter->next) {
-                if (iter->name == "property") {
-                    switch (iter->get_prop ("name")) {
-                         case "program":
-                             program = iter->get_content ();
-                             break;
-                        default:
-                            break;
-                    }
-                }
-            }
-        }
-    }
-
+//    public BrabenderModule.from_xml_node (Xml.Node *node) {
+//
+//        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+//            node->type != Xml.ElementType.COMMENT_NODE) {
+//            id = node->get_prop ("id");
+//            /* iterate through node children */
+//            for (Xml.Node *iter = node->children;
+//                 iter != null;
+//                 iter = iter->next) {
+//                if (iter->name == "property") {
+//                    switch (iter->get_prop ("name")) {
+//                         case "port":
+//                             port = iter->get_content ();
+//                             break;
+//                         case
+//                        default:
+//                            break;
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
     /**
      * Start the dry feeder.
      */
@@ -151,37 +151,38 @@ public class Cld.BrabenderModule : AbstractModule {
     /**
      * Callback event that handles new data seen on the modbus port.
      */
-    private void new_data_cb (ModbusPort port, /* some data */) {
+    private void new_data_cb () {//ModbusPort port /* some data */) {
+
+    /* XXX Hard code this for now to get speed or mass flow rate depending on mode setting. */
     }
 
     /**
      * Set the operating mode.
      */
-    public bool set_operating_mode (ModbusPort port, Mode mode) {
+    public bool set_operating_mode () {//ModbusPort port, Mode mode) {
+        return true;
      }
 
     /**
      * Set the set point
      */
-    public bool set_set_point (ModbusPort port, double sp) {
+    public bool set_set_point () {//ModbusPort port, double sp) {
+        return true;
     }
 
     /**
      * Set the speed
      */
-    public bool set_speed (ModbusPort port, double speed) {
+    public bool set_speed () {//ModbusPort port, double speed) {
+        return true;
     }
 
-    /**
-    *
-    */
-    public bool
     /**
      * {@inheritDoc}
      */
     public override bool load () {
-        if (!port.open ())
-            return false;
+//        if (!port.open ())
+//            return false;
 
         loaded = true;
 
@@ -192,7 +193,9 @@ public class Cld.BrabenderModule : AbstractModule {
      * {@inheritDoc}
      */
     public override void unload () {
-        port.close ();
+//        port.close ();
+
+        loaded = false;
     }
 
     /**
@@ -200,7 +203,7 @@ public class Cld.BrabenderModule : AbstractModule {
      */
     public override string to_string () {
         string r;
-        r  = "BrabenderModule [%s]\n".printf (id);
+        r  = "Brabender Module: [%s]\n".printf (id);
         return r;
     }
 }

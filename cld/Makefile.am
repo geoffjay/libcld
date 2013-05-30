@@ -32,7 +32,7 @@ libcld_0_2_la_SOURCES = \
 	pid.vala \
 	port.vala \
 	serialport.vala \
-	socketport.vala \
+	socketport.vala\
 	vchannel.vala \
 	velmexmodule.vala \
 	brabendermodule.vala\
@@ -53,6 +53,7 @@ libcld_0_2_la_VALAFLAGS = \
 	--vapidir=$(srcdir)/../vapi --pkg config \
 	--pkg glib-2.0 --pkg gee-1.0 --pkg libxml-2.0 --pkg json-glib-1.0 \
 	--pkg gio-2.0 --pkg linux --pkg posix \
+	--pkg libmodbus\
 	$(VALAFLAGS) \
 	$(NULL)
 

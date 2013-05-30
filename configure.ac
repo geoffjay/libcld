@@ -71,6 +71,19 @@ PKG_CHECK_MODULES([JSON], json-glib-1.0,,
 AC_SUBST(JSON_CFLAGS)
 AC_SUBST(JSON_LIBS)
 
+dnl libmodbus support
+AC_ARG_WITH(modbus,
+[  --with-modbus         Use Modbus library],
+	[use_modbus=$withval],
+	[use_modbus=no])
+AC_MSG_RESULT(checking whether libmodbus support was selected... $use_modbus)
+
+if test "x$use_modbus" != "xno" ; then
+	PKG_CHECK_MODULES([MODBUS], [libmodbus],,
+		[AC_MSG_ERROR([libmodbus is required])])
+	AC_DEFINE(USE_MODBUS, [1], ["Modbus Library"])
+fi
+
 dnl ---------------------------------------------------------------------------
 dnl CFLAGS
 dnl ---------------------------------------------------------------------------

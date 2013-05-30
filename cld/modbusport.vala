@@ -27,23 +27,41 @@ using Modbus;
  */
 public class Cld.ModbusPort : AbstractPort {
 
+    private Context ctx;
+    /* property backing fields */
+    private bool _connected = false;
+
+    /**
+     * {@inheritDoc}
+     */
+    public override bool connected {
+        get { return _connected; }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override ulong tx_count {
+        get { return 0; }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override ulong rx_count {
+        get { return 0; }
+    }
+
     /**
      * {@inheritDoc}
      */
     public override string id { get; set; }
 
+
     /**
      * The TCP/IP address of the ModbusPort
      */
     public string ip_address { get; set; }
-
-    /* property backing fields */
-    private bool _connected = false;
-
-    /**
-     * Used when new data arrives.
-     */
-    public signal void new_data (uchar[] data, int size);
 
     /**
      * Used when a setting has been changed.
@@ -55,6 +73,7 @@ public class Cld.ModbusPort : AbstractPort {
      */
     public ModbusPort () {
         this.settings_changed.connect (update_settings);
+        message ("also done");
     }
 
     /**
@@ -69,41 +88,56 @@ public class Cld.ModbusPort : AbstractPort {
     /**
      * Alternate construction that uses an XML node to populate the settings.
      */
-    public ModbusPort.from_xml_node (Xml.Node *node) {
-        string val;
+//    public ModbusPort.from_xml_node (Xml.Node *node) {
+//        string val;
+//
+//        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+//            node->type != Xml.ElementType.COMMENT_NODE) {
+//            id = node->get_prop ("id");
+//            /* iterate through node children */
+//            for (Xml.Node *iter = node->children;
+//                 iter != null;
+//                 iter = iter->next) {
+//                if (iter->name == "property") {
+//                    switch (iter->get_prop ("name")) {
+//                        case "ip_address":
+//                           ip_address = iter->get_content ();
+//                            break;
+//                        default:
+//                            break;
+//                    }
+//                }
+//            }
+//        }
+//
+//        this.settings_changed.connect (update_settings);
+//    }
+//
+    /**
+     * XXX These functions are not by ModbusPort implemented yet
+     **/
+    private void update_settings () {}
 
-        if (node->type == Xml.ElementType.ELEMENT_NODE &&
-            node->type != Xml.ElementType.COMMENT_NODE) {
-            id = node->get_prop ("id");
-            /* iterate through node children */
-            for (Xml.Node *iter = node->children;
-                 iter != null;
-                 iter = iter->next) {
-                if (iter->name == "property") {
-                    switch (iter->get_prop ("name")) {
-                        case "ip_address":
-                            device = iter->get_content ();
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
+    public override void send_byte (uchar byte) {}
+    public override void send_bytes (char[] bytes, size_t size) {}
+    public override bool read_bytes (GLib.IOChannel source, GLib.IOCondition condition) {
+        return false;
         }
-
-        this.settings_changed.connect (update_settings);
-    }
 
     /**
      * {@inheritDoc}
      */
     public override bool open () {
-
-        private Context ctx;
+        uint16 reg[16];
         ctx = new Context.as_tcp (ip_address, TcpAttributes.DEFAULT_PORT);
-        open (ip_address);
+        if (ctx.connect () == -1)
+            error ("Connection failed.");
 
-        return true;
+        if (ctx.read_registers (0x20, reg[0:2]) == -1)
+            error ("Modbus read error.");
+        _connected = true;
+
+       return true;
     }
 
     /**
@@ -111,25 +145,26 @@ public class Cld.ModbusPort : AbstractPort {
      */
     public override void close () {
         if (connected) {
-            GLib.Source.remove (source_id);
-            source_id = null;
-            try {
-                fd_channel.shutdown (true);
-            } catch (GLib.IOChannelError e) {
-                warning ("%s", e.message);
-            }
-            non_printable = 0;
-            last_rx_was_cr = false;
-            fd_channel = null;
+            ctx.close ();
             _connected = false;
-            _tx_count = 0;
-            _rx_count = 0;
-            tcsetattr (fd, Posix.TCSANOW, newtio);
-            Posix.close (fd);
-        }
+            message ("Closed Modbus port.");
+            }
     }
 
     /**
-     *
+     * Read modbus registers and store in an array.
+     **/
+     public void read_registers (int addr, uint16[] dest) {
+        if  (ctx == null)
+        message ("Port has no context (ie. is not open)");
+        ctx.read_registers (0x20, dest);
+     }
 
-
+    public double get_float (uint16[] src){
+        double num;
+        if (src.length > 2)
+            message ("Warning: get_float takes 2 integers of 16 bits only");
+        num = get_float (src);
+        return num;
+    }
+}

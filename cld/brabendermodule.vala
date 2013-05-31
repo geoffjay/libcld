@@ -181,10 +181,12 @@ public class Cld.BrabenderModule : AbstractModule {
      * {@inheritDoc}
      */
     public override bool load () {
-//        if (!port.open ())
-//            return false;
-
+        if (!port.open ()){
+            message ("Couldn load id:%s", id);
+            return false;
+        }
         loaded = true;
+        message ("BrabenderModule loaded");
 
         return true;
     }

@@ -27,6 +27,32 @@ using Modbus;
  */
 public class Cld.ModbusPort : AbstractPort {
 
+    private Context ctx;
+    /* property backing fields */
+    private bool _connected = false;
+
+
+    /**
+     * {@inheritDoc}
+     */
+    public override bool connected {
+        get { return _connected; }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override ulong tx_count {
+        get { return 0; }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override ulong rx_count {
+        get { return 0; }
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -37,8 +63,6 @@ public class Cld.ModbusPort : AbstractPort {
      */
     public string ip_address { get; set; }
 
-    /* property backing fields */
-    private bool _connected = false;
 
     /**
      * Used when new data arrives.
@@ -69,40 +93,49 @@ public class Cld.ModbusPort : AbstractPort {
     /**
      * Alternate construction that uses an XML node to populate the settings.
      */
-    public ModbusPort.from_xml_node (Xml.Node *node) {
-        string val;
+//    public ModbusPort.from_xml_node (Xml.Node *node) {
+//        string val;
+//
+//        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+//            node->type != Xml.ElementType.COMMENT_NODE) {
+//            id = node->get_prop ("id");
+//            /* iterate through node children */
+//            for (Xml.Node *iter = node->children;
+//                 iter != null;
+//                 iter = iter->next) {
+//                if (iter->name == "property") {
+//                    switch (iter->get_prop ("name")) {
+//                        case "ip_address":
+//                           ip_address = iter->get_content ();
+//                            break;
+//                        default:
+//                            break;
+//                    }
+//                }
+//            }
+//        }
+//
+//        this.settings_changed.connect (update_settings);
+//    }
+//
+    /**
+     * XXX These functions are not implemented yet
+     **/
+    private void update_settings () {}
 
-        if (node->type == Xml.ElementType.ELEMENT_NODE &&
-            node->type != Xml.ElementType.COMMENT_NODE) {
-            id = node->get_prop ("id");
-            /* iterate through node children */
-            for (Xml.Node *iter = node->children;
-                 iter != null;
-                 iter = iter->next) {
-                if (iter->name == "property") {
-                    switch (iter->get_prop ("name")) {
-                        case "ip_address":
-                            device = iter->get_content ();
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
+    public override void send_byte (uchar byte) {}
+    public override void send_bytes (char[] bytes, size_t size) {}
+    public override bool read_bytes (GLib.IOChannel source, GLib.IOCondition condition) {
+        return false;
         }
-
-        this.settings_changed.connect (update_settings);
-    }
 
     /**
      * {@inheritDoc}
      */
     public override bool open () {
-
-//        private Context ctx;
-
-//        ctx = new Context.as_tcp (ip_address, TcpAttributes.DEFAULT_PORT);
-
+        message ("ModbusPort is open!");
+        ctx = new Context.as_tcp (ip_address, TcpAttributes.DEFAULT_PORT);
+        _connected = true;
        return true;
     }
 
@@ -111,21 +144,9 @@ public class Cld.ModbusPort : AbstractPort {
      */
     public override void close () {
         if (connected) {
-            GLib.Source.remove (source_id);
-            source_id = null;
-            try {
-                fd_channel.shutdown (true);
-            } catch (GLib.IOChannelError e) {
-                warning ("%s", e.message);
-            }
-            non_printable = 0;
-            last_rx_was_cr = false;
-            fd_channel = null;
-            _connected = false;
-            _tx_count = 0;
-            _rx_count = 0;
-            tcsetattr (fd, Posix.TCSANOW, newtio);
-            Posix.close (fd);
-        }
+            message ("Close Modbus port (ie. do nothing");
+                    }
     }
+
+
 }

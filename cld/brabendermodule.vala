@@ -195,7 +195,7 @@ public class Cld.BrabenderModule : AbstractModule {
      * {@inheritDoc}
      */
     public override void unload () {
-//        port.close ();
+        port.close ();
 
         loaded = false;
     }

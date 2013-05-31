@@ -31,7 +31,6 @@ public class Cld.ModbusPort : AbstractPort {
     /* property backing fields */
     private bool _connected = false;
 
-
     /**
      * {@inheritDoc}
      */
@@ -78,7 +77,10 @@ public class Cld.ModbusPort : AbstractPort {
      * Default construction.
      */
     public ModbusPort () {
+        message ("instantiating a new ModbusPort");
+        message ("done");
         this.settings_changed.connect (update_settings);
+        message ("also done");
     }
 
     /**
@@ -133,9 +135,21 @@ public class Cld.ModbusPort : AbstractPort {
      * {@inheritDoc}
      */
     public override bool open () {
-        message ("ModbusPort is open!");
+        uint16 reg[16];
         ctx = new Context.as_tcp (ip_address, TcpAttributes.DEFAULT_PORT);
+
+
+        if (ctx.connect () == -1)
+            error ("Connection failed.");
+
+        if (ctx.read_registers (0x20, reg[0:2]) == -1)
+            error ("Modbus read error.");
+
+        message ("ModbusPort is open.");
+        message ("reg = %d (0x%X)", reg[0], reg[0]);
+        message ("reg = %d (0x%X)", reg[1], reg[1]);
         _connected = true;
+
        return true;
     }
 
@@ -144,7 +158,10 @@ public class Cld.ModbusPort : AbstractPort {
      */
     public override void close () {
         if (connected) {
-            message ("Close Modbus port (ie. do nothing");
+            ctx.close ();
+            _connected = false;
+            message ("Closed Modbus port.");
+
                     }
     }
 

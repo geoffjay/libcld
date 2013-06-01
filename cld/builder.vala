@@ -184,7 +184,7 @@ public class Cld.Builder : GLib.Object {
     private void build_object_map () {
         string type;
         string direction;
-        string xpath = "/cld/objects/object";
+        string xpath = "/cld/cld:objects/cld:object";
 
         /* request the nodeset from the configuration */
         Xml.XPath.NodeSet *nodes = xml.nodes_from_xpath (xpath);

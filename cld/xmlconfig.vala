@@ -70,8 +70,11 @@ public class Cld.XmlConfig : GLib.Object {
      */
     public XmlConfig.from_node (Xml.Node *node) {
         doc = new Xml.Doc ("1.0");
-        doc->set_root_element (node);
+        Xml.Node *root = new Xml.Node (null, "cld");
+        doc->set_root_element (root);
+        root->add_child (node);
         ctx = new Xml.XPath.Context (doc);
+        ctx->register_ns ("cld", "urn:libcld");
     }
 
     void load_document (string file_name) {
@@ -85,6 +88,7 @@ public class Cld.XmlConfig : GLib.Object {
 
         /* create xpath evaluation context */
         ctx = new Xml.XPath.Context (doc);
+        ctx->register_ns ("cld", "urn:libcld");
     }
 
     /**

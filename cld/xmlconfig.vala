@@ -63,6 +63,17 @@ public class Cld.XmlConfig : GLib.Object {
         load_document (this.file_name);
     }
 
+    /**
+     * Constructs a new configuration using the node provided.
+     *
+     * @param node the node to add to the root
+     */
+    public XmlConfig.from_node (Xml.Node *node) {
+        doc = new Xml.Doc ("1.0");
+        doc->set_root_element (node);
+        ctx = new Xml.XPath.Context (doc);
+    }
+
     void load_document (string file_name) {
         /* load XML document */
         doc = Xml.Parser.parse_file (file_name);

@@ -35,6 +35,7 @@ libcld_0_2_la_SOURCES = \
 	socketport.vala \
 	vchannel.vala \
 	velmexmodule.vala \
+	brabendermodule.vala\
 	xmlconfig.vala \
 	$(NULL)
 

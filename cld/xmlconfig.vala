@@ -226,4 +226,16 @@ public class Cld.XmlConfig : GLib.Object {
 
         return node->get_content ();
     }
+
+    public Xml.Node * get_node (string xpath) {
+        obj = ctx->eval_expression (xpath);
+        if (obj == null)
+            throw new Cld.XmlError.INVALID_XPATH_EXPR (
+                    "the xpath expression %s is invalid", xpath
+                );
+
+        Xml.XPath.NodeSet *nodes = obj->nodesetval;
+
+        return nodes->item (0);
+    }
 }

@@ -25,6 +25,7 @@
  * XXX should be buildable using XML.
  */
 public class Cld.BrabenderModule : AbstractModule {
+    int timeout_ms = 100;
 
     /**
      * Operating Mode.
@@ -93,7 +94,10 @@ public class Cld.BrabenderModule : AbstractModule {
     /**
      * Default construction.
      */
-    public BrabenderModule () { }
+    public BrabenderModule () {
+        uint source_id = Timeout.add (timeout_ms, new_data_cb);
+        }
+
 
     /**
      * Full construction using available settings.
@@ -101,6 +105,7 @@ public class Cld.BrabenderModule : AbstractModule {
     public BrabenderModule.full (string id, Port port) {
         this.id = id;
         this.port = port;
+        uint source_id = Timeout.add (timeout_ms, new_data_cb);
     }
 
     /**
@@ -151,15 +156,37 @@ public class Cld.BrabenderModule : AbstractModule {
     /**
      * Callback event that handles new data seen on the modbus port.
      */
-    private void new_data_cb () {//ModbusPort port /* some data */) {
+    private bool new_data_cb () {
+        uint16 reg[59];
 
-    /* XXX Hard code this for now to get speed or mass flow rate depending on mode setting. */
+        (this.port as ModbusPort).read_registers (0x10, reg);
+        var id = "br0";
+        /** Assign the channel the value that was received
+         *  XXX Actual values should be enumerated and parsed
+         *  For now this is hard coded.
+         **/
+        var channel = channels.get (id);
+        (channel as VChannel).raw_value = get_double (reg[0:2]);
+        id = "br1";
+        channel = channels.get (id);
+        (channel as VChannel).raw_value = get_double (reg[2:4]);
+        return false;
+        }
+
+    private double get_double (uint16[] reg) {
+        uint16 reg1[2];
+        double num = 0;
+        /* Swap bytes. */
+        reg1[0] = reg[1];
+        reg1[1] = reg[0];
+        num = (this.port as ModbusPort).get_float (reg1);
+        return num;
     }
 
     /**
      * Set the operating mode.
      */
-    public bool set_operating_mode () {//ModbusPort port, Mode mode) {
+    public bool set_operating_mode (int mode) {
         return true;
      }
 

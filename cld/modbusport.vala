@@ -132,9 +132,6 @@ public class Cld.ModbusPort : AbstractPort {
         ctx = new Context.as_tcp (ip_address, TcpAttributes.DEFAULT_PORT);
         if (ctx.connect () == -1)
             error ("Connection failed.");
-
-        if (ctx.read_registers (0x20, reg[0:2]) == -1)
-            error ("Modbus read error.");
         _connected = true;
 
        return true;
@@ -154,17 +151,19 @@ public class Cld.ModbusPort : AbstractPort {
     /**
      * Read modbus registers and store in an array.
      **/
-     public void read_registers (int addr, uint16[] dest) {
+    public void read_registers (int addr, uint16[] dest) {
         if  (ctx == null)
-        message ("Port has no context (ie. is not open)");
-        ctx.read_registers (0x20, dest);
+            message ("Port has no context");
+            if (ctx.read_registers (addr, dest) == -1)
+                error ("Modbus read error.");
      }
-
-    public double get_float (uint16[] src){
-        double num;
-        if (src.length > 2)
-            message ("Warning: get_float takes 2 integers of 16 bits only");
-        num = get_float (src);
-        return num;
+     /**
+      * Write modbus registers.
+      **/
+      public void write_register (int addr, int val) {
+        if  (ctx == null)
+            message ("Port has no context");
+            if (ctx.write_register (addr, val) == -1)
+                error ("Modbus write error.");
     }
 }

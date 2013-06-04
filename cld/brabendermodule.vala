@@ -25,7 +25,7 @@
  * XXX should be buildable using XML.
  */
 public class Cld.BrabenderModule : AbstractModule {
-    int timeout_ms = 100;
+    int timeout_ms = 2000;
 
     /**
      * Operating Mode.
@@ -95,7 +95,6 @@ public class Cld.BrabenderModule : AbstractModule {
      * Default construction.
      */
     public BrabenderModule () {
-        uint source_id = Timeout.add (timeout_ms, new_data_cb);
         }
 
 
@@ -105,7 +104,6 @@ public class Cld.BrabenderModule : AbstractModule {
     public BrabenderModule.full (string id, Port port) {
         this.id = id;
         this.port = port;
-        uint source_id = Timeout.add (timeout_ms, new_data_cb);
     }
 
     /**
@@ -159,27 +157,41 @@ public class Cld.BrabenderModule : AbstractModule {
     private bool new_data_cb () {
         uint16 reg[59];
 
-        (this.port as ModbusPort).read_registers (0x10, reg);
-        var id = "br0";
-        /** Assign the channel the value that was received
-         *  XXX Actual values should be enumerated and parsed
-         *  For now this is hard coded.
-         **/
-        var channel = channels.get (id);
-        (channel as VChannel).raw_value = get_double (reg[0:2]);
-        id = "br1";
-        channel = channels.get (id);
-        (channel as VChannel).raw_value = get_double (reg[2:4]);
-        return false;
+        message ("new Brabender data");
+
+        if ((this.port as ModbusPort).connected == true) {
+            (this.port as ModbusPort).read_registers (0x10, reg);
+            for (int i = 0; i < 59;i++)
+                message ("reg[%d]: %d", i,reg[i]);
+            /**
+            * Assign the channel the value that was received
+            * XXX Actual values should be enumerated and parsed
+            * For now this is hard coded.
+            */
+            var id = "br0";
+            var channel = channels.get (id);
+            message ("got0");
+            (channel as VChannel).raw_value = get_double (reg[0:2]);
+            message("got 1");
+
+            id = "br1";
+            channel = channels.get (id);
+            (channel as VChannel).raw_value = get_double (reg[16:18]);
+            message ("got2");
         }
+
+        return true;
+    }
 
     private double get_double (uint16[] reg) {
         uint16 reg1[2];
         double num = 0;
+
         /* Swap bytes. */
         reg1[0] = reg[1];
         reg1[1] = reg[0];
         num = (this.port as ModbusPort).get_float (reg1);
+        message ("num: %.3f", num);
         return num;
     }
 
@@ -214,6 +226,7 @@ public class Cld.BrabenderModule : AbstractModule {
         }
         loaded = true;
         message ("BrabenderModule loaded");
+        uint source_id = Timeout.add (timeout_ms, new_data_cb);
 
         return true;
     }

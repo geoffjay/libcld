@@ -157,12 +157,4 @@ public class Cld.ModbusPort : AbstractPort {
             if (ctx.read_registers (addr, dest) == -1)
                 error ("Modbus read error.");
      }
-
-    public double get_float (uint16[] src){
-        double num;
-        if (src.length > 2)
-            message ("Warning: get_float takes 2 integers of 16 bits only");
-        num = Modbus.get_float (src);
-        return num;
-    }
 }

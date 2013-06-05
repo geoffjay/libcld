@@ -24,8 +24,10 @@
  * XXX should be a container.
  * XXX should be buildable using XML.
  */
+using Modbus;
+
 public class Cld.BrabenderModule : AbstractModule {
-    int timeout_ms = 2000;
+    int timeout_ms = 100;
 
     /**
      * Operating Mode.
@@ -157,12 +159,8 @@ public class Cld.BrabenderModule : AbstractModule {
     private bool new_data_cb () {
         uint16 reg[59];
 
-        message ("new Brabender data");
-
         if ((this.port as ModbusPort).connected == true) {
             (this.port as ModbusPort).read_registers (0x10, reg);
-            for (int i = 0; i < 59;i++)
-                message ("reg[%d]: %d", i,reg[i]);
             /**
             * Assign the channel the value that was received
             * XXX Actual values should be enumerated and parsed
@@ -170,14 +168,12 @@ public class Cld.BrabenderModule : AbstractModule {
             */
             var id = "br0";
             var channel = channels.get (id);
-            message ("got0");
-            (channel as VChannel).raw_value = get_double (reg[0:2]);
-            message("got 1");
-
+            (channel as VChannel).raw_value = get_double (reg[2:4]);
             id = "br1";
             channel = channels.get (id);
-            (channel as VChannel).raw_value = get_double (reg[16:18]);
-            message ("got2");
+            (channel as VChannel).raw_value = get_double (reg[6:8]);
+            //message ("Setpoint [kg/h]: %.3f", get_double (reg[0:2]));
+            //message ("Auto-Tare value [kg]: %.3f", get_double (reg[16:18]));
         }
 
         return true;
@@ -190,8 +186,8 @@ public class Cld.BrabenderModule : AbstractModule {
         /* Swap bytes. */
         reg1[0] = reg[1];
         reg1[1] = reg[0];
-        num = (this.port as ModbusPort).get_float (reg1);
-        message ("num: %.3f", num);
+        num = Modbus.get_float (reg1);
+
         return num;
     }
 

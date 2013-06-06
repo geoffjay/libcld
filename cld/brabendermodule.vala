@@ -28,7 +28,13 @@ using Modbus;
 
 public class Cld.BrabenderModule : AbstractModule {
     int timeout_ms = 100;
-
+    const int ACTUAL_VALUE_START_ADDRESS = 0x10;
+    const uint NUM_ACTUAL_VALUE_REGISTERS = 59;
+    const int SETPOINT_REL_ADDR = 0x0;
+    const int MASS_FLOW_REL_ADDR = 0x2;
+    const int SPEED_REL_ADDR = 0x6;
+    const int MODE_ADDR = 0x0A;
+    const int FUNC_ADDR = 0x08;
     /**
      * Operating Mode.
      */
@@ -160,7 +166,7 @@ public class Cld.BrabenderModule : AbstractModule {
         uint16 reg[59];
 
         if ((this.port as ModbusPort).connected == true) {
-            (this.port as ModbusPort).read_registers (0x10, reg);
+            (this.port as ModbusPort).read_registers (ACTUAL_VALUE_START_ADDRESS, reg);
             /**
             * Assign the channel the value that was received
             * XXX Actual values should be enumerated and parsed
@@ -168,10 +174,10 @@ public class Cld.BrabenderModule : AbstractModule {
             */
             var id = "br0";
             var channel = channels.get (id);
-            (channel as VChannel).raw_value = get_double (reg[2:4]);
+            (channel as VChannel).raw_value = get_double (reg[MASS_FLOW_REL_ADDR: MASS_FLOW_REL_ADDR + 2]);
             id = "br1";
             channel = channels.get (id);
-            (channel as VChannel).raw_value = get_double (reg[6:8]);
+            (channel as VChannel).raw_value = get_double (reg[SPEED_REL_ADDR: SPEED_REL_ADDR + 2]);
             //message ("Setpoint [kg/h]: %.3f", get_double (reg[0:2]));
             //message ("Auto-Tare value [kg]: %.3f", get_double (reg[16:18]));
         }
@@ -194,8 +200,26 @@ public class Cld.BrabenderModule : AbstractModule {
     /**
      * Set the operating mode.
      */
-    public bool set_operating_mode (int mode) {
-        return true;
+    public bool set_mode (string mode) {
+        bool status;
+        int modeval = false;
+
+        if (mode == "GF") {
+            modeval = GF
+            status = true;
+            port.write_register(MODE_ADDR, modeval)
+            }
+        else if (mode == "VF") {
+            modeval = VF
+            status = true;
+            }
+        if (status == true) {
+            port.write_register (MODE_ADDR, modeval)
+        }
+        else
+            message ("Invalid Brabender operating mode setting");
+
+        return status;
      }
 
     /**

@@ -157,4 +157,7 @@ public class Cld.ModbusPort : AbstractPort {
             if (ctx.read_registers (addr, dest) == -1)
                 error ("Modbus read error.");
      }
+     /**
+      * Write modbus registers.
+      **/
 }

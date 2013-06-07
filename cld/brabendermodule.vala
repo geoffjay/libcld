@@ -25,12 +25,15 @@
  * XXX should be buildable using XML.
  */
 using Modbus;
+using Math;
 
 public class Cld.BrabenderModule : AbstractModule {
+    double eps = 0.0001;
     int timeout_ms = 100;
     const int MF_SP_WRITE_ADDR = 0x10;
     const int DI_SP_WRITE_ADDR = 0x14;
     const int MF_SP_READ_ADDR = 0x10;
+    const int DI_SP_READ_ADDR = 0x1C;
     const int MF_AV_READ_ADDR = 0x12;
     const int DI_AV_READ_ADDR = 0x16;
     const int AUTO_TARE_READ_ADDR = 0x20;
@@ -226,7 +229,7 @@ public class Cld.BrabenderModule : AbstractModule {
         if (status == true) {
             mode <<= 8;
             (this.port as ModbusPort).write_register (MODE_ADDR, mode);
-            Posix.sleep(1);  // Need to wait beween read and write.
+            Posix.usleep(200000);  // Need to wait beween read and write.
             (this.port as ModbusPort).read_registers (MODE_ADDR, data_in);
             message ("data_in: (0x%X) mode: (0x%X)", data_in[0], mode);
             if (!((int) data_in[0] == mode)) {
@@ -250,9 +253,11 @@ public class Cld.BrabenderModule : AbstractModule {
         set_double (setpoint, data_out);
         /* Swap bytes. */
         (this.port as ModbusPort).write_registers (MF_SP_WRITE_ADDR, data_out);
-        (this.port as ModbusPort).read_registers (MF_SP_WRITE_ADDR, data_in);
+        Posix.usleep (200000);
+        (this.port as ModbusPort).read_registers (MF_SP_READ_ADDR, data_in);
         setpoint_in = get_double (data_in);
-        if (!(setpoint == setpoint_in)) {
+        message ("setpoint: %.6f setpoint_in: %.6f", setpoint, setpoint_in);
+        if (fabs (setpoint - setpoint_in) > eps) {
             critical("Brabender Module: Unable to verify mass flow rate setpoint.");
             status = false;
         }
@@ -272,15 +277,16 @@ public class Cld.BrabenderModule : AbstractModule {
         set_double (setpoint, data_out);
         /* Swap bytes. */
         (this.port as ModbusPort).write_registers (DI_SP_WRITE_ADDR, data_out);
-        (this.port as ModbusPort).read_registers (DI_SP_WRITE_ADDR, data_in);
+        Posix.usleep (200000);
+        (this.port as ModbusPort).read_registers (DI_SP_READ_ADDR, data_in);
         setpoint_in = get_double (data_in);
-        if (!(setpoint == setpoint_in)) {
+        message ("setpoint: %.6f setpoint_in: %.6f", setpoint, setpoint_in);
+        if (fabs (setpoint - setpoint_in) > eps) {
             critical("Brabender Module: Unable to verify discharge rate setpoint.");
             status = false;
         }
 
         return status;
-
     }
 
     /**

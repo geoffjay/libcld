@@ -164,13 +164,16 @@ public class Cld.ModbusPort : AbstractPort {
         if  (ctx == null)
             message ("Port has no context");
             if (ctx.write_register (addr, val) == -1)
-                critical ("Modbus write error.");
+                critical ("Modbus write single register error.");
     }
 
     /**
      * Write to multiple registers.
      **/
     public void write_registers (int addr, uint16[] data) {
-        }
-
+        if (ctx == null)
+            message ("Port has no context.");
+            if (ctx.write_registers (addr, data) == -1)
+                critical ("Modbus write registers error.");
+    }
 }

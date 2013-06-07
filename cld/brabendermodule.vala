@@ -28,83 +28,59 @@ using Modbus;
 
 public class Cld.BrabenderModule : AbstractModule {
     int timeout_ms = 100;
-    const int ACTUAL_VALUE_START_ADDRESS = 0x10;
-    const uint NUM_ACTUAL_VALUE_REGISTERS = 59;
-    const int SETPOINT_REL_ADDR = 0x0;
-    const int MASS_FLOW_REL_ADDR = 0x2;
-    const int SPEED_REL_ADDR = 0x6;
+    const int MF_SP_WRITE_ADDR = 0x10;
+    const int DF_SP_WRITE_ADDR = 0x14;
+    const int MF_SP_READ_ADDR = 0x10;
+    const int DI_SP_READ_ADDR = 0x1C;
+    const int MF_VAL_ADDR = 0x12;
+    const int SPEED_READ_ADDR = 0x16;
+    const int AUTO_TARE_READ_ADDR = 0x20;
     const int MODE_ADDR = 0x0A;
     const int FUNC_ADDR = 0x08;
+    const int STATUS_ADDR = 0x08;
+    const int FREE_WRITE_VAL = 0x00;
+    const int START_WRITE_VAL = 0x01;
+    const int STOP_WRITE_VAL = 0x02;
+    const int STARTED_MASK = 0x0100;
     /**
-     * Operating Mode.
+     * Operating Modes
      */
-    public enum Mode {
-        FREE0,
-        GF,
-        VR,
-        VS,
-        DI,
-        CM,
-        GD,
-        VF,
-        FREE1,
-        AT,
-        FREE2,
-        GM,
-        BF,
-        BM,
-        FREE3,
-        FREE4;
-
-        public string to_string () {
-            switch (this) {
-                case FREE0: return "Free(0)";
-                case GF:    return "Gravimetric Feed";
-                case VR:    return "Volumetric Regulation";
-                case VS:    return "Volumetric Setting";
-                case DI:    return "Discharge";
-                case CM:    return "Check max. output";
-                case GD:    return "Gravimetric Discharge";
-                case VF:    return "Volumetric Feeding";
-                case FREE1: return "Free(1)";
-                case AT:    return "Auto-tare";
-                case FREE2: return "Free(2)";
-                case GM:    return "Gravimetric Measuring";
-                case BF:    return "Batch Feeding";
-                case BM:    return "Batch Measuring";
-                case FREE3: return "Free(3)";
-                case FREE4: return "Free(4)";
-                default:    return "default";
-            }
-        }
-    }
+    const int FREE0 = 0;
+    const int GF = 1;
+    const int VR = 2;
+    const int VS = 3;
+    const int DI = 4;
+    const int CM = 5;
+    const int GD = 6;
+    const int VF = 7;
+    const int FREE1 = 8;
+    const int AT = 9;
+    const int FREE2 = 10;
+    const int GM = 11;
+    const int BF = 12;
+    const int BM = 13;
+    const int FREE3 = 14;
+    const int FREE4 = 15;
 
     /**
      * {@inheritDoc}
      */
     public override string id { get; set; }
-
     public override bool loaded { get; set; default = false; }
+
+
 
     /**
      * The port to connect to the Brabender with.
      */
     public Port port { get; set; }
-
     public Gee.Map<string, Object> channels { get; set; }
-
-    /**
-     * The operating mode.
-     */
-    public Mode mode { get; set; default = Mode.GF; }
-
 
     /**
      * Default construction.
      */
     public BrabenderModule () {
         }
-
 
     /**
      * Full construction using available settings.
@@ -146,8 +122,21 @@ public class Cld.BrabenderModule : AbstractModule {
      */
 
     public bool run () {
-        message ("BrabenderModule.run");
-        return true;
+        bool status = true;
+        uint16[1] data;
+        int x;
+
+        (this.port as ModbusPort).write_register (FUNC_ADDR, START_WRITE_VAL);
+        (this.port as ModbusPort).read_registers (STATUS_ADDR, data);
+        x = data[0];
+        if (!((x &  STARTED_MASK) == STARTED_MASK)) {
+            critical ("Brabender Module start command not responding.");
+            status = false;
+        }
+        /* Enable starting if already stopped by OP1 */
+        (this.port as ModbusPort).write_register (FUNC_ADDR, FREE_WRITE_VAL);
+
+        return status;
     }
 
     /**
@@ -155,31 +144,38 @@ public class Cld.BrabenderModule : AbstractModule {
      */
 
     public bool stop () {
-        message ("BrabenderModule.stop");
-        return true;
+        bool status = true;
+        uint16[1] data;
+        int x;
+
+        (this.port as ModbusPort).write_register (FUNC_ADDR, STOP_WRITE_VAL);
+        (this.port as ModbusPort).read_registers (STATUS_ADDR, data);
+        x = data[0];
+        if (((x & STARTED_MASK) == STARTED_MASK)) {
+            critical ("Brabender Module stop command not responding.");
+            status = false;
+        }
+        /* Enable stoping if already started by OP1 */
+        (this.port as ModbusPort).write_register (FUNC_ADDR, FREE_WRITE_VAL);
+
+        return status;
     }
 
     /**
      * Callback event that handles new data seen on the modbus port.
      */
     private bool new_data_cb () {
-        uint16 reg[59];
+        uint16[2] data;
 
         if ((this.port as ModbusPort).connected == true) {
-            (this.port as ModbusPort).read_registers (ACTUAL_VALUE_START_ADDRESS, reg);
-            /**
-            * Assign the channel the value that was received
-            * XXX Actual values should be enumerated and parsed
-            * For now this is hard coded.
-            */
-            var id = "br0";
-            var channel = channels.get (id);
-            (channel as VChannel).raw_value = get_double (reg[MASS_FLOW_REL_ADDR: MASS_FLOW_REL_ADDR + 2]);
-            id = "br1";
-            channel = channels.get (id);
-            (channel as VChannel).raw_value = get_double (reg[SPEED_REL_ADDR: SPEED_REL_ADDR + 2]);
-            //message ("Setpoint [kg/h]: %.3f", get_double (reg[0:2]));
-            //message ("Auto-Tare value [kg]: %.3f", get_double (reg[16:18]));
+            var channel = channels.get ("br0");
+            (this.port as ModbusPort).read_registers (MF_SP_READ_ADDR, data);
+            (channel as VChannel).raw_value = get_double (data);
+            channel = channels.get ("br1");
+            (this.port as ModbusPort).read_registers (DI_SP_READ_ADDR, data);
+            (channel as VChannel).raw_value = get_double (data);
+            (this.port as ModbusPort).read_registers (AUTO_TARE_READ_ADDR, data);
+            message ("Auto-Tare value [kg]: %.3f", get_double (data));
         }
 
         return true;
@@ -197,42 +193,71 @@ public class Cld.BrabenderModule : AbstractModule {
         return num;
     }
 
+    private void set_double (double val, uint16[] reg) {
+        uint16[2] reg1;
+
+        Modbus.set_float ((float) val, reg1);
+        /* Swap bytes. */
+        reg[0] = reg1[1];
+        reg[1] = reg1[0];
+
+        }
+
+
     /**
      * Set the operating mode.
      */
-    public bool set_mode (string mode) {
-        bool status;
-        int modeval = false;
+    public bool set_mode (string mode_string) {
+        bool status = false;
+        int mode;
+        uint16 data[1];
 
-        if (mode == "GF") {
-            modeval = GF
+        switch (mode_string) {
+        case "GF":
+            mode = GF;
             status = true;
-            port.write_register(MODE_ADDR, modeval)
-            }
-        else if (mode == "VF") {
-            modeval = VF
+        case "DI":
+            mode = DI;
             status = true;
-            }
-        if (status == true) {
-            port.write_register (MODE_ADDR, modeval)
         }
-        else
-            message ("Invalid Brabender operating mode setting");
+        if (status == true) {
+            (this.port as ModbusPort).write_register (MODE_ADDR, mode);
+            (this.port as ModbusPort).read_registers (MODE_ADDR, data);
+            if (!(data[0] == mode)) {
+                critical ("Brabender Module: Unable to verify mode setting.");
+                status = false;
+            }
+        }
+        /* Arm device to receive a new command */
+        (this.port as ModbusPort).write_register (MODE_ADDR, FREE0);
 
         return status;
      }
 
     /**
-     * Set the set point
+     * Set the mass flow rate setpoint [kg/min].
      */
-    public bool set_set_point () {//ModbusPort port, double sp) {
-        return true;
+    public bool set_mass_flow (double setpoint) {
+        bool status = true;
+        uint16[2] data_out;
+        uint16[2] data_in;
+        double setpoint_in;
+
+        set_double (setpoint, data);
+        (this.port as ModbusPort).write_register (MF_SP_WRITE_ADDR, data_out);
+        (this.port as ModbusPort).read_register (MF_SP_WRITE_ADDR, setpoint_in);
+        if (!(setpoint == setpoint_in)) {
+            critical("Brabender Module:Unable to verify mass flow rate setpoint.");
+            status = false;
+        }
+
+        return status;
     }
 
     /**
-     * Set the speed
+     * Set the discharge speed [%].
      */
-    public bool set_speed () {//ModbusPort port, double speed) {
+    public bool set_discharge (double setpoint) {
         return true;
     }
 

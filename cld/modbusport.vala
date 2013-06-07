@@ -151,13 +151,19 @@ public class Cld.ModbusPort : AbstractPort {
     /**
      * Read modbus registers and store in an array.
      **/
-     public void read_registers (int addr, uint16[] dest) {
+    public void read_registers (int addr, uint16[] dest) {
         if  (ctx == null)
-           message ("Port has no context");
+            message ("Port has no context");
             if (ctx.read_registers (addr, dest) == -1)
                 error ("Modbus read error.");
      }
      /**
       * Write modbus registers.
       **/
+      public void write_register (int addr, int val) {
+        if  (ctx == null)
+            message ("Port has no context");
+            if (ctx.write_register (addr, val) == -1)
+                error ("Modbus write error.");
+    }
 }

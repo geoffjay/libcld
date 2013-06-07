@@ -88,33 +88,33 @@ public class Cld.ModbusPort : AbstractPort {
     /**
      * Alternate construction that uses an XML node to populate the settings.
      */
-//    public ModbusPort.from_xml_node (Xml.Node *node) {
-//        string val;
-//
-//        if (node->type == Xml.ElementType.ELEMENT_NODE &&
-//            node->type != Xml.ElementType.COMMENT_NODE) {
-//            id = node->get_prop ("id");
-//            /* iterate through node children */
-//            for (Xml.Node *iter = node->children;
-//                 iter != null;
-//                 iter = iter->next) {
-//                if (iter->name == "property") {
-//                    switch (iter->get_prop ("name")) {
-//                        case "ip_address":
-//                           ip_address = iter->get_content ();
-//                            break;
-//                        default:
-//                            break;
-//                    }
-//                }
-//            }
-//        }
-//
-//        this.settings_changed.connect (update_settings);
-//    }
-//
+    public ModbusPort.from_xml_node (Xml.Node *node) {
+        string val;
+
+        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+            node->type != Xml.ElementType.COMMENT_NODE) {
+            id = node->get_prop ("id");
+            /* iterate through node children */
+            for (Xml.Node *iter = node->children;
+                 iter != null;
+                 iter = iter->next) {
+                if (iter->name == "property") {
+                    switch (iter->get_prop ("name")) {
+                        case "ip_address":
+                           ip_address = iter->get_content ();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+
+        this.settings_changed.connect (update_settings);
+    }
+
     /**
-     * XXX These functions are not by ModbusPort implemented yet
+     * XXX These functions are not implemented by ModbusPort.
      **/
     private void update_settings () {}
 
@@ -128,13 +128,16 @@ public class Cld.ModbusPort : AbstractPort {
      * {@inheritDoc}
      */
     public override bool open () {
-        uint16 reg[16];
-        ctx = new Context.as_tcp (ip_address, TcpAttributes.DEFAULT_PORT);
+        ctx = new Context.tcp (ip_address, TcpAttributes.DEFAULT_PORT);
         if (ctx.connect () == -1)
-            error ("Connection failed.");
-        _connected = true;
-
-       return true;
+            critical ("Connection failed.");
+            _connected = false;
+            return false;
+        }
+        else {
+             _connected = true;
+            return true;
+        }
     }
 
     /**
@@ -155,15 +158,26 @@ public class Cld.ModbusPort : AbstractPort {
         if  (ctx == null)
             message ("Port has no context");
             if (ctx.read_registers (addr, dest) == -1)
-                error ("Modbus read error.");
+                critical ("Modbus read error.");
      }
+
      /**
-      * Write modbus registers.
+      * Write modbus register.
       **/
-      public void write_register (int addr, int val) {
+    public void write_register (int addr, int val) {
         if  (ctx == null)
             message ("Port has no context");
             if (ctx.write_register (addr, val) == -1)
-                error ("Modbus write error.");
+                critical ("Modbus write single register error.");
+    }
+
+    /**
+     * Write to multiple registers.
+     **/
+    public void write_registers (int addr, uint16[] data) {
+        if (ctx == null)
+            message ("Port has no context.");
+            if (ctx.write_registers (addr, data) == -1)
+                critical ("Modbus write registers error.");
     }
 }

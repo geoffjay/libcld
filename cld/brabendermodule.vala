@@ -29,11 +29,10 @@ using Modbus;
 public class Cld.BrabenderModule : AbstractModule {
     int timeout_ms = 100;
     const int MF_SP_WRITE_ADDR = 0x10;
-    const int DF_SP_WRITE_ADDR = 0x14;
+    const int DI_SP_WRITE_ADDR = 0x14;
     const int MF_SP_READ_ADDR = 0x10;
-    const int DI_SP_READ_ADDR = 0x1C;
-    const int MF_VAL_ADDR = 0x12;
-    const int SPEED_READ_ADDR = 0x16;
+    const int MF_AV_READ_ADDR = 0x12;
+    const int DI_AV_READ_ADDR = 0x16;
     const int AUTO_TARE_READ_ADDR = 0x20;
     const int MODE_ADDR = 0x0A;
     const int FUNC_ADDR = 0x08;
@@ -123,7 +122,7 @@ public class Cld.BrabenderModule : AbstractModule {
 
     public bool run () {
         bool status = true;
-        uint16[1] data;
+        uint16[] data = new uint16[1];
         int x;
 
         (this.port as ModbusPort).write_register (FUNC_ADDR, START_WRITE_VAL);
@@ -145,7 +144,7 @@ public class Cld.BrabenderModule : AbstractModule {
 
     public bool stop () {
         bool status = true;
-        uint16[1] data;
+        uint16[] data = new uint16[1];
         int x;
 
         (this.port as ModbusPort).write_register (FUNC_ADDR, STOP_WRITE_VAL);
@@ -165,25 +164,25 @@ public class Cld.BrabenderModule : AbstractModule {
      * Callback event that handles new data seen on the modbus port.
      */
     private bool new_data_cb () {
-        uint16[2] data;
+        uint16[] data = new uint16[2];
 
         if ((this.port as ModbusPort).connected == true) {
             var channel = channels.get ("br0");
-            (this.port as ModbusPort).read_registers (MF_SP_READ_ADDR, data);
+            (this.port as ModbusPort).read_registers (MF_AV_READ_ADDR, data);
             (channel as VChannel).raw_value = get_double (data);
             channel = channels.get ("br1");
-            (this.port as ModbusPort).read_registers (DI_SP_READ_ADDR, data);
+            (this.port as ModbusPort).read_registers (DI_AV_READ_ADDR, data);
             (channel as VChannel).raw_value = get_double (data);
-            (this.port as ModbusPort).read_registers (AUTO_TARE_READ_ADDR, data);
-            message ("Auto-Tare value [kg]: %.3f", get_double (data));
+//            (this.port as ModbusPort).read_registers (AUTO_TARE_READ_ADDR, data);
+//            message ("Auto-Tare value [kg]: %.3f", get_double (data));
         }
 
         return true;
     }
 
     private double get_double (uint16[] reg) {
-        uint16 reg1[2];
-        double num = 0;
+        uint16[] reg1 = new uint16[2];
+        double num = 0.0;
 
         /* Swap bytes. */
         reg1[0] = reg[1];
@@ -194,7 +193,7 @@ public class Cld.BrabenderModule : AbstractModule {
     }
 
     private void set_double (double val, uint16[] reg) {
-        uint16[2] reg1;
+        uint16[] reg1 = new uint16[2];
 
         Modbus.set_float ((float) val, reg1);
         /* Swap bytes. */
@@ -203,33 +202,38 @@ public class Cld.BrabenderModule : AbstractModule {
 
         }
 
-
     /**
      * Set the operating mode.
      */
     public bool set_mode (string mode_string) {
         bool status = false;
-        int mode;
-        uint16 data[1];
+        int mode = 0;
+        uint16[] data_in = new uint16[1];
 
         switch (mode_string) {
         case "GF":
             mode = GF;
             status = true;
+            break;
         case "DI":
             mode = DI;
             status = true;
+            break;
+        default:
+            critical ("Unknown Brabender operating mode: %s", mode_string);
+            break;
         }
         if (status == true) {
+            mode <<= 8;
             (this.port as ModbusPort).write_register (MODE_ADDR, mode);
-            (this.port as ModbusPort).read_registers (MODE_ADDR, data);
-            if (!(data[0] == mode)) {
-                critical ("Brabender Module: Unable to verify mode setting.");
-                status = false;
+            Posix.sleep(1);  // Need to wait beween read and write.
+            (this.port as ModbusPort).read_registers (MODE_ADDR, data_in);
+            message ("data_in: (0x%X) mode: (0x%X)", data_in[0], mode);
+            if (!((int) data_in[0] == mode)) {
+                                critical ("Brabender Module: Unable to verify mode setting.");
+                                status = false;
             }
         }
-        /* Arm device to receive a new command */
-        (this.port as ModbusPort).write_register (MODE_ADDR, FREE0);
 
         return status;
      }
@@ -239,15 +243,17 @@ public class Cld.BrabenderModule : AbstractModule {
      */
     public bool set_mass_flow (double setpoint) {
         bool status = true;
-        uint16[2] data_out;
-        uint16[2] data_in;
+        uint16[] data_out = new uint16[2];
+        uint16[] data_in = new uint16[2];
         double setpoint_in;
 
-        set_double (setpoint, data);
-        (this.port as ModbusPort).write_register (MF_SP_WRITE_ADDR, data_out);
-        (this.port as ModbusPort).read_register (MF_SP_WRITE_ADDR, setpoint_in);
+        set_double (setpoint, data_out);
+        /* Swap bytes. */
+        (this.port as ModbusPort).write_registers (MF_SP_WRITE_ADDR, data_out);
+        (this.port as ModbusPort).read_registers (MF_SP_WRITE_ADDR, data_in);
+        setpoint_in = get_double (data_in);
         if (!(setpoint == setpoint_in)) {
-            critical("Brabender Module:Unable to verify mass flow rate setpoint.");
+            critical("Brabender Module: Unable to verify mass flow rate setpoint.");
             status = false;
         }
 
@@ -258,7 +264,23 @@ public class Cld.BrabenderModule : AbstractModule {
      * Set the discharge speed [%].
      */
     public bool set_discharge (double setpoint) {
-        return true;
+        bool status = true;
+        uint16[] data_out = new uint16[2];
+        uint16[] data_in = new uint16[2];
+        double setpoint_in;
+
+        set_double (setpoint, data_out);
+        /* Swap bytes. */
+        (this.port as ModbusPort).write_registers (DI_SP_WRITE_ADDR, data_out);
+        (this.port as ModbusPort).read_registers (DI_SP_WRITE_ADDR, data_in);
+        setpoint_in = get_double (data_in);
+        if (!(setpoint == setpoint_in)) {
+            critical("Brabender Module: Unable to verify discharge rate setpoint.");
+            status = false;
+        }
+
+        return status;
+
     }
 
     /**
@@ -266,7 +288,7 @@ public class Cld.BrabenderModule : AbstractModule {
      */
     public override bool load () {
         if (!port.open ()){
-            message ("Couldn load id:%s", id);
+            critical ("Couldn load id:%s", id);
             return false;
         }
         loaded = true;

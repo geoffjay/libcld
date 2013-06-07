@@ -114,7 +114,7 @@ public class Cld.ModbusPort : AbstractPort {
 //    }
 //
     /**
-     * XXX These functions are not by ModbusPort implemented yet
+     * XXX These functions are not implemented by ModbusPort.
      **/
     private void update_settings () {}
 
@@ -128,10 +128,9 @@ public class Cld.ModbusPort : AbstractPort {
      * {@inheritDoc}
      */
     public override bool open () {
-        uint16 reg[16];
         ctx = new Context.as_tcp (ip_address, TcpAttributes.DEFAULT_PORT);
         if (ctx.connect () == -1)
-            error ("Connection failed.");
+            critical ("Connection failed.");
         _connected = true;
 
        return true;
@@ -155,15 +154,23 @@ public class Cld.ModbusPort : AbstractPort {
         if  (ctx == null)
             message ("Port has no context");
             if (ctx.read_registers (addr, dest) == -1)
-                error ("Modbus read error.");
+                critical ("Modbus read error.");
      }
+
      /**
-      * Write modbus registers.
+      * Write modbus register.
       **/
-      public void write_register (int addr, int val) {
+    public void write_register (int addr, int val) {
         if  (ctx == null)
             message ("Port has no context");
             if (ctx.write_register (addr, val) == -1)
-                error ("Modbus write error.");
+                critical ("Modbus write error.");
     }
+
+    /**
+     * Write to multiple registers.
+     **/
+    public void write_registers (int addr, uint16[] data) {
+        }
+
 }

@@ -30,6 +30,8 @@ using Math;
 public class Cld.BrabenderModule : AbstractModule {
     double eps = 0.0001;
     int timeout_ms = 100;
+    int time_us = 200000;
+    uint source_id;
     const int MF_SP_WRITE_ADDR = 0x10;
     const int DI_SP_WRITE_ADDR = 0x14;
     const int MF_SP_READ_ADDR = 0x10;
@@ -43,7 +45,9 @@ public class Cld.BrabenderModule : AbstractModule {
     const int FREE_WRITE_VAL = 0x00;
     const int START_WRITE_VAL = 0x01;
     const int STOP_WRITE_VAL = 0x02;
+    const int ENABLE_OP1_WRITE_VAL = 0x10;
     const int STARTED_MASK = 0x0100;
+    const int OP1_ENABLED_MASK = 0x0300;
     /**
      * Operating Modes
      */
@@ -120,15 +124,34 @@ public class Cld.BrabenderModule : AbstractModule {
 //    }
 //
     /**
+     * Enable the OP1 touch screen interface.
+     **/
+    public bool enable_op1 () {
+        bool status = false;
+        uint16[] data = new uint16[1];
+        int x;
+
+        (this.port as ModbusPort).write_register (FUNC_ADDR, ENABLE_OP1_WRITE_VAL);
+        Posix.usleep (time_us);
+        (this.port as ModbusPort).read_registers (STATUS_ADDR, data);
+        x = data[0];
+        if (!((x & OP1_ENABLED_MASK) == OP1_ENABLED_MASK)) {
+            critical ("Brabender OP1 interface is not enabled");
+            status = false;
+        }
+
+        return status;
+    }
+    /**
      * Start the dry feeder.
      */
-
     public bool run () {
         bool status = true;
         uint16[] data = new uint16[1];
         int x;
 
         (this.port as ModbusPort).write_register (FUNC_ADDR, START_WRITE_VAL);
+        Posix.usleep (time_us);
         (this.port as ModbusPort).read_registers (STATUS_ADDR, data);
         x = data[0];
         if (!((x &  STARTED_MASK) == STARTED_MASK)) {
@@ -151,6 +174,7 @@ public class Cld.BrabenderModule : AbstractModule {
         int x;
 
         (this.port as ModbusPort).write_register (FUNC_ADDR, STOP_WRITE_VAL);
+        Posix.usleep (time_us);
         (this.port as ModbusPort).read_registers (STATUS_ADDR, data);
         x = data[0];
         if (((x & STARTED_MASK) == STARTED_MASK)) {
@@ -229,7 +253,7 @@ public class Cld.BrabenderModule : AbstractModule {
         if (status == true) {
             mode <<= 8;
             (this.port as ModbusPort).write_register (MODE_ADDR, mode);
-            Posix.usleep(200000);  // Need to wait beween read and write.
+            Posix.usleep (time_us);  // Need to wait beween read and write.
             (this.port as ModbusPort).read_registers (MODE_ADDR, data_in);
             message ("data_in: (0x%X) mode: (0x%X)", data_in[0], mode);
             if (!((int) data_in[0] == mode)) {
@@ -298,8 +322,9 @@ public class Cld.BrabenderModule : AbstractModule {
             return false;
         }
         loaded = true;
+        enable_op1 ();
+        source_id = Timeout.add (timeout_ms, new_data_cb);
         message ("BrabenderModule loaded");
-        uint source_id = Timeout.add (timeout_ms, new_data_cb);
 
         return true;
     }
@@ -308,9 +333,11 @@ public class Cld.BrabenderModule : AbstractModule {
      * {@inheritDoc}
      */
     public override void unload () {
+        stop ();
         port.close ();
 
         loaded = false;
+        message ("BrabenderModule unloaded");
     }
 
     /**

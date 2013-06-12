@@ -42,12 +42,14 @@ public class Cld.BrabenderModule : AbstractModule {
     const int MODE_ADDR = 0x0A;
     const int FUNC_ADDR = 0x08;
     const int STATUS_ADDR = 0x08;
+    const int ALARM_ADDR = 0x09;
     const int FREE_WRITE_VAL = 0x00;
     const int START_WRITE_VAL = 0x01;
     const int STOP_WRITE_VAL = 0x02;
+    const int RESET_ALARM_WRITE_VAL = 0x03;
     const int ENABLE_OP1_WRITE_VAL = 0x10;
     const int STARTED_MASK = 0x0100;
-    const int OP1_ENABLED_MASK = 0x0300;
+    const int OP1_ENABLED_MASK = 0x0003;
     /**
      * Operating Modes
      */
@@ -73,8 +75,7 @@ public class Cld.BrabenderModule : AbstractModule {
      */
     public override string id { get; set; }
     public override bool loaded { get; set; default = false; }
-
-
+    public bool running { get; set; default = false; }
 
     /**
      * The port to connect to the Brabender with.
@@ -124,41 +125,67 @@ public class Cld.BrabenderModule : AbstractModule {
 //    }
 //
     /**
+     * Reset alarms.
+     **/
+    public bool reset_alarm () {
+        bool status = true;
+        uint16[] data_in = new uint16[1];
+        int write_val = RESET_ALARM_WRITE_VAL;
+
+        write_val <<= 8;
+        (this.port as ModbusPort).write_register (FUNC_ADDR, write_val);
+        Posix.usleep(time_us);
+        (this.port as ModbusPort).read_registers (STATUS_ADDR, data_in);
+        message ("status: data_in[0]: %.4x, write_val: %.4x", data_in[0], write_val);
+        (this.port as ModbusPort).read_registers (ALARM_ADDR, data_in);
+        message ("alarm: data_in[0]: %.4x, write_val: %.4x", data_in[0], write_val);
+
+        return status;
+    }
+    /**
      * Enable the OP1 touch screen interface.
      **/
     public bool enable_op1 () {
-        bool status = false;
-        uint16[] data = new uint16[1];
-        int x;
+        bool status = true;
+        uint16[] data_in = new uint16[1];
+        int write_val = ENABLE_OP1_WRITE_VAL;
 
-        (this.port as ModbusPort).write_register (FUNC_ADDR, ENABLE_OP1_WRITE_VAL);
+        write_val <<= 8;
+        (this.port as ModbusPort).write_register (FUNC_ADDR, write_val);
         Posix.usleep (time_us);
-        (this.port as ModbusPort).read_registers (STATUS_ADDR, data);
-        x = data[0];
-        if (!((x & OP1_ENABLED_MASK) == OP1_ENABLED_MASK)) {
+        (this.port as ModbusPort).read_registers (STATUS_ADDR, data_in);
+        message ("status: data_in[0]: %.4x, write_val: %.4x", data_in[0], write_val);
+        if (!(((int) data_in[0] & OP1_ENABLED_MASK) == OP1_ENABLED_MASK)) {
             critical ("Brabender OP1 interface is not enabled");
             status = false;
         }
 
         return status;
     }
+
     /**
      * Start the dry feeder.
      */
     public bool run () {
         bool status = true;
-        uint16[] data = new uint16[1];
-        int x;
+        uint16[] data_in = new uint16[1];
+        int write_val = START_WRITE_VAL;
 
-        (this.port as ModbusPort).write_register (FUNC_ADDR, START_WRITE_VAL);
+        write_val <<= 8;
+        (this.port as ModbusPort).write_register (FUNC_ADDR, write_val);
         Posix.usleep (time_us);
-        (this.port as ModbusPort).read_registers (STATUS_ADDR, data);
-        x = data[0];
-        if (!((x &  STARTED_MASK) == STARTED_MASK)) {
+        (this.port as ModbusPort).read_registers (STATUS_ADDR, data_in);
+        message ("data_in[0]: %.4x, write_val: %.4x",data_in[0] ,write_val);
+        if (!((data_in[0] &  STARTED_MASK) == STARTED_MASK)) {
             critical ("Brabender Module start command not responding.");
             status = false;
         }
+        else {
+            running = true;
+        }
         /* Enable starting if already stopped by OP1 */
+        write_val = FREE_WRITE_VAL;
+        write_val <<= 8;
         (this.port as ModbusPort).write_register (FUNC_ADDR, FREE_WRITE_VAL);
 
         return status;
@@ -170,19 +197,25 @@ public class Cld.BrabenderModule : AbstractModule {
 
     public bool stop () {
         bool status = true;
-        uint16[] data = new uint16[1];
-        int x;
+        uint16[] data_in = new uint16[1];
+        int write_val = STOP_WRITE_VAL;
 
-        (this.port as ModbusPort).write_register (FUNC_ADDR, STOP_WRITE_VAL);
+        write_val <<= 8;
+        (this.port as ModbusPort).write_register (FUNC_ADDR, write_val);
         Posix.usleep (time_us);
-        (this.port as ModbusPort).read_registers (STATUS_ADDR, data);
-        x = data[0];
-        if (((x & STARTED_MASK) == STARTED_MASK)) {
+        (this.port as ModbusPort).read_registers (STATUS_ADDR, data_in);
+        message ("status: data_in[0]: %.4x, write_val: %.4x", data_in[0], write_val);
+        if (((data_in[0] & STARTED_MASK) == STARTED_MASK)) {
             critical ("Brabender Module stop command not responding.");
             status = false;
         }
+        else {
+            running = false;
+        }
         /* Enable stoping if already started by OP1 */
-        (this.port as ModbusPort).write_register (FUNC_ADDR, FREE_WRITE_VAL);
+        write_val = FREE_WRITE_VAL;
+        write_val <<= 8;
+        (this.port as ModbusPort).write_register (FUNC_ADDR, write_val);
 
         return status;
     }
@@ -317,16 +350,18 @@ public class Cld.BrabenderModule : AbstractModule {
      * {@inheritDoc}
      */
     public override bool load () {
-        if (!port.open ()){
-            critical ("Couldn load id:%s", id);
-            return false;
-        }
         loaded = true;
+        if (!port.open ()){
+            critical ("Could notopen port, id:%s", id);
+            loaded = false;
+        }
+        stop ();
         enable_op1 ();
+        reset_alarm ();
         source_id = Timeout.add (timeout_ms, new_data_cb);
         message ("BrabenderModule loaded");
 
-        return true;
+        return loaded;
     }
 
     /**

@@ -198,9 +198,9 @@ public class Cld.Builder : GLib.Object {
                     Object object;
                     type = iter->get_prop ("type");
                     switch (type) {
-                        case "daq":
-                            object = new Daq.from_xml_node (iter);
-                            break;
+//                        case "daq":
+//                            object = new Daq.from_xml_node (iter);
+//                            break;
                         case "log":
                             object = new Log.from_xml_node (iter);
                             break;

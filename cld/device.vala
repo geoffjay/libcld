@@ -22,7 +22,7 @@
 /**
  * Hardware device information and settings.
  */
-public class Cld.Device : AbstractObject {
+public interface Cld.Device : GLib.Object {
     /* properties */
     [Property(nick = "ID", blurb = "Device ID")]
     public override string id { get; set; }

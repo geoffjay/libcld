@@ -36,7 +36,7 @@ libcld_0_2_la_SOURCES = \
 	vchannel.vala \
 	velmexmodule.vala \
 	xmlconfig.vala \
-	$(NULL)
+		$(NULL)
 
 INCLUDES = \
 	-include common.h \

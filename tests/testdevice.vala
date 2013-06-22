@@ -29,7 +29,7 @@ public class DeviceTests : ObjectTests {
     }
 
     public override void set_up () {
-        test_object = new Device ();
+//        test_object = new Device ();
     }
 
     public override void tear_down () {

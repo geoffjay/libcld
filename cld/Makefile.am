@@ -12,6 +12,7 @@ MODBUS_SOURCES = \
 libcld_0_2_la_SOURCES = \
 	abstractchannel.vala \
 	abstractcontainer.vala \
+	abstractdevice.vala \
 	abstractfilter.vala \
 	abstractmodule.vala \
 	abstractobject.vala \

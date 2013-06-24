@@ -24,7 +24,6 @@
  */
 [GenericAccessors]
 public interface Cld.Device :  GLib.Object {
-
     /**
      * The XXX.
      */
@@ -45,10 +44,10 @@ public interface Cld.Device :  GLib.Object {
     /**
      */
     public abstract int unix_fd { get; set; }
-
     /**
-     * A function to open the device for read and write operations.
-     */
+/**
+ * A function to open the device for read and write operations.
+ */
     public abstract bool open ();
 
     /**

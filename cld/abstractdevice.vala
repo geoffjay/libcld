@@ -26,71 +26,45 @@
  * Contains common code shared by all device implementations.
  */
 public abstract class Cld.AbstractDevice : Cld.AbstractObject, Cld.Device {
-     /**
-     * Default construction
+        /**
+     * The XXX.
      */
-    public abstract Device () {
-        id = "dev0";
-        hw_type = 0;
-        driver = 0;
-        name = "device";
-        file = "/dev/null";
+    public abstract int hw_type { get; set; }
+
+    /**
+     */
+    public abstract int driver { get; set; }
+
+    /**
+     */
+    public abstract string description { get; set; }
+
+    /**
+     */
+    public abstract string filename { get; set; }
+
+    /**
+     */
+    public abstract int unix_fd { get; set; }
+
+    public override string to_string () {
+        string str_data  = "CldDevice\n";
+               str_data += " [hw_type  ] : %d\n".printf (hw_type);
+               str_data += " [driver ] : %d\n".printf (driver);
+               str_data += " [description ] : %s\n".printf (description);
+               str_data += " [filename ] : %s\n".printf (filename);
+               str_data += " [unix_fd] : %d\n".printf (unix_fd);
+        return str_data;
     }
 
     /**
-     * Construction using an xml node
+     * A function to open the device for read and write operations.
      */
-    public abstract Device.from_xml_node (Xml.Node *node) {
+    public abstract bool open ();
 
-        if (node->type == Xml.ElementType.ELEMENT_NODE &&
-            node->type != Xml.ElementType.COMMENT_NODE) {
-            id = node->get_prop ("id");
-            var dt = node->get_prop ("driver");
-            if (dt == "virtual")
-                driver = DeviceType.VIRTUAL;
-            else if (dt == "comedi")
-                driver = DeviceType.COMEDI;
-            else if (dt == "mcchid")
-                driver = DeviceType.MCCHID;
-            else if (dt == "advantech")
-                driver = DeviceType.ADVANTECH;
+    /**
+     * A function to close the device and disabel read and write operations.
+    */
+    public abstract bool close ();
 
-            /* iterate through node children */
-            for (Xml.Node *iter = node->children;
-                 iter != null;
-                 iter = iter->next) {
-                if (iter->name == "property") {
-                    switch (iter->get_prop ("name")) {
-                        case "hardware":
-                            name = iter->get_content ();
-                            break;
-                        case "file":
-                            file = iter->get_content ();
-                            break;
-                        case "type":
-                            var type = iter->get_content ();
-                            if (type == "input")
-                                hw_type = HardwareType.INPUT;
-                            else if (type == "output")
-                                hw_type = HardwareType.OUTPUT;
-                            else if (type == "counter")
-                                hw_type = HardwareType.COUNTER;
-                            else if (type == "multifunction")
-                                hw_type = HardwareType.MULTIFUNCTION;
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
-        }
-    }
-
-    public abstract override string to_string () {
-        string str_data = "[%s] : Device %s with file %s\n".printf (
-                            id, name, file);
-        /* add the hardware and driver types later */
-        return str_data;
-    }
-}
 }

@@ -29,7 +29,7 @@ public class DeviceTests : ObjectTests {
     }
 
     public override void set_up () {
-//        test_object = new Device ();
+        test_object = new Device ();
     }
 
     public override void tear_down () {
@@ -37,7 +37,7 @@ public class DeviceTests : ObjectTests {
     }
 
     private void test_foo () {
-        var test_device = test_object as Device;
+        var test_device = test_object as Cld.AbstractDevice;
 
         // Check the Device exists
         assert (test_device != null);

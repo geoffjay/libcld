@@ -23,13 +23,13 @@
 /**
  */
 using Comedi;
+using Cld;
 
 public class Cld.ComediDevice : Cld.AbstractDevice {
-    public Device (string fn);
      /**
      * Default construction
      */
-    public Device () {
+    public ComediDevice () {
         id = "dev0";
         hw_type = 0;
         driver = 0;
@@ -40,7 +40,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
     /**
      * Construction using an xml node
      */
-    public Device.from_xml_node (Xml.Node *node) {
+    public ComediDevice.from_xml_node (Xml.Node *node) {
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {

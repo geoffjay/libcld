@@ -29,18 +29,19 @@ public class DeviceTests : ObjectTests {
     }
 
     public override void set_up () {
-        test_object = new Device ();
-    }
+//        dev = new ComediDevice ();
+//        Device test_object = dev;
+        }
 
     public override void tear_down () {
         test_object = null;
     }
 
     private void test_foo () {
-        var test_device = test_object as Cld.AbstractDevice;
+//        var test_device = test_object as Cld.AbstractDevice;
 
         // Check the Device exists
-        assert (test_device != null);
+//        assert (test_device != null);
 
 //        test_device.do_something ();
 //        assert (test_device. == );

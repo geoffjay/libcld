@@ -84,6 +84,19 @@ if test "x$use_modbus" != "xno" ; then
 	AC_DEFINE(USE_MODBUS, [1], ["Modbus Library"])
 fi
 
+dnl Comedi
+AC_ARG_WITH(comedi,
+[  --with-comedi         Use Comedi drivers],
+	[use_comedi=$withval],
+	[use_comedi=no])
+AC_MSG_RESULT(checking whether Comedi drivers were selected... $use_comedi)
+
+if test "x$use_comedi" != "xno" ; then
+	PKG_CHECK_MODULES([COMEDI], [comedi],,
+		[AC_MSG_ERROR([Comedi is required])])
+	AC_DEFINE(USE_COMEDI, [1], ["Comedi Drivers"])
+fi
+
 dnl ---------------------------------------------------------------------------
 dnl CFLAGS
 dnl ---------------------------------------------------------------------------

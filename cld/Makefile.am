@@ -25,6 +25,7 @@ libcld_0_2_la_SOURCES = \
 	channel.vala \
 	cld.vala \
 	coefficient.vala \
+	comedidevice.vala \
 	container.vala \
 	control.vala \
 	daq.vala \
@@ -71,6 +72,7 @@ libcld_0_2_la_CPPFLAGS = \
 	$(XML_CFLAGS) \
 	$(JSON_CFLAGS) \
 	$(MODBUS_CFLAGS) \
+	$(COMEDI_CFLAGS)\
 	$(NULL)
 
 libcld_0_2_la_LIBADD = \
@@ -80,6 +82,7 @@ libcld_0_2_la_LIBADD = \
 	$(XML_LIBS) \
 	$(JSON_LIBS) \
 	$(MODBUS_LIBS) \
+	$(COMEDI_LIBS)\
 	$(NULL)
 
 libcld_0_2_la_LDFLAGS = \

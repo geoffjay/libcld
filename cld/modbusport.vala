@@ -57,16 +57,11 @@ public class Cld.ModbusPort : AbstractPort {
      */
     public override string id { get; set; }
 
+
     /**
      * The TCP/IP address of the ModbusPort
      */
     public string ip_address { get; set; }
-
-
-    /**
-     * Used when new data arrives.
-     */
-    public signal void new_data (uchar[] data, int size);
 
     /**
      * Used when a setting has been changed.
@@ -77,8 +72,6 @@ public class Cld.ModbusPort : AbstractPort {
      * Default construction.
      */
     public ModbusPort () {
-        message ("instantiating a new ModbusPort");
-        message ("done");
         this.settings_changed.connect (update_settings);
         message ("also done");
     }
@@ -121,7 +114,7 @@ public class Cld.ModbusPort : AbstractPort {
 //    }
 //
     /**
-     * XXX These functions are not implemented yet
+     * XXX These functions are not implemented by ModbusPort.
      **/
     private void update_settings () {}
 
@@ -135,19 +128,9 @@ public class Cld.ModbusPort : AbstractPort {
      * {@inheritDoc}
      */
     public override bool open () {
-        uint16 reg[16];
         ctx = new Context.as_tcp (ip_address, TcpAttributes.DEFAULT_PORT);
-
-
         if (ctx.connect () == -1)
-            error ("Connection failed.");
-
-        if (ctx.read_registers (0x20, reg[0:2]) == -1)
-            error ("Modbus read error.");
-
-        message ("ModbusPort is open.");
-        message ("reg = %d (0x%X)", reg[0], reg[0]);
-        message ("reg = %d (0x%X)", reg[1], reg[1]);
+            critical ("Connection failed.");
         _connected = true;
 
        return true;
@@ -161,9 +144,36 @@ public class Cld.ModbusPort : AbstractPort {
             ctx.close ();
             _connected = false;
             message ("Closed Modbus port.");
-
-                    }
+            }
     }
 
+    /**
+     * Read modbus registers and store in an array.
+     **/
+    public void read_registers (int addr, uint16[] dest) {
+        if  (ctx == null)
+            message ("Port has no context");
+            if (ctx.read_registers (addr, dest) == -1)
+                critical ("Modbus read error.");
+     }
 
+     /**
+      * Write modbus register.
+      **/
+    public void write_register (int addr, int val) {
+        if  (ctx == null)
+            message ("Port has no context");
+            if (ctx.write_register (addr, val) == -1)
+                critical ("Modbus write single register error.");
+    }
+
+    /**
+     * Write to multiple registers.
+     **/
+    public void write_registers (int addr, uint16[] data) {
+        if (ctx == null)
+            message ("Port has no context.");
+            if (ctx.write_registers (addr, data) == -1)
+                critical ("Modbus write registers error.");
+    }
 }

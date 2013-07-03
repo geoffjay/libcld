@@ -4,6 +4,11 @@ lib_LTLIBRARIES = \
 	libcld-0.2.la \
 	$(NULL)
 
+#if USE_MODBUS
+MODBUS_SOURCES = \
+	modbusport.vala
+#endif
+
 libcld_0_2_la_SOURCES = \
 	abstractchannel.vala \
 	abstractcontainer.vala \
@@ -13,6 +18,7 @@ libcld_0_2_la_SOURCES = \
 	abstractport.vala \
 	aichannel.vala \
 	aochannel.vala \
+	brabendermodule.vala\
 	builder.vala \
 	calibration.vala \
 	channel.vala \
@@ -32,10 +38,11 @@ libcld_0_2_la_SOURCES = \
 	pid.vala \
 	port.vala \
 	serialport.vala \
-	socketport.vala \
+	socketport.vala\
 	vchannel.vala \
 	velmexmodule.vala \
 	xmlconfig.vala \
+	$(MODBUS_SOURCES) \
 	$(NULL)
 
 INCLUDES = \
@@ -52,6 +59,7 @@ libcld_0_2_la_VALAFLAGS = \
 	--vapidir=$(srcdir)/../vapi --pkg config \
 	--pkg glib-2.0 --pkg gee-1.0 --pkg libxml-2.0 --pkg json-glib-1.0 \
 	--pkg gio-2.0 --pkg linux --pkg posix \
+	--pkg libmodbus \
 	$(VALAFLAGS) \
 	$(NULL)
 
@@ -61,6 +69,7 @@ libcld_0_2_la_CPPFLAGS = \
 	$(GIO_CFLAGS) \
 	$(XML_CFLAGS) \
 	$(JSON_CFLAGS) \
+	$(MODBUS_CFLAGS) \
 	$(NULL)
 
 libcld_0_2_la_LIBADD = \
@@ -69,6 +78,7 @@ libcld_0_2_la_LIBADD = \
 	$(GIO_LIBS) \
 	$(XML_LIBS) \
 	$(JSON_LIBS) \
+	$(MODBUS_LIBS) \
 	$(NULL)
 
 libcld_0_2_la_LDFLAGS = \

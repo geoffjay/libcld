@@ -227,9 +227,16 @@ public class Cld.Builder : GLib.Object {
                                 object = null;
                             break;
                         case "module":
+                            message ("Loading modules:");
                             var mtype = iter->get_prop ("mtype");
                             if (mtype == "velmex")
                                 object = new VelmexModule.from_xml_node (iter);
+                            else if (mtype == "licor")
+                                object = new LicorModule.from_xml_node (iter);
+                            else if (mtype == "brabender") {
+                                message ("Loading Brabender Module:");
+                                object = new BrabenderModule.from_xml_node (iter);
+                            }
                             else
                                 object = null;
                             break;
@@ -237,6 +244,10 @@ public class Cld.Builder : GLib.Object {
                             var ptype = iter->get_prop ("ptype");
                             if (ptype == "serial")
                                 object = new SerialPort.from_xml_node (iter);
+                            if (ptype == "modbus") {
+                                message ("Loading Modbus Port:");
+                                object = new ModbusPort.from_xml_node (iter);
+                            }
                             else
                                 object = null;
                             break;
@@ -326,6 +337,15 @@ public class Cld.Builder : GLib.Object {
                             }
                         }
                     }
+                }
+            }
+            /* Brabender module references a modbus port */
+            if (object is BrabenderModule) {
+                ref_id = (object as BrabenderModule).portref;
+                if (ref_id != null) {
+                    var port = get_object (ref_id);
+                    if (port != null && port is ModbusPort)
+                         (object as BrabenderModule).port = (port as Port);
                 }
             }
         }

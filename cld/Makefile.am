@@ -4,14 +4,22 @@ lib_LTLIBRARIES = \
 	libcld-0.2.la \
 	$(NULL)
 
+#if USE_COMEDI
+COMEDI_SOURCES = \
+	comedidevice.vala \
+	$(NULL)
+#endif
+
 #if USE_MODBUS
 MODBUS_SOURCES = \
-	modbusport.vala
+	modbusport.vala \
+	$(NULL)
 #endif
 
 libcld_0_2_la_SOURCES = \
 	abstractchannel.vala \
 	abstractcontainer.vala \
+	abstractdevice.vala \
 	abstractfilter.vala \
 	abstractmodule.vala \
 	abstractobject.vala \
@@ -24,6 +32,7 @@ libcld_0_2_la_SOURCES = \
 	channel.vala \
 	cld.vala \
 	coefficient.vala \
+	comedidevice.vala \
 	container.vala \
 	control.vala \
 	daq.vala \
@@ -42,6 +51,7 @@ libcld_0_2_la_SOURCES = \
 	vchannel.vala \
 	velmexmodule.vala \
 	xmlconfig.vala \
+	$(COMEDI_SOURCES) \
 	$(MODBUS_SOURCES) \
 	$(NULL)
 
@@ -57,10 +67,7 @@ AM_VALAFLAGS = \
 	--internal-vapi cld-internals-0.1.vapi \
 	--library cld-0.1 --gir Cld-0.1.gir \
 	--vapidir=$(srcdir)/../vapi --pkg config \
-	--pkg glib-2.0 --pkg gee-0.8 --pkg libxml-2.0 --pkg json-glib-1.0 \
-	--pkg gio-2.0 --pkg linux --pkg posix \
-	--pkg libmodbus \
-	$(VALAFLAGS) \
+	@VALA_PACKAGES@ --pkg linux --pkg posix \
 	$(NULL)
 
 libcld_0_2_la_CPPFLAGS = \
@@ -70,6 +77,7 @@ libcld_0_2_la_CPPFLAGS = \
 	$(XML_CFLAGS) \
 	$(JSON_CFLAGS) \
 	$(MODBUS_CFLAGS) \
+	$(COMEDI_CFLAGS) \
 	$(NULL)
 
 libcld_0_2_la_LIBADD = \
@@ -79,6 +87,7 @@ libcld_0_2_la_LIBADD = \
 	$(XML_LIBS) \
 	$(JSON_LIBS) \
 	$(MODBUS_LIBS) \
+	$(COMEDI_LIBS) \
 	$(NULL)
 
 libcld_0_2_la_LDFLAGS = \

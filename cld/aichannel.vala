@@ -263,8 +263,9 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
     public void add_raw_value (double value) {
         double conv = value;
         /* clip the input */
-        conv = (conv <  0.0) ?  0.0 : conv;
-        conv = (conv > 10.0) ? 10.0 : conv;
+        /* XXX This is being commented out as a test only. Not sure if it is needed. */
+        //conv = (conv <  0.0) ?  0.0 : conv;
+        //conv = (conv > 10.0) ? 10.0 : conv;
 
         lock (raw_value_list) {
             /* for now add it to the list and the raw value array */

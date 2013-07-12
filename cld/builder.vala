@@ -146,7 +146,7 @@ public class Cld.Builder : GLib.Object {
         Gee.List<Object> map_values = new Gee.ArrayList<Object> ();
 
         map_values.add_all (objects.values);
-        map_values.sort ((GLib.CompareDataFunc<Cld.Object?>) Object.compare);
+        map_values.sort ((GLib.CompareFunc) Object.compare);
         objects.clear ();
         foreach (Object object in map_values) {
             objects.set (object.id, object);
@@ -198,9 +198,9 @@ public class Cld.Builder : GLib.Object {
                     Object object;
                     type = iter->get_prop ("type");
                     switch (type) {
-                        case "daq":
-                            object = new Daq.from_xml_node (iter);
-                            break;
+//                        case "daq":
+//                            object = new Daq.from_xml_node (iter);
+//                            break;
                         case "log":
                             object = new Log.from_xml_node (iter);
                             break;
@@ -227,14 +227,12 @@ public class Cld.Builder : GLib.Object {
                                 object = null;
                             break;
                         case "module":
-                            message ("Loading modules:");
                             var mtype = iter->get_prop ("mtype");
                             if (mtype == "velmex")
                                 object = new VelmexModule.from_xml_node (iter);
                             else if (mtype == "licor")
                                 object = new LicorModule.from_xml_node (iter);
                             else if (mtype == "brabender") {
-                                message ("Loading Brabender Module:");
                                 object = new BrabenderModule.from_xml_node (iter);
                             }
                             else
@@ -245,8 +243,15 @@ public class Cld.Builder : GLib.Object {
                             if (ptype == "serial")
                                 object = new SerialPort.from_xml_node (iter);
                             if (ptype == "modbus") {
-                                message ("Loading Modbus Port:");
                                 object = new ModbusPort.from_xml_node (iter);
+                            }
+                            else
+                                object = null;
+                            break;
+                        case "device":
+                            var dtype = iter->get_prop ("dtype");
+                            if (dtype == "comedi") {
+                                object = new ComediDevice.from_xml_node (iter);
                             }
                             else
                                 object = null;

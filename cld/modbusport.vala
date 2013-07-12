@@ -21,13 +21,15 @@
  */
 
 using Modbus;
+
 /**
  * An object to use with UART and FTDI type serial ports. Pretty much pilfered
  * the code from the moserial application.
  */
 public class Cld.ModbusPort : AbstractPort {
 
-    private Context ctx;
+    private Modbus.Context ctx;
+
     /* property backing fields */
     private bool _connected = false;
 
@@ -56,7 +58,6 @@ public class Cld.ModbusPort : AbstractPort {
      * {@inheritDoc}
      */
     public override string id { get; set; }
-
 
     /**
      * The TCP/IP address of the ModbusPort
@@ -129,12 +130,11 @@ public class Cld.ModbusPort : AbstractPort {
      */
     public override bool open () {
         ctx = new Context.tcp (ip_address, TcpAttributes.DEFAULT_PORT);
-        if (ctx.connect () == -1)
+        if (ctx.connect () == -1) {
             critical ("Connection failed.");
             _connected = false;
             return false;
-        }
-        else {
+        } else {
              _connected = true;
             return true;
         }

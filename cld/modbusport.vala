@@ -129,11 +129,15 @@ public class Cld.ModbusPort : AbstractPort {
      */
     public override bool open () {
         ctx = new Context.as_tcp (ip_address, TcpAttributes.DEFAULT_PORT);
-        if (ctx.connect () == -1)
+        if (ctx.connect () == -1) {
             critical ("Connection failed.");
-        _connected = true;
-
-       return true;
+            _connected = false;
+            return false;
+        }
+        else {
+             _connected = true;
+            return true;
+        }
     }
 
     /**

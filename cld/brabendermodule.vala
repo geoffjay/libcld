@@ -362,12 +362,13 @@ public class Cld.BrabenderModule : AbstractModule {
             critical ("Could notopen port, id:%s", id);
             loaded = false;
         }
-        stop ();
-        //enable_op1 ();
-        reset_alarm ();
-        source_id = Timeout.add (timeout_ms, new_data_cb);
-        message ("BrabenderModule loaded");
-
+        else {
+            stop ();
+            //enable_op1 ();
+            reset_alarm ();
+            source_id = Timeout.add (timeout_ms, new_data_cb);
+            message ("BrabenderModule loaded");
+        }
         return loaded;
     }
 

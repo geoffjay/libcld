@@ -115,7 +115,7 @@ public class Cld.Pid : AbstractObject {
     /* XXX For now these are just analog channels, possible use digital as
      *     well later on. */
     private AIChannel? _pv = null;
-    private AIChannel pv {
+    public AIChannel pv {
         get {
             if (_pv == null) {
                 foreach (var object in process_values.values) {
@@ -129,7 +129,7 @@ public class Cld.Pid : AbstractObject {
     }
 
     private AOChannel? _mv = null;
-    private AOChannel mv {
+    public AOChannel mv {
         get {
             if (_mv == null) {
                 foreach (var object in process_values.values) {

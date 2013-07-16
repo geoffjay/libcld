@@ -78,6 +78,11 @@ public class Cld.BrabenderModule : AbstractModule {
     public bool running { get; set; default = false; }
 
     /**
+     * {@inheritDoc}
+     */
+    public virtual string portref { get; set; }
+
+    /**
      * The port to connect to the Brabender with.
      */
     public Port port { get; set; }
@@ -101,29 +106,30 @@ public class Cld.BrabenderModule : AbstractModule {
      * Alternate construction that uses an XML node to populate the settings.
      */
 
-//    public BrabenderModule.from_xml_node (Xml.Node *node) {
-//
-//        if (node->type == Xml.ElementType.ELEMENT_NODE &&
-//            node->type != Xml.ElementType.COMMENT_NODE) {
-//            id = node->get_prop ("id");
-//            /* iterate through node children */
-//            for (Xml.Node *iter = node->children;
-//                 iter != null;
-//                 iter = iter->next) {
-//                if (iter->name == "property") {
-//                    switch (iter->get_prop ("name")) {
-//                         case "port":
-//                             port = iter->get_content ();
-//                             break;
-//                         case
-//                        default:
-//                            break;
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
+    public BrabenderModule.from_xml_node (Xml.Node *node) {
+        message ("Starting..");
+        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+            node->type != Xml.ElementType.COMMENT_NODE) {
+            id = node->get_prop ("id");
+            message ("Got Brab id:");
+            /* iterate through node children */
+            for (Xml.Node *iter = node->children;
+                 iter != null;
+                 iter = iter->next) {
+                if (iter->name == "property") {
+                    switch (iter->get_prop ("name")) {
+                         case "portref":
+                         message ("Got portref..");
+                            portref = iter->get_content ();
+                             break;
+                         default:
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * XXX This  method does not work - Reset alarms.
      **/
@@ -356,12 +362,13 @@ public class Cld.BrabenderModule : AbstractModule {
             critical ("Could notopen port, id:%s", id);
             loaded = false;
         }
-        stop ();
-        //enable_op1 ();
-        reset_alarm ();
-        source_id = Timeout.add (timeout_ms, new_data_cb);
-        message ("BrabenderModule loaded");
-
+        else {
+            stop ();
+            //enable_op1 ();
+            reset_alarm ();
+            source_id = Timeout.add (timeout_ms, new_data_cb);
+            message ("BrabenderModule loaded");
+        }
         return loaded;
     }
 

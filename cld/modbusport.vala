@@ -88,31 +88,31 @@ public class Cld.ModbusPort : AbstractPort {
     /**
      * Alternate construction that uses an XML node to populate the settings.
      */
-//    public ModbusPort.from_xml_node (Xml.Node *node) {
-//        string val;
-//
-//        if (node->type == Xml.ElementType.ELEMENT_NODE &&
-//            node->type != Xml.ElementType.COMMENT_NODE) {
-//            id = node->get_prop ("id");
-//            /* iterate through node children */
-//            for (Xml.Node *iter = node->children;
-//                 iter != null;
-//                 iter = iter->next) {
-//                if (iter->name == "property") {
-//                    switch (iter->get_prop ("name")) {
-//                        case "ip_address":
-//                           ip_address = iter->get_content ();
-//                            break;
-//                        default:
-//                            break;
-//                    }
-//                }
-//            }
-//        }
-//
-//        this.settings_changed.connect (update_settings);
-//    }
-//
+    public ModbusPort.from_xml_node (Xml.Node *node) {
+        string val;
+
+        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+            node->type != Xml.ElementType.COMMENT_NODE) {
+            id = node->get_prop ("id");
+            /* iterate through node children */
+            for (Xml.Node *iter = node->children;
+                 iter != null;
+                 iter = iter->next) {
+                if (iter->name == "property") {
+                    switch (iter->get_prop ("name")) {
+                        case "ip_address":
+                           ip_address = iter->get_content ();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+
+        this.settings_changed.connect (update_settings);
+    }
+
     /**
      * XXX These functions are not implemented by ModbusPort.
      **/
@@ -131,9 +131,13 @@ public class Cld.ModbusPort : AbstractPort {
         ctx = new Context.tcp (ip_address, TcpAttributes.DEFAULT_PORT);
         if (ctx.connect () == -1)
             critical ("Connection failed.");
-        _connected = true;
-
-       return true;
+            _connected = false;
+            return false;
+        }
+        else {
+             _connected = true;
+            return true;
+        }
     }
 
     /**

@@ -234,10 +234,10 @@ public class Cld.BrabenderModule : AbstractModule {
         uint16[] data = new uint16[2];
 
         if ((this.port as ModbusPort).connected == true) {
-            var channel = channels.get ("br0");
+            var channel = channels.get ("br00");
             (this.port as ModbusPort).read_registers (MF_AV_READ_ADDR, data);
             (channel as VChannel).raw_value = get_double (data);
-            channel = channels.get ("br1");
+            channel = channels.get ("br01");
             (this.port as ModbusPort).read_registers (DI_AV_READ_ADDR, data);
             (channel as VChannel).raw_value = get_double (data);
 //            (this.port as ModbusPort).read_registers (AUTO_TARE_READ_ADDR, data);

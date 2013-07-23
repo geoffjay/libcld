@@ -4,9 +4,16 @@ lib_LTLIBRARIES = \
 	libcld-0.2.la \
 	$(NULL)
 
+#if USE_COMEDI
+COMEDI_SOURCES = \
+	comedidevice.vala \
+	$(NULL)
+#endif
+
 #if USE_MODBUS
 MODBUS_SOURCES = \
-	modbusport.vala
+	modbusport.vala \
+	$(NULL)
 #endif
 
 libcld_0_2_la_SOURCES = \
@@ -25,7 +32,6 @@ libcld_0_2_la_SOURCES = \
 	channel.vala \
 	cld.vala \
 	coefficient.vala \
-	comedidevice.vala \
 	container.vala \
 	control.vala \
 	daq.vala \
@@ -44,6 +50,7 @@ libcld_0_2_la_SOURCES = \
 	vchannel.vala \
 	velmexmodule.vala \
 	xmlconfig.vala \
+	$(COMEDI_SOURCES) \
 	$(MODBUS_SOURCES) \
 	$(NULL)
 
@@ -61,7 +68,7 @@ libcld_0_2_la_VALAFLAGS = \
 	--vapidir=$(srcdir)/../vapi --pkg config \
 	--pkg glib-2.0 --pkg gee-1.0 --pkg libxml-2.0 --pkg json-glib-1.0 \
 	--pkg gio-2.0 --pkg linux --pkg posix \
-	--pkg libmodbus \
+	--pkg libmodbus --pkg comedi \
 	$(VALAFLAGS) \
 	$(NULL)
 
@@ -72,7 +79,7 @@ libcld_0_2_la_CPPFLAGS = \
 	$(XML_CFLAGS) \
 	$(JSON_CFLAGS) \
 	$(MODBUS_CFLAGS) \
-	$(COMEDI_CFLAGS)\
+	$(COMEDI_CFLAGS) \
 	$(NULL)
 
 libcld_0_2_la_LIBADD = \
@@ -82,7 +89,7 @@ libcld_0_2_la_LIBADD = \
 	$(XML_LIBS) \
 	$(JSON_LIBS) \
 	$(MODBUS_LIBS) \
-	$(COMEDI_LIBS)\
+	$(COMEDI_LIBS) \
 	$(NULL)
 
 libcld_0_2_la_LDFLAGS = \

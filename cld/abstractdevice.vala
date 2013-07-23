@@ -21,32 +21,50 @@
  */
 
 /**
- * Skeletal implementation of the {@link Module} interface.
+ * Skeletal implementation of the {@link Device} interface.
  *
  * Contains common code shared by all device implementations.
  */
 public abstract class Cld.AbstractDevice : Cld.AbstractObject, Cld.Device {
-        /**
-     * The XXX.
+
+    /**
+     * {@inheritDoc}
      */
     public abstract int hw_type { get; set; }
 
     /**
+     * {@inheritDoc}
      */
     public abstract int driver { get; set; }
 
     /**
+     * {@inheritDoc}
      */
     public abstract string description { get; set; }
 
     /**
+     * {@inheritDoc}
      */
     public abstract string filename { get; set; }
 
     /**
+     * {@inheritDoc}
      */
     public abstract int unix_fd { get; set; }
 
+    /**
+     * {@inheritDoc}
+     */
+    public abstract bool open ();
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract bool close ();
+
+    /**
+     * {@inheritDoc}
+     */
     public override string to_string () {
         string str_data  = "CldDevice\n";
                str_data += " [hw_type  ] : %d\n".printf (hw_type);
@@ -56,15 +74,4 @@ public abstract class Cld.AbstractDevice : Cld.AbstractObject, Cld.Device {
                str_data += " [unix_fd] : %d\n".printf (unix_fd);
         return str_data;
     }
-
-    /**
-     * A function to open the device for read and write operations.
-     */
-    public abstract bool open ();
-
-    /**
-     * A function to close the device and disabel read and write operations.
-    */
-    public abstract bool close ();
-
 }

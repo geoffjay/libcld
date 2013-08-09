@@ -46,6 +46,7 @@ libcld_0_2_la_SOURCES = \
 	heidolphmodule.vala \
 	licormodule.vala \
 	log.vala \
+	mathchannel.vala \
 	module.vala \
 	object.vala \
 	parkermodule.vala \
@@ -73,7 +74,7 @@ AM_VALAFLAGS = \
 	--internal-vapi cld-internals-0.1.vapi \
 	--library cld-0.1 --gir Cld-0.1.gir \
 	--vapidir=$(srcdir)/../vapi --pkg config \
-	@VALA_PACKAGES@ --pkg linux --pkg posix \
+	@VALA_PACKAGES@ --pkg linux --pkg posix --pkg libmatheval \
 	$(NULL)
 
 libcld_0_2_la_CPPFLAGS = \
@@ -84,6 +85,7 @@ libcld_0_2_la_CPPFLAGS = \
 	$(JSON_CFLAGS) \
 	$(MODBUS_CFLAGS) \
 	$(COMEDI_CFLAGS) \
+	$(MATH_CFLAGS) \
 	$(NULL)
 
 libcld_0_2_la_LIBADD = \
@@ -94,6 +96,7 @@ libcld_0_2_la_LIBADD = \
 	$(JSON_LIBS) \
 	$(MODBUS_LIBS) \
 	$(COMEDI_LIBS) \
+	$(MATH_LIBS) \
 	$(NULL)
 
 libcld_0_2_la_LDFLAGS = \

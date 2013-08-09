@@ -67,6 +67,10 @@ PKG_CHECK_MODULES([JSON], [json-glib-1.0],
     [VALA_PACKAGES="$VALA_PACKAGES --pkg json-glib-1.0"],
 	[AC_MSG_ERROR(json-glib-1.0 is required)])
 
+PKG_CHECK_MODULES([MATH], libmatheval,
+    [VALA_PACKAGES="$VALA_PACKAGES --pkg libmatheval"],
+	[AC_MSG_ERROR(libmatheval is required)])
+
 dnl libmodbus support
 AC_ARG_WITH(modbus,
 [  --with-modbus         Use Modbus library],

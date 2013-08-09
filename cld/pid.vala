@@ -67,6 +67,17 @@ public class Cld.Pid : AbstractObject {
     public double sp { get; set; }
 
     /**
+     * Set point channel (so_channel) reference string.
+     **/
+    public string sp_chanref { get; set; }
+
+    /**
+     * A channel that alters the setpoint value (sp) thus a time varying signal
+     * can be the sepoint value.
+     **/
+    public ScalableChannel? sp_channel { get; set; default = null; }
+
+    /**
      * Whether or not the loop is currently running.
      */
     public bool running { get; set; default = false; }
@@ -249,6 +260,7 @@ public class Cld.Pid : AbstractObject {
         kd = 0.0;
 
         process_values = new Gee.TreeMap<string, Object> ();
+        connect_sp ();
     }
 
     /**
@@ -266,6 +278,7 @@ public class Cld.Pid : AbstractObject {
         this.kd = kd;
 
         process_values = new Gee.TreeMap<string, Object> ();
+        connect_sp ();
     }
 
     /**
@@ -277,6 +290,7 @@ public class Cld.Pid : AbstractObject {
         string value;
 
         process_values = new Gee.TreeMap<string, Object> ();
+        connect_sp ();
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -308,6 +322,9 @@ public class Cld.Pid : AbstractObject {
                         case "desc":
                             desc = iter->get_content ();
                             break;
+                        case "sp_chanref":
+                            sp_chanref = iter->get_content ();
+                            break;
                         default:
                             break;
                     }
@@ -318,6 +335,17 @@ public class Cld.Pid : AbstractObject {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Connect the setpoint channel if it exists.
+     */
+    private void connect_sp () {
+        if (sp_channel != null) {
+            (sp_channel as ScalableChannel).new_value.connect ((id, scaled_value) => {
+               sp = scaled_value;
+            });
         }
     }
 

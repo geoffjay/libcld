@@ -103,6 +103,11 @@ public class Cld.Calibration : AbstractContainer {
         }
     }
 
+    ~Calibration () {
+        if (objects != null)
+            objects.clear ();
+    }
+
     public int coefficient_count () {
         return objects.size;
     }

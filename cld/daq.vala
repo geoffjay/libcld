@@ -81,6 +81,11 @@ public class Cld.Daq : AbstractContainer {
         }
     }
 
+    ~Daq () {
+        if (objects != null)
+            objects.clear ();
+    }
+
     /**
      * {@inheritDoc}
      */

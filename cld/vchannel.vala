@@ -19,6 +19,8 @@
  *  Geoff Johnson <geoff.jay@gmail.com>
  */
 
+using matheval;
+
 /**
  * Virtual channel to be used to execute expressions or just as a dummy channel
  * with a settable value.
@@ -66,6 +68,25 @@ public class Cld.VChannel : AbstractChannel, ScalableChannel {
     public override weak Task task { get; set; }
 
     /**
+     * {@inheritdoc}
+     */
+    public virtual string pidref {
+        get {
+            if (_pidref == null)
+                throw new Cld.Error.NULL_REF ("A taskref has not been set for this virtual channel.");
+            else
+                return _pidref;
+        }
+        set { _pidref = value; }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public virtual weak Pid pid { get; set; }
+
+
+    /**
      * {@inheritDoc}
      */
     public override string tag { get; set; }
@@ -75,10 +96,23 @@ public class Cld.VChannel : AbstractChannel, ScalableChannel {
      */
     public override string desc { get; set; }
 
+    /* Evaluator fields */
+    private Evaluator evaluator = null;
+
     /**
-     * Mathematical expression to be used to evaluate the channel value.
+     * @deprecated cld-0.2
      */
-    public string expression { get; set; }
+    private HashTable<string, AIChannel> channels =
+        new HashTable<string, AIChannel> (str_hash, str_equal);
+    private double[]? channel_vals;
+
+    /**
+     * Names of variables used in expression
+     */
+    public string[]? channel_names {
+        get { return _channel_names; }
+        private set { _channel_names = value; }
+    }
 
     /* Property backing fields. */
     private double _scaled_value = 0.0;
@@ -115,11 +149,6 @@ public class Cld.VChannel : AbstractChannel, ScalableChannel {
      * {@inheritDoc}
      */
     public virtual weak Calibration calibration { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    //public override signal void new_value ();
 
     /* default constructor */
     public VChannel () {
@@ -173,6 +202,11 @@ public class Cld.VChannel : AbstractChannel, ScalableChannel {
                 }
             }
         }
+    }
+
+    ~VChannel () {
+        if (channels != null)
+            channels.remove_all ();
     }
 
     public override string to_string () {

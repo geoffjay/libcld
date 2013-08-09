@@ -146,6 +146,56 @@ public class Cld.Builder : AbstractContainer {
         setup_references ();
     }
 
+    ~Builder () {
+        if (objects != null)
+            objects.clear ();
+    }
+
+    /**
+     * Add a object to the array list of objects
+     *
+     * @param object object to add to the list
+     */
+    public void add (Object object) {
+        objects.set (object.id, object);
+    }
+
+    public void sort_objects () {
+        Gee.List<Object> map_values = new Gee.ArrayList<Object> ();
+
+        map_values.add_all (objects.values);
+        map_values.sort ((GLib.CompareFunc) Object.compare);
+        objects.clear ();
+        foreach (Object object in map_values) {
+            objects.set (object.id, object);
+        }
+    }
+
+    /**
+     * Search the object list for the object with the given ID
+     *
+     * @param id ID of the object to retrieve
+     * @return The object if found, null otherwise
+     */
+    public Object? get_object (string id) {
+        Object? result = null;
+
+        if (objects.has_key (id)) {
+            result = objects.get (id);
+        } else {
+            foreach (var object in objects.values) {
+                if (object is Container) {
+                    result = (object as Container).get_object (id);
+                    if (result != null) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
     /**
      * Constructs the object tree using the top level object types.
      */
@@ -187,10 +237,13 @@ public class Cld.Builder : AbstractContainer {
                                 object = new AOChannel.from_xml_node (iter);
                             } else if (ctype == "digital" && direction == "input") {
                                 object = new DIChannel.from_xml_node (iter);
+
                             } else if (ctype == "digital" && direction == "output") {
                                 object = new DOChannel.from_xml_node (iter);
-                            } else if (ctype == "calculation" || ctype == "virtual") {
+                            } else if (ctype == "virtual") {
                                 object = new VChannel.from_xml_node (iter);
+                            } else if (ctype == "calculation") {
+                                object = new MathChannel.from_xml_node (iter);
                             } else {
                                 object = null;
                             }
@@ -270,6 +323,28 @@ public class Cld.Builder : AbstractContainer {
                 }
             }
 
+            if (object is VChannel) {
+                if ((object as VChannel).expression != null) {
+                    foreach( var name in (object as VChannel).channel_names ) {
+                        (object as VChannel).add_channel( name, (get_object (name) as AIChannel));
+                    }
+                }
+            }
+
+            if (object is MathChannel) {
+message ("id: %s expression: %s", object.id, (object as MathChannel).expression);
+                if ((object as MathChannel).expression != null) {
+                    foreach( var name in (object as MathChannel).channel_names ) {
+                        Cld.debug ("Assigning AIChannel %s to VChannel %s\n", name, object.id);
+                        var chan = get_object (name) as AIChannel;
+                        (object as MathChannel).add_channel( name, chan);
+                        (chan as AIChannel).new_value.connect ((id, val) => {
+                            double num = (object as MathChannel).calculated_value;
+                        });
+                    }
+                }
+            }
+
             /* XXX Too much nesting, should break into individual methods. */
             if (object is Control) {
                 foreach (var control_object in
@@ -288,6 +363,14 @@ public class Cld.Builder : AbstractContainer {
                                             = (channel as Channel);
                                     }
                                 }
+                            }
+                        }
+                        ref_id = (control_object as Pid).sp_chanref;
+                        if (ref_id != null) {
+                            var channel = get_object (ref_id);
+                            if (channel != null && channel is ScalableChannel) {
+                                Cld.debug ("Assigning ScalableChannel %s to Pid %s\n", ref_id, control_object.id);
+                                (control_object as Pid).sp_channel = channel as ScalableChannel;
                             }
                         }
                     }
@@ -347,7 +430,6 @@ public class Cld.Builder : AbstractContainer {
             }
         }
     }
-
     /**
      * Set a channel list for a Comedi task.
      **/

@@ -152,6 +152,11 @@ public class Cld.Control : AbstractContainer {
         }
     }
 
+    ~Control () {
+        if (objects != null)
+            objects.clear ();
+    }
+
     /**
      * {@inheritDoc}
      */

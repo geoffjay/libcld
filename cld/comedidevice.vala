@@ -58,7 +58,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
     /**
      * The comedi specific hardware device that this class will use.
      */
-    private Comedi.Device device;
+    protected Comedi.Device device;
 
     /**
      * Default construction
@@ -68,8 +68,6 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
         hw_type = HardwareType.INPUT;
         driver = DeviceType.COMEDI;
         filename = "/dev/comedi0";
-
-        device = new Comedi.Device (filename);
     }
 
     /**
@@ -107,16 +105,13 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
                 }
             }
         }
-
-        device = new Comedi.Device (filename);
     }
-
 
     /**
      * {@inheritDoc}
      */
     public override bool open () {
-        /* The device should already be open. */
+        device = new Comedi.Device (filename);
         return true;
     }
 
@@ -130,10 +125,61 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
             return false;
     }
 
+    /**
+     * Retrieve information about the Comedi device.
+     */
+    public Information info () {
+        var i = new Information ();
+        i.version_code = device.get_version_code ();
+//        i.driver_name = device.get_driver_name ();
+//        i.board_name = device.get_board_name ();
+        i.n_subdevices = device.get_n_subdevices ();
+
+        return i;
+    }
+
     public override string to_string () {
         string str_data = "[%s] : Comedi device using file %s\n".printf (
                             id, filename);
         /* add the hardware and driver types later */
         return str_data;
     }
+
+    /**
+     * Comedi device information class.
+     */
+    public class Information {
+
+        /**
+         * {@inheritDoc}
+         */
+        public string id { get; set; }
+
+        public int version_code { get; set; }
+        public string driver_name { get; set; }
+        public string board_name { get; set; }
+        public int n_subdevices { get; set; }
+
+        public Information () {
+            id = "XXXX";
+            version_code = -1;
+            driver_name = "XXXX";
+            board_name = "XXXX";
+            n_subdevices = -1;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public string to_string () {
+            string str_data = ("[%s] : Information for this Comedi device:\n" +
+                                "   version code: %d\n" +
+                                "   driver name: %s\n" +
+                                "   board name: %s\n" +
+                                "   n_subdevices: %d\n").printf (
+                                    id, version_code, driver_name, board_name, n_subdevices);
+            return str_data;
+        }
+    }
 }
+

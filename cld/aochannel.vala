@@ -59,6 +59,23 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel, ScalableChanne
      */
     public override weak Task task { get; set; }
 
+    /**
+     * {@inheritdoc}
+     */
+    public virtual string pidref {
+        get {
+            if (_pidref == null)
+                throw new Cld.Error.NULL_REF ("A taskref has not been set for this analog output channel.");
+            else
+                return _pidref;
+        }
+        set { _pidref = value; }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public virtual weak Pid pid { get; set; }
 
     /**
      * {@inheritDoc}
@@ -89,6 +106,7 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel, ScalableChanne
     /* Property backing fields. */
     private double _scaled_value = 0.0;
     private double _raw_value = 0.0;
+    private string _pidref = null;
 
     /**
      * {@inheritDoc}

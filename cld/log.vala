@@ -279,6 +279,11 @@ public class Cld.Log : AbstractContainer {
         }
     }
 
+    ~Log () {
+        if (_objects != null)
+            _objects.clear ();
+    }
+
     /**
      * Connect the columns to their corresponding channel signals.
      */

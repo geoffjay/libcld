@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<cld xmlns:cld="urn:libcld">
+    <cld:objects>
+        <cld:object id="cal0" type="calibration">
+            <cld:property name="units">Volts</cld:property>
+            <cld:object id="cft0" type="coefficient">
+                <cld:property name="n">0</cld:property>
+                <cld:property name="value">0.000</cld:property>
+            </cld:object>
+            <cld:object id="cft1" type="coefficient">
+                <cld:property name="n">1</cld:property>
+                <cld:property name="value">1.000</cld:property>
+            </cld:object>
+        </cld:object>
+        <cld:object id="ai0" type="channel" ref="dev0" ctype="analog" direction="input">
+            <cld:property name="tag">AI0</cld:property>
+            <cld:property name="desc">Sample Input</cld:property>
+            <cld:property name="num">0</cld:property>
+            <cld:property name="calref">cal0</cld:property>
+        </cld:object>
+        <cld:object id="ai1" type="channel" ref="dev1" ctype="analog" direction="input">
+            <cld:property name="tag">AI1</cld:property>
+            <cld:property name="desc">Sample Input</cld:property>
+            <cld:property name="num">1</cld:property>
+            <cld:property name="calref">cal0</cld:property>
+        </cld:object>
+        <cld:object id="ai2" type="channel" ref="dev2" ctype="analog" direction="input">
+            <cld:property name="tag">AI2</cld:property>
+            <cld:property name="desc">Sample Input</cld:property>
+            <cld:property name="num">2</cld:property>
+            <cld:property name="calref">cal0</cld:property>
+        </cld:object>
+        <cld:object id="ai3" type="channel" ref="dev3" ctype="analog" direction="input">
+            <cld:property name="tag">AI3</cld:property>
+            <cld:property name="desc">Sample Input</cld:property>
+            <cld:property name="num">3</cld:property>
+            <cld:property name="calref">cal0</cld:property>
+        </cld:object>
+        <cld:object id="vc0" type="channel" ref="vdev0" ctype="virtual">
+            <cld:property name="tag">VC0</cld:property>
+            <cld:property name="desc">Sample Calculation</cld:property>
+            <cld:property name="num">4</cld:property>
+            <cld:property name="expression">(ai0 + ai1 + ai2 + ai3)/4</cld:property>
+        </cld:object>
+    </cld:objects>
+</cld>

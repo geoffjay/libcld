@@ -325,19 +325,38 @@ public class Cld.Builder : Cld.AbstractContainer {
 
             if (object is MathChannel) {
                 if ((object as MathChannel).expression != null) {
-                    foreach( var name in (object as MathChannel).channel_names ) {
-                        Cld.debug ("Assigning AIChannel %s to VChannel %s", name, object.id);
-                        var chan = get_object (name) as AIChannel;
-                        (object as MathChannel).add_channel( name, chan);
-                        (chan as AIChannel).new_value.connect ((id, val) => {
-                            double num = (object as MathChannel).calculated_value;
-                        });
+                    int len = (object as MathChannel).variable_names.length;
+                    for (int i = 0; i < len; i++) {
+                        Cld.Object obj;
+                        string name  = (object as MathChannel).variable_names [i];
+                        foreach (string id in objects.keys) {
+                            obj = get_object (id);
+                            if (name.contains (id) && (objects.get (id) is DataSeries)) {
+                                (((obj as DataSeries).channel) as ScalableChannel).new_value.connect ((id, val) => {
+                                double num = (object as MathChannel).calculated_value;
+                            });
+
+                            } else if (name == id && (objects.get (id) is ScalableChannel)) {
+                                obj = get_object (id);
+                                (obj as ScalableChannel).new_value.connect ((id, val) => {
+                                    double num = (object as MathChannel).calculated_value;
+                                });
+                            } else {
+                                obj = null;
+                            }
+                            if (obj != null) {
+                                (object as MathChannel).add_object (id, obj);
+                                Cld.debug ("Assigning Cld.Object %s to MathChannel %s", name, object.id);
+                            }
+                        }
                     }
                 }
             }
 
             if (object is VChannel) {
                 /* For now virtual channels do too */
+                ref_id = (object as VChannel).calref;
+
                 if ((object as VChannel).expression != null) {
                     foreach( var name in (object as VChannel).channel_names ) {
                         (object as VChannel).add_channel( name, (get_object (name) as AIChannel));

@@ -21,13 +21,15 @@
  */
 
 using Modbus;
+
 /**
  * An object to use with UART and FTDI type serial ports. Pretty much pilfered
  * the code from the moserial application.
  */
 public class Cld.ModbusPort : AbstractPort {
 
-    private Context ctx;
+    private Modbus.Context ctx;
+
     /* property backing fields */
     private bool _connected = false;
 
@@ -56,7 +58,6 @@ public class Cld.ModbusPort : AbstractPort {
      * {@inheritDoc}
      */
     public override string id { get; set; }
-
 
     /**
      * The TCP/IP address of the ModbusPort

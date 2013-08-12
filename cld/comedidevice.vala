@@ -182,4 +182,3 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
         }
     }
 }
-

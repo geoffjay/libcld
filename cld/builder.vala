@@ -227,14 +227,12 @@ public class Cld.Builder : GLib.Object {
                                 object = null;
                             break;
                         case "module":
-                            message ("Loading modules:");
                             var mtype = iter->get_prop ("mtype");
                             if (mtype == "velmex")
                                 object = new VelmexModule.from_xml_node (iter);
                             else if (mtype == "licor")
                                 object = new LicorModule.from_xml_node (iter);
                             else if (mtype == "brabender") {
-                                message ("Loading Brabender Module:");
                                 object = new BrabenderModule.from_xml_node (iter);
                             }
                             else
@@ -245,8 +243,15 @@ public class Cld.Builder : GLib.Object {
                             if (ptype == "serial")
                                 object = new SerialPort.from_xml_node (iter);
                             if (ptype == "modbus") {
-                                message ("Loading Modbus Port:");
                                 object = new ModbusPort.from_xml_node (iter);
+                            }
+                            else
+                                object = null;
+                            break;
+                        case "device":
+                            var dtype = iter->get_prop ("dtype");
+                            if (dtype == "comedi") {
+                                object = new ComediDevice.from_xml_node (iter);
                             }
                             else
                                 object = null;

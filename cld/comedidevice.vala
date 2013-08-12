@@ -85,7 +85,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
                  iter = iter->next) {
                 if (iter->name == "property") {
                     switch (iter->get_prop ("name")) {
-                        case "file":
+                        case "filename":
                             filename = iter->get_content ();
                             break;
                         case "type":
@@ -131,8 +131,8 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
     public Information info () {
         var i = new Information ();
         i.version_code = device.get_version_code ();
-//        i.driver_name = device.get_driver_name ();
-//        i.board_name = device.get_board_name ();
+        i.driver_name = device.get_driver_name ();
+        i.board_name = device.get_board_name ();
         i.n_subdevices = device.get_n_subdevices ();
 
         return i;

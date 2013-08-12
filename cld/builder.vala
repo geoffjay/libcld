@@ -146,7 +146,7 @@ public class Cld.Builder : GLib.Object {
         Gee.List<Object> map_values = new Gee.ArrayList<Object> ();
 
         map_values.add_all (objects.values);
-        map_values.sort ((GLib.CompareDataFunc<Cld.Object?>) Object.compare);
+        map_values.sort ((GLib.CompareFunc) Object.compare);
         objects.clear ();
         foreach (Object object in map_values) {
             objects.set (object.id, object);

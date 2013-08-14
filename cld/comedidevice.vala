@@ -60,9 +60,10 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      */
     protected Comedi.Device device;
     private bool _is_open;
-    public bool is_open { get; }
-
-
+    public bool is_open {
+        get { return _is_open; }
+        set { _is_open = value; }
+    }
     /**
      * Default construction
      */

@@ -31,24 +31,24 @@ public class Cld.ComediTask : AbstractTask {
     * Abstract properties
     */
     public override bool active { get; set; }
-    public string id { get; set; }
+    public override string id { get; set; }
     public string task_type { get; set; }
     public string devref { get; set; }
-    public weak Cld.ComediDevice device { get; set; }
+    public Device device { get; set; }
     public string exec_type { get; set; }
     public int sampling_interval_ms { get; set; }
 
     private Gee.Map<string, Object>? _channels = null;
     public Gee.Map<string, Object>? channels {
             get { return _channels; }
-            set;
+            set { _channels = value; }
     }
 
     /**
      * Constructors
      **/
-    public Cld.ComediTask () {
-        active = false
+    public ComediTask () {
+        active = false;
         id = "t0";
         task_type = "comedi";
         devref = "dev00";
@@ -56,17 +56,17 @@ public class Cld.ComediTask : AbstractTask {
         sampling_interval_ms = 100;
     }
 
-    public Cld.ComediTask.from_xml_node (Xml.Node *node) {
+    public ComediTask.from_xml_node (Xml.Node *node) {
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
-            id = node.get_prop ("id");
+            id = node->get_prop ("id");
 
             /* Iterate through node children */
-            for (Xml.Node *iter = node.children;
+            for (Xml.Node *iter = node->children;
             iter != null; iter = iter->next) {
-                if iter->name == "property" {
-                    switch (iter->get_prop ("name"));
-                        case "task_type":
+                if (iter->name == "property") {
+                    switch (iter->get_prop ("name")) {
+                        case "ttype":
                             task_type = iter->get_content ();
                             break;
                         case ("devref"):
@@ -76,26 +76,29 @@ public class Cld.ComediTask : AbstractTask {
                             exec_type = iter->get_content ();
                             break;
                         case "sampling_interval_ms":
-                            sampling_interval_ms = iter->get_content ();
+                            sampling_interval_ms = int.parse (iter->get_content ());
                             break;
                         default:
                             break;
+                    }
                 }
             }
         }
     }
 
-    public bool open_device () {
-
+    public override string to_string () {
+        return "not implemented yet";
+    }
 
     /**
      * Abstract methods
      */
     public override void run () {
-
+        this.device.open ();
     }
 
     public override void stop () {
+        this.device.close ();
     }
 
 

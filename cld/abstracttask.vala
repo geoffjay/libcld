@@ -34,12 +34,11 @@ public abstract class Cld.AbstractTask : AbstractObject, Task {
     /**
      * {@inheritdoc}
      **/
-     public abstract void run () {
-     }
+     public abstract void run ();
 
     /**
      * {@inheritdoc}
      **/
-    public abstract void stop () {
-    }
+    public abstract void stop ();
+
 }

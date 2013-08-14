@@ -256,6 +256,14 @@ public class Cld.Builder : GLib.Object {
                             else
                                 object = null;
                             break;
+                        case "task":
+                            var ttype = iter->get_prop ("ttype");
+                            if (ttype == "comedi") {
+                                object = new ComediTask.from_xml_node (iter);
+                            }
+                            else
+                                object = null;
+                            break;
                         default:
                             object = null;
                             break;
@@ -351,6 +359,16 @@ public class Cld.Builder : GLib.Object {
                     var port = get_object (ref_id);
                     if (port != null && port is ModbusPort)
                          (object as BrabenderModule).port = (port as Port);
+                }
+            }
+            /* Comedi Task references a Comedi device */
+            if (object is ComediTask) {
+                ref_id = (object as ComediTask).devref;
+                if (ref_id != null) {
+                    var device = get_object (ref_id);
+                    if (device != null && device is ComediDevice) {
+                        (object as ComediTask).device = (device as Device);
+                    }
                 }
             }
         }

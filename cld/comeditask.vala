@@ -52,6 +52,7 @@ public class Cld.ComediTask : AbstractTask {
         id = "t0";
         task_type = "comedi";
         devref = "dev00";
+        device = new ComediDevice ();
         exec_type = "polled_read";
         sampling_interval_ms = 100;
     }
@@ -87,14 +88,23 @@ public class Cld.ComediTask : AbstractTask {
     }
 
     public override string to_string () {
-        return "not implemented yet";
+        string str_data  = "Cld.ComediTask\n";
+               str_data += " [id  ] : %s\n".printf (id);
+               str_data += " [task_type] : %s\n".printf (task_type);
+               str_data += " [devref ] : %s\n".printf (devref);
+               str_data += " [exec_type : %s\n".printf (exec_type);
+               str_data += " [sampling_interval_ms] : %d\n".printf (sampling_interval_ms);
+        return str_data;
     }
 
     /**
      * Abstract methods
      */
     public override void run () {
-        this.device.open ();
+        var device = this.device;
+        (device as ComediDevice).open ();
+        var information = (device as ComediDevice).info ();
+        message ((information as ComediDevice.Information).to_string ());
     }
 
     public override void stop () {

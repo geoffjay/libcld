@@ -59,6 +59,9 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * The comedi specific hardware device that this class will use.
      */
     protected Comedi.Device device;
+    private bool _is_open;
+    public bool is_open { get; }
+
 
     /**
      * Default construction
@@ -112,7 +115,14 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      */
     public override bool open () {
         device = new Comedi.Device (filename);
-        return true;
+        if (device != null) {
+            _is_open = true;
+            return true;
+        }
+        else {
+            _is_open = false;
+            return false;
+        }
     }
 
     /**

@@ -47,6 +47,16 @@ public class Cld.DOChannel : AbstractChannel, DChannel, OChannel {
     /**
      * {@inheritDoc}
      */
+    public override string taskref { get; set; }
+
+    /**
+     * {@inheritdoc}
+     */
+    public override weak Task task { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public override string tag { get; set; }
 
     /**
@@ -91,6 +101,11 @@ public class Cld.DOChannel : AbstractChannel, DChannel, OChannel {
                         case "num":
                             value = iter->get_content ();
                             num = int.parse (value);
+                            break;
+                        case "taskref":
+                           /* this should maybe be an object property,
+                             * possibly fix later */
+                            taskref = iter->get_content ();
                             break;
                         default:
                             break;

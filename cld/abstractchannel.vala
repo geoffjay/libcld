@@ -44,6 +44,16 @@ public abstract class Cld.AbstractChannel : AbstractObject, Channel {
     /**
      * {@inheritDoc}
      */
+    public abstract string taskref { get; set; }
+
+    /**
+     * {@inheritdoc}
+     */
+    public abstract weak Task task { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public abstract string tag { get; set; }
 
     /**

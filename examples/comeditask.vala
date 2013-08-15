@@ -25,6 +25,12 @@ class Cld.ComediTaskExample : GLib.Object {
          /*
           * TestXML constructor
           */
+        message ("Testing construction from XML method.");
+        Xml.Parser.init ();
+        xml = new XmlConfig.with_file_name ("comedidevice.xml");
+        builder = new Builder.from_xml_config (xml);
+        task = builder.get_object ("t00");
+        (task as ComediTask).run ();
 
          /*
           * Test methods

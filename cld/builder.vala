@@ -198,9 +198,9 @@ public class Cld.Builder : GLib.Object {
                     Object object;
                     type = iter->get_prop ("type");
                     switch (type) {
-//                        case "daq":
-//                            object = new Daq.from_xml_node (iter);
-//                            break;
+                        case "daq":
+                            object = new Daq.from_xml_node (iter);
+                            break;
                         case "log":
                             object = new Log.from_xml_node (iter);
                             break;
@@ -291,6 +291,10 @@ public class Cld.Builder : GLib.Object {
                 var device = get_object (ref_id);
                 if (device != null && device is Device)
                     (object as Channel).device = (device as Device);
+//                ref_id = (object as Channel).taskref;
+//                var task = get_object (ref_id);
+//                if (task != null && task is Task)
+//                    (object as Channel).task = (task as Task);
             }
 
             if (object is AChannel) {
@@ -370,6 +374,13 @@ public class Cld.Builder : GLib.Object {
                         (object as ComediTask).device = (device as Device);
                     }
                 }
+//                _channels = channels;
+//                foreach (var channel in _channels.values) {
+//                    if ((channel as Channel).taskref == (object as ComediTask).id) {
+//                        (object as ComediTask).channels.set
+//                                ((channel as Channel).id, (channel as Channel));
+//                    }
+//                }
             }
         }
     }

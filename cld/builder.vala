@@ -284,6 +284,7 @@ public class Cld.Builder : GLib.Object {
      */
     private void setup_references () {
         string ref_id;
+        Gee.Map<string, Object>? task_channels = new Gee.TreeMap<string, Object> ();
 
         foreach (var object in objects.values) {
             /* Setup the device references for all of the channel types */
@@ -292,10 +293,10 @@ public class Cld.Builder : GLib.Object {
                 var device = get_object (ref_id);
                 if (device != null && device is Device)
                     (object as Channel).device = (device as Device);
-//                ref_id = (object as Channel).taskref;
-//                var task = get_object (ref_id);
-//                if (task != null && task is Task)
-//                    (object as Channel).task = (task as Task);
+                ref_id = (object as Channel).taskref;
+                var task = get_object (ref_id);
+                if (task != null && task is Task)
+                    (object as Channel).task = (task as Task);
             }
 
             if (object is AChannel) {
@@ -376,13 +377,15 @@ public class Cld.Builder : GLib.Object {
                         (object as ComediTask).device = (device as Device);
                     }
                 }
-//                _channels = channels;
-//                foreach (var channel in _channels.values) {
-//                    if ((channel as Channel).taskref == (object as ComediTask).id) {
-//                        (object as ComediTask).channels.set
-//                                ((channel as Channel).id, (channel as Channel));
-//                    }
-//                }
+                _channels = channels;
+                foreach (var task_channel in _channels.values) {
+                    if ((task_channel as Channel).taskref == (object as ComediTask).id) {
+                        message ("Task channel included: %s\n", task_channel.to_string ());
+                        task_channels.set (task_channel.id, task_channel);
+                    }
+                    message ("Size of task_channels: %d", task_channels.size);
+                    (object as ComediTask).channels = task_channels;
+                }
             }
         }
     }

@@ -4,6 +4,7 @@ class Cld.ComediTaskExample : GLib.Object {
 
     private Cld.Object task;
     private Cld.Object device;
+    private Cld.Object channel;
     private GLib.MainLoop loop;
     private XmlConfig xml;
     private Builder builder;
@@ -27,17 +28,14 @@ class Cld.ComediTaskExample : GLib.Object {
          /*
           * TestXML constructor
           */
-        message ("Testing construction from XML method.");
         Xml.Parser.init ();
         xml = new XmlConfig.with_file_name ("comeditask.xml");
         builder = new Builder.from_xml_config (xml);
-        message (builder.to_string ());
         task = builder.get_object ("tk0");
-        message ((task as ComediTask).to_string ());
         device = builder.get_object ("dev0");
-        message ((device as ComediDevice).to_string ());
+        channel = builder.get_object ("ai0");
+        message (builder.to_string ());
         (task as ComediTask).run ();
-
          /*
           * Test methods
           */

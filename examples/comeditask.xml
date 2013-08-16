@@ -45,6 +45,7 @@
             <cld:property name="num">0</cld:property>
             <cld:property name="calref">cal0</cld:property>
             <cld:property name="taskref">tk0</cld:property>
+            <cld:property name="range">5</cld:property>
         </cld:object>
         <cld:object id="ai1" type="channel" ref="dev0" ctype="analog" direction="input">
             <cld:property name="tag">IN1</cld:property>
@@ -52,6 +53,7 @@
             <cld:property name="num">1</cld:property>
             <cld:property name="calref">cal1</cld:property>
             <cld:property name="taskref">tk0</cld:property>
+            <cld:property name="range">5</cld:property>
         </cld:object>
         <cld:object id="ai2" type="channel" ref="dev0" ctype="analog" direction="input">
             <cld:property name="tag">IN1</cld:property>
@@ -59,6 +61,7 @@
             <cld:property name="num">1</cld:property>
             <cld:property name="calref">cal1</cld:property>
             <cld:property name="taskref">tk1</cld:property>
+            <cld:property name="range">5</cld:property>
         </cld:object>
     </cld:objects>
 </cld>

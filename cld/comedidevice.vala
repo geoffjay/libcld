@@ -141,6 +141,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      */
     public Information info () {
         var i = new Information ();
+        i.id = id;
         i.version_code = device.get_version_code ();
         i.driver_name = device.get_driver_name ();
         i.board_name = device.get_board_name ();

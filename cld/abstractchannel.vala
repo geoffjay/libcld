@@ -68,6 +68,8 @@ public abstract class Cld.AbstractChannel : AbstractObject, Channel {
                str_data += " [dev ] : %s\n".printf (devref);
                str_data += " [tag ] : %s\n".printf (tag);
                str_data += " [desc] : %s\n".printf (desc);
+               str_data += " [devref] : %s\n".printf (devref);
+               str_data += " [taskref]: %s\n".printf (taskref);
         return str_data;
     }
 }

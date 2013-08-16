@@ -72,6 +72,7 @@ public class Cld.Daq : AbstractContainer {
                     if (iter->get_prop ("type") == "device") {
                         if (iter->get_prop ("dtype") == "comedi") {
                             var dev = new ComediDevice.from_xml_node (iter);
+                            dev.id = iter->get_prop ("id");
                             objects.set (dev.id, dev);
                         }
                     }

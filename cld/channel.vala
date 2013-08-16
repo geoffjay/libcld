@@ -97,6 +97,11 @@ public interface Cld.AChannel : AbstractChannel, Channel {
      *
      */
     public abstract double avg_value { get; private set; }
+
+    /**
+     *
+     */
+    public abstract int range { get; set; }
 }
 
 /**

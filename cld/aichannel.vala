@@ -54,7 +54,6 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      */
     public override weak Task task { get; set; }
 
-
     /**
      * {@inheritDoc}
      */
@@ -74,6 +73,11 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      * {@inheritDoc}
      */
     public virtual weak Calibration calibration { get; set; }
+
+    /**
+     * {@inheritdoc}
+     */
+    public virtual int range { get; set; }
 
     /**
      * Property backing fields to allow the channels to have a short history
@@ -258,6 +262,10 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
                              * possibly fix later */
                             taskref = iter->get_content ();
                             break;
+                        case "range":
+                            val = iter->get_content ();
+                            range = int.parse (val);
+                            break;
                         default:
                             break;
                     }
@@ -319,6 +327,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      * {@inheritDoc}
      */
     public override string to_string () {
-        return base.to_string ();
+        return base.to_string () + " [range]: %d\n".printf (range);
+;
     }
 }

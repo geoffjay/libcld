@@ -46,6 +46,14 @@ public class Cld.ComediTask : AbstractTask {
     }
 
     /**
+     * Internal thread data for log file output handling.
+     */
+    private unowned GLib.Thread<void *> thread;
+    private Mutex mutex = new Mutex ();
+    private ReadThread task_thread;
+
+
+    /**
      * Constructors
      **/
     public ComediTask () {
@@ -108,16 +116,103 @@ public class Cld.ComediTask : AbstractTask {
      * Abstract methods
      */
     public override void run () {
-        var device = this.device;
-        (device as ComediDevice).open ();
-        var information = (device as ComediDevice).info ();
-        message ((information as ComediDevice.Information).to_string ());
+        if (device == null)
+            error ("Task %s has no reference to a device.", id);
+        if (!(device as ComediDevice).is_open)
+            (device as ComediDevice).open ();
+        if (!(device as ComediDevice).is_open)
+            error ("Failed to open Comedi device: %s", devref);
+        switch (exec_type) {
+            case "streaming":
+                /* XXX TBD */
+                break;
+            case "pollling":
+                switch (poll_type) {
+                    case "read":
+                        do_polled_read ();
+                        break;
+                    case "write":
+                        //do_polled_write ();
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     public override void stop () {
-        this.device.close ();
+       device.close ();
+       if ((device as ComediDevice).is_open) {
+        message ("Failed to close Comedi device: %s", devref);
+       }
     }
 
+    private void do_polled_read () {
+        // setup the device instruction list based on channel list and subdevice
+            if (!GLib.Thread.supported ()) {
+                stderr.printf ("Cannot run logging without thread support.\n");
+                active = false;
+                return;
+            }
+            if (!active) {
+                task_thread = new ReadThread (this);
 
+                try {
+                    active = true;
+                    thread = GLib.Thread.create<void *> (task_thread.run, true);
+                } catch (ThreadError e) {
+                    stderr.printf ("%s\n", e.message);
+                    active = false;
+                    return;
+                }
+            }
+    }
+
+    private void do_instruction () {
+
+    }
+    public class ReadThread {
+        private ComediTask task;
+
+        public ReadThread (ComediTask task) {
+            this.task = task;
+        }
+
+        public void * run () {
+            Mutex mutex = new Mutex ();
+            Cond cond = new Cond ();
+#if HAVE_GLIB232
+            int64 end_time;
+#else
+            TimeVal next_time = TimeVal ();
+            next_time.get_current_time ();
+#endif
+
+            while (task.active) {
+                lock (task) {
+                    task.do_instruction ();
+                }
+
+                mutex.lock ();
+                try {
+#if HAVE_GLIB232
+                    end_time = get_monotonic_time () + task.poll_interval_ms * TimeSpan.MILLISECOND;
+                    while (cond.wait_until (mutex, end_time))
+#else
+                    next_time.add (task.poll_interval_ms * (long)TimeSpan.MILLISECOND);
+                    while (cond.timed_wait (mutex, next_time))
+#endif
+                        ; /* do nothing */
+                } finally {
+                    mutex.unlock ();
+                }
+            }
+
+            return null;
+        }
+    }
 }
 

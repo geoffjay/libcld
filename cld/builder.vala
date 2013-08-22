@@ -377,13 +377,14 @@ public class Cld.Builder : GLib.Object {
                         (object as ComediTask).device = (device as Device);
                     }
                 }
+                /* Get all of the channels */
                 _channels = channels;
+                /* Build a channel list for this task. */
                 foreach (var task_channel in _channels.values) {
                     if ((task_channel as Channel).taskref == (object as ComediTask).id) {
-                        message ("Task channel included: %s\n", task_channel.to_string ());
+                        stdout.printf ("Assigning channel %s to task %s\n", task_channel.id, object.id);
                         task_channels.set (task_channel.id, task_channel);
                     }
-                    message ("Size of task_channels: %d", task_channels.size);
                     (object as ComediTask).channels = task_channels;
                 }
             }

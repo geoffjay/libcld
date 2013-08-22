@@ -130,8 +130,10 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * {@inheritDoc}
      */
     public override bool close () {
-        if (device.close () == 0)
+        if (device.close () == 0) {
+            _is_open = false;
             return true;
+        }
         else
             return false;
     }

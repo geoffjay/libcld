@@ -26,33 +26,33 @@
 public interface Cld.Device :  GLib.Object {
 
     /**
-     * {@inheritDoc}
+     *
      */
     public abstract int hw_type { get; set; }
 
     /**
-     * {@inheritDoc}
+     *
      */
     public abstract int driver { get; set; }
 
     /**
-     * {@inheritDoc}
+     *
      */
     public abstract string description { get; set; }
 
     /**
-     * {@inheritDoc}
+     *
      */
     public abstract string filename { get; set; }
 
     /**
-     * {@inheritDoc}
+     *
      */
     public abstract int unix_fd { get; set; }
 
     /**
      * A function to open the device for read and write operations.
-    */
+     */
     public abstract bool open ();
 
     /**

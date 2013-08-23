@@ -59,18 +59,13 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * The comedi specific hardware device that this class will use.
      */
     protected Comedi.Device device;
-    protected Comedi.InstructionList insn_list;
+//    protected Comedi.InstructionList instruction_list;
+//    protected Comedi.Instruction instruction;
     private bool _is_open;
     public bool is_open {
         get { return _is_open; }
         set { _is_open = value; }
     }
-    private Gee.Map<string, Object>? _ai_channels = null;
-    public Gee.Map<string, Object>? ai_channels {
-            get { return _ai_channels; }
-            set { _ai_channels = value; }
-    }
-
 
     /**
      * Default construction
@@ -151,11 +146,30 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * from a list of channels.
      **/
     public void set_insn_list (Gee.Map<string, Object> channels, int subdevice) {
-        ai_channels = channels;
-        var subdevice = subdevice;
-        insn_list.n_insns = ai_channels.size;
+        int n = 0;
+        const int NSAMPLES = 10; //XXX Why is this set to 10 (Steve)??
+        const int MAX_SAMPLES = 128;
+//        instruction_list.n_insns = channels.size;
+//        foreach (var channel in channels.values) {
+//            instruction.insn = InstructionAttribute.READ;
+//            instruction.n    = NSAMPLES;
+//            instruction.data = null;
+//            instruction.subdev = subdevice;
+//            instruction.chanspec = pack (n, (channel as AIChannel).
+//                                        range, AnalogReference.GROUND);
+//            n++;
+//        }
+//        instruction_list.insns = insns;
     }
 
+    /**
+     * This is just a test function used for debugging only.
+     **/
+    public void test () {
+        uint data[1];
+        device.data_read (0, 0, 4, AnalogReference.GROUND, data);
+        message ("data: %u", data[0]);
+    }
 
     /**
      * Retrieve information about the Comedi device.

@@ -122,25 +122,25 @@ public class Cld.ComediTask : AbstractTask {
             (device as ComediDevice).open ();
         if (!(device as ComediDevice).is_open)
             error ("Failed to open Comedi device: %s", devref);
-        switch (exec_type) {
-            case "streaming":
-                /* XXX TBD */
-                break;
-            case "pollling":
-                switch (poll_type) {
-                    case "read":
-                        do_polled_read ();
+            switch (exec_type) {
+                    case "streaming":
+                        /* XXX TBD */
                         break;
-                    case "write":
-                        //do_polled_write ();
+                    case "polling":
+                        switch (poll_type) {
+                            case "read":
+                                do_polled_read ();
+                                break;
+                            case "write":
+                                //do_polled_write ();
+                                break;
+                            default:
+                                break;
+                        }
                         break;
                     default:
                         break;
-                }
-                break;
-            default:
-                break;
-        }
+            }
     }
 
     public override void stop () {
@@ -152,6 +152,7 @@ public class Cld.ComediTask : AbstractTask {
 
     private void do_polled_read () {
         // setup the device instruction list based on channel list and subdevice
+        message ("doin' the polled read");
         (device as ComediDevice).set_insn_list (channels, subdevice);
         if (!GLib.Thread.supported ()) {
             stderr.printf ("Cannot run logging without thread support.\n");
@@ -173,7 +174,7 @@ public class Cld.ComediTask : AbstractTask {
     }
 
     private void trigger_device () {
-
+        (device as ComediDevice).test ();
     }
     public class ReadThread {
         private ComediTask task;

@@ -152,26 +152,27 @@ public class Cld.ComediTask : AbstractTask {
 
     private void do_polled_read () {
         // setup the device instruction list based on channel list and subdevice
-            if (!GLib.Thread.supported ()) {
-                stderr.printf ("Cannot run logging without thread support.\n");
+        (device as ComediDevice).set_insn_list (channels, subdevice);
+        if (!GLib.Thread.supported ()) {
+            stderr.printf ("Cannot run logging without thread support.\n");
+            active = false;
+            return;
+        }
+        if (!active) {
+            task_thread = new ReadThread (this);
+
+            try {
+                active = true;
+                thread = GLib.Thread.create<void *> (task_thread.run, true);
+            } catch (ThreadError e) {
+                stderr.printf ("%s\n", e.message);
                 active = false;
                 return;
             }
-            if (!active) {
-                task_thread = new ReadThread (this);
-
-                try {
-                    active = true;
-                    thread = GLib.Thread.create<void *> (task_thread.run, true);
-                } catch (ThreadError e) {
-                    stderr.printf ("%s\n", e.message);
-                    active = false;
-                    return;
-                }
-            }
+        }
     }
 
-    private void do_instruction () {
+    private void trigger_device () {
 
     }
     public class ReadThread {
@@ -193,7 +194,7 @@ public class Cld.ComediTask : AbstractTask {
 
             while (task.active) {
                 lock (task) {
-                    task.do_instruction ();
+                    task.trigger_device ();
                 }
 
                 mutex.lock ();

@@ -59,11 +59,19 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * The comedi specific hardware device that this class will use.
      */
     protected Comedi.Device device;
+    protected Comedi.InstructionList insn_list;
     private bool _is_open;
     public bool is_open {
         get { return _is_open; }
         set { _is_open = value; }
     }
+    private Gee.Map<string, Object>? _ai_channels = null;
+    public Gee.Map<string, Object>? ai_channels {
+            get { return _ai_channels; }
+            set { _ai_channels = value; }
+    }
+
+
     /**
      * Default construction
      */
@@ -137,6 +145,17 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
         else
             return false;
     }
+
+    /**
+     * Build a Comedi instruction list for a single subdevice
+     * from a list of channels.
+     **/
+    public void set_insn_list (Gee.Map<string, Object> channels, int subdevice) {
+        ai_channels = channels;
+        var subdevice = subdevice;
+        insn_list.n_insns = ai_channels.size;
+    }
+
 
     /**
      * Retrieve information about the Comedi device.

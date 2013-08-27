@@ -55,19 +55,22 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      */
     public override int unix_fd { get; set; }
 
-    /**
-     * The comedi specific hardware device that this class will use.
-     */
-    protected Comedi.Device device;
-    private Comedi.InstructionList instruction_list;
-    private Gee.Map<string, Object> ai_channels;
-    const int NSAMPLES = 10; //XXX Why is this set to 10 (Steve)??
+
     private bool _is_open;
     public bool is_open {
         get { return _is_open; }
         set { _is_open = value; }
     }
 
+    /**
+     * The comedi specific hardware device that this class will use.
+     */
+    protected Comedi.Device device;
+
+    private Comedi.InstructionList instruction_list;
+    private Gee.Map<string, Object> ai_channels;
+    private const int NSAMPLES = 10; //XXX Why is this set to 10 (Steve)??
+    private int subdevice;
     /**
      * Default construction
      */
@@ -148,6 +151,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      **/
     public void set_insn_list (Gee.Map<string, Object> channels, int subdevice) {
         ai_channels = channels;
+        this.subdevice = subdevice;
         Instruction[] instructions = new Instruction [ai_channels.size];
         int n = 0;
         instruction_list.n_insns = ai_channels.size;
@@ -177,14 +181,27 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * This method executes a Comedi Instruction list.
      */
     public void execute_instruction_list () {
-        int ret = device.do_insnlist (instruction_list);
+        Comedi.Range range;
+        uint maxdata;
+        int ret, i, j;
+        double meas;
+
+        ret = device.do_insnlist (instruction_list);
         if (ret < 0)
             perror ("do_insnlist failed:");
-        int i = 0;
+        i = 0;
         foreach (var channel in  ai_channels.values) {
-            for (int j = 0; j < NSAMPLES; j++) {
-                message ("instruction_list.insns[%d].data[%d]: %u", i, j, instruction_list.insns[i].data[j]);
+            meas = 0.0;
+            maxdata = device.get_maxdata (subdevice, (channel as AIChannel).num);
+            for (j = 0; j < NSAMPLES; j++) {
+                range = device.get_range (subdevice, (channel as AIChannel).num, (channel as AIChannel).range);
+                //message ("range min: %.3f, range max: %.3f, units: %u", range.min, range.max, range.unit);
+                meas += Comedi.to_phys (instruction_list.insns[i].data[j], range, maxdata);
+                //message ("instruction_list.insns[%d].data[%d]: %u, physical value: %.3f", i, j, instruction_list.insns[i].data[j], meas/(j+1));
             }
+            meas = meas / (j + 1);
+            (channel as AIChannel).add_raw_value (meas);
+            //message ("Channel: %s, Raw value: %.3f", (channel as AIChannel).id, (channel as AIChannel).raw_value);
             i++;
         }
      }

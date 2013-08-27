@@ -59,8 +59,9 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * The comedi specific hardware device that this class will use.
      */
     protected Comedi.Device device;
-//    protected Comedi.InstructionList instruction_list;
-//    protected Comedi.Instruction instruction;
+    private Comedi.InstructionList instruction_list;
+    private Gee.Map<string, Object> ai_channels;
+    const int NSAMPLES = 10; //XXX Why is this set to 10 (Steve)??
     private bool _is_open;
     public bool is_open {
         get { return _is_open; }
@@ -146,30 +147,48 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * from a list of channels.
      **/
     public void set_insn_list (Gee.Map<string, Object> channels, int subdevice) {
+        ai_channels = channels;
+        Instruction[] instructions = new Instruction [ai_channels.size];
         int n = 0;
-        const int NSAMPLES = 10; //XXX Why is this set to 10 (Steve)??
-        const int MAX_SAMPLES = 128;
-//        instruction_list.n_insns = channels.size;
-//        foreach (var channel in channels.values) {
-//            instruction.insn = InstructionAttribute.READ;
-//            instruction.n    = NSAMPLES;
-//            instruction.data = null;
-//            instruction.subdev = subdevice;
-//            instruction.chanspec = pack (n, (channel as AIChannel).
-//                                        range, AnalogReference.GROUND);
-//            n++;
-//        }
-//        instruction_list.insns = insns;
+        instruction_list.n_insns = ai_channels.size;
+        foreach (var channel in channels.values) {
+            instructions[n] = Instruction ();
+            instructions[n].insn = InstructionAttribute.READ;
+            instructions[n].n    = NSAMPLES;
+            instructions[n].data = new uint [NSAMPLES];
+            instructions[n].subdev = subdevice;
+            instructions[n].chanspec = pack (n, (channel as AIChannel).
+                                        range, AnalogReference.GROUND);
+            n++;
+        }
+        instruction_list.insns = instructions;
     }
 
     /**
      * This is just a test function used for debugging only.
-     **/
+     */
     public void test () {
         uint data[1];
         device.data_read (0, 0, 4, AnalogReference.GROUND, data);
         message ("data: %u", data[0]);
     }
+
+    /**
+     * This method executes a Comedi Instruction list.
+     */
+    public void execute_instruction_list () {
+        int ret = device.do_insnlist (instruction_list);
+        if (ret < 0)
+            perror ("do_insnlist failed:");
+        int i = 0;
+        foreach (var channel in  ai_channels.values) {
+            for (int j = 0; j < NSAMPLES; j++) {
+                message ("instruction_list.insns[%d].data[%d]: %u", i, j, instruction_list.insns[i].data[j]);
+            }
+            i++;
+        }
+     }
+
 
     /**
      * Retrieve information about the Comedi device.

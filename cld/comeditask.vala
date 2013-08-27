@@ -152,7 +152,6 @@ public class Cld.ComediTask : AbstractTask {
 
     private void do_polled_read () {
         // setup the device instruction list based on channel list and subdevice
-        message ("doin' the polled read");
         (device as ComediDevice).set_insn_list (channels, subdevice);
         if (!GLib.Thread.supported ()) {
             stderr.printf ("Cannot run logging without thread support.\n");
@@ -174,7 +173,8 @@ public class Cld.ComediTask : AbstractTask {
     }
 
     private void trigger_device () {
-        (device as ComediDevice).test ();
+        (device as ComediDevice).execute_instruction_list ();
+//        (device as ComediDevice).test ();
     }
     public class ReadThread {
         private ComediTask task;

@@ -157,7 +157,6 @@ public class Cld.ComediTask : AbstractTask {
         return str_data;
     }
 
-
     /**
      * {@inheritDoc}
      */
@@ -187,7 +186,11 @@ public class Cld.ComediTask : AbstractTask {
                         break;
                     default:
                         break;
-            }
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     /**

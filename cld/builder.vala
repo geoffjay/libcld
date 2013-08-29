@@ -283,7 +283,6 @@ public class Cld.Builder : GLib.Object {
      */
     private void setup_references () {
         string ref_id;
-        Gee.Map<string, Object>? task_channels = new Gee.TreeMap<string, Object> ();
 
         foreach (var object in objects.values) {
             /* Setup the device references for all of the channel types */
@@ -391,25 +390,31 @@ public class Cld.Builder : GLib.Object {
                     }
                 }
             }
+        }
+
+        foreach (var object in objects.values) {
+
             /* Comedi Task references a Comedi device */
             if (object is ComediTask) {
                 ref_id = (object as ComediTask).devref;
+
                 if (ref_id != null) {
                     var device = get_object (ref_id);
                     if (device != null && device is ComediDevice) {
                         (object as ComediTask).device = (device as Device);
                     }
                 }
+
                 /* Get all of the channels */
-                _channels = channels;
                 /* Build a channel list for this task. */
-                foreach (var task_channel in _channels.values) {
-                    if ((task_channel as Channel).taskref == (object as ComediTask).id) {
-                        stdout.printf ("Assigning channel %s to task %s\n", task_channel.id, object.id);
-                        task_channels.set (task_channel.id, task_channel);
+                foreach (var task_channel in channels.values) {
+                    if (((task_channel as Channel).taskref == (object as ComediTask).id) &&
+                        (ref_id == (task_channel as Channel).devref)) {
+                        (object as ComediTask).add_channel (task_channel);
                     }
-                    (object as ComediTask).channels = task_channels;
                 }
+
+                message ((object as ComediTask).to_string ());
             }
         }
     }

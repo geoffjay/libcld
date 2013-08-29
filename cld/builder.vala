@@ -388,8 +388,6 @@ public class Cld.Builder : GLib.Object {
                         (object as ComediTask).add_channel (task_channel);
                     }
                 }
-
-                message ((object as ComediTask).to_string ());
             }
         }
     }

@@ -28,21 +28,56 @@ using Comedi;
 public class Cld.ComediTask : AbstractTask {
 
    /**
-    * Abstract properties
+    * Property backing fields.
+    */
+    private Gee.Map<string, Object>? _channels = null;
+
+   /**
+    * ...
     */
     public override bool active { get; set; }
+
+   /**
+    * ...
+    */
     public override string id { get; set; }
+
+   /**
+    * ...
+    */
     public string devref { get; set; }
+
+   /**
+    * ...
+    */
     public Device device { get; set; }
+
+   /**
+    * ...
+    */
     public string exec_type { get; set; }
+
+   /**
+    * ...
+    */
     public int subdevice { get; set; }
+
+   /**
+    * ...
+    */
     public string poll_type { get; set; }
+
+   /**
+    * ...
+    */
     public int poll_interval_ms { get; set; }
 
-    private Gee.Map<string, Object>? _channels = null;
+   /**
+    * ...
+    */
     public Gee.Map<string, Object>? channels {
-            get { return _channels; }
-            set { _channels = value; }
+        get { return _channels; }
+        set { _channels = value; }
     }
 
     /**
@@ -50,12 +85,12 @@ public class Cld.ComediTask : AbstractTask {
      */
     private unowned GLib.Thread<void *> thread;
     private Mutex mutex = new Mutex ();
-    private ReadThread task_thread;
-
+    private Thread task_thread;
+    private string direction;
 
     /**
-     * Constructors
-     **/
+     * Default construction.
+     */
     public ComediTask () {
         active = false;
         id = "tk0";
@@ -65,8 +100,13 @@ public class Cld.ComediTask : AbstractTask {
         subdevice = 0;
         poll_type = "read";
         poll_interval_ms = 100;
+
+        channels = new Gee.TreeMap<string, Object> ();
     }
 
+    /**
+     * Construction using an XML node.
+     */
     public ComediTask.from_xml_node (Xml.Node *node) {
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -98,8 +138,13 @@ public class Cld.ComediTask : AbstractTask {
                 }
             }
         }
+
+        channels = new Gee.TreeMap<string, Object> ();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public override string to_string () {
         string str_data  = "Cld.ComediTask\n";
                str_data += " [id  ] : %s\n".printf (id);
@@ -108,58 +153,88 @@ public class Cld.ComediTask : AbstractTask {
                str_data += " [subdevice] : %d\n".printf (subdevice);
                str_data += " [poll_type] : %s\n".printf (poll_type);
                str_data += " [poll_interval_ms] : %d\n".printf (poll_interval_ms);
+               str_data += " [channels.size] : %d\n".printf (channels.size);
         return str_data;
     }
 
-
     /**
-     * Abstract methods
+     * {@inheritDoc}
      */
     public override void run () {
         if (device == null)
             error ("Task %s has no reference to a device.", id);
+
         if (!(device as ComediDevice).is_open)
             (device as ComediDevice).open ();
+
         if (!(device as ComediDevice).is_open)
             error ("Failed to open Comedi device: %s", devref);
-            switch (exec_type) {
-                    case "streaming":
-                        /* XXX TBD */
+
+        switch (exec_type) {
+            case "streaming":
+                /* XXX TBD */
+                break;
+            case "polling":
+                switch (poll_type) {
+                    case "read":
+                        direction = "read";
+                        do_polling ();
                         break;
-                    case "polling":
-                        switch (poll_type) {
-                            case "read":
-                                do_polled_read ();
-                                break;
-                            case "write":
-                                //do_polled_write ();
-                                break;
-                            default:
-                                break;
-                        }
+                    case "write":
+                        direction = "write";
+                        do_polling ();
                         break;
                     default:
                         break;
-            }
+                }
+                break;
+            default:
+                break;
+        }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public override void stop () {
-       device.close ();
-       if ((device as ComediDevice).is_open) {
-        message ("Failed to close Comedi device: %s", devref);
-       }
+        device.close ();
+        if ((device as ComediDevice).is_open) {
+            message ("Failed to close Comedi device: %s", devref);
+        }
     }
 
-    private void do_polled_read () {
-        // setup the device instruction list based on channel list and subdevice
-        (device as ComediDevice).set_insn_list (channels, subdevice);
+    /**
+     * ...
+     */
+    public void add_channel (Object channel) {
+        channels.set (channel.id, channel);
+    }
+
+    /**
+     * ...
+     */
+    private void do_polling () {
+
+        switch (direction) {
+            case "read":
+                // setup the device instruction list based on channel list and subdevice
+                (device as ComediDevice).set_insn_list (channels, subdevice);
+                break;
+            case "write":
+                (device as ComediDevice).set_out_channels (channels, subdevice);
+                break;
+            default:
+                break;
+        }
+
         if (!GLib.Thread.supported ()) {
             stderr.printf ("Cannot run logging without thread support.\n");
             active = false;
             return;
         }
+
         if (!active) {
-            task_thread = new ReadThread (this);
+            task_thread = new Thread (this);
 
             try {
                 active = true;
@@ -172,17 +247,39 @@ public class Cld.ComediTask : AbstractTask {
         }
     }
 
+    /**
+     * ...
+     */
     private void trigger_device () {
-        (device as ComediDevice).execute_instruction_list ();
-//        (device as ComediDevice).test ();
+        switch (direction) {
+            case "read":
+                (device as ComediDevice).execute_instruction_list ();
+                //(device as ComediDevice).test ();
+                break;
+            case "write":
+                (device as ComediDevice).execute_polled_output ();
+                break;
+            default:
+                break;
+        }
     }
-    public class ReadThread {
+
+    /**
+     * ...
+     */
+    public class Thread {
         private ComediTask task;
 
-        public ReadThread (ComediTask task) {
+        /**
+         * ...
+         */
+        public Thread (ComediTask task) {
             this.task = task;
         }
 
+        /**
+         * ...
+         */
         public void * run () {
             Mutex mutex = new Mutex ();
             Cond cond = new Cond ();

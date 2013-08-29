@@ -32,10 +32,8 @@ class Cld.ComediTaskExample : GLib.Object {
         xml = new XmlConfig.with_file_name ("comeditask.xml");
         builder = new Builder.from_xml_config (xml);
         task = builder.get_object ("tk0");
-        device = builder.get_object ("dev0");
-        channel = builder.get_object ("ai0");
-        message (builder.to_string ());
-        (task as ComediTask).run ();
+        message (task.to_string ());
+//        (task as ComediTask).run ();
          /*
           * Test methods
           */

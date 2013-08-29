@@ -197,9 +197,13 @@ public class Cld.ComediTask : AbstractTask {
      * {@inheritDoc}
      */
     public override void stop () {
-        device.close ();
-        if ((device as ComediDevice).is_open) {
-            message ("Failed to close Comedi device: %s", devref);
+        if (active) {
+            active = false;
+            thread.join ();
+            device.close ();
+            if ((device as ComediDevice).is_open) {
+                message ("Failed to close Comedi device: %s", devref);
+            }
         }
     }
 

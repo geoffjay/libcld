@@ -390,7 +390,7 @@ public class Cld.Log : AbstractContainer {
     }
 
     /**
-     * Stop a PID control loop that is executing.
+     * Stop a log that is executing.
      */
     public void stop () {
         if (active) {

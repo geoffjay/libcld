@@ -155,9 +155,11 @@ public class Cld.LicorModule : AbstractModule {
     public override bool load () {
         (port as SerialPort).new_data.connect (new_data_cb);
         loaded = (port.open ()) ? true : false;
+        if (loaded)
 
-        Cld.debug ("LicorModule :: load ()\n");
-
+            Cld.debug ("LicorModule :: load ()\n");
+        else
+            Cld.debug ("LicorModule not loaded \n");
         return loaded;
     }
 

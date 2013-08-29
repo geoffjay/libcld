@@ -331,7 +331,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
             }
             meas = meas / (j);
             (channel as AIChannel).add_raw_value (meas);
-            message ("Channel: %s, Raw value: %.3f", (channel as AIChannel).id, (channel as AIChannel).raw_value);
+//            Cld.debug ("Channel: %s, Raw value: %.3f\n", (channel as AIChannel).id, (channel as AIChannel).raw_value);
             i++;
         }
      }

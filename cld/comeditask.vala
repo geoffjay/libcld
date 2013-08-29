@@ -157,6 +157,7 @@ public class Cld.ComediTask : AbstractTask {
         return str_data;
     }
 
+
     /**
      * {@inheritDoc}
      */
@@ -254,7 +255,6 @@ public class Cld.ComediTask : AbstractTask {
         switch (direction) {
             case "read":
                 (device as ComediDevice).execute_instruction_list ();
-                //(device as ComediDevice).test ();
                 break;
             case "write":
                 (device as ComediDevice).execute_polled_output ();

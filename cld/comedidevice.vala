@@ -186,11 +186,16 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * The comedi specific hardware device that this class will use.
      */
     protected Comedi.Device device;
+    private bool _is_open;
+    public bool is_open { get; }
+
 
     private Comedi.InstructionList instruction_list;
     private Gee.Map<string, Object> ai_channels;
+    private Gee.Map<string, Object> ao_channels;
     private const int NSAMPLES = 10; //XXX Why is this set to 10 (Steve)??
     private int ai_subdevice;
+    private int ao_subdevice;
     /**
      * Default construction
      */
@@ -289,6 +294,8 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
     }
 
     public void set_out_channels (Gee.Map<string, Object> channels, int subdevice) {
+        ao_channels = channels;
+        ao_subdevice = subdevice;
     }
 
     /**
@@ -322,15 +329,25 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
                 meas += Comedi.to_phys (instruction_list.insns[i].data[j], range, maxdata);
                 //message ("instruction_list.insns[%d].data[%d]: %u, physical value: %.3f", i, j, instruction_list.insns[i].data[j], meas/(j+1));
             }
-            meas = meas / (j + 1);
+            meas = meas / (j);
             (channel as AIChannel).add_raw_value (meas);
-            //message ("Channel: %s, Raw value: %.3f", (channel as AIChannel).id, (channel as AIChannel).raw_value);
+            message ("Channel: %s, Raw value: %.3f", (channel as AIChannel).id, (channel as AIChannel).raw_value);
             i++;
         }
      }
 
      public void execute_polled_output () {
-        message ("polled output is happenning!");
+        Comedi.Range range;
+        uint maxdata,  data;
+        double val;
+        foreach (var channel in ao_channels.values) {
+            val = (channel as AOChannel).scaled_value;
+            range = device.get_range (ao_subdevice, (channel as AOChannel).num, (channel as AOChannel).range);
+            maxdata = device.get_maxdata (ao_subdevice, (channel as AOChannel).num);
+            data = (uint)((val / 100.0) * maxdata);
+            message ("%s scaled_value: %.3f, data: %u", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
+            device.data_write (ao_subdevice, (channel as AOChannel).num, (channel as AOChannel).range, AnalogReference.GROUND, data);
+        }
      }
 
     /**

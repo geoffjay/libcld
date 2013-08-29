@@ -389,8 +389,23 @@ public class Cld.Builder : GLib.Object {
                         (object as ComediTask).add_channel (task_channel);
                     }
                 }
-
-                message ((object as ComediTask).to_string ());
+            }
+            /* Comedi Task references a Comedi device */
+            if (object is ComediTask) {
+                ref_id = (object as ComediTask).devref;
+                if (ref_id != null) {
+                    var device = get_object (ref_id);
+                    if (device != null && device is ComediDevice) {
+                        (object as ComediTask).device = (device as Device);
+                    }
+                }
+//                _channels = channels;
+//                foreach (var channel in _channels.values) {
+//                    if ((channel as Channel).taskref == (object as ComediTask).id) {
+//                        (object as ComediTask).channels.set
+//                                ((channel as Channel).id, (channel as Channel));
+//                    }
+//                }
             }
         }
     }

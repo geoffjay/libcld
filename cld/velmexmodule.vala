@@ -93,10 +93,31 @@ public class Cld.VelmexModule : AbstractModule {
     }
 
     /**
+     * Jog forward one step.
+     */
+    public void jog (int val) {
+        string cmd;
+        if (val < 0)
+            cmd = "F PM1,C,SA1M4000,A1M50,I1M%c%d\r".printf ('-',val);
+        else
+            cmd = "F PM1,C,SA1M4000,A1M50,I1M%d\r".printf (val);
+        port.send_bytes (cmd.to_utf8 (), cmd.length);
+        Posix.usleep (50000);
+        port.send_byte ('R');
+        Posix.usleep (50000);
+        port.send_byte ('Q');
+    }
+
+    /**
      * Run whatever program the device currently has stored.
      */
     public void run_stored_program () {
+        string msg = "E PM0,";
+        port.send_bytes (msg.to_utf8 (), msg.length);
+        Posix.usleep (50000);
         port.send_byte ('R');
+        Posix.usleep (500000);
+        port.send_byte ('Q');
     }
 
     /**

@@ -81,9 +81,12 @@ public class Cld.VelmexModule : AbstractModule {
                  iter = iter->next) {
                 if (iter->name == "property") {
                     switch (iter->get_prop ("name")) {
-                         case "program":
-                             program = iter->get_content ();
-                             break;
+                        case "port":
+                            portref = iter->get_content ();
+                            break;
+                        case "program":
+                            program = iter->get_content ();
+                            break;
                         default:
                             break;
                     }

@@ -33,12 +33,20 @@ public class Cld.VelmexModule : AbstractModule {
      */
     public override string id { get; set; }
 
+    /**
+     * {@inheritDoc}
+     */
     public override bool loaded { get; set; default = false; }
 
     /**
-     * The port to connect to the Velmex with.
+     * {@inheritDoc}
      */
-    public Port port { get; set; }
+    public override string portref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override weak Port port { get; set; }
 
     /**
      * The program commands to be executed on apply_program.

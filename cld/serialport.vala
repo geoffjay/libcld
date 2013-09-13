@@ -361,7 +361,7 @@ public class Cld.SerialPort : AbstractPort {
                 if (iter->name == "property") {
                     switch (iter->get_prop ("name")) {
                         case "device":
-                            device = iter->get_content ();
+                            this.device = iter->get_content ();
                             break;
                         case "baudrate":
                             val = iter->get_content ();

@@ -346,23 +346,13 @@ public class Cld.Builder : GLib.Object {
                 }
             }
 
-            /* Velmex module references a serial port */
-            if (object is VelmexModule) {
-                ref_id = (object as VelmexModule).portref;
+            /* Setup the device references for all of the channel types */
+            if (object is Module) {
+                ref_id = (object as Module).portref;
                 if (ref_id != null) {
                     var port = get_object (ref_id);
-                    if (port != null && port is SerialPort)
-                        (object as VelmexModule).port = (port as Port);
-                }
-            }
-
-            /* Brabender module references a modbus port */
-            if (object is BrabenderModule) {
-                ref_id = (object as BrabenderModule).portref;
-                if (ref_id != null) {
-                    var port = get_object (ref_id);
-                    if (port != null && port is ModbusPort)
-                         (object as BrabenderModule).port = (port as Port);
+                    if (port != null && port is Port)
+                        (object as Module).port = (port as Port);
                 }
             }
         }

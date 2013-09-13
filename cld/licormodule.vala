@@ -39,9 +39,14 @@ public class Cld.LicorModule : AbstractModule {
     public override bool loaded { get; set; default = false; }
 
     /**
-     * The port to connect to the Licor with.
+     * {@inheritDoc}
      */
-    public Port port { get; set; }
+    public override string portref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override weak Port port { get; set; }
 
     /**
      * The list of channels to fill with received data.

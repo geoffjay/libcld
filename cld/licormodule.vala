@@ -93,11 +93,9 @@ public class Cld.LicorModule : AbstractModule {
                  iter = iter->next) {
                 if (iter->name == "property") {
                     switch (iter->get_prop ("name")) {
-                        /*
-                         *case "":
-                         *     = iter->get_content ();
-                         *    break;
-                         */
+                        case "port":
+                            portref = iter->get_content ();
+                            break;
                         default:
                             break;
                     }

@@ -495,7 +495,6 @@ public class Cld.SerialPort : AbstractPort {
         for (int i = 0; i < nread; i++) {
             sized_buf[i] = buf[i];
         }
-
         new_data (sized_buf, nread);
         if (echo)
             send_bytes ((char[])sized_buf, nread);

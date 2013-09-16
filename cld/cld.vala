@@ -80,4 +80,25 @@ namespace Cld {
             }
         }
     }
+
+    /**
+     * Library initialization.
+     */
+    public void init (string[] args) {
+        Cld.verbosity = 1;
+    }
+
+    /**
+     * Logging facilities.
+     */
+
+    public static int verbosity = 0;
+
+    public void debug (string format, ...) {
+        if (verbosity >= 1) {
+            va_list va_list = va_list ();
+            string res = format.vprintf (va_list);
+            stdout.puts (res);
+        }
+    }
 }

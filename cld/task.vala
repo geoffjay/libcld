@@ -20,42 +20,13 @@
  */
 
 /**
- * Hardware device information and settings.
+ * A common interface for task type objects XXX
  */
 [GenericAccessors]
-public interface Cld.Device :  GLib.Object {
-    /**
-     *
-     */
-    public abstract int hw_type { get; set; }
+public interface Cld.Task : Cld.Object {
+   /**
+    * Abstract properties
+    */
+    public abstract bool active { get; set;  }
 
-    /**
-     *
-     */
-    public abstract int driver { get; set; }
-
-    /**
-     *
-     */
-    public abstract string description { get; set; }
-
-    /**
-     *
-     */
-    public abstract string filename { get; set; }
-
-    /**
-     *
-     */
-    public abstract int unix_fd { get; set; }
-    /**
-     * A function to open the device for read and write operations.
-     */
-    public abstract bool open ();
-
-    /**
-     * A function to close the device and disabel read and write operations.
-     */
-    public abstract bool close ();
 }
-

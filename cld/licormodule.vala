@@ -154,21 +154,21 @@ public class Cld.LicorModule : AbstractModule {
      */
     public override bool load () {
         (port as SerialPort).new_data.connect (new_data_cb);
+        loaded = (port.open ()) ? true : false;
 
-        if (!port.open ())
-            return false;
+        Cld.debug ("LicorModule :: load ()\n");
 
-        loaded = true;
-
-        return true;
+        return loaded;
     }
 
     /**
      * {@inheritDoc}
      */
     public override void unload () {
-        //(port as SerialPort.new_data.disconnect ();
         port.close ();
+        loaded = false; // XXX There is currently no way to verify this.
+
+        Cld.debug ("LicorModule :: unload ()\n");
     }
 
     /**

@@ -451,7 +451,7 @@ public class Cld.SerialPort : AbstractPort {
             _connected = false;
             _tx_count = 0;
             _rx_count = 0;
-            tcsetattr (fd, Posix.TCSANOW, newtio);
+            tcsetattr (fd, Posix.TCSANOW, newtio);//maybe change this to oldtio
             Posix.close (fd);
         }
     }
@@ -483,6 +483,8 @@ public class Cld.SerialPort : AbstractPort {
      * {@inheritDoc}
      */
     public override bool read_bytes (GLib.IOChannel source, GLib.IOCondition condition) {
+        if (!connected)
+            return false;
         uchar[] buf = new uchar[bufsz];
         int nread = (int)Posix.read (fd, buf, bufsz);
         _rx_count += (ulong)nread;
@@ -495,7 +497,6 @@ public class Cld.SerialPort : AbstractPort {
         for (int i = 0; i < nread; i++) {
             sized_buf[i] = buf[i];
         }
-
         new_data (sized_buf, nread);
         if (echo)
             send_bytes ((char[])sized_buf, nread);

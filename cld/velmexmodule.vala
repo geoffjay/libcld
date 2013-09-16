@@ -100,7 +100,11 @@ public class Cld.VelmexModule : AbstractModule {
      * XXX verbose method would check port tx bytes and return false on fail.
      */
     public void store_program () {
-        port.send_bytes (program.to_utf8 (), program.length);
+        //string msg = "F PM0,%s".printf (program);
+        string msg = "PM0,%s\r".printf (program);
+        port.send_bytes (msg.to_utf8 (), msg.length);
+        //Posix.usleep (50000);
+        //port.send_bytes (program.to_utf8 (), program.length);
     }
 
     /**
@@ -108,46 +112,53 @@ public class Cld.VelmexModule : AbstractModule {
      */
     public void jog (int val) {
         string cmd;
-        if (val < 0)
-            cmd = "F PM1,C,SA1M4000,A1M50,I1M%c%d\r".printf ('-',val);
-        else
-            cmd = "F PM1,C,SA1M4000,A1M50,I1M%d\r".printf (val);
+        //if (val < 0)
+        //    cmd = "F PM1,C,SA1M4000,A1M50,I1M%c%d\r".printf ('-', val);
+        //else
+            //cmd = "F PM1,C,SA1M4000,A1M50,I1M%d\r".printf (val);
+            cmd = "PM1,C,SA1M4000,A1M50,I1M%d\r".printf (val);
         port.send_bytes (cmd.to_utf8 (), cmd.length);
         Posix.usleep (50000);
         port.send_byte ('R');
-        Posix.usleep (50000);
-        port.send_byte ('Q');
+        //Posix.usleep (50000);
+        //port.send_byte ('Q');
     }
 
     /**
      * Run whatever program the device currently has stored.
      */
     public void run_stored_program () {
-        string msg = "E PM0,";
+        //string msg = "F PM0,";
+        string msg = "PM0,R\r";
         port.send_bytes (msg.to_utf8 (), msg.length);
-        Posix.usleep (50000);
-        port.send_byte ('R');
-        Posix.usleep (500000);
-        port.send_byte ('Q');
+        //Posix.usleep (50000);
+        //port.send_byte ('R');
+        ///Posix.usleep (500000);
+        ///port.send_byte ('Q');
     }
 
     /**
      * {@inheritDoc}
      */
     public override bool load () {
-        if (!port.open ())
-            return false;
+        loaded = (port.open ()) ? true : false;
+        port.send_byte ('F');
 
-        loaded = true;
+        Cld.debug ("VelmexModule :: load ()\n");
 
-        return true;
+        return loaded;
     }
 
     /**
      * {@inheritDoc}
      */
     public override void unload () {
+        port.send_byte ('Q');
         port.close ();
+
+        loaded = false; // XXX There is currently no way to verify this.
+
+        Cld.debug ("VelmexModule :: unload ()\n");
     }
 
     /**

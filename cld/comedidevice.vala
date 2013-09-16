@@ -175,11 +175,22 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      */
     public override int unix_fd { get; set; }
 
+
+    private bool _is_open;
+    public bool is_open {
+        get { return _is_open; }
+        set { _is_open = value; }
+    }
+
     /**
      * The comedi specific hardware device that this class will use.
      */
     protected Comedi.Device device;
 
+    private Comedi.InstructionList instruction_list;
+    private Gee.Map<string, Object> ai_channels;
+    private const int NSAMPLES = 10; //XXX Why is this set to 10 (Steve)??
+    private int ai_subdevice;
     /**
      * Default construction
      */
@@ -232,24 +243,102 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      */
     public override bool open () {
         device = new Comedi.Device (filename);
-        return true;
+        if (device != null) {
+            _is_open = true;
+            return true;
+        }
+        else {
+            _is_open = false;
+            return false;
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     public override bool close () {
-        if (device.close () == 0)
+        if (device.close () == 0) {
+            _is_open = false;
             return true;
+        }
         else
             return false;
     }
+
+    /**
+     * Build a Comedi instruction list for a single subdevice
+     * from a list of channels.
+     **/
+    public void set_insn_list (Gee.Map<string, Object> channels, int subdevice) {
+        ai_channels = channels;
+        ai_subdevice = subdevice;
+        Instruction[] instructions = new Instruction [ai_channels.size];
+        int n = 0;
+        instruction_list.n_insns = channels.size;
+        foreach (var channel in channels.values) {
+            instructions[n] = Instruction ();
+            instructions[n].insn = InstructionAttribute.READ;
+            instructions[n].n    = NSAMPLES;
+            instructions[n].data = new uint [NSAMPLES];
+            instructions[n].subdev = subdevice;
+            instructions[n].chanspec = pack (n, (channel as AIChannel).
+                                        range, AnalogReference.GROUND);
+            n++;
+        }
+        instruction_list.insns = instructions;
+    }
+
+    public void set_out_channels (Gee.Map<string, Object> channels, int subdevice) {
+    }
+
+    /**
+     * This is just a test function used for debugging only.
+     */
+    public void test () {
+        uint data[1];
+        device.data_read (0, 0, 4, AnalogReference.GROUND, data);
+        message ("data: %u", data[0]);
+    }
+
+    /**
+     * This method executes a Comedi Instruction list.
+     */
+    public void execute_instruction_list () {
+        Comedi.Range range;
+        uint maxdata;
+        int ret, i, j;
+        double meas;
+
+        ret = device.do_insnlist (instruction_list);
+        if (ret < 0)
+            perror ("do_insnlist failed:");
+        i = 0;
+        foreach (var channel in ai_channels.values) {
+            meas = 0.0;
+            maxdata = device.get_maxdata (ai_subdevice, (channel as AIChannel).num);
+            for (j = 0; j < NSAMPLES; j++) {
+                range = device.get_range (ai_subdevice, (channel as AIChannel).num, (channel as AIChannel).range);
+                //message ("range min: %.3f, range max: %.3f, units: %u", range.min, range.max, range.unit);
+                meas += Comedi.to_phys (instruction_list.insns[i].data[j], range, maxdata);
+                //message ("instruction_list.insns[%d].data[%d]: %u, physical value: %.3f", i, j, instruction_list.insns[i].data[j], meas/(j+1));
+            }
+            meas = meas / (j + 1);
+            (channel as AIChannel).add_raw_value (meas);
+            //message ("Channel: %s, Raw value: %.3f", (channel as AIChannel).id, (channel as AIChannel).raw_value);
+            i++;
+        }
+     }
+
+     public void execute_polled_output () {
+        message ("polled output is happenning!");
+     }
 
     /**
      * Retrieve information about the Comedi device.
      */
     public Information info () {
         var i = new Information ();
+        i.id = id;
         i.version_code = device.get_version_code ();
         i.driver_name = device.get_driver_name ();
         i.board_name = device.get_board_name ();

@@ -198,9 +198,9 @@ public class Cld.Builder : GLib.Object {
                     Object object;
                     type = iter->get_prop ("type");
                     switch (type) {
-//                        case "daq":
-//                            object = new Daq.from_xml_node (iter);
-//                            break;
+                        case "daq":
+                            object = new Daq.from_xml_node (iter);
+                            break;
                         case "log":
                             object = new Log.from_xml_node (iter);
                             break;
@@ -257,11 +257,18 @@ public class Cld.Builder : GLib.Object {
                             else
                                 object = null;
                             break;
+                        case "task":
+                            var ttype = iter->get_prop ("ttype");
+                            if (ttype == "comedi") {
+                                object = new ComediTask.from_xml_node (iter);
+                            }
+                            else
+                                object = null;
+                            break;
                         default:
                             object = null;
                             break;
                     }
-
                     /* no point adding an object type that isn't recognized */
                     if (object != null)
                         add (object);
@@ -284,6 +291,10 @@ public class Cld.Builder : GLib.Object {
                 var device = get_object (ref_id);
                 if (device != null && device is Device)
                     (object as Channel).device = (device as Device);
+                ref_id = (object as Channel).taskref;
+                var task = get_object (ref_id);
+                if (task != null && task is Task)
+                    (object as Channel).task = (task as Task);
             }
 
             if (object is AChannel) {
@@ -349,12 +360,37 @@ public class Cld.Builder : GLib.Object {
             /* Setup the device references for all of the channel types */
             if (object is Module) {
                 ref_id = (object as Module).portref;
-message ("portref: %s", ref_id);
                 if (ref_id != null) {
                     var port = get_object (ref_id);
                     if (port != null && port is Port)
                         (object as Module).port = (port as Port);
                 }
+            }
+        }
+
+        foreach (var object in objects.values) {
+
+            /* Comedi Task references a Comedi device */
+            if (object is ComediTask) {
+                ref_id = (object as ComediTask).devref;
+
+                if (ref_id != null) {
+                    var device = get_object (ref_id);
+                    if (device != null && device is ComediDevice) {
+                        (object as ComediTask).device = (device as Device);
+                    }
+                }
+
+                /* Get all of the channels */
+                /* Build a channel list for this task. */
+                foreach (var task_channel in channels.values) {
+                    if (((task_channel as Channel).taskref == (object as ComediTask).id) &&
+                        (ref_id == (task_channel as Channel).devref)) {
+                        (object as ComediTask).add_channel (task_channel);
+                    }
+                }
+
+                message ((object as ComediTask).to_string ());
             }
         }
     }

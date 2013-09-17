@@ -39,9 +39,14 @@ public class Cld.LicorModule : AbstractModule {
     public override bool loaded { get; set; default = false; }
 
     /**
-     * The port to connect to the Licor with.
+     * {@inheritDoc}
      */
-    public Port port { get; set; }
+    public override string portref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override weak Port port { get; set; }
 
     /**
      * The list of channels to fill with received data.
@@ -88,11 +93,9 @@ public class Cld.LicorModule : AbstractModule {
                  iter = iter->next) {
                 if (iter->name == "property") {
                     switch (iter->get_prop ("name")) {
-                        /*
-                         *case "":
-                         *     = iter->get_content ();
-                         *    break;
-                         */
+                        case "port":
+                            portref = iter->get_content ();
+                            break;
                         default:
                             break;
                     }
@@ -151,21 +154,21 @@ public class Cld.LicorModule : AbstractModule {
      */
     public override bool load () {
         (port as SerialPort).new_data.connect (new_data_cb);
+        loaded = (port.open ()) ? true : false;
 
-        if (!port.open ())
-            return false;
+        Cld.debug ("LicorModule :: load ()\n");
 
-        loaded = true;
-
-        return true;
+        return loaded;
     }
 
     /**
      * {@inheritDoc}
      */
     public override void unload () {
-        //(port as SerialPort.new_data.disconnect ();
         port.close ();
+        loaded = false; // XXX There is currently no way to verify this.
+
+        Cld.debug ("LicorModule :: unload ()\n");
     }
 
     /**

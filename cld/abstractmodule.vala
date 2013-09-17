@@ -34,6 +34,16 @@ public abstract class Cld.AbstractModule : AbstractObject, Module {
     /**
      * {@inheritDoc}
      */
+    public abstract string portref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract weak Port port { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public abstract bool load ();
 
     /**

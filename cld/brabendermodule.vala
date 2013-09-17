@@ -74,25 +74,31 @@ public class Cld.BrabenderModule : AbstractModule {
      * {@inheritDoc}
      */
     public override string id { get; set; }
-    public override bool loaded { get; set; default = false; }
-    public bool running { get; set; default = false; }
 
     /**
      * {@inheritDoc}
      */
-    public virtual string portref { get; set; }
+    public override bool loaded { get; set; default = false; }
 
     /**
-     * The port to connect to the Brabender with.
+     * {@inheritDoc}
      */
-    public Port port { get; set; }
+    public override string portref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override weak Port port { get; set; }
+
+    public bool running { get; set; default = false; }
+
     public Gee.Map<string, Object> channels { get; set; }
 
     /**
      * Default construction.
      */
     public BrabenderModule () {
-        }
+    }
 
     /**
      * Full construction using available settings.
@@ -105,7 +111,6 @@ public class Cld.BrabenderModule : AbstractModule {
     /**
      * Alternate construction that uses an XML node to populate the settings.
      */
-
     public BrabenderModule.from_xml_node (Xml.Node *node) {
         message ("Starting..");
         if (node->type == Xml.ElementType.ELEMENT_NODE &&

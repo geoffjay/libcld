@@ -240,9 +240,10 @@ public class Cld.Builder : GLib.Object {
                             break;
                         case "port":
                             var ptype = iter->get_prop ("ptype");
-                            if (ptype == "serial")
+                            if (ptype == "serial") {
                                 object = new SerialPort.from_xml_node (iter);
-                            if (ptype == "modbus") {
+                            }
+                            else if (ptype == "modbus") {
                                 object = new ModbusPort.from_xml_node (iter);
                             }
                             else
@@ -344,13 +345,14 @@ public class Cld.Builder : GLib.Object {
                     }
                 }
             }
-            /* Brabender module references a modbus port */
-            if (object is BrabenderModule) {
-                ref_id = (object as BrabenderModule).portref;
+
+            /* Setup the device references for all of the channel types */
+            if (object is Module) {
+                ref_id = (object as Module).portref;
                 if (ref_id != null) {
                     var port = get_object (ref_id);
-                    if (port != null && port is ModbusPort)
-                         (object as BrabenderModule).port = (port as Port);
+                    if (port != null && port is Port)
+                        (object as Module).port = (port as Port);
                 }
             }
         }

@@ -82,9 +82,11 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
         /* XXX consider getting rid of the call to add_raw_value to pack it
                onto the list and just use this setter */
         set {
-            _raw_value[2] = _raw_value[1];
-            _raw_value[1] = _raw_value[0];
-            _raw_value[0] = value;
+            lock (_raw_value) {
+                _raw_value[2] = _raw_value[1];
+                _raw_value[1] = _raw_value[0];
+                _raw_value[0] = value;
+            }
         }
     }
 

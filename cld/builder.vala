@@ -391,6 +391,30 @@ public class Cld.Builder : GLib.Object {
                 }
             }
         }
+
+        foreach (var object in objects.values) {
+
+            /* Comedi Task references a Comedi device */
+            if (object is ComediTask) {
+                ref_id = (object as ComediTask).devref;
+
+                if (ref_id != null) {
+                    var device = get_object (ref_id);
+                    if (device != null && device is ComediDevice) {
+                        (object as ComediTask).device = (device as Device);
+                    }
+                }
+
+                /* Get all of the channels */
+                /* Build a channel list for this task. */
+                foreach (var task_channel in channels.values) {
+                    if (((task_channel as Channel).taskref == (object as ComediTask).id) &&
+                        (ref_id == (task_channel as Channel).devref)) {
+                        (object as ComediTask).add_channel (task_channel);
+                    }
+                }
+            }
+        }
     }
 
     public virtual void print (FileStream f) {

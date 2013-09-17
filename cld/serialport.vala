@@ -483,6 +483,8 @@ public class Cld.SerialPort : AbstractPort {
      * {@inheritDoc}
      */
     public override bool read_bytes (GLib.IOChannel source, GLib.IOCondition condition) {
+        if (!connected)
+            return false;
         uchar[] buf = new uchar[bufsz];
         int nread = (int)Posix.read (fd, buf, bufsz);
         _rx_count += (ulong)nread;

@@ -166,7 +166,7 @@ public class Cld.LicorModule : AbstractModule {
      */
     public override void unload () {
         port.close ();
-        //loaded = false; // XXX There is currently no way to verify this.
+        loaded = false; // XXX There is currently no way to verify this.
 
         Cld.debug ("LicorModule :: unload ()\n");
     }

@@ -349,7 +349,6 @@ public class Cld.Builder : GLib.Object {
             /* Setup the device references for all of the channel types */
             if (object is Module) {
                 ref_id = (object as Module).portref;
-message ("portref: %s", ref_id);
                 if (ref_id != null) {
                     var port = get_object (ref_id);
                     if (port != null && port is Port)

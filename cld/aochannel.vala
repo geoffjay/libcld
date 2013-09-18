@@ -47,12 +47,24 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
     /**
      * {@inheritDoc}
      */
+    public override string taskref { get; set; }
+
+    /**
+     * {@inheritdoc}
+     */
+    public override weak Task task { get; set; }
+
+
+    /**
+     * {@inheritDoc}
+     */
     public override string tag { get; set; }
 
     /**
      * {@inheritDoc}
      */
     public override string desc { get; set; }
+
 
     /**
      * {@inheritDoc}
@@ -63,6 +75,11 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
      * {@inheritDoc}
      */
     public virtual weak Calibration calibration { get; set; }
+
+    /**
+     * {@inheritdoc}
+     */
+    public virtual int range { get; set; }
 
     /**
      * {@inheritDoc}
@@ -132,6 +149,15 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
                              * possibly fix later */
                             calref = iter->get_content ();
                             break;
+                        case "taskref":
+                           /* this should maybe be an object property,
+                             * possibly fix later */
+                            taskref = iter->get_content ();
+                            break;
+                        case "range":
+                            val = iter->get_content ();
+                            range = int.parse (val);
+                            break;
                         default:
                             break;
                     }
@@ -141,6 +167,7 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
     }
 
     public override string to_string () {
-        return base.to_string ();
+        return base.to_string () + " [range]: %d\n".printf (range);
+
     }
 }

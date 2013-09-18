@@ -20,44 +20,25 @@
  */
 
 /**
- * Hardware device information and settings.
+ * Skeletal implementation of the {@link Task} interface.
+ *
+ * Contains common code shared by all task implementations.
  */
-[GenericAccessors]
-public interface Cld.Device :  GLib.Object {
+public abstract class Cld.AbstractTask : AbstractObject, Task {
 
     /**
-     *
-     */
-    public abstract int hw_type { get; set; }
+     * {@inheritdoc}
+     **/
+     public abstract bool active { get; set; }
 
     /**
-     *
-     */
-    public abstract int driver { get; set; }
+     * {@inheritdoc}
+     **/
+     public abstract void run ();
 
     /**
-     *
-     */
-    public abstract string description { get; set; }
+     * {@inheritdoc}
+     **/
+    public abstract void stop ();
 
-    /**
-     *
-     */
-    public abstract string filename { get; set; }
-
-    /**
-     *
-     */
-    public abstract int unix_fd { get; set; }
-
-    /**
-     * A function to open the device for read and write operations.
-     */
-    public abstract bool open ();
-
-    /**
-     * A function to close the device and disabel read and write operations.
-     */
-    public abstract bool close ();
 }
-

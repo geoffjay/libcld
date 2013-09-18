@@ -48,36 +48,39 @@ public class Cld.Daq : AbstractContainer {
     /**
      * Construction using an xml node
      */
-//    public Daq.from_xml_node (Xml.Node *node) {
-//        string value;
-//
-//        objects = new Gee.TreeMap<string, Object> ();
-//
-//        if (node->type == Xml.ElementType.ELEMENT_NODE &&
-//            node->type != Xml.ElementType.COMMENT_NODE) {
-//            id = node->get_prop ("id");
-//            driver = node->get_prop ("driver");
-//            /* iterate through node children */
-//            for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
-//                if (iter->name == "property") {
-//                    switch (iter->get_prop ("name")) {
-//                        case "rate":
-//                            value = iter->get_content ();
-//                            rate = double.parse (value);
-//                            break;
-//                        default:
-//                            break;
-//                    }
-//                } else if (iter->name == "object") {
-//                    if (iter->get_prop ("type") == "device") {
-//                        var dev = new Device.from_xml_node (iter);
-//                        objects.set (dev.id, dev);
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
+    public Daq.from_xml_node (Xml.Node *node) {
+        string value;
+
+        objects = new Gee.TreeMap<string, Object> ();
+
+        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+            node->type != Xml.ElementType.COMMENT_NODE) {
+            id = node->get_prop ("id");
+            driver = node->get_prop ("driver");
+            /* iterate through node children */
+            for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
+                if (iter->name == "property") {
+                    switch (iter->get_prop ("name")) {
+                        case "rate":
+                            value = iter->get_content ();
+                            rate = double.parse (value);
+                            break;
+                        default:
+                            break;
+                    }
+                } else if (iter->name == "object") {
+                    if (iter->get_prop ("type") == "device") {
+                        if (iter->get_prop ("dtype") == "comedi") {
+                            var dev = new ComediDevice.from_xml_node (iter);
+                            dev.id = iter->get_prop ("id");
+                            objects.set (dev.id, dev);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * {@inheritDoc}
      */

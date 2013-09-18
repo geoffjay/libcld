@@ -43,6 +43,20 @@ public interface Cld.Channel : Cld.Object {
     public abstract weak Device device { get; set; }
 
     /**
+     * A reference to the task that this channel belongs to, this may be a
+     * backwards approach and should be replaced with a Task containing a list
+     * of channels.
+     */
+    public abstract string taskref { get; set; }
+
+    /**
+     * A reference to the task that the channel belongs to, same comments
+     * apply here as they did to the devref.
+     */
+    public abstract weak Task task { get; set; }
+
+
+    /**
      * String name of the channel, could be considered to be the channel's
      * PNID label.
      */
@@ -83,6 +97,11 @@ public interface Cld.AChannel : AbstractChannel, Channel {
      *
      */
     public abstract double avg_value { get; private set; }
+
+    /**
+     *
+     */
+    public abstract int range { get; set; }
 }
 
 /**

@@ -269,6 +269,9 @@ public class Cld.Builder : GLib.Object {
                             object = null;
                             break;
                     }
+
+                    Cld.debug ("Loading object of type %s with id %s\n", type, object.id);
+
                     /* no point adding an object type that isn't recognized */
                     if (object != null)
                         add (object);
@@ -288,10 +291,13 @@ public class Cld.Builder : GLib.Object {
             /* Setup the device references for all of the channel types */
             if (object is Channel) {
                 ref_id = (object as Channel).devref;
+                Cld.debug ("Assigning Device %s to Channel %s\n", ref_id, object.id);
                 var device = get_object (ref_id);
                 if (device != null && device is Device)
                     (object as Channel).device = (device as Device);
+
                 ref_id = (object as Channel).taskref;
+                Cld.debug ("Assigning Task %s to Channel %s\n", ref_id, object.id);
                 var task = get_object (ref_id);
                 if (task != null && task is Task)
                     (object as Channel).task = (task as Task);
@@ -300,6 +306,7 @@ public class Cld.Builder : GLib.Object {
             if (object is AChannel) {
                 /* Analog channels reference a calibration object */
                 ref_id = (object as AChannel).calref;
+                Cld.debug ("Assigning Calibration %s to AChannel %s\n", ref_id, object.id);
                 if (ref_id != null) {
                     var calibration = get_object (ref_id);
                     if (calibration != null && calibration is Calibration)
@@ -311,6 +318,7 @@ public class Cld.Builder : GLib.Object {
             if (object is VChannel) {
                 /* For now virtual channels do too */
                 ref_id = (object as VChannel).calref;
+                Cld.debug ("Assigning Calibration %s to VChannel %s\n", ref_id, object.id);
                 if (ref_id != null) {
                     var calibration = get_object (ref_id);
                     if (calibration != null && calibration is Calibration)
@@ -329,6 +337,7 @@ public class Cld.Builder : GLib.Object {
                             /* Process values reference a channel */
                             if (process_value is ProcessValue) {
                                 ref_id = (process_value as ProcessValue).chref;
+                                Cld.debug ("Assigning ProcessValue %s to Control %s\n", ref_id, object.id);
                                 if (ref_id != null) {
                                     var channel = get_object (ref_id);
                                     if (channel != null && channel is Channel) {
@@ -349,7 +358,7 @@ public class Cld.Builder : GLib.Object {
                         if (ref_id != null) {
                             var channel = get_object (ref_id);
                             if (channel != null && channel is Channel) {
-                                stdout.printf ("Assigning channel %s to column %s\n", channel.id, column.id);
+                                Cld.debug ("Assigning channel %s to column %s\n", channel.id, column.id);
                                 (column as Column).channel = (channel as Channel);
                             }
                         }
@@ -360,11 +369,11 @@ public class Cld.Builder : GLib.Object {
             /* Setup the device references for all of the channel types */
             if (object is Module) {
                 ref_id = (object as Module).portref;
+                Cld.debug ("Assigning Port %s to Module %s\n", ref_id, object.id);
                 if (ref_id != null) {
                     var port = get_object (ref_id);
                     if (port != null && port is Port)
                         (object as Module).port = (port as Port);
-message ("id: %s ref_id: %s", object.id, ref_id);
                 }
             }
         }
@@ -392,7 +401,6 @@ message ("id: %s ref_id: %s", object.id, ref_id);
                 }
             }
         }
-
     }
 
     public virtual void print (FileStream f) {

@@ -32,6 +32,11 @@ public abstract class Cld.AbstractModule : AbstractObject, Module {
     public abstract bool loaded { get; set; }
 
     /**
+     * {@inheritdoc}
+     */
+    public abstract string devref { get; set; }
+
+    /**
      * {@inheritDoc}
      */
     public abstract string portref { get; set; }

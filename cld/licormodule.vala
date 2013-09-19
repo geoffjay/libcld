@@ -39,6 +39,11 @@ public class Cld.LicorModule : AbstractModule {
     public override bool loaded { get; set; default = false; }
 
     /**
+     * {@inheritdoc}
+     */
+    public override string devref { get; set; }
+
+    /**
      * {@inheritDoc}
      */
     public override string portref { get; set; }
@@ -96,6 +101,9 @@ public class Cld.LicorModule : AbstractModule {
                         case "port":
                             portref = iter->get_content ();
                             break;
+                        case "devref":
+                            devref = iter->get_content ();
+                            break;
                         default:
                             break;
                     }
@@ -147,6 +155,13 @@ public class Cld.LicorModule : AbstractModule {
                 received = "";
             }
         }
+    }
+
+    /**
+     * ...
+     */
+    public void add_channel (Object channel) {
+        channels.set (channel.id, channel);
     }
 
     /**

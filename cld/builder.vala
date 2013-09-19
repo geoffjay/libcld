@@ -389,10 +389,14 @@ public class Cld.Builder : GLib.Object {
                     if (port != null && port is Port)
                         (object as Module).port = (port as Port);
                 }
+                if (object is LicorModule)
+                    /* set the virtual channel that are to be referenced by this module */
+                    foreach (var licor_channel in channels.values) {
+                        if ((licor_channel as Channel).devref == (object as Module).devref)
+                            Cld.debug ("Assigning Channel %s to Device %s", licor_channel.id, (object as LicorModule).devref);
+                            (object as LicorModule).add_channel (licor_channel);
+                    }
             }
-        }
-
-        foreach (var object in objects.values) {
 
             /* Comedi Task references a Comedi device */
             if (object is ComediTask) {

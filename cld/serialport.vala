@@ -451,6 +451,7 @@ public class Cld.SerialPort : AbstractPort {
             _connected = false;
             _tx_count = 0;
             _rx_count = 0;
+            Posix.tcflush (fd, Posix.TCIOFLUSH);
             tcsetattr (fd, Posix.TCSANOW, newtio);//maybe change this to oldtio
             Posix.close (fd);
         }

@@ -141,7 +141,7 @@ public class Cld.LicorModule : AbstractModule {
                     /* Assign the channel the value that was received */
                     var channel = channels.get (id);
                     (channel as VChannel).raw_value = double.parse (token);
-                    Cld.debug ("lc%d: %.3f\n", x - 1, double.parse (token));
+//                    Cld.debug ("lc%d: %.3f\n", x - 1, double.parse (token));
                 }
 
                 if (tokens[tokens.length - 1] != "0") {

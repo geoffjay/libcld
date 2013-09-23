@@ -296,11 +296,18 @@ public class Cld.Builder : GLib.Object {
                 if (device != null && device is Device)
                     (object as Channel).device = (device as Device);
 
-                ref_id = (object as Channel).taskref;
-                Cld.debug ("Assigning Task %s to Channel %s\n", ref_id, object.id);
-                var task = get_object (ref_id);
-                if (task != null && task is Task)
-                    (object as Channel).task = (task as Task);
+                try {
+                    ref_id = (object as Channel).taskref;
+                    var task = get_object (ref_id);
+                    Cld.debug ("Assigning Task %s to Channel %s\n", ref_id, object.id);
+                    if (task != null && task is Task)
+                        (object as Channel).task = (task as Task);
+                    }
+
+                catch (Cld.Error e) {
+                        if (e is Cld.Error.NULL_REF)
+                            Cld.debug ("No Task assigned to Channel %s\n", object.id);
+                    }
             }
 
             if (object is AChannel) {

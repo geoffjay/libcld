@@ -29,6 +29,13 @@ namespace Cld {
     }
 
     /**
+     * A general error domain.
+     */
+    public errordomain Error {
+        NULL_REF
+    }
+
+    /**
      * Future plan is to incorporate more device-specific setup and features
      * including information about the hardware, eg. bit count of a DAC or
      * maximum sampling rate of an ADC.

@@ -1,7 +1,7 @@
 # configure.ac
 # process this file with autoconf to produce a configure script
 
-AC_INIT([libcld], [0.2.2], [geoff.jay@gmail.com], [libcld])
+AC_INIT([libcld], [0.2.3], [geoff.jay@gmail.com], [libcld])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_MACRO_DIR(m4)
@@ -10,7 +10,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 m4_define([package_major_version], [0])
 m4_define([package_minor_version], [2])
-m4_define([package_micro_version], [2])
+m4_define([package_micro_version], [3])
 m4_define([package_version], [package_major_version.package_minor_version.package_micro_version])
 
 # Make sure the right substitution is done

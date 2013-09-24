@@ -4,15 +4,31 @@ lib_LTLIBRARIES = \
 	libcld-0.2.la \
 	$(NULL)
 
+#if USE_COMEDI
+COMEDI_SOURCES = \
+	comedidevice.vala \
+	comeditask.vala \
+	$(NULL)
+#endif
+
+#if USE_MODBUS
+MODBUS_SOURCES = \
+	modbusport.vala \
+	$(NULL)
+#endif
+
 libcld_0_2_la_SOURCES = \
 	abstractchannel.vala \
 	abstractcontainer.vala \
+	abstractdevice.vala \
 	abstractfilter.vala \
 	abstractmodule.vala \
 	abstractobject.vala \
 	abstractport.vala \
+	abstracttask.vala \
 	aichannel.vala \
 	aochannel.vala \
+	brabendermodule.vala\
 	builder.vala \
 	calibration.vala \
 	channel.vala \
@@ -32,9 +48,13 @@ libcld_0_2_la_SOURCES = \
 	pid.vala \
 	port.vala \
 	serialport.vala \
+	socketport.vala\
+	task.vala \
 	vchannel.vala \
 	velmexmodule.vala \
 	xmlconfig.vala \
+	$(COMEDI_SOURCES) \
+	$(MODBUS_SOURCES) \
 	$(NULL)
 
 INCLUDES = \
@@ -49,23 +69,27 @@ libcld_0_2_la_VALAFLAGS = \
 	--internal-vapi cld-internals-0.2.vapi \
 	--library cld-0.2 --gir Cld-0.2.gir \
 	--vapidir=$(srcdir)/../vapi --pkg config \
-	--pkg glib-2.0 --pkg gee-1.0 --pkg libxml-2.0 --pkg json-glib-1.0 \
-	--pkg linux --pkg posix \
-	$(VALAFLAGS) \
+	@VALA_PACKAGES@ --pkg linux --pkg posix \
 	$(NULL)
 
 libcld_0_2_la_CPPFLAGS = \
 	$(GLIB_CFLAGS) \
 	$(GEE_CFLAGS) \
+	$(GIO_CFLAGS) \
 	$(XML_CFLAGS) \
 	$(JSON_CFLAGS) \
+	$(MODBUS_CFLAGS) \
+	$(COMEDI_CFLAGS) \
 	$(NULL)
 
 libcld_0_2_la_LIBADD = \
 	$(GLIB_LIBS) \
 	$(GEE_LIBS) \
+	$(GIO_LIBS) \
 	$(XML_LIBS) \
 	$(JSON_LIBS) \
+	$(MODBUS_LIBS) \
+	$(COMEDI_LIBS) \
 	$(NULL)
 
 libcld_0_2_la_LDFLAGS = \

@@ -15,49 +15,63 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
- * Author:
+ * Authors:
  *  Geoff Johnson <geoff.jay@gmail.com>
+ *  Steve Roy <sroy1966@gmail.com>
  */
 
 /**
- * Hardware device information and settings.
+ * Skeletal implementation of the {@link Device} interface.
+ *
+ * Contains common code shared by all device implementations.
  */
-[GenericAccessors]
-public interface Cld.Device :  GLib.Object {
+public abstract class Cld.AbstractDevice : Cld.AbstractObject, Cld.Device {
 
     /**
-     *
+     * {@inheritDoc}
      */
     public abstract int hw_type { get; set; }
 
     /**
-     *
+     * {@inheritDoc}
      */
     public abstract int driver { get; set; }
 
     /**
-     *
+     * {@inheritDoc}
      */
     public abstract string description { get; set; }
 
     /**
-     *
+     * {@inheritDoc}
      */
     public abstract string filename { get; set; }
 
     /**
-     *
+     * {@inheritDoc}
      */
     public abstract int unix_fd { get; set; }
 
     /**
-     * A function to open the device for read and write operations.
+     * {@inheritDoc}
      */
     public abstract bool open ();
 
     /**
-     * A function to close the device and disabel read and write operations.
+     * {@inheritDoc}
      */
     public abstract bool close ();
-}
 
+    /**
+     * {@inheritDoc}
+     */
+    public override string to_string () {
+        string str_data  = "CldDevice\n";
+               str_data += " [hw_type  ] : %d\n".printf (hw_type);
+               str_data += " [driver ] : %d\n".printf (driver);
+               str_data += " [description ] : %s\n".printf (description);
+               str_data += " [filename ] : %s\n".printf (filename);
+               str_data += " [unix_fd] : %d\n".printf (unix_fd);
+        return str_data;
+    }
+}

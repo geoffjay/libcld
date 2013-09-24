@@ -19,45 +19,31 @@
  *  Geoff Johnson <geoff.jay@gmail.com>
  */
 
-/**
- * Hardware device information and settings.
- */
-[GenericAccessors]
-public interface Cld.Device :  GLib.Object {
+using Cld;
 
-    /**
-     *
-     */
-    public abstract int hw_type { get; set; }
+public class SocketPortTests : PortTests {
 
-    /**
-     *
-     */
-    public abstract int driver { get; set; }
+    public SocketPortTests () {
+        base ("SocketPort");
+        add_test ("[SocketPort] ...", test_foo);
+    }
 
-    /**
-     *
-     */
-    public abstract string description { get; set; }
+    public override void set_up () {
+        test_object = new SocketPort ();
+    }
 
-    /**
-     *
-     */
-    public abstract string filename { get; set; }
+    public override void tear_down () {
+        test_object = null;
+    }
 
-    /**
-     *
-     */
-    public abstract int unix_fd { get; set; }
+    private void test_foo () {
+        var test_port = test_object as SocketPort;
 
-    /**
-     * A function to open the device for read and write operations.
-     */
-    public abstract bool open ();
+        // Check the SocketPort exists
+        assert (test_port != null);
 
-    /**
-     * A function to close the device and disabel read and write operations.
-     */
-    public abstract bool close ();
+//        test_port.do_something ();
+//        assert (test_port. == );
+//        assert (test_port. == );
+    }
 }
-

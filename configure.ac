@@ -37,34 +37,80 @@ AC_PROG_LIBTOOL
 
 AM_PROG_VALAC([0.14.0])
 AC_SUBST(VALAC)
-AC_SUBST(VALAFLAGS)
 
 dnl ---------------------------------------------------------------------------
 dnl Mandatory Libraries
 dnl ---------------------------------------------------------------------------
+
+VALA_PACKAGES=""
+
 GLIB_REQUIRED=2.32.0
-PKG_CHECK_MODULES([GLIB], glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED gthread-2.0 >= $GLIB_REQUIRED,
+PKG_CHECK_MODULES([GLIB], [glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED gthread-2.0 >= $GLIB_REQUIRED],
 	[AC_DEFINE(HAVE_GLIB232, [], [GLib 2.32 available])],
 	[PKG_CHECK_MODULES([GLIB], [glib-2.0 gobject-2.0 gthread-2.0],,
 		[AC_MSG_ERROR(glib-2.12 is required)])
 	])
-AC_SUBST(GLIB_CFLAGS)
-AC_SUBST(GLIB_LIBS)
 
-PKG_CHECK_MODULES([GEE], gee-1.0,,
-	AC_MSG_ERROR(gee-1.0 is required))
-AC_SUBST(GEE_CFLAGS)
-AC_SUBST(GEE_LIBS)
+PKG_CHECK_MODULES([GEE], [gee-1.0],
+    [VALA_PACKAGES="$VALA_PACKAGES --pkg gee-1.0"],
+	[AC_MSG_ERROR(gee-1.0 is required)])
 
-PKG_CHECK_MODULES([XML], libxml-2.0,,
-	AC_MSG_ERROR(libxml2 is required))
-AC_SUBST(XML_CFLAGS)
-AC_SUBST(XML_LIBS)
+PKG_CHECK_MODULES([GIO], [gio-2.0],
+    [VALA_PACKAGES="$VALA_PACKAGES --pkg gio-2.0"],
+	[AC_MSG_ERROR(gio-2.0 is required)])
 
-PKG_CHECK_MODULES([JSON], json-glib-1.0,,
-	AC_MSG_ERROR(json-glib-1.0 is required))
-AC_SUBST(JSON_CFLAGS)
-AC_SUBST(JSON_LIBS)
+PKG_CHECK_MODULES([XML], [libxml-2.0],
+    [VALA_PACKAGES="$VALA_PACKAGES --pkg libxml-2.0"],
+	[AC_MSG_ERROR(libxml-2.0 is required)])
+
+PKG_CHECK_MODULES([JSON], [json-glib-1.0],
+    [VALA_PACKAGES="$VALA_PACKAGES --pkg json-glib-1.0"],
+	[AC_MSG_ERROR(json-glib-1.0 is required)])
+
+dnl libmodbus support
+AC_ARG_WITH(modbus,
+[  --with-modbus         Use Modbus library],
+	[use_modbus=$withval],
+	[use_modbus=no])
+AC_MSG_RESULT(checking whether libmodbus support was selected... $use_modbus)
+
+if test "x$use_modbus" != "xno" ; then
+	PKG_CHECK_MODULES([MODBUS], [libmodbus],
+        [VALA_PACKAGES="$VALA_PACKAGES --pkg libmodbus"],
+		[AC_MSG_ERROR([libmodbus is required])])
+	AC_DEFINE(USE_MODBUS, [1], ["Modbus Library"])
+fi
+
+dnl Comedi
+AC_ARG_WITH(comedi,
+[  --with-comedi         Use Comedi drivers],
+	[use_comedi=$withval],
+	[use_comedi=no])
+AC_MSG_RESULT(checking whether Comedi drivers were selected... $use_comedi)
+
+if test "x$use_comedi" != "xno" ; then
+	PKG_CHECK_MODULES([COMEDI], [comedi],
+        [VALA_PACKAGES="$VALA_PACKAGES --pkg comedi"],
+		[AC_MSG_ERROR([Comedi is required])])
+	AC_DEFINE(USE_COMEDI, [1], ["Comedi Drivers"])
+fi
+
+AC_SUBST(VALA_PACKAGES)
+
+dnl Comedi
+AC_ARG_WITH(comedi,
+[  --with-comedi         Use Comedi drivers],
+	[use_comedi=$withval],
+	[use_comedi=no])
+AC_MSG_RESULT(checking whether Comedi drivers were selected... $use_comedi)
+
+if test "x$use_comedi" != "xno" ; then
+	PKG_CHECK_MODULES([COMEDI], [comedi],,
+		[AC_MSG_ERROR([Comedi is required])])
+	AC_DEFINE(USE_COMEDI, [1], ["Comedi Drivers"])
+fi
+
+
 
 dnl ---------------------------------------------------------------------------
 dnl CFLAGS

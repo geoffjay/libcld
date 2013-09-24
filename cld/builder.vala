@@ -184,7 +184,7 @@ public class Cld.Builder : GLib.Object {
     private void build_object_map () {
         string type;
         string direction;
-        string xpath = "/cld/objects/object";
+        string xpath = "/cld/cld:objects/cld:object";
 
         /* request the nodeset from the configuration */
         Xml.XPath.NodeSet *nodes = xml.nodes_from_xpath (xpath);
@@ -226,10 +226,42 @@ public class Cld.Builder : GLib.Object {
                             else
                                 object = null;
                             break;
+                        case "module":
+                            var mtype = iter->get_prop ("mtype");
+                            if (mtype == "velmex")
+                                object = new VelmexModule.from_xml_node (iter);
+                            else if (mtype == "licor")
+                                object = new LicorModule.from_xml_node (iter);
+                            else if (mtype == "brabender") {
+                                object = new BrabenderModule.from_xml_node (iter);
+                            }
+                            else
+                                object = null;
+                            break;
                         case "port":
                             var ptype = iter->get_prop ("ptype");
-                            if (ptype == "serial")
+                            if (ptype == "serial") {
                                 object = new SerialPort.from_xml_node (iter);
+                            }
+                            else if (ptype == "modbus") {
+                                object = new ModbusPort.from_xml_node (iter);
+                            }
+                            else
+                                object = null;
+                            break;
+                        case "device":
+                            var dtype = iter->get_prop ("dtype");
+                            if (dtype == "comedi") {
+                                object = new ComediDevice.from_xml_node (iter);
+                            }
+                            else
+                                object = null;
+                            break;
+                        case "task":
+                            var ttype = iter->get_prop ("ttype");
+                            if (ttype == "comedi") {
+                                object = new ComediTask.from_xml_node (iter);
+                            }
                             else
                                 object = null;
                             break;
@@ -237,6 +269,8 @@ public class Cld.Builder : GLib.Object {
                             object = null;
                             break;
                     }
+
+                    Cld.debug ("Loading object of type %s with id %s\n", type, object.id);
 
                     /* no point adding an object type that isn't recognized */
                     if (object != null)
@@ -257,14 +291,22 @@ public class Cld.Builder : GLib.Object {
             /* Setup the device references for all of the channel types */
             if (object is Channel) {
                 ref_id = (object as Channel).devref;
+                Cld.debug ("Assigning Device %s to Channel %s\n", ref_id, object.id);
                 var device = get_object (ref_id);
                 if (device != null && device is Device)
                     (object as Channel).device = (device as Device);
+
+                ref_id = (object as Channel).taskref;
+                Cld.debug ("Assigning Task %s to Channel %s\n", ref_id, object.id);
+                var task = get_object (ref_id);
+                if (task != null && task is Task)
+                    (object as Channel).task = (task as Task);
             }
 
             if (object is AChannel) {
                 /* Analog channels reference a calibration object */
                 ref_id = (object as AChannel).calref;
+                Cld.debug ("Assigning Calibration %s to AChannel %s\n", ref_id, object.id);
                 if (ref_id != null) {
                     var calibration = get_object (ref_id);
                     if (calibration != null && calibration is Calibration)
@@ -276,6 +318,7 @@ public class Cld.Builder : GLib.Object {
             if (object is VChannel) {
                 /* For now virtual channels do too */
                 ref_id = (object as VChannel).calref;
+                Cld.debug ("Assigning Calibration %s to VChannel %s\n", ref_id, object.id);
                 if (ref_id != null) {
                     var calibration = get_object (ref_id);
                     if (calibration != null && calibration is Calibration)
@@ -294,6 +337,7 @@ public class Cld.Builder : GLib.Object {
                             /* Process values reference a channel */
                             if (process_value is ProcessValue) {
                                 ref_id = (process_value as ProcessValue).chref;
+                                Cld.debug ("Assigning ProcessValue %s to Control %s\n", ref_id, object.id);
                                 if (ref_id != null) {
                                     var channel = get_object (ref_id);
                                     if (channel != null && channel is Channel) {
@@ -314,10 +358,45 @@ public class Cld.Builder : GLib.Object {
                         if (ref_id != null) {
                             var channel = get_object (ref_id);
                             if (channel != null && channel is Channel) {
-                                stdout.printf ("Assigning channel %s to column %s\n", channel.id, column.id);
+                                Cld.debug ("Assigning channel %s to column %s\n", channel.id, column.id);
                                 (column as Column).channel = (channel as Channel);
                             }
                         }
+                    }
+                }
+            }
+
+            /* Setup the device references for all of the channel types */
+            if (object is Module) {
+                ref_id = (object as Module).portref;
+                Cld.debug ("Assigning Port %s to Module %s\n", ref_id, object.id);
+                if (ref_id != null) {
+                    var port = get_object (ref_id);
+                    if (port != null && port is Port)
+                        (object as Module).port = (port as Port);
+                }
+            }
+        }
+
+        foreach (var object in objects.values) {
+
+            /* Comedi Task references a Comedi device */
+            if (object is ComediTask) {
+                ref_id = (object as ComediTask).devref;
+
+                if (ref_id != null) {
+                    var device = get_object (ref_id);
+                    if (device != null && device is ComediDevice) {
+                        (object as ComediTask).device = (device as Device);
+                    }
+                }
+
+                /* Get all of the channels */
+                /* Build a channel list for this task. */
+                foreach (var task_channel in channels.values) {
+                    if (((task_channel as Channel).taskref == (object as ComediTask).id) &&
+                        (ref_id == (task_channel as Channel).devref)) {
+                        (object as ComediTask).add_channel (task_channel);
                     }
                 }
             }

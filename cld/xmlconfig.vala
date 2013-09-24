@@ -63,6 +63,20 @@ public class Cld.XmlConfig : GLib.Object {
         load_document (this.file_name);
     }
 
+    /**
+     * Constructs a new configuration using the node provided.
+     *
+     * @param node the node to add to the root
+     */
+    public XmlConfig.from_node (Xml.Node *node) {
+        doc = new Xml.Doc ("1.0");
+        Xml.Node *root = new Xml.Node (null, "cld");
+        doc->set_root_element (root);
+        root->add_child (node);
+        ctx = new Xml.XPath.Context (doc);
+        ctx->register_ns ("cld", "urn:libcld");
+    }
+
     void load_document (string file_name) {
         /* load XML document */
         doc = Xml.Parser.parse_file (file_name);
@@ -74,6 +88,7 @@ public class Cld.XmlConfig : GLib.Object {
 
         /* create xpath evaluation context */
         ctx = new Xml.XPath.Context (doc);
+        ctx->register_ns ("cld", "urn:libcld");
     }
 
     /**
@@ -210,5 +225,17 @@ public class Cld.XmlConfig : GLib.Object {
 //        }
 
         return node->get_content ();
+    }
+
+    public Xml.Node * get_node (string xpath) {
+        obj = ctx->eval_expression (xpath);
+        if (obj == null)
+            throw new Cld.XmlError.INVALID_XPATH_EXPR (
+                    "the xpath expression %s is invalid", xpath
+                );
+
+        Xml.XPath.NodeSet *nodes = obj->nodesetval;
+
+        return nodes->item (0);
     }
 }

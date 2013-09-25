@@ -92,7 +92,7 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
         get { return _raw_value; }
         set {
             _raw_value = value;
-            _scaled_value = calibration.apply (_raw_value);
+            scaled_value = calibration.apply (_raw_value);
         }
     }
 

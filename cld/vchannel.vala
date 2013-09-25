@@ -73,13 +73,21 @@ public class Cld.VChannel : AbstractChannel {
 
     /* Property backing fields. */
     private double _scaled_value = 0.0;
+    private double _raw_value = 0.0;
 
     /**
      * Calculate value if expression exists or placeholder for dummy channel.
      */
-    public double raw_value { get; set; }
+    public double raw_value {
+        get { return _raw_value; }
+        set {
+            _raw_value = value;
+            _scaled_value = calibration.apply (_raw_value);
+        }
+    }
+
     public double scaled_value {
-        get { return calibration.apply (raw_value); }
+        get { return _scaled_value; }
         private set { _scaled_value = value; }
     }
 

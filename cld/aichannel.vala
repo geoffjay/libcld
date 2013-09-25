@@ -91,11 +91,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      * {@inheritDoc}
      */
     public virtual double raw_value {
-        get {
-            return _raw_value[0];
-        }
-        /* XXX consider getting rid of the call to add_raw_value to pack it
-               onto the list and just use this setter */
+        get { return _raw_value[0]; }
         set {
             lock (_raw_value) {
                 _raw_value[2] = _raw_value[1];
@@ -109,19 +105,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      * {@inheritDoc}
      */
     public virtual double avg_value {
-        get {
-            double sum = 0.0;
-            lock (raw_value_list) {
-                if (raw_value_list.size > 0) {
-                    foreach (double value in raw_value_list) {
-                        sum += value;
-                    }
-
-                    avg_value = sum / raw_value_list.size;
-                }
-            }
-            return _avg_value[0];
-        }
+        get { return _avg_value[0]; }
         private set {
             _avg_value[2] = _avg_value[1];
             _avg_value[1] = _avg_value[0];
@@ -133,10 +117,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      * {@inheritDoc}
      */
     public virtual double scaled_value {
-        get {
-            _scaled_value[0] = calibration.apply (avg_value);
-            return _scaled_value[0];
-        }
+        get { return _scaled_value[0]; }
         private set {
             _scaled_value[2] = _scaled_value[1];
             _scaled_value[1] = _scaled_value[0];
@@ -287,22 +268,30 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
     }
 
     public void add_raw_value (double value) {
-        double conv = value;
-        /* clip the input */
-        /* XXX This is being commented out as a test only. Not sure if it is needed. */
-        //conv = (conv <  0.0) ?  0.0 : conv;
-        //conv = (conv > 10.0) ? 10.0 : conv;
 
         lock (raw_value_list) {
             /* for now add it to the list and the raw value array */
-            raw_value_list.add (conv);
-            raw_value = conv;
+            raw_value_list.add (value);
+            raw_value = value;
 
             if (raw_value_list.size > raw_value_list_size) {
                 /* throw away the value */
-                conv = (raw_value_list as Gee.LinkedList<double?>).poll_head ();
+                (raw_value_list as Gee.LinkedList<double?>).poll_head ();
+            }
+
+            /* update the average */
+            var sum = 0.0;
+            if (raw_value_list.size > 0) {
+                foreach (var value in raw_value_list) {
+                    sum += value;
+                }
+
+                avg_value = sum / raw_value_list.size;
             }
         }
+
+        /* update the scaled value */
+        scaled_value = calibration.apply (avg_value);
     }
 
     /**

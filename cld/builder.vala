@@ -351,6 +351,7 @@ public class Cld.Builder : GLib.Object {
                 }
             }
 
+            /* Setup the channel references for all of the log columns. */
             if (object is Cld.Log) {
                 foreach (var column in (object as Container).objects.values) {
                     if (column is Column) {
@@ -364,6 +365,9 @@ public class Cld.Builder : GLib.Object {
                         }
                     }
                 }
+
+                /* Following the setup of the log columns, the log needs to attach the signals. */
+                (object as Cld.Log).connect_signals ();
             }
 
             /* Setup the device references for all of the channel types */

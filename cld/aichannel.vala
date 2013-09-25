@@ -282,8 +282,8 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
             /* update the average */
             var sum = 0.0;
             if (raw_value_list.size > 0) {
-                foreach (var value in raw_value_list) {
-                    sum += value;
+                foreach (var datum in raw_value_list) {
+                    sum += datum;
                 }
 
                 avg_value = sum / raw_value_list.size;

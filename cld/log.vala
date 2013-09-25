@@ -40,6 +40,11 @@ public class Cld.Column : AbstractObject {
     public weak Channel channel { get; set; }
 
     /**
+     * Channel value for tracking.
+     */
+    public double channel_value { get; set; }
+
+    /**
      * Default constructor.
      */
     public Column () {
@@ -193,6 +198,20 @@ public class Cld.Log : AbstractContainer {
                         objects.set (column.id, column);
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Connect the column signals.
+     */
+    public void connect_signals () {
+        foreach (var column in objects.values) {
+            if (column is Cld.Column) {
+                var channel = (column as Cld.Column).channel;
+                (channel as Cld.ScalableChannel).new_value.connect (() => {
+                    (column as Cld.Column).channel_value = (channel as Cld.ScalableChannel).scaled_value;
+                });
             }
         }
     }

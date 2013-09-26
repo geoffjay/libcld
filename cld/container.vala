@@ -27,7 +27,7 @@
 public interface Cld.Container : Cld.Object {
 
     /**
-     *
+     * The map collection of the objects that belong to the container.
      */
     public abstract Gee.Map<string, Object> objects { get; set; }
 
@@ -39,7 +39,9 @@ public interface Cld.Container : Cld.Object {
     public abstract void add (Object object);
 
     /**
+     * Update the internal object list.
      *
+     * @param val List of objects to replace the existing one
      */
     public abstract void update_objects (Gee.Map<string, Object> val);
 
@@ -50,4 +52,9 @@ public interface Cld.Container : Cld.Object {
      * @return The object if found, null otherwise
      */
     public abstract Object? get_object (string id);
+
+    /**
+     * Sort the contents of the objects map collection.
+     */
+    public abstract void sort_objects ();
 }

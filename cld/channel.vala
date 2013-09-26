@@ -76,22 +76,7 @@ public interface Cld.AChannel : AbstractChannel, Channel {
     /**
      *
      */
-    public abstract string calref { get; set; }
-
-    /**
-     *
-     */
-    public abstract weak Calibration calibration { get; set; }
-
-    /**
-     *
-     */
     public abstract double raw_value { get; set; }
-
-    /**
-     *
-     */
-    public abstract double scaled_value { get; private set; }
 
     /**
      *

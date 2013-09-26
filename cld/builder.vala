@@ -303,26 +303,14 @@ public class Cld.Builder : GLib.Object {
                     (object as Channel).task = (task as Task);
             }
 
-            if (object is AChannel) {
-                /* Analog channels reference a calibration object */
-                ref_id = (object as AChannel).calref;
-                Cld.debug ("Assigning Calibration %s to AChannel %s\n", ref_id, object.id);
+            /* Channels with a calibration reference */
+            if (object is ScalableChannel) {
+                ref_id = (object as ScalableChannel).calref;
+                Cld.debug ("Assigning Calibration %s to ScalableChannel %s\n", ref_id, object.id);
                 if (ref_id != null) {
                     var calibration = get_object (ref_id);
                     if (calibration != null && calibration is Calibration)
-                        (object as AChannel).calibration =
-                                                (calibration as Calibration);
-                }
-            }
-
-            if (object is VChannel) {
-                /* For now virtual channels do too */
-                ref_id = (object as VChannel).calref;
-                Cld.debug ("Assigning Calibration %s to VChannel %s\n", ref_id, object.id);
-                if (ref_id != null) {
-                    var calibration = get_object (ref_id);
-                    if (calibration != null && calibration is Calibration)
-                        (object as VChannel).calibration =
+                        (object as ScalableChannel).calibration =
                                                 (calibration as Calibration);
                 }
             }

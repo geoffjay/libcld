@@ -22,11 +22,13 @@
 /**
  * This is very much intended to service an immediate specific need and will not
  * be suitable for a generic scenario.
- *
- * XXX should be a container.
- * XXX should be buildable using XML.
  */
 public class Cld.LicorModule : AbstractModule {
+
+    /**
+     * Property backing fields.
+     */
+    private Gee.Map<string, Object> _objects;
 
     /**
      * {@inheritDoc}
@@ -49,9 +51,17 @@ public class Cld.LicorModule : AbstractModule {
     public override weak Port port { get; set; }
 
     /**
+     * {@inheritDoc}
+     */
+    public override Gee.Map<string, Object> objects {
+        get { return (_objects); }
+        set { update_objects (value); }
+    }
+
+    /**
      * The list of channels to fill with received data.
      */
-    public Gee.Map<string, Object> channels { get; set; }
+    public weak Gee.Map<string, Object> channels { get; set; }
 
     private string received = "";
 
@@ -64,6 +74,9 @@ public class Cld.LicorModule : AbstractModule {
      */
     public signal void diagnostic_event (int event);
 
+    /**
+     * Signal is raised whenever the flag that shows an event was seen is reset.
+     */
     public signal void diagnostic_reset ();
 
     /**
@@ -173,6 +186,13 @@ public class Cld.LicorModule : AbstractModule {
         loaded = false; // XXX There is currently no way to verify this.
 
         Cld.debug ("LicorModule :: unload ()\n");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override void update_objects (Gee.Map<string, Object> val) {
+        _objects = val;
     }
 
     /**

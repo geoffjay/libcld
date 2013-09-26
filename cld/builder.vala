@@ -22,15 +22,23 @@
 /**
  * Class use to build objects from configuration data.
  */
-public class Cld.Builder : GLib.Object {
+public class Cld.Builder : AbstractContainer {
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string id { get; set; }
 
     /**
      * The XML configuration to use for building
      */
     public XmlConfig xml { get; set; }
 
+    /**
+     * {@inheritDoc}
+     */
     private Gee.Map<string, Object> _objects;
-    public Gee.Map<string, Object> objects {
+    public override Gee.Map<string, Object> objects {
         get { return (_objects); }
         set { update_objects (value); }
     }
@@ -136,60 +144,6 @@ public class Cld.Builder : GLib.Object {
         _objects = new Gee.TreeMap<string, Object> ();
         build_object_map ();
         setup_references ();
-    }
-
-    /**
-     * Add a object to the array list of objects
-     *
-     * @param object object to add to the list
-     */
-    public void add (Object object) {
-        objects.set (object.id, object);
-    }
-
-    /**
-     * Update the internal object list.
-     *
-     * @param val List of objects to replace the existing one
-     */
-    public void update_objects (Gee.Map<string, Object> val) {
-        _objects = val;
-    }
-
-    public void sort_objects () {
-        Gee.List<Object> map_values = new Gee.ArrayList<Object> ();
-
-        map_values.add_all (objects.values);
-        map_values.sort ((GLib.CompareFunc) Object.compare);
-        objects.clear ();
-        foreach (Object object in map_values) {
-            objects.set (object.id, object);
-        }
-    }
-
-    /**
-     * Search the object list for the object with the given ID
-     *
-     * @param id ID of the object to retrieve
-     * @return The object if found, null otherwise
-     */
-    public Object? get_object (string id) {
-        Object? result = null;
-
-        if (objects.has_key (id)) {
-            result = objects.get (id);
-        } else {
-            foreach (var object in objects.values) {
-                if (object is Container) {
-                    result = (object as Container).get_object (id);
-                    if (result != null) {
-                        break;
-                    }
-                }
-            }
-        }
-
-        return result;
     }
 
     /**
@@ -409,11 +363,17 @@ public class Cld.Builder : GLib.Object {
         }
     }
 
-    public virtual void print (FileStream f) {
-        f.printf ("%s\n", to_string ());
+    /**
+     * {@inheritDoc}
+     */
+    public override void update_objects (Gee.Map<string, Object> val) {
+        _objects = val;
     }
 
-    public string to_string () {
+    /**
+     * {@inheritDoc}
+     */
+    public override string to_string () {
         int i;
         string str_data;
 

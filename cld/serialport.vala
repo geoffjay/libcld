@@ -84,7 +84,7 @@ public class Cld.SerialPort : AbstractPort {
                     return SPACE;
                 }
             } catch (RegexError e) {
-                debug ("Error %s\n", e.message);
+                Cld.debug ("Error %s\n", e.message);
             }
 
             /* XXX need to return something */
@@ -132,7 +132,7 @@ public class Cld.SerialPort : AbstractPort {
                     return BOTH;
                 }
             } catch (RegexError e) {
-                debug ("Error %s\n", e.message);
+                Cld.debug ("Error %s\n", e.message);
             }
 
             /* XXX need to return something */
@@ -175,7 +175,7 @@ public class Cld.SerialPort : AbstractPort {
                     return WRITEONLY;
                 }
             } catch (RegexError e) {
-                debug ("Error %s\n", e.message);
+                Cld.debug ("Error %s\n", e.message);
             }
 
             /* XXX need to return something */
@@ -443,7 +443,7 @@ public class Cld.SerialPort : AbstractPort {
             try {
                 fd_channel.shutdown (true);
             } catch (GLib.IOChannelError e) {
-                warning ("%s", e.message);
+                Cld.debug ("%s", e.message);
             }
             non_printable = 0;
             last_rx_was_cr = false;

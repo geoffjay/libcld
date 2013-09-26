@@ -202,7 +202,7 @@ public class Cld.ComediTask : AbstractTask {
             thread.join ();
             device.close ();
             if ((device as ComediDevice).is_open) {
-                message ("Failed to close Comedi device: %s", devref);
+                Cld.debug ("Failed to close Comedi device: %s", devref);
             }
         }
     }

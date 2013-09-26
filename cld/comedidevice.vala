@@ -181,7 +181,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
     public void test () {
         uint data[1];
         device.data_read (0, 0, 4, AnalogReference.GROUND, data);
-        message ("data: %u", data[0]);
+        Cld.debug ("data: %u", data[0]);
     }
 
     /**
@@ -202,9 +202,9 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
             maxdata = device.get_maxdata (ai_subdevice, (channel as AIChannel).num);
             for (j = 0; j < NSAMPLES; j++) {
                 range = device.get_range (ai_subdevice, (channel as AIChannel).num, (channel as AIChannel).range);
-                //message ("range min: %.3f, range max: %.3f, units: %u", range.min, range.max, range.unit);
+                //Cld.debug ("range min: %.3f, range max: %.3f, units: %u", range.min, range.max, range.unit);
                 meas += Comedi.to_phys (instruction_list.insns[i].data[j], range, maxdata);
-                //message ("instruction_list.insns[%d].data[%d]: %u, physical value: %.3f", i, j, instruction_list.insns[i].data[j], meas/(j+1));
+                //Cld.debug ("instruction_list.insns[%d].data[%d]: %u, physical value: %.3f", i, j, instruction_list.insns[i].data[j], meas/(j+1));
             }
             meas = meas / (j);
             (channel as AIChannel).add_raw_value (meas);
@@ -222,7 +222,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
             range = device.get_range (ao_subdevice, (channel as AOChannel).num, (channel as AOChannel).range);
             maxdata = device.get_maxdata (ao_subdevice, (channel as AOChannel).num);
             data = (uint)((val / 100.0) * maxdata);
-            message ("%s scaled_value: %.3f, data: %u", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
+            Cld.debug ("%s scaled_value: %.3f, data: %u", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
             device.data_write (ao_subdevice, (channel as AOChannel).num, (channel as AOChannel).range, AnalogReference.GROUND, data);
         }
      }

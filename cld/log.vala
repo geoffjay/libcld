@@ -298,19 +298,19 @@ public class Cld.Log : AbstractContainer {
         string cals = "Channel Calibrations:\n\n";
 
         foreach (var object in objects.values) {
-            message ("Found object [%s]", object.id);
+            Cld.debug ("Found object [%s]", object.id);
             if (object is Column) {
                 var channel = ((object as Column).channel as Channel);
                 Type type = (channel as GLib.Object).get_type ();
-                message ("Received object is Column - %s", type.name ());
+                Cld.debug ("Received object is Column - %s", type.name ());
 
                 if (channel is AChannel || channel is VChannel) {
                     Calibration calibration;
                     if (channel is AChannel) {
-                        message ("Column channel reference is analog.");
+                        Cld.debug ("Column channel reference is analog.");
                         calibration = (channel as AChannel).calibration;
                     } else {
-                        message ("Column channel reference is virtual.");
+                        Cld.debug ("Column channel reference is virtual.");
                         calibration = (channel as VChannel).calibration;
                     }
                     cals += "%s:\ty = ".printf (channel.id);

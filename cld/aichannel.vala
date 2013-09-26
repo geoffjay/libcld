@@ -22,7 +22,7 @@
 /**
  * Analog input channel used with measurements and other control functions.
  */
-public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
+public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChannel {
 
     /**
      * {@inheritDoc}
@@ -122,6 +122,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
             _scaled_value[2] = _scaled_value[1];
             _scaled_value[1] = _scaled_value[0];
             _scaled_value[0] = value;
+            new_value ();
         }
     }
 

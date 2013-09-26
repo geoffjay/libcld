@@ -129,15 +129,12 @@ public class Cld.LicorModule : AbstractModule {
                 string[] tokens = received.split ("\t");
                 var x = 0;
                 /* First token is DATAM, slice to remove */
-                Cld.debug ("%10d: ", n_new_data_seen);
                 foreach (string token in tokens[1:tokens.length]) {
                     var id = "lc%d".printf (x++);
                     /* Assign the channel the value that was received */
                     var channel = channels.get (id);
                     (channel as VChannel).raw_value = double.parse (token);
-                    Cld.debug ("%f ", (channel as VChannel).raw_value);
                 }
-                Cld.debug ("\n");
 
                 if (tokens[tokens.length - 1] != "0") {
                     diagnostic_event (int.parse (tokens[tokens.length - 1]));
@@ -162,7 +159,6 @@ public class Cld.LicorModule : AbstractModule {
         (port as SerialPort).new_data.connect (new_data_cb);
         loaded = (port.open ()) ? true : false;
         if (loaded)
-
             Cld.debug ("LicorModule :: load ()\n");
         else
             Cld.debug ("LicorModule not loaded \n");

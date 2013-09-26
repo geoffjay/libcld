@@ -22,7 +22,7 @@
 /**
  * Analog output channel used for control and logging.
  */
-public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
+public class Cld.AOChannel : AbstractChannel, AChannel, OChannel, ScalableChannel {
 
     /**
      * {@inheritDoc}
@@ -101,7 +101,10 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
      */
     public virtual double scaled_value {
         get { return _scaled_value; }
-        private set { _scaled_value = value; }
+        private set {
+            _scaled_value = value;
+            new_value ();
+        }
     }
 
     /**

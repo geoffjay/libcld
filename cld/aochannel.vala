@@ -103,7 +103,7 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel, ScalableChanne
         get { return _scaled_value; }
         private set {
             _scaled_value = value;
-            new_value (value);
+            new_value (id, value);
         }
     }
 

@@ -122,7 +122,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChanne
             _scaled_value[2] = _scaled_value[1];
             _scaled_value[1] = _scaled_value[0];
             _scaled_value[0] = value;
-            new_value (value);
+            new_value (id, value);
         }
     }
 
@@ -132,11 +132,8 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChanne
      */
     public double current_value {
         get {
-            double value;
-            lock (raw_value_list) {
-                value = calibration.apply (raw_value_list.get (raw_value_list.size - 1));
-            }
-            return value;
+            /* XXX why not just return scaled_value ??? */
+            return calibration.apply (_raw_value[0]);
         }
     }
 
@@ -145,13 +142,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChanne
      * XXX consider name change
      */
     public double previous_value {
-        get {
-            double value;
-            lock (raw_value_list) {
-                value = calibration.apply (raw_value_list.get (raw_value_list.size - 2));
-            }
-            return value;
-        }
+        get { return calibration.apply (_raw_value[1]); }
     }
 
     /**
@@ -160,13 +151,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChanne
      * XXX consider name change
      */
     public double past_previous_value {
-        get {
-            double value;
-            lock (raw_value_list) {
-                value = calibration.apply (raw_value_list.get (raw_value_list.size - 3));
-            }
-            return value;
-        }
+        get { return calibration.apply (_raw_value[2]); }
     }
 
     /**
@@ -175,16 +160,13 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChanne
      *
      * XXX should be max list size, naming is confusing
      * XXX if value != current the list should be resized to reflect the change
-     * XXX having a minimum size of 3 isn't ideal, instead the getters on the
-     *     values that index the list size should check there and handle
-     *     appropriately
      */
-    private int _raw_value_list_size = 3;
+    private int _raw_value_list_size = 1;
     public int raw_value_list_size {
         get { return _raw_value_list_size; }
         set {
-            if (value < 3)
-                _raw_value_list_size = 3;
+            if (value < 1)
+                _raw_value_list_size = 1;
             else
                 _raw_value_list_size = value;
         }
@@ -281,14 +263,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChanne
             }
 
             /* update the average */
-            var sum = 0.0;
-            if (raw_value_list.size > 0) {
-                foreach (var datum in raw_value_list) {
-                    sum += datum;
-                }
-
-                avg_value = sum / raw_value_list.size;
-            }
+            update_avg_value ();
         }
 
         /* update the scaled value */
@@ -298,18 +273,16 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChanne
     /**
      * Update the value for the running average that represents the contents
      * of the raw data list.
-     *
-     * @deprecated The getter for avg_value performs the same functionality.
      */
-    public void update_avg_value () {
-        double sum = 0.0;
-
+    private void update_avg_value () {
+        var sum = 0.0;
         if (raw_value_list.size > 0) {
-            foreach (double value in raw_value_list) {
+            foreach (var value in raw_value_list) {
                 sum += value;
             }
-
             avg_value = sum / raw_value_list.size;
+        } else {
+            avg_value = 0.0;
         }
     }
 

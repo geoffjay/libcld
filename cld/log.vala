@@ -209,8 +209,8 @@ public class Cld.Log : AbstractContainer {
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
                 var channel = (column as Cld.Column).channel;
-                (channel as Cld.ScalableChannel).new_value.connect (() => {
-                    (column as Cld.Column).channel_value = (channel as Cld.ScalableChannel).scaled_value;
+                (channel as Cld.ScalableChannel).new_value.connect ((value) => {
+                    (column as Cld.Column).channel_value = value;
                 });
             }
         }

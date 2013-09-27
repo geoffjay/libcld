@@ -122,7 +122,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChanne
             _scaled_value[2] = _scaled_value[1];
             _scaled_value[1] = _scaled_value[0];
             _scaled_value[0] = value;
-            new_value ();
+            new_value (value);
         }
     }
 

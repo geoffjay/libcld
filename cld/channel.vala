@@ -136,5 +136,5 @@ public interface Cld.ScalableChannel : AbstractChannel, Channel {
     /**
      * Raised when a new value has been calculated.
      */
-    public abstract signal void new_value ();
+    public abstract signal void new_value (double value);
 }

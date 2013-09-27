@@ -48,12 +48,15 @@ public class Cld.VChannel : AbstractChannel {
     /**
      * {@inheritDoc}
      */
-    public override string taskref { get {
-                                            if (_taskref == null)
-                                                throw new Cld.Error.NULL_REF ("A taskref has not been set for this virtual channel.");
-                                            else
-                                                return _taskref;}
-                                    set {_taskref = value; }}
+    public override string taskref {
+        get {
+            if (_taskref == null)
+                throw new Cld.Error.NULL_REF ("A taskref has not been set for this virtual channel.");
+            else
+                return _taskref;
+        }
+        set { _taskref = value; }
+    }
 
     /**
      * {@inheritdoc}

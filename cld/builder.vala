@@ -110,6 +110,20 @@ public class Cld.Builder : GLib.Object {
         }
     }
 
+    private Gee.Map<string, Object>? _modules = null;
+    public Gee.Map<string, Object>? modules {
+        get {
+            if (_modules == null) {
+                _modules = new Gee.TreeMap<string, Object> ();
+                foreach (var object in objects.values) {
+                    if (object is Module)
+                        _modules.set (object.id, object);
+                }
+            }
+            return _modules;
+        }
+    }
+
     public Builder.from_file (string filename) {
         xml = new XmlConfig.with_file_name (filename);
         _objects = new Gee.TreeMap<string, Object> ();

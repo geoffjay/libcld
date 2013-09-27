@@ -39,6 +39,11 @@ public abstract class Cld.AbstractModule : AbstractContainer, Module {
     /**
      * {@inheritDoc}
      */
+    public abstract string devref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public abstract string portref { get; set; }
 
     /**

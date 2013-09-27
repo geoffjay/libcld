@@ -100,6 +100,8 @@ public class Cld.Context : Cld.AbstractContainer {
 
 
     /**
+=======
+>>>>>>> a8aba4f... Minor edits to log functions.
      * {@inheritDoc}
      */
     public override void update_objects (Gee.Map<string, Cld.Object> val) {

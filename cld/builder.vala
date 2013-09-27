@@ -301,11 +301,13 @@ public class Cld.Builder : Cld.AbstractContainer {
         string ref_id;
 
         foreach (var object in objects.values) {
+message ("object id: %s", object.id);
             /* Setup the device references for all of the channel types */
             if (object is Channel) {
                 ref_id = (object as Channel).devref;
                 Cld.debug ("Assigning Device %s to Channel %s", ref_id, object.id);
                 var device = get_object (ref_id);
+message ("1111");
                 if (device != null && device is Device) {
                     (object as Channel).device = (device as Device);
                     ref_id = (object as Channel).taskref;
@@ -361,7 +363,6 @@ public class Cld.Builder : Cld.AbstractContainer {
             if (object is VChannel) {
                 /* For now virtual channels do too */
                 ref_id = (object as VChannel).calref;
-
                 if ((object as VChannel).expression != null) {
                     foreach( var name in (object as VChannel).channel_names ) {
                         (object as VChannel).add_channel( name, (get_object (name) as AIChannel));
@@ -437,6 +438,7 @@ public class Cld.Builder : Cld.AbstractContainer {
 //                        }
 //                    }
                 }
+                }
             }
 
             /* A  data series references a scalable channel. */
@@ -507,8 +509,9 @@ public class Cld.Builder : Cld.AbstractContainer {
                             }
                         }
                     }
-                }
             }
+
+>>>>>>> bd84c83... Pointless change, squash me.
 
             /* Each device in daq references tasks.  */
             if (object is Daq) {
@@ -521,6 +524,9 @@ public class Cld.Builder : Cld.AbstractContainer {
                     }
                 }
             }
+        }
+        foreach (var object in objects.values) {
+            Cld.debug ("%s", object.id);
         }
     }
     /**

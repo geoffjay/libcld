@@ -45,6 +45,20 @@ public class Cld.HeidolphModule : AbstractModule {
         }
     private string old_speed_sp = "0";
 
+    private string _speed_sp;
+    public string speed_sp {
+        get { return _speed_sp; }
+        set { _speed_sp = value; }
+        }
+    private string old_speed_sp = "0";
+
+    private string _speed_sp;
+    public string speed_sp {
+        get { return _speed_sp; }
+        set { _speed_sp = value; }
+        }
+    private string old_speed_sp = "0";
+
     private string _speed = "0";
     public string speed {
         get { return _speed; }
@@ -262,6 +276,50 @@ public class Cld.HeidolphModule : AbstractModule {
     public void add_channel (Cld.Object channel) {
         channels.set (channel.id, channel);
        //Cld.debug ("HeidolphModule :: add_channel(%s)", channel.id);
+    }
+
+
+    /**
+     * ...
+     */
+    public void add_channel (Cld.Object channel) {
+        channels.set (channel.id, channel);
+       //Cld.debug ("HeidolphModule :: add_channel(%s)\n", channel.id);
+=======
+    public void set_speed (string speed_set) {
+        Cld.debug ("Heidolph: set_speed ()\n");
+        _speed_sp = speed_set;
+    }
+
+    /**
+     * XXX This doesn't work. Retrieve the speed setpoint.
+     */
+    public string get_speed_sp () {
+        string msg1 = "s\r\n";
+
+        port.send_bytes (msg1.to_utf8 (), msg1.length);
+        Posix.sleep (5); // wait for the new data to appear
+
+        return _speed_sp;
+    }
+
+    /**
+     * Normalize the torque value.
+     */
+    public void normalize () {
+        string msg1 = "N\r\n";
+
+        port.send_bytes (msg1.to_utf8 (), msg1.length);
+>>>>>>> 62fce25... HeidolphModule is working. May need minor changes upon review.
+    }
+
+
+    /**
+     * ...
+     */
+    public void add_channel (Cld.Object channel) {
+        channels.set (channel.id, channel);
+       //Cld.debug ("HeidolphModule :: add_channel(%s)\n", channel.id);
     }
 
 

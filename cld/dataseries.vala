@@ -233,6 +233,26 @@ public class Cld.DataSeries : Cld.AbstractContainer {
         }
     }
 
+    /**
+     * XXX Virtual channels from a list of tap values may not be that useful.
+     */
+    public void activate_vchannels () {
+        foreach (Cld.Object object in objects.values) {
+            if (object is VChannel && object.id.contains (this.id)) {
+                (object as VChannel).desc = "%s [n - %d]".printf (((channel as Channel).id),
+                            (object as VChannel).num);
+                (object as VChannel).calref = (channel as ScalableChannel).calref;
+                (object as VChannel).calibration = (channel as ScalableChannel).calibration;
+                (channel as ScalableChannel).new_value.connect ((id, val) => {
+                    double nth_value;
+                    if (get_nth_value ((object as VChannel).num, out nth_value)) {
+                        (object as VChannel).raw_value = nth_value;
+                    }
+                });
+            }
+        }
+    }
+
     public override string to_string () {
 
         return base.to_string ();

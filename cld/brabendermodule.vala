@@ -96,6 +96,11 @@ public class Cld.BrabenderModule : AbstractModule {
     /**
      * {@inheritDoc}
      */
+    public override string devref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public override string portref { get; set; }
 
     /**
@@ -409,6 +414,20 @@ public class Cld.BrabenderModule : AbstractModule {
         loaded = false;
         }
         Cld.debug ("BrabenderModule unloaded");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override void update_objects (Gee.Map<string, Object> val) {
+        _objects = val;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override void update_objects (Gee.Map<string, Object> val) {
+        _objects = val;
     }
 
     /**

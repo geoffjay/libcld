@@ -1,64 +1,53 @@
 using Cld;
+using Math;
 
 class Cld.SerialPortExample : GLib.Object {
 
     public string received = "";
+    public double[] data = new double [7];
+    public GLib.Rand randy = new Rand ();
+    public const int nbits = 24;
+    public uint source_id;
+    public SerialPort port = new SerialPort ();
 
     public void run () {
         var loop = new MainLoop();
-        var port = new SerialPort ();
-        int timeout_ms = 100;
-
+        uint timeout_ms = 20;
 
         port.id = "ser0";
-        port.device = "/dev/ttyUSB0";
+        port.device = "/dev/ttyUSB1";
         port.baud_rate = 115200;
         port.handshake = SerialPort.Handshake.HARDWARE;
 
-        /* this should really be in a unit test */
-
-        GLib.Log.set_handler("SerialPortExample",
-                             LogLevelFlags.LEVEL_DEBUG,
-                             GLib.Log.default_handler);
-
-        var parity = SerialPort.Parity.parse ("none");
-        message ("Parity [none]: %s", parity.to_string ());
-
-        parity = SerialPort.Parity.parse ("NoNe");
-        message ("Parity [NoNe]: %s", parity.to_string ());
-
-        parity = SerialPort.Parity.parse ("oDD");
-        message ("Parity [oDD]: %s", parity.to_string ());
-
-        parity = SerialPort.Parity.parse ("MaRK");
-        message ("Parity [MaRK]: %s", parity.to_string ());
-
-        parity = SerialPort.Parity.parse ("spacE");
-        message ("Parity [spacE]: %s", parity.to_string ());
-
-        /* access mode */
-        message ("AccessMode [read andWrite]: %s", (SerialPort.AccessMode.parse ("read andWrite")).to_string ());
-        message ("AccessMode [readWRITE]: %s", (SerialPort.AccessMode.parse ("readWRITE")).to_string ());
-        message ("AccessMode [Ro]: %s", (SerialPort.AccessMode.parse ("Ro")).to_string ());
-        message ("AccessMode [readOnly]: %s", (SerialPort.AccessMode.parse ("readOnly")).to_string ());
-        message ("AccessMode [reaD Only]: %s", (SerialPort.AccessMode.parse ("reaD Only")).to_string ());
-        message ("AccessMode [WrItE oNlY]: %s", (SerialPort.AccessMode.parse ("WrItE oNlY")).to_string ());
-
-        message ("\n\n%s", port.to_string ());
-
         port.open ();
-        message ("\n\n%s", port.to_string ());
-
+        source_id = Timeout.add (timeout_ms, send_data_cb);
         loop.run ();
 
         port.close ();
+    }
 
-        message ("\n\n%s", port.to_string ());
+    public bool send_data_cb () {
+
+        string message = "DATAM\t";
+
+        for (int i = 0; i < 7; i++) {
+            data[i] = (double) randy.int_range (0, (int) pow (2, nbits));
+            message += "%.4f".printf (data[i]);
+            if (i < 6)
+                message += "\t";
+        }
+
+        message += "\r\n";
+        stdout.printf ("%s", message);
+        port.send_bytes (message.to_utf8 (), message.length);
+
+        return true;
     }
 }
 
 public static int main (string[] args) {
 
+    Cld.init (args);
     Cld.SerialPortExample ex = new Cld.SerialPortExample ();
 
     ex.run ();

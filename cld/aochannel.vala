@@ -22,7 +22,7 @@
 /**
  * Analog output channel used for control and logging.
  */
-public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
+public class Cld.AOChannel : AbstractChannel, AChannel, OChannel, ScalableChannel {
 
     /**
      * {@inheritDoc}
@@ -81,23 +81,30 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel {
      */
     public virtual int range { get; set; }
 
+    /* Property backing fields. */
+    private double _scaled_value = 0.0;
+    private double _raw_value = 0.0;
+
     /**
      * {@inheritDoc}
      */
-    public virtual double raw_value { get; set; }
-
-    private double _scaled_value;
+    public virtual double raw_value {
+        get { return _raw_value; }
+        set {
+            _raw_value = value;
+            scaled_value = calibration.apply (_raw_value);
+        }
+    }
 
     /**
      * {@inheritDoc}
      */
     public virtual double scaled_value {
-        get {
-            if (calibration != null)
-                _scaled_value = calibration.apply (raw_value);
-            return _scaled_value;
+        get { return _scaled_value; }
+        private set {
+            _scaled_value = value;
+            new_value (id, value);
         }
-        private set { _scaled_value = value; }
     }
 
     /**

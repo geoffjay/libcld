@@ -22,7 +22,7 @@
 /**
  * Analog input channel used with measurements and other control functions.
  */
-public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
+public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChannel {
 
     /**
      * {@inheritDoc}
@@ -91,11 +91,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      * {@inheritDoc}
      */
     public virtual double raw_value {
-        get {
-            return _raw_value[0];
-        }
-        /* XXX consider getting rid of the call to add_raw_value to pack it
-               onto the list and just use this setter */
+        get { return _raw_value[0]; }
         set {
             lock (_raw_value) {
                 _raw_value[2] = _raw_value[1];
@@ -109,19 +105,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      * {@inheritDoc}
      */
     public virtual double avg_value {
-        get {
-            double sum = 0.0;
-            lock (raw_value_list) {
-                if (raw_value_list.size > 0) {
-                    foreach (double value in raw_value_list) {
-                        sum += value;
-                    }
-
-                    avg_value = sum / raw_value_list.size;
-                }
-            }
-            return _avg_value[0];
-        }
+        get { return _avg_value[0]; }
         private set {
             _avg_value[2] = _avg_value[1];
             _avg_value[1] = _avg_value[0];
@@ -133,14 +117,12 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      * {@inheritDoc}
      */
     public virtual double scaled_value {
-        get {
-            _scaled_value[0] = calibration.apply (avg_value);
-            return _scaled_value[0];
-        }
+        get { return _scaled_value[0]; }
         private set {
             _scaled_value[2] = _scaled_value[1];
             _scaled_value[1] = _scaled_value[0];
             _scaled_value[0] = value;
+            new_value (id, value);
         }
     }
 
@@ -150,11 +132,8 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      */
     public double current_value {
         get {
-            double value;
-            lock (raw_value_list) {
-                value = calibration.apply (raw_value_list.get (raw_value_list.size - 1));
-            }
-            return value;
+            /* XXX why not just return scaled_value ??? */
+            return calibration.apply (_raw_value[0]);
         }
     }
 
@@ -163,13 +142,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      * XXX consider name change
      */
     public double previous_value {
-        get {
-            double value;
-            lock (raw_value_list) {
-                value = calibration.apply (raw_value_list.get (raw_value_list.size - 2));
-            }
-            return value;
-        }
+        get { return calibration.apply (_raw_value[1]); }
     }
 
     /**
@@ -178,13 +151,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      * XXX consider name change
      */
     public double past_previous_value {
-        get {
-            double value;
-            lock (raw_value_list) {
-                value = calibration.apply (raw_value_list.get (raw_value_list.size - 3));
-            }
-            return value;
-        }
+        get { return calibration.apply (_raw_value[2]); }
     }
 
     /**
@@ -193,16 +160,13 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
      *
      * XXX should be max list size, naming is confusing
      * XXX if value != current the list should be resized to reflect the change
-     * XXX having a minimum size of 3 isn't ideal, instead the getters on the
-     *     values that index the list size should check there and handle
-     *     appropriately
      */
-    private int _raw_value_list_size = 3;
+    private int _raw_value_list_size = 1;
     public int raw_value_list_size {
         get { return _raw_value_list_size; }
         set {
-            if (value < 3)
-                _raw_value_list_size = 3;
+            if (value < 1)
+                _raw_value_list_size = 1;
             else
                 _raw_value_list_size = value;
         }
@@ -287,39 +251,38 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel {
     }
 
     public void add_raw_value (double value) {
-        double conv = value;
-        /* clip the input */
-        /* XXX This is being commented out as a test only. Not sure if it is needed. */
-        //conv = (conv <  0.0) ?  0.0 : conv;
-        //conv = (conv > 10.0) ? 10.0 : conv;
 
         lock (raw_value_list) {
             /* for now add it to the list and the raw value array */
-            raw_value_list.add (conv);
-            raw_value = conv;
+            raw_value_list.add (value);
+            raw_value = value;
 
             if (raw_value_list.size > raw_value_list_size) {
                 /* throw away the value */
-                conv = (raw_value_list as Gee.LinkedList<double?>).poll_head ();
+                (raw_value_list as Gee.LinkedList<double?>).poll_head ();
             }
+
+            /* update the average */
+            update_avg_value ();
         }
+
+        /* update the scaled value */
+        scaled_value = calibration.apply (avg_value);
     }
 
     /**
      * Update the value for the running average that represents the contents
      * of the raw data list.
-     *
-     * @deprecated The getter for avg_value performs the same functionality.
      */
-    public void update_avg_value () {
-        double sum = 0.0;
-
+    private void update_avg_value () {
+        var sum = 0.0;
         if (raw_value_list.size > 0) {
-            foreach (double value in raw_value_list) {
+            foreach (var value in raw_value_list) {
                 sum += value;
             }
-
             avg_value = sum / raw_value_list.size;
+        } else {
+            avg_value = 0.0;
         }
     }
 

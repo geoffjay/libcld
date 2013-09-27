@@ -20,18 +20,25 @@
 
 /**
  * Brabender ISC-CM Plus implementing TCP/IP Modbus
- *
- * XXX should be a container.
- * XXX should be buildable using XML.
  */
 using Modbus;
 using Math;
 
 public class Cld.BrabenderModule : AbstractModule {
+
+    /**
+     * Property backing fields.
+     */
+    private Gee.Map<string, Object> _objects;
+
+    /**
+     * Class constants.
+     */
     double eps = 0.0001;
     int timeout_ms = 100;
     int time_us = 250000;
     uint source_id;
+
     const int MF_SP_WRITE_ADDR = 0x10;
     const int DI_SP_WRITE_ADDR = 0x14;
     const int MF_SP_READ_ADDR = 0x10;
@@ -50,6 +57,7 @@ public class Cld.BrabenderModule : AbstractModule {
     const int ENABLE_OP1_WRITE_VAL = 0x10;
     const int STARTED_MASK = 0x1000;
     const int OP1_ENABLED_MASK = 0x0003;
+
     /**
      * Operating Modes
      */
@@ -90,9 +98,17 @@ public class Cld.BrabenderModule : AbstractModule {
      */
     public override weak Port port { get; set; }
 
+    /**
+     * {@inheritDoc}
+     */
+    public override Gee.Map<string, Object> objects {
+        get { return (_objects); }
+        set { update_objects (value); }
+    }
+
     public bool running { get; set; default = false; }
 
-    public Gee.Map<string, Object> channels { get; set; }
+    public weak Gee.Map<string, Object> channels { get; set; }
 
     /**
      * Default construction.
@@ -136,8 +152,8 @@ public class Cld.BrabenderModule : AbstractModule {
     }
 
     /**
-     * XXX This  method does not work - Reset alarms.
-     **/
+     * XXX This method does not work - Reset alarms.
+     */
     public bool reset_alarm () {
         bool status = true;
         uint16[] data_in = new uint16[1];
@@ -155,7 +171,7 @@ public class Cld.BrabenderModule : AbstractModule {
     }
     /**
      * XXX This method does not work - Enable the OP1 touch screen interface.
-     **/
+     */
     public bool enable_op1 () {
         bool status = true;
         uint16[] data_in = new uint16[1];
@@ -388,6 +404,13 @@ public class Cld.BrabenderModule : AbstractModule {
         loaded = false;
         }
         message ("BrabenderModule unloaded");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override void update_objects (Gee.Map<string, Object> val) {
+        _objects = val;
     }
 
     /**

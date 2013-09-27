@@ -34,7 +34,9 @@ public abstract class Cld.AbstractContainer : AbstractObject, Container {
     /**
      * {@inheritDoc}
      */
-    public abstract void add (Object object);
+    public virtual void add (Object object) {
+        objects.set (object.id, object);
+    }
 
     /**
      * {@inheritDoc}
@@ -44,5 +46,36 @@ public abstract class Cld.AbstractContainer : AbstractObject, Container {
     /**
      * {@inheritDoc}
      */
-    public abstract Object? get_object (string id);
+    public virtual Object? get_object (string id) {
+        Object? result = null;
+
+        if (objects.has_key (id)) {
+            result = objects.get (id);
+        } else {
+            foreach (var object in objects.values) {
+                if (object is Container) {
+                    result = (object as Container).get_object (id);
+                    if (result != null) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual void sort_objects () {
+        Gee.List<Object> map_values = new Gee.ArrayList<Object> ();
+
+        map_values.add_all (objects.values);
+        map_values.sort ((GLib.CompareFunc) Object.compare);
+        objects.clear ();
+        foreach (Object object in map_values) {
+            objects.set (object.id, object);
+        }
+    }
 }

@@ -76,22 +76,7 @@ public interface Cld.AChannel : AbstractChannel, Channel {
     /**
      *
      */
-    public abstract string calref { get; set; }
-
-    /**
-     *
-     */
-    public abstract weak Calibration calibration { get; set; }
-
-    /**
-     *
-     */
     public abstract double raw_value { get; set; }
-
-    /**
-     *
-     */
-    public abstract double scaled_value { get; private set; }
 
     /**
      *
@@ -99,7 +84,8 @@ public interface Cld.AChannel : AbstractChannel, Channel {
     public abstract double avg_value { get; private set; }
 
     /**
-     *
+     * Relates to the measurement range of the hardware.
+     * XXX This should perhaps be abstracted from the channel.
      */
     public abstract int range { get; set; }
 }
@@ -110,7 +96,7 @@ public interface Cld.AChannel : AbstractChannel, Channel {
 public interface Cld.DChannel : AbstractChannel, Channel {
 
     /**
-     *
+     * The binary state of the channel.
      */
     public abstract bool state { get; set; }
 }
@@ -125,4 +111,30 @@ public interface Cld.IChannel : AbstractChannel, Channel {
  * Output channel interface class.
  */
 public interface Cld.OChannel : AbstractChannel, Channel {
+}
+
+/**
+ * Interface class for all channels that can be scaled based on a calibration.
+ */
+public interface Cld.ScalableChannel : AbstractChannel, Channel {
+
+    /**
+     * ID reference to the calibration object.
+     */
+    public abstract string calref { get; set; }
+
+    /**
+     * Calibration object used to calculate the scaled value.
+     */
+    public abstract weak Calibration calibration { get; set; }
+
+    /**
+     * The scaled value that is calculated using the calibration.
+     */
+    public abstract double scaled_value { get; private set; }
+
+    /**
+     * Raised when a new value has been calculated.
+     */
+    public abstract signal void new_value (string id, double value);
 }

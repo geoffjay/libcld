@@ -40,6 +40,11 @@ public class Cld.Column : AbstractObject {
     public weak Channel channel { get; set; }
 
     /**
+     * Channel value for tracking.
+     */
+    public double channel_value { get; set; }
+
+    /**
      * Default constructor.
      */
     public Column () {
@@ -198,6 +203,20 @@ public class Cld.Log : AbstractContainer {
     }
 
     /**
+     * Connect the column signals.
+     */
+    public void connect_signals () {
+        foreach (var column in objects.values) {
+            if (column is Cld.Column) {
+                var channel = (column as Cld.Column).channel;
+                (channel as Cld.ScalableChannel).new_value.connect ((id, value) => {
+                    (column as Cld.Column).channel_value = value;
+                });
+            }
+        }
+    }
+
+    /**
      * Print a string to the log file.
      *
      * @param toprint The string to print
@@ -299,15 +318,8 @@ public class Cld.Log : AbstractContainer {
                 Type type = (channel as GLib.Object).get_type ();
                 message ("Received object is Column - %s", type.name ());
 
-                if (channel is AChannel || channel is VChannel) {
-                    Calibration calibration;
-                    if (channel is AChannel) {
-                        message ("Column channel reference is analog.");
-                        calibration = (channel as AChannel).calibration;
-                    } else {
-                        message ("Column channel reference is virtual.");
-                        calibration = (channel as VChannel).calibration;
-                    }
+                if (channel is ScalableChannel) {
+                    var calibration = (channel as ScalableChannel).calibration;
                     cals += "%s:\ty = ".printf (channel.id);
 
                     foreach (var coefficient in (calibration as Container).objects.values) {
@@ -346,15 +358,13 @@ public class Cld.Log : AbstractContainer {
         foreach (var object in objects.values) {
             if (object is Column) {
                 var channel = ((object as Column).channel as Channel);
-                if (channel is AChannel) {
-                    line += "%f%c".printf ((channel as AChannel).scaled_value, sep);
+                if (channel is ScalableChannel) {
+                    line += "%f%c".printf ((object as Column).channel_value, sep);
                 } else if (channel is DChannel) {
                     if ((channel as DChannel).state)
                         line += "on%c".printf (sep);
                     else
                         line += "off%c".printf (sep);
-                } else if (channel is VChannel) {
-                    line += "%f%c".printf ((channel as VChannel).scaled_value, sep);
                 }
             }
         }

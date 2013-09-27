@@ -23,7 +23,7 @@
  * Virtual channel to be used to execute expressions or just as a dummy channel
  * with a settable value.
  */
-public class Cld.VChannel : AbstractChannel {
+public class Cld.VChannel : AbstractChannel, ScalableChannel {
 
     /**
      * {@inheritDoc}
@@ -55,7 +55,6 @@ public class Cld.VChannel : AbstractChannel {
      */
     public override weak Task task { get; set; }
 
-
     /**
      * {@inheritDoc}
      */
@@ -73,21 +72,44 @@ public class Cld.VChannel : AbstractChannel {
 
     /* Property backing fields. */
     private double _scaled_value = 0.0;
+    private double _raw_value = 0.0;
 
     /**
      * Calculate value if expression exists or placeholder for dummy channel.
      */
-    public double raw_value { get; set; }
-    public double scaled_value {
-        get { return calibration.apply (raw_value); }
-        private set { _scaled_value = value; }
+    public double raw_value {
+        get { return _raw_value; }
+        set {
+            _raw_value = value;
+            scaled_value = calibration.apply (_raw_value);
+        }
     }
 
     /**
-     * Calibration should maybe be rethought.
+     * {@inheritDoc}
      */
-    public string calref { get; set; }
-    public weak Calibration calibration { get; set; }
+    public virtual double scaled_value {
+        get { return _scaled_value; }
+        private set {
+            _scaled_value = value;
+            new_value (id, value);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual string calref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual weak Calibration calibration { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    //public override signal void new_value ();
 
     /* default constructor */
     public VChannel () {

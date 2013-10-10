@@ -184,9 +184,16 @@ public class Cld.Calibration : AbstractContainer {
      */
     public double apply (double value) {
         double result = 0.0;
+
         foreach (var coefficient in objects.values) {
-            result += Math.pow (value, (coefficient as Coefficient).n)
-                        * (coefficient as Coefficient).value;
+            if ((coefficient as Coefficient).n == 0) {
+                result += (coefficient as Coefficient).value;
+            } else if ((coefficient as Coefficient).n == 1) {
+                result += value * (coefficient as Coefficient).value;
+            } else {
+                result += Math.pow (value, (coefficient as Coefficient).n)
+                            * (coefficient as Coefficient).value;
+            }
         }
         return result;
     }

@@ -24,7 +24,7 @@
  *
  * Contains common code shared by all module implementations.
  */
-public abstract class Cld.AbstractModule : AbstractObject, Module {
+public abstract class Cld.AbstractModule : AbstractContainer, Module {
 
     /**
      * {@inheritDoc}

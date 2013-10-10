@@ -22,11 +22,13 @@
 /**
  * This is very much intended to service an immediate specific need and will not
  * be suitable for a generic scenario.
- *
- * XXX should be a container.
- * XXX should be buildable using XML.
  */
 public class Cld.VelmexModule : AbstractModule {
+
+    /**
+     * Property backing fields.
+     */
+    private Gee.Map<string, Object> _objects;
 
     /**
      * {@inheritDoc}
@@ -47,6 +49,14 @@ public class Cld.VelmexModule : AbstractModule {
      * {@inheritDoc}
      */
     public override weak Port port { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override Gee.Map<string, Object> objects {
+        get { return (_objects); }
+        set { update_objects (value); }
+    }
 
     /**
      * The program commands to be executed on apply_program.
@@ -159,6 +169,13 @@ public class Cld.VelmexModule : AbstractModule {
         loaded = false; // XXX There is currently no way to verify this.
 
         Cld.debug ("VelmexModule :: unload ()\n");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override void update_objects (Gee.Map<string, Object> val) {
+        _objects = val;
     }
 
     /**

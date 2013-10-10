@@ -61,6 +61,9 @@ public abstract class Cld.AbstractChannel : AbstractObject, Channel {
      */
     public abstract string desc { get; set; }
 
+    /**
+     * {@inheritDoc}
+     */
     public override string to_string () {
         string str_data  = "CldChannel\n";
                str_data += " [id  ] : %s\n".printf (id);

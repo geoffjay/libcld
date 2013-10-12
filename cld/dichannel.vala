@@ -64,10 +64,16 @@ public class Cld.DIChannel : AbstractChannel, DChannel, IChannel {
      */
     public override string desc { get; set; }
 
+    private bool _state;
+
     /**
      * {@inheritDoc}
      */
-    public virtual bool state { get; set; }
+    public virtual bool state {
+        get { return _state; }
+        set { new_value (id, value); }
+    }
+
 
     /* default constructor */
     public DIChannel () {

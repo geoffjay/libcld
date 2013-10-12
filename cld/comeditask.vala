@@ -65,7 +65,7 @@ public class Cld.ComediTask : AbstractTask {
    /**
     * ...
     */
-    public string poll_type { get; set; }
+    public string direction { get; set; }
 
    /**
     * ...
@@ -86,7 +86,6 @@ public class Cld.ComediTask : AbstractTask {
     private unowned GLib.Thread<void *> thread;
     private Mutex mutex = new Mutex ();
     private Thread task_thread;
-    private string direction;
 
     /**
      * Default construction.
@@ -98,7 +97,7 @@ public class Cld.ComediTask : AbstractTask {
         device = new ComediDevice ();
         exec_type = "polling";
         subdevice = 0;
-        poll_type = "read";
+        direction = "read";
         poll_interval_ms = 100;
 
         channels = new Gee.TreeMap<string, Object> ();
@@ -126,8 +125,8 @@ public class Cld.ComediTask : AbstractTask {
                         case "subdevice":
                             subdevice = int.parse (iter->get_content ());
                             break;
-                        case "poll-type":
-                            poll_type = iter->get_content ();
+                        case "direction":
+                            direction = iter->get_content ();
                             break;
                         case "poll-interval-ms":
                             poll_interval_ms = int.parse (iter->get_content ());
@@ -151,7 +150,7 @@ public class Cld.ComediTask : AbstractTask {
                str_data += " [devref] : %s\n".printf (devref);
                str_data += " [exec_type] : %s\n".printf (exec_type);
                str_data += " [subdevice] : %d\n".printf (subdevice);
-               str_data += " [poll_type] : %s\n".printf (poll_type);
+               str_data += " [direction] : %s\n".printf (direction);
                str_data += " [poll_interval_ms] : %d\n".printf (poll_interval_ms);
                str_data += " [channels.size] : %d\n".printf (channels.size);
         return str_data;
@@ -164,8 +163,10 @@ public class Cld.ComediTask : AbstractTask {
         if (device == null)
             error ("Task %s has no reference to a device.", id);
 
-        if (!(device as ComediDevice).is_open)
+        if (!(device as ComediDevice).is_open) {
+            Cld.debug ("Opening Comedi Device: %s", devref);
             (device as ComediDevice).open ();
+        }
 
         if (!(device as ComediDevice).is_open)
             error ("Failed to open Comedi device: %s", devref);
@@ -175,7 +176,7 @@ public class Cld.ComediTask : AbstractTask {
                 /* XXX TBD */
                 break;
             case "polling":
-                switch (poll_type) {
+                switch (direction) {
                     case "read":
                         direction = "read";
                         do_polling ();

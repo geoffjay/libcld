@@ -24,6 +24,18 @@ using Comedi;
 using Cld;
 
 public class Cld.ComediDevice : Cld.AbstractDevice {
+    /**
+     * Property backing fields.
+     */
+    private Gee.Map<string, Object> _objects;
+
+    /**
+     * {@inheritDoc}
+     */
+    public override Gee.Map<string, Object> objects {
+        get { return (_objects); }
+        set { update_objects (value); }
+    }
 
     /**
      * {@inheritDoc}
@@ -148,6 +160,14 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public override void update_objects (Gee.Map<string, Object> val) {
+        _objects = val;
+    }
+
+
+    /**
      * Build a Comedi instruction list for a single subdevice
      * from a list of channels.
      **/
@@ -173,15 +193,6 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
     public void set_out_channels (Gee.Map<string, Object> channels, int subdevice) {
         ao_channels = channels;
         ao_subdevice = subdevice;
-    }
-
-    /**
-     * This is just a test function used for debugging only.
-     */
-    public void test () {
-        uint data[1];
-        device.data_read (0, 0, 4, AnalogReference.GROUND, data);
-        message ("data: %u", data[0]);
     }
 
     /**
@@ -222,7 +233,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
             range = device.get_range (ao_subdevice, (channel as AOChannel).num, (channel as AOChannel).range);
             maxdata = device.get_maxdata (ao_subdevice, (channel as AOChannel).num);
             data = (uint)((val / 100.0) * maxdata);
-            message ("%s scaled_value: %.3f, data: %u", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
+           // message ("%s scaled_value: %.3f, data: %u", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
             device.data_write (ao_subdevice, (channel as AOChannel).num, (channel as AOChannel).range, AnalogReference.GROUND, data);
         }
      }

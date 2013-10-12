@@ -225,6 +225,14 @@ public class Cld.Builder : AbstractContainer {
                             else
                                 object = null;
                             break;
+                        case "subdevice":
+                            var sdtype = iter->get_prop ("sdtype");
+                            if (sdtype =="comedi") {
+                                object = new ComediSubDevice.from_xml_node (iter);
+                            }
+                            else
+                                object = null;
+                            break;
                         case "task":
                             var ttype = iter->get_prop ("ttype");
                             if (ttype == "comedi") {

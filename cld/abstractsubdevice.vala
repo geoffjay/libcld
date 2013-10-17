@@ -43,7 +43,7 @@ public abstract class Cld.AbstractSubDevice : AbstractObject, Cld.SubDevice {
     public override string to_string () {
         string str_data  = "CldSubDevice\n";
                str_data += " [num  ] : %d\n".printf (num);
-               str_data += " [type] : %s\n".printf (type);
+               str_data += " [sdtype] : %s\n".printf (sdtype);
         return str_data;
     }
 }

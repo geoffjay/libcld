@@ -33,7 +33,7 @@ public interface Cld.SubDevice :  GLib.Object {
     /**
      *
      */
-    public abstract string type { get; set; }
+    public abstract string sdtype { get; set; }
 }
 
 

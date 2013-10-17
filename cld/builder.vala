@@ -217,30 +217,22 @@ public class Cld.Builder : AbstractContainer {
                             else
                                 object = null;
                             break;
-                        case "device":
-                            var dtype = iter->get_prop ("dtype");
-                            if (dtype == "comedi") {
-                                object = new ComediDevice.from_xml_node (iter);
-                            }
-                            else
-                                object = null;
-                            break;
-                        case "subdevice":
-                            var sdtype = iter->get_prop ("sdtype");
-                            if (sdtype =="comedi") {
-                                object = new ComediSubDevice.from_xml_node (iter);
-                            }
-                            else
-                                object = null;
-                            break;
-                        case "task":
-                            var ttype = iter->get_prop ("ttype");
-                            if (ttype == "comedi") {
-                                object = new ComediTask.from_xml_node (iter);
-                            }
-                            else
-                                object = null;
-                            break;
+//                        case "device":
+//                            var dtype = iter->get_prop ("dtype");
+//                            if (dtype == "comedi") {
+//                                object = new ComediDevice.from_xml_node (iter);
+//                            }
+//                            else
+//                                object = null;
+//                            break;
+//                        case "task":
+//                            var ttype = iter->get_prop ("ttype");
+//                            if (ttype == "comedi") {
+//                                object = new ComediTask.from_xml_node (iter);
+//                            }
+//                            else
+//                                object = null;
+//                            break;
                         default:
                             object = null;
                             break;
@@ -344,27 +336,28 @@ public class Cld.Builder : AbstractContainer {
                         (object as Module).port = (port as Port);
                 }
             }
-        }
-
-        foreach (var object in objects.values) {
 
             /* Comedi Task references a Comedi device */
-            if (object is ComediTask) {
-                ref_id = (object as ComediTask).devref;
-
-                if (ref_id != null) {
-                    var device = get_object (ref_id);
-                    if (device != null && device is ComediDevice) {
-                        (object as ComediTask).device = (device as Device);
-                    }
-                }
-
-                /* Get all of the channels */
-                /* Build a channel list for this task. */
-                foreach (var task_channel in channels.values) {
-                    if (((task_channel as Channel).taskref == (object as ComediTask).id) &&
-                        (ref_id == (task_channel as Channel).devref)) {
-                        (object as ComediTask).add_channel (task_channel);
+            if (object is Daq) {
+                foreach (var device in (object as Container).objects.values) {
+                    foreach (var devobject in (device as Container).objects.values) {
+                        if ((devobject is ComediSubDevice) && (device is ComediDevice)) {
+                            message ("%s %s", device.id, devobject.id);
+                        }
+//
+//                if (ref_id != null) {
+//                    var device = get_object (ref_id);
+//                    if (device != null && device is ComediDevice) {
+//                        (object as ComediTask).device = (device as Device);
+//                    }
+//                }
+//
+//                /* Get all of the channels */
+//                /* Build a channel list for this task. */
+//                foreach (var task_channel in channels.values) {
+//                    if (((task_channel as Channel).taskref == (object as ComediTask).id) &&
+//                        (ref_id == (task_channel as Channel).devref)) {
+//                        (object as ComediTask).add_channel (task_channel);
                     }
                 }
             }

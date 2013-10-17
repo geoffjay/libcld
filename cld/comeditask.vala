@@ -145,14 +145,14 @@ public class Cld.ComediTask : AbstractTask {
      * {@inheritDoc}
      */
     public override string to_string () {
-        string str_data  = "Cld.ComediTask\n";
-               str_data += " [id  ] : %s\n".printf (id);
-               str_data += " [devref] : %s\n".printf (devref);
-               str_data += " [exec_type] : %s\n".printf (exec_type);
-               str_data += " [subdevice] : %d\n".printf (subdevice);
-               str_data += " [direction] : %s\n".printf (direction);
-               str_data += " [poll_interval_ms] : %d\n".printf (poll_interval_ms);
-               str_data += " [channels.size] : %d\n".printf (channels.size);
+
+        string str_data = "[%s  ] : Comedi task\n".printf (id);
+               str_data += "      [devref] : %s\n".printf (devref);
+               str_data += "      [exec_type] : %s\n".printf (exec_type);
+               str_data += "      [subdevice] : %d\n".printf (subdevice);
+               str_data += "      [direction] : %s\n".printf (direction);
+               str_data += "      [poll_interval_ms] : %d\n".printf (poll_interval_ms);
+               str_data += "      [channels.size] : %d\n".printf (channels.size);
         return str_data;
     }
 
@@ -233,7 +233,7 @@ public class Cld.ComediTask : AbstractTask {
         }
 
         if (!GLib.Thread.supported ()) {
-            stderr.printf ("Cannot run logging without thread support.\n");
+            stderr.printf ("Cannot run polling without thread support.\n");
             active = false;
             return;
         }

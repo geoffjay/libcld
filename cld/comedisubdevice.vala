@@ -63,8 +63,8 @@ public class Cld.ComediSubDevice : Cld.AbstractSubDevice {
                             val = iter->get_content ();
                             num = int.parse (val);
                             break;
-                        case "type":
-                            type = iter->get_content ();
+                        case "sdtype":
+                            sdtype = iter->get_content ();
                             break;
                         default:
                             break;
@@ -73,6 +73,16 @@ public class Cld.ComediSubDevice : Cld.AbstractSubDevice {
             }
         }
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string to_string () {
+        string str_data  = "[%s] : Comedi subdevice\n".printf (id);
+               str_data += "      [sdtype] : %s\n".printf (sdtype);
+        return str_data;
+    }
+
 
 }
 

@@ -89,6 +89,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * Default construction
      */
     public ComediDevice () {
+        objects = new Gee.TreeMap<string, Object> ();
         id = "dev0";
         hw_type = HardwareType.INPUT;
         driver = DeviceType.COMEDI;
@@ -99,7 +100,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * Construction using an xml node
      */
     public ComediDevice.from_xml_node (Xml.Node *node) {
-
+        objects = new Gee.TreeMap<string, Object> ();
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
@@ -123,6 +124,20 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
                                 hw_type = HardwareType.COUNTER;
                             else if (type == "multifunction")
                                 hw_type = HardwareType.MULTIFUNCTION;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                else if (iter->name == "object") {
+                    switch (iter->get_prop ("type")) {
+                        case "subdevice":
+                            var subdev = new ComediSubDevice.from_xml_node (iter);
+                            add (subdev as Cld.Object);
+                            break;
+                        case "task":
+                            var task = new ComediTask.from_xml_node (iter);
+                            add (task as Cld.Object);
                             break;
                         default:
                             break;
@@ -159,12 +174,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
             return false;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Object> val) {
-        _objects = val;
-    }
+
 
 
     /**
@@ -252,10 +262,53 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
         return i;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public override void update_objects (Gee.Map<string, Object> val) {
+        _objects = val;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override void add (Object object) {
+        objects.set (object.id, object);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override Object? get_object (string id) {
+        Object? result = null;
+
+        if (objects.has_key (id)) {
+            result = objects.get (id);
+        } else {
+            foreach (var object in objects.values) {
+                if (object is Container) {
+                    result = (object as Container).get_object (id);
+                    if (result != null) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+
     public override string to_string () {
         string str_data = "[%s] : Comedi device using file %s\n".printf (
                             id, filename);
         /* add the hardware and driver types later */
+        if (!objects.is_empty) {
+            foreach (var subdev in objects.values) {
+                str_data += "    %s".printf (subdev.to_string ());
+            }
+        }
+
         return str_data;
     }
 

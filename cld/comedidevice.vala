@@ -242,10 +242,6 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
                 }
                 else if (iter->name == "object") {
                     switch (iter->get_prop ("type")) {
-                        case "subdevice":
-                            var subdev = new ComediSubDevice.from_xml_node (iter);
-                            add (subdev as Cld.Object);
-                            break;
                         case "task":
                             var task = new ComediTask.from_xml_node (iter);
                             add (task as Cld.Object);

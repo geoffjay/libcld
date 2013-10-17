@@ -43,24 +43,25 @@ public class Cld.ComediTask : AbstractTask {
     public override string id { get; set; }
 
    /**
-    * ...
+    * The sub device reference name.
     */
-    public string devref { get; set; }
+    public string subdevref { get; set; }
+
+    /**
+     * The referenced subdevice.
+     */
+    public ComediSubDevice subdevice { get; set; }
 
    /**
-    * ...
+    * The Comedi integer reference number of the subdevice.
     */
-    public Device device { get; set; }
+    public int subdevnum { get; set; }
 
    /**
     * ...
     */
     public string exec_type { get; set; }
 
-   /**
-    * ...
-    */
-    public int subdevice { get; set; }
 
    /**
     * ...
@@ -93,12 +94,11 @@ public class Cld.ComediTask : AbstractTask {
     public ComediTask () {
         active = false;
         id = "tk0";
-        devref = "dev00";
-        device = new ComediDevice ();
+        subdevref = "sub0";
+        subdevice = new ComediSubDevice ();
         exec_type = "polling";
-        subdevice = 0;
         direction = "read";
-        poll_interval_ms = 100;
+        interval_ms = 100;
 
         channels = new Gee.TreeMap<string, Object> ();
     }
@@ -116,20 +116,17 @@ public class Cld.ComediTask : AbstractTask {
             iter != null; iter = iter->next) {
                 if (iter->name == "property") {
                     switch (iter->get_prop ("name")) {
-                        case "devref":
-                            devref = iter->get_content ();
+                        case "subdevref":
+                            subdevref = iter->get_content ();
                             break;
                         case "exec-type":
                             exec_type = iter->get_content ();
                             break;
-                        case "subdevice":
-                            subdevice = int.parse (iter->get_content ());
-                            break;
                         case "direction":
                             direction = iter->get_content ();
                             break;
-                        case "poll-interval-ms":
-                            poll_interval_ms = int.parse (iter->get_content ());
+                        case "interval-ms":
+                            interval_ms = int.parse (iter->get_content ());
                             break;
                         default:
                             break;
@@ -147,11 +144,10 @@ public class Cld.ComediTask : AbstractTask {
     public override string to_string () {
 
         string str_data = "[%s  ] : Comedi task\n".printf (id);
-               str_data += "      [devref] : %s\n".printf (devref);
+               str_data += "      [subdevref] : %s\n".printf (subdevref);
                str_data += "      [exec_type] : %s\n".printf (exec_type);
-               str_data += "      [subdevice] : %d\n".printf (subdevice);
                str_data += "      [direction] : %s\n".printf (direction);
-               str_data += "      [poll_interval_ms] : %d\n".printf (poll_interval_ms);
+               str_data += "      [interval_ms] : %d\n".printf (interval_ms);
                str_data += "      [channels.size] : %d\n".printf (channels.size);
         return str_data;
     }
@@ -160,16 +156,8 @@ public class Cld.ComediTask : AbstractTask {
      * {@inheritDoc}
      */
     public override void run () {
-        if (device == null)
-            error ("Task %s has no reference to a device.", id);
-
-        if (!(device as ComediDevice).is_open) {
-            Cld.debug ("Opening Comedi Device: %s", devref);
-            (device as ComediDevice).open ();
-        }
-
-        if (!(device as ComediDevice).is_open)
-            error ("Failed to open Comedi device: %s", devref);
+        if (subdevice == null)
+            error ("Task %s has no reference to a subdevice.", id);
 
         switch (exec_type) {
             case "streaming":
@@ -179,15 +167,14 @@ public class Cld.ComediTask : AbstractTask {
                 switch (direction) {
                     case "read":
                         direction = "read";
-                        do_polling ();
                         break;
                     case "write":
                         direction = "write";
-                        do_polling ();
                         break;
                     default:
                         break;
                 }
+                do_polling ();
                 break;
             default:
                 break;
@@ -198,14 +185,9 @@ public class Cld.ComediTask : AbstractTask {
      * {@inheritDoc}
      */
     public override void stop () {
-        if (active) {
-            active = false;
-            thread.join ();
-            device.close ();
-            if ((device as ComediDevice).is_open) {
-                message ("Failed to close Comedi device: %s", devref);
-            }
-        }
+//        if (active) {
+//            active = false;
+//            thread.join ();
     }
 
     /**
@@ -223,10 +205,10 @@ public class Cld.ComediTask : AbstractTask {
         switch (direction) {
             case "read":
                 // setup the device instruction list based on channel list and subdevice
-                (device as ComediDevice).set_insn_list (channels, subdevice);
+//                (subdevice as ComediSubDevice).set_insn_list (channels);
                 break;
             case "write":
-                (device as ComediDevice).set_out_channels (channels, subdevice);
+                (subdevice as ComediSubDevice).set_out_channels (channels);
                 break;
             default:
                 break;
@@ -258,10 +240,10 @@ public class Cld.ComediTask : AbstractTask {
     private void trigger_device () {
         switch (direction) {
             case "read":
-                (device as ComediDevice).execute_instruction_list ();
+//                (device as ComediDevice).execute_instruction_list ();
                 break;
             case "write":
-                (device as ComediDevice).execute_polled_output ();
+//                (device as ComediDevice).execute_polled_output ();
                 break;
             default:
                 break;
@@ -302,10 +284,10 @@ public class Cld.ComediTask : AbstractTask {
                 mutex.lock ();
                 try {
 #if HAVE_GLIB232
-                    end_time = get_monotonic_time () + task.poll_interval_ms * TimeSpan.MILLISECOND;
+                    end_time = get_monotonic_time () + task.interval_ms * TimeSpan.MILLISECOND;
                     while (cond.wait_until (mutex, end_time))
 #else
-                    next_time.add (task.poll_interval_ms * (long)TimeSpan.MILLISECOND);
+                    next_time.add (task.interval_ms * (long)TimeSpan.MILLISECOND);
                     while (cond.timed_wait (mutex, next_time))
 #endif
                         ; /* do nothing */

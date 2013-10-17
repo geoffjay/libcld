@@ -217,22 +217,6 @@ public class Cld.Builder : AbstractContainer {
                             else
                                 object = null;
                             break;
-//                        case "device":
-//                            var dtype = iter->get_prop ("dtype");
-//                            if (dtype == "comedi") {
-//                                object = new ComediDevice.from_xml_node (iter);
-//                            }
-//                            else
-//                                object = null;
-//                            break;
-//                        case "task":
-//                            var ttype = iter->get_prop ("ttype");
-//                            if (ttype == "comedi") {
-//                                object = new ComediTask.from_xml_node (iter);
-//                            }
-//                            else
-//                                object = null;
-//                            break;
                         default:
                             object = null;
                             break;
@@ -326,7 +310,7 @@ public class Cld.Builder : AbstractContainer {
                 (object as Cld.Log).connect_signals ();
             }
 
-            /* Setup the device references for all of the channel types */
+            /* Setup port references for all of the modules */
             if (object is Module) {
                 ref_id = (object as Module).portref;
                 Cld.debug ("Assigning Port %s to Module %s\n", ref_id, object.id);
@@ -337,32 +321,31 @@ public class Cld.Builder : AbstractContainer {
                 }
             }
 
-            /* Comedi Task references a Comedi device */
+            /* Each device in daq references tasks.  */
             if (object is Daq) {
                 foreach (var device in (object as Container).objects.values) {
                     foreach (var devobject in (device as Container).objects.values) {
-                        if ((devobject is ComediSubDevice) && (device is ComediDevice)) {
-                            message ("%s %s", device.id, devobject.id);
+                        if ((devobject is ComediTask) && (device is ComediDevice)) {
+                            set_channels (devobject as ComediTask);
                         }
-//
-//                if (ref_id != null) {
-//                    var device = get_object (ref_id);
-//                    if (device != null && device is ComediDevice) {
-//                        (object as ComediTask).device = (device as Device);
-//                    }
-//                }
-//
-//                /* Get all of the channels */
-//                /* Build a channel list for this task. */
-//                foreach (var task_channel in channels.values) {
-//                    if (((task_channel as Channel).taskref == (object as ComediTask).id) &&
-//                        (ref_id == (task_channel as Channel).devref)) {
-//                        (object as ComediTask).add_channel (task_channel);
                     }
                 }
             }
         }
     }
+
+    /**
+     * Set a channel list for a Comedi task.
+     **/
+     public void set_channels (ComediTask task) {
+        /* Get all of the channels */
+        /* Build a channel list for this task. */
+        foreach (var task_channel in channels.values) {
+            if ((task_channel as Channel).taskref == (task as ComediTask).id) {
+                (task as ComediTask).add_channel (task_channel);
+            }
+        }
+     }
 
     /**
      * {@inheritDoc}

@@ -74,6 +74,12 @@ public class Cld.ComediSubDevice : Cld.AbstractSubDevice {
         }
     }
 
+    public void set_out_channels (Gee.Map<string, Object> channels, int subdevice) {
+        ao_channels = channels;
+        ao_subdevice = subdevice;
+    }
+
+
     /**
      * {@inheritDoc}
      */

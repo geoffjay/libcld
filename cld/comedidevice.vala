@@ -77,14 +77,11 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
     /**
      * The comedi specific hardware device that this class will use.
      */
-    protected Comedi.Device device;
+    public Comedi.Device dev;
+//    public Comedi.Device dev {
+//        get { return _dev; }
+//    }
 
-    private Comedi.InstructionList instruction_list;
-    private Gee.Map<string, Object> ai_channels;
-    private Gee.Map<string, Object> ao_channels;
-    private const int NSAMPLES = 10; //XXX Why is this set to 10 (Steve)??
-    private int ai_subdevice;
-    private int ao_subdevice;
     /**
      * Default construction
      */
@@ -147,8 +144,8 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * {@inheritDoc}
      */
     public override bool open () {
-        device = new Comedi.Device (filename);
-        if (device != null) {
+        dev = new Comedi.Device (filename);
+        if (dev != null) {
             _is_open = true;
             return true;
         }
@@ -162,7 +159,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * {@inheritDoc}
      */
     public override bool close () {
-        if (device.close () == 0) {
+        if (dev.close () == 0) {
             _is_open = false;
             return true;
         }
@@ -171,89 +168,16 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
     }
 
 
-
-
-    /**
-     * Build a Comedi instruction list for a single subdevice
-     * from a list of channels.
-     **/
-    public void set_insn_list (Gee.Map<string, Object> channels, int subdevice) {
-        ai_channels = channels;
-        ai_subdevice = subdevice;
-        Instruction[] instructions = new Instruction [ai_channels.size];
-        int n = 0;
-        instruction_list.n_insns = channels.size;
-        foreach (var channel in channels.values) {
-            instructions[n] = Instruction ();
-            instructions[n].insn = InstructionAttribute.READ;
-            instructions[n].n    = NSAMPLES;
-            instructions[n].data = new uint [NSAMPLES];
-            instructions[n].subdev = subdevice;
-            instructions[n].chanspec = pack (n, (channel as AIChannel).
-                                        range, AnalogReference.GROUND);
-            n++;
-        }
-        instruction_list.insns = instructions;
-    }
-
-    public void set_out_channels (Gee.Map<string, Object> channels, int subdevice) {
-        ao_channels = channels;
-        ao_subdevice = subdevice;
-    }
-
-    /**
-     * This method executes a Comedi Instruction list.
-     */
-    public void execute_instruction_list () {
-        Comedi.Range range;
-        uint maxdata;
-        int ret, i, j;
-        double meas;
-
-        ret = device.do_insnlist (instruction_list);
-        if (ret < 0)
-            perror ("do_insnlist failed:");
-        i = 0;
-        foreach (var channel in ai_channels.values) {
-            meas = 0.0;
-            maxdata = device.get_maxdata (ai_subdevice, (channel as AIChannel).num);
-            for (j = 0; j < NSAMPLES; j++) {
-                range = device.get_range (ai_subdevice, (channel as AIChannel).num, (channel as AIChannel).range);
-                //message ("range min: %.3f, range max: %.3f, units: %u", range.min, range.max, range.unit);
-                meas += Comedi.to_phys (instruction_list.insns[i].data[j], range, maxdata);
-                //message ("instruction_list.insns[%d].data[%d]: %u, physical value: %.3f", i, j, instruction_list.insns[i].data[j], meas/(j+1));
-            }
-            meas = meas / (j);
-            (channel as AIChannel).add_raw_value (meas);
-//            Cld.debug ("Channel: %s, Raw value: %.3f\n", (channel as AIChannel).id, (channel as AIChannel).raw_value);
-            i++;
-        }
-     }
-
-     public void execute_polled_output () {
-        Comedi.Range range;
-        uint maxdata,  data;
-        double val;
-        foreach (var channel in ao_channels.values) {
-            val = (channel as AOChannel).scaled_value;
-            range = device.get_range (ao_subdevice, (channel as AOChannel).num, (channel as AOChannel).range);
-            maxdata = device.get_maxdata (ao_subdevice, (channel as AOChannel).num);
-            data = (uint)((val / 100.0) * maxdata);
-           // message ("%s scaled_value: %.3f, data: %u", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
-            device.data_write (ao_subdevice, (channel as AOChannel).num, (channel as AOChannel).range, AnalogReference.GROUND, data);
-        }
-     }
-
     /**
      * Retrieve information about the Comedi device.
      */
     public Information info () {
         var i = new Information ();
         i.id = id;
-        i.version_code = device.get_version_code ();
-        i.driver_name = device.get_driver_name ();
-        i.board_name = device.get_board_name ();
-        i.n_subdevices = device.get_n_subdevices ();
+        i.version_code = dev.get_version_code ();
+        i.driver_name = dev.get_driver_name ();
+        i.board_name = dev.get_board_name ();
+        i.n_subdevices = dev.get_n_subdevices ();
 
         return i;
     }

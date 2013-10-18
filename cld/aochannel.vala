@@ -159,6 +159,7 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel, ScalableChanne
                         case "subdevnum":
                             val = iter->get_content ();
                             subdevnum = int.parse (val);
+                            break;
                         case "calref":
                             /* this should maybe be an object property,
                              * possibly fix later */

@@ -30,6 +30,13 @@ public interface Cld.Channel : Cld.Object {
     public abstract int num { get; set; }
 
     /**
+     * The subdevice number; an integer reference as used by Comedi devices.
+     * It would be preferable to not do it this way but works as a temporary
+     * solution.
+     */
+    public abstract int subdevnum { get; set; }
+
+    /**
      * A reference to the device that this channel belongs to, this may be a
      * backwards approach and should be replaced with a Device containing a list
      * of channels.

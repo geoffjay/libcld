@@ -7,7 +7,6 @@ lib_LTLIBRARIES = \
 #if USE_COMEDI
 COMEDI_SOURCES = \
 	comedidevice.vala \
-	comedisubdevice.vala \
 	comeditask.vala \
 	$(NULL)
 #endif
@@ -26,7 +25,6 @@ libcld_0_2_la_SOURCES = \
 	abstractmodule.vala \
 	abstractobject.vala \
 	abstractport.vala \
-	abstractsubdevice.vala \
 	abstracttask.vala \
 	aichannel.vala \
 	aochannel.vala \
@@ -52,7 +50,6 @@ libcld_0_2_la_SOURCES = \
 	port.vala \
 	serialport.vala \
 	socketport.vala \
-	subdevice.vala \
 	task.vala \
 	vchannel.vala \
 	velmexmodule.vala \

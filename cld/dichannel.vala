@@ -35,6 +35,11 @@ public class Cld.DIChannel : AbstractChannel, DChannel, IChannel {
     public override int num { get; set; }
 
     /**
+     * {@inheritdoc}
+     */
+    public override int subdevnum { get; set; }
+
+    /**
      * {@inheritDoc}
      */
     public override string devref { get; set; }
@@ -108,6 +113,9 @@ public class Cld.DIChannel : AbstractChannel, DChannel, IChannel {
                             value = iter->get_content ();
                             num = int.parse (value);
                             break;
+                        case "subdevnum":
+                            value = iter->get_content ();
+                            subdevnum = int.parse (value);
                         case "taskref":
                            /* this should maybe be an object property,
                              * possibly fix later */

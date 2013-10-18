@@ -35,6 +35,11 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChanne
     public override int num { get; set; }
 
     /**
+     * {@inheritdoc}
+     */
+    public override int subdevnum { get; set; }
+
+    /**
      * {@inheritDoc}
      */
     public override string devref { get; set; }
@@ -212,6 +217,9 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChanne
                             val = iter->get_content ();
                             num = int.parse (val);
                             break;
+                        case "subdevnum":
+                            val = iter->get_content ();
+                            subdevnum = int.parse (val);
                         case "naverage":
                             val = iter->get_content ();
                             raw_value_list_size = int.parse (val);

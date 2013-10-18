@@ -45,23 +45,17 @@ public class Cld.ComediTask : AbstractTask {
    /**
     * The sub device reference name.
     */
-    public string subdevref { get; set; }
+    public string devref { get; set; }
 
     /**
      * The referenced subdevice.
      */
-    public ComediSubDevice subdevice { get; set; }
-
-   /**
-    * The Comedi integer reference number of the subdevice.
-    */
-    public int subdevnum { get; set; }
+    public Device device { get; set; }
 
    /**
     * ...
     */
     public string exec_type { get; set; }
-
 
    /**
     * ...
@@ -71,7 +65,7 @@ public class Cld.ComediTask : AbstractTask {
    /**
     * ...
     */
-    public int poll_interval_ms { get; set; }
+    public int interval_ms { get; set; }
 
    /**
     * ...
@@ -94,8 +88,8 @@ public class Cld.ComediTask : AbstractTask {
     public ComediTask () {
         active = false;
         id = "tk0";
-        subdevref = "sub0";
-        subdevice = new ComediSubDevice ();
+        devref = "dev0";
+        device = new ComediDevice ();
         exec_type = "polling";
         direction = "read";
         interval_ms = 100;
@@ -116,8 +110,8 @@ public class Cld.ComediTask : AbstractTask {
             iter != null; iter = iter->next) {
                 if (iter->name == "property") {
                     switch (iter->get_prop ("name")) {
-                        case "subdevref":
-                            subdevref = iter->get_content ();
+                        case "devref":
+                            devref = iter->get_content ();
                             break;
                         case "exec-type":
                             exec_type = iter->get_content ();
@@ -144,7 +138,7 @@ public class Cld.ComediTask : AbstractTask {
     public override string to_string () {
 
         string str_data = "[%s  ] : Comedi task\n".printf (id);
-               str_data += "      [subdevref] : %s\n".printf (subdevref);
+               str_data += "      [devref] : %s\n".printf (devref);
                str_data += "      [exec_type] : %s\n".printf (exec_type);
                str_data += "      [direction] : %s\n".printf (direction);
                str_data += "      [interval_ms] : %d\n".printf (interval_ms);
@@ -156,8 +150,8 @@ public class Cld.ComediTask : AbstractTask {
      * {@inheritDoc}
      */
     public override void run () {
-        if (subdevice == null)
-            error ("Task %s has no reference to a subdevice.", id);
+        if (device == null)
+            error ("Task %s has no reference to a device.", id);
 
         switch (exec_type) {
             case "streaming":
@@ -204,11 +198,11 @@ public class Cld.ComediTask : AbstractTask {
 
         switch (direction) {
             case "read":
-                // setup the device instruction list based on channel list and subdevice
-//                (subdevice as ComediSubDevice).set_insn_list (channels);
+                // setup the device instruction list based on channel list and device
+                (device as ComediDevice).set_insn_list (channels);
                 break;
             case "write":
-                (subdevice as ComediSubDevice).set_out_channels (channels);
+//                (device as ComediDevice).set_out_channels (channels);
                 break;
             default:
                 break;

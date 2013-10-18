@@ -34,6 +34,11 @@ public abstract class Cld.AbstractChannel : AbstractObject, Channel {
     /**
      * {@inheritDoc}
      */
+    public abstract int subdevnum { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public abstract string devref { get; set; }
 
     /**

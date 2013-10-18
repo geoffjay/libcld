@@ -326,6 +326,7 @@ public class Cld.Builder : AbstractContainer {
                 foreach (var device in (object as Container).objects.values) {
                     foreach (var devobject in (device as Container).objects.values) {
                         if ((devobject is ComediTask) && (device is ComediDevice)) {
+                            (devobject as ComediTask).device = (device as ComediDevice);
                             set_channels (devobject as ComediTask);
                         }
                     }

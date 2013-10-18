@@ -116,6 +116,7 @@ public class Cld.DIChannel : AbstractChannel, DChannel, IChannel {
                         case "subdevnum":
                             value = iter->get_content ();
                             subdevnum = int.parse (value);
+                            break;
                         case "taskref":
                            /* this should maybe be an object property,
                              * possibly fix later */

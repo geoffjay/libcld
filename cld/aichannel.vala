@@ -220,6 +220,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChanne
                         case "subdevnum":
                             val = iter->get_content ();
                             subdevnum = int.parse (val);
+                            break;
                         case "naverage":
                             val = iter->get_content ();
                             raw_value_list_size = int.parse (val);

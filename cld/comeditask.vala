@@ -33,12 +33,12 @@ public class Cld.ComediTask : AbstractTask {
     private Gee.Map<string, Object>? _channels = null;
 
    /**
-    * ...
+    * {@inheritDoc}
     */
     public override bool active { get; set; }
 
    /**
-    * ...
+    * {@inheritDoc}
     */
     public override string id { get; set; }
 
@@ -74,6 +74,9 @@ public class Cld.ComediTask : AbstractTask {
         get { return _channels; }
         set { _channels = value; }
     }
+
+    private Comedi.InstructionList instruction_list;
+    private const int NSAMPLES = 10; //XXX Why is this set to 10 (Steve)??
 
     /**
      * Internal thread data for log file output handling.
@@ -179,35 +182,38 @@ public class Cld.ComediTask : AbstractTask {
      * {@inheritDoc}
      */
     public override void stop () {
-//        if (active) {
-//            active = false;
-//            thread.join ();
+        if (active) {
+            active = false;
+            thread.join ();
+        }
     }
 
     /**
-     * ...
+     * Adds a channel to the task's list of channels.
      */
     public void add_channel (Object channel) {
         channels.set (channel.id, channel);
     }
 
     /**
-     * ...
+     * Polling tasks spawn a thread of execution. Currently, a task is either input (read)
+     * or output (write) though it could be possible to have a combination of the two
+     * operating in a single task.
      */
     private void do_polling () {
 
         switch (direction) {
             case "read":
                 // setup the device instruction list based on channel list and device
-                (device as ComediDevice).set_insn_list (channels);
+                set_insn_list ();
                 break;
             case "write":
-//                (device as ComediDevice).set_out_channels (channels);
+                // no action required for now.
                 break;
             default:
                 break;
         }
-
+        // Instantiate and launch the thread.
         if (!GLib.Thread.supported ()) {
             stderr.printf ("Cannot run polling without thread support.\n");
             active = false;
@@ -229,15 +235,37 @@ public class Cld.ComediTask : AbstractTask {
     }
 
     /**
-     * ...
+     * Build a Comedi instruction list for a single subdevice
+     * from a list of channels.
+     **/
+    public void set_insn_list () {
+        Instruction[] instructions = new Instruction [channels.size];
+        int n = 0;
+        instruction_list.n_insns = channels.size;
+        foreach (var channel in channels.values) {
+            instructions[n] = Instruction ();
+            instructions[n].insn = InstructionAttribute.READ;
+            instructions[n].n    = NSAMPLES;
+            instructions[n].data = new uint [NSAMPLES];
+            instructions[n].subdev = (channel as Channel).subdevnum;
+            instructions[n].chanspec = pack (n, (channel as AIChannel).
+                                        range, AnalogReference.GROUND);
+            n++;
+        }
+        instruction_list.insns = instructions;
+    }
+
+    /**
+     * Here again the task is input (read) or output (write)
+     * exclusively but that could change as needed.
      */
     private void trigger_device () {
         switch (direction) {
             case "read":
-//                (device as ComediDevice).execute_instruction_list ();
+                execute_instruction_list ();
                 break;
             case "write":
-//                (device as ComediDevice).execute_polled_output ();
+                execute_polled_output ();
                 break;
             default:
                 break;
@@ -245,20 +273,72 @@ public class Cld.ComediTask : AbstractTask {
     }
 
     /**
-     * ...
+     * This method executes a Comedi Instruction list.
+     */
+    public void execute_instruction_list () {
+        Comedi.Range range;
+        uint maxdata;
+        int ret, i, j;
+        double meas;
+
+        ret = (device as ComediDevice).dev.do_insnlist (instruction_list);
+        if (ret < 0)
+            perror ("do_insnlist failed:");
+        i = 0;
+        foreach (var channel in channels.values) {
+            meas = 0.0;
+            maxdata = (device as ComediDevice).dev.get_maxdata (
+                        (channel as Channel).subdevnum, (channel as AIChannel).num);
+            for (j = 0; j < NSAMPLES; j++) {
+
+                range = (device as ComediDevice).dev.get_range (
+                        (channel as Channel).subdevnum, (channel as AIChannel).num,
+                        (channel as AIChannel).range);
+
+                //message ("range min: %.3f, range max: %.3f, units: %u", range.min, range.max, range.unit);
+                meas += Comedi.to_phys (instruction_list.insns[i].data[j], range, maxdata);
+                //message ("instruction_list.insns[%d].data[%d]: %u, physical value: %.3f", i, j, instruction_list.insns[i].data[j], meas/(j+1));
+            }
+            meas = meas / (j);
+            (channel as AIChannel).add_raw_value (meas);
+            //Cld.debug ("Channel: %s, Raw value: %.3f\n", (channel as AIChannel).id, (channel as AIChannel).raw_value);
+            i++;
+        }
+     }
+
+     public void execute_polled_output () {
+        Comedi.Range range;
+        uint maxdata,  data;
+        double val;
+        foreach (var channel in channels.values) {
+            val = (channel as AOChannel).scaled_value;
+
+            range = (device as ComediDevice).dev.get_range (
+                    (channel as Channel).subdevnum, (channel as AOChannel).num,
+                    (channel as AOChannel).range);
+
+            maxdata = (device as ComediDevice).dev.get_maxdata ((channel as Channel).subdevnum, (channel as AOChannel).num);
+            data = (uint)((val / 100.0) * maxdata);
+           // message ("%s scaled_value: %.3f, data: %u", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
+            (device as ComediDevice).dev.data_write (
+                (channel as Channel).subdevnum, (channel as AOChannel).num,
+                (channel as AOChannel).range, AnalogReference.GROUND, data);
+        }
+     }
+
+
+    /**
+     * A thread that is used to implement a polling task.
      */
     public class Thread {
         private ComediTask task;
 
-        /**
-         * ...
-         */
         public Thread (ComediTask task) {
             this.task = task;
         }
 
         /**
-         * ...
+         *
          */
         public void * run () {
             Mutex mutex = new Mutex ();

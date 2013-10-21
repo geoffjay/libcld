@@ -38,6 +38,11 @@ public class Cld.VChannel : AbstractChannel, ScalableChannel {
     /**
      * {@inheritDoc}
      */
+    public override int subdevnum {get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public override string devref { get; set; }
 
     /**

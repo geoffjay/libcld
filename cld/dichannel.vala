@@ -35,6 +35,11 @@ public class Cld.DIChannel : AbstractChannel, DChannel, IChannel {
     public override int num { get; set; }
 
     /**
+     * {@inheritdoc}
+     */
+    public override int subdevnum { get; set; }
+
+    /**
      * {@inheritDoc}
      */
     public override string devref { get; set; }
@@ -64,10 +69,16 @@ public class Cld.DIChannel : AbstractChannel, DChannel, IChannel {
      */
     public override string desc { get; set; }
 
+    private bool _state;
+
     /**
      * {@inheritDoc}
      */
-    public virtual bool state { get; set; }
+    public virtual bool state {
+        get { return _state; }
+        set { new_value (id, value); }
+    }
+
 
     /* default constructor */
     public DIChannel () {
@@ -101,6 +112,10 @@ public class Cld.DIChannel : AbstractChannel, DChannel, IChannel {
                         case "num":
                             value = iter->get_content ();
                             num = int.parse (value);
+                            break;
+                        case "subdevnum":
+                            value = iter->get_content ();
+                            subdevnum = int.parse (value);
                             break;
                         case "taskref":
                            /* this should maybe be an object property,

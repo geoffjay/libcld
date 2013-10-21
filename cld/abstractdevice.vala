@@ -25,7 +25,7 @@
  *
  * Contains common code shared by all device implementations.
  */
-public abstract class Cld.AbstractDevice : Cld.AbstractObject, Cld.Device {
+public abstract class Cld.AbstractDevice : Cld.AbstractContainer, Cld.Device {
 
     /**
      * {@inheritDoc}

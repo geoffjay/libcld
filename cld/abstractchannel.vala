@@ -34,6 +34,11 @@ public abstract class Cld.AbstractChannel : AbstractObject, Channel {
     /**
      * {@inheritDoc}
      */
+    public abstract int subdevnum { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public abstract string devref { get; set; }
 
     /**
@@ -68,6 +73,7 @@ public abstract class Cld.AbstractChannel : AbstractObject, Channel {
         string str_data  = "CldChannel\n";
                str_data += " [id  ] : %s\n".printf (id);
                str_data += " [num ] : %d\n".printf (num);
+               str_data += " [subdev ] : %d\n".printf (subdevnum);
                str_data += " [dev ] : %s\n".printf (devref);
                str_data += " [tag ] : %s\n".printf (tag);
                str_data += " [desc] : %s\n".printf (desc);

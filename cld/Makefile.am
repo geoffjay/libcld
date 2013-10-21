@@ -48,7 +48,7 @@ libcld_0_2_la_SOURCES = \
 	pid.vala \
 	port.vala \
 	serialport.vala \
-	socketport.vala\
+	socketport.vala \
 	task.vala \
 	vchannel.vala \
 	velmexmodule.vala \

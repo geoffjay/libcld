@@ -35,6 +35,11 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel, ScalableChanne
     public override int num { get; set; }
 
     /**
+     * {@inheritdoc}
+     */
+    public override int subdevnum { get; set; }
+
+    /**
      * {@inheritDoc}
      */
     public override string devref { get; set; }
@@ -150,6 +155,10 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel, ScalableChanne
                         case "num":
                             val = iter->get_content ();
                             num = int.parse (val);
+                            break;
+                        case "subdevnum":
+                            val = iter->get_content ();
+                            subdevnum = int.parse (val);
                             break;
                         case "calref":
                             /* this should maybe be an object property,

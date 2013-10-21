@@ -15,7 +15,7 @@ class Cld.SerialPortExample : GLib.Object {
         uint timeout_ms = 20;
 
         port.id = "ser0";
-        port.device = "/dev/ttyACM0";
+        port.device = "/dev/ttyACM1";
         port.baud_rate = 115200;
         port.handshake = SerialPort.Handshake.HARDWARE;
 
@@ -28,7 +28,7 @@ class Cld.SerialPortExample : GLib.Object {
 
     public bool send_data_cb () {
 
-        string message = "DATAM\t7000000.0000\r\n";
+        string message = "DATAM\t7564809\t11534981\t18652492\t8951674\0";
 
 /*
  *        for (int i = 0; i < 1; i++) {
@@ -40,7 +40,7 @@ class Cld.SerialPortExample : GLib.Object {
  *
  *        message += "\r\n";
  */
-        stdout.printf ("%s", message);
+        stdout.printf ("%s\r\n", message);
         port.send_bytes (message.to_utf8 (), message.length);
 
         return true;

@@ -86,8 +86,8 @@ class Cld.SerialPortExample : GLib.Object {
                 received = received.chug ();
                 received = received.chomp ();
                 string[] tokens = received.split ("\t");
-                foreach (string token in tokens[1:tokens.length]) {
-                    r += "%s,".printf (token);
+                foreach (string token in tokens[0:tokens.length]) {
+                    r += "%s\t".printf (token);
                 }
                 r = r.substring (0, r.length - 1);
                 stdout.printf ("%s\n", r);

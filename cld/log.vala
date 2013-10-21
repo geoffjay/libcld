@@ -73,27 +73,32 @@ public class Cld.Column : AbstractObject {
 public class Cld.Log : AbstractContainer {
 
     /**
+     * Property backing fields.
+     */
+    private Gee.Map<string, Object> _objects;
+
+    /**
      * {@inheritDoc}
      */
     public override string id { get; set; }
 
     /**
-     *
+     * The name of the log file.
      */
     public string name { get; set; }
 
     /**
-     *
+     * File system path to write the log file to.
      */
     public string path { get; set; }
 
     /**
-     *
+     * Base file name to use for the log file.
      */
     public string file { get; set; }
 
     /**
-     *
+     * The log file rate in Hz.
      */
     public double rate { get; set; }
 
@@ -108,12 +113,7 @@ public class Cld.Log : AbstractContainer {
     public bool active { get; set; default = false; }
 
     /**
-     *
-     */
-    public string header { get; set; }
-
-    /**
-     *
+     * Flag to check whether the file is open or not.
      */
     public bool is_open { get; set; }
 
@@ -122,7 +122,14 @@ public class Cld.Log : AbstractContainer {
      */
     public string date_format { get; set; }
 
-    private Gee.Map<string, Object> _objects;
+    /**
+     * Determines whether the file is renamed on open using the format string.
+     */
+    public bool format_on_open { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public override Gee.Map<string, Object> objects {
         get { return (_objects); }
         set { update_objects (value); }
@@ -189,6 +196,10 @@ public class Cld.Log : AbstractContainer {
                         case "format":
                             date_format = iter->get_content ();
                             break;
+                        case "format-on-open":
+                            value = iter->get_content ();
+                            format_on_open = bool.parse (value);
+                            break;
                         default:
                             break;
                     }
@@ -203,7 +214,7 @@ public class Cld.Log : AbstractContainer {
     }
 
     /**
-     * Connect the column signals.
+     * Connect the columns to their corresponding channel signals.
      */
     public void connect_signals () {
         foreach (var column in objects.values) {
@@ -236,15 +247,27 @@ public class Cld.Log : AbstractContainer {
      */
     public bool file_open () {
         string filename;
+        string temp;
+        string tempname;
+        string tempext;
         DateTime time = new DateTime.now_local ();
+
+        /* if it was requested rename the file on open */
+        if (format_on_open) {
+            disassemble_filename (file, out tempname, out tempext);
+            temp = "%s%s-%s.%s".printf (path, tempname, time.format (date_format), tempext);
+        } else {
+            temp = file;
+        }
 
         /* original implementation checked for the existence of requested
          * file and posted error message if it is, reimplement that later */
         if (path.has_suffix ("/"))
-            filename = "%s%s".printf (path, file);
+            filename = "%s%s".printf (path, temp);
         else
-            filename = "%s/%s".printf (path, file);
+            filename = "%s/%s".printf (path, temp);
 
+        /* open the file */
         file_stream = FileStream.open (filename, "w+");
         if (file_stream == null)
             is_open = false;
@@ -260,6 +283,9 @@ public class Cld.Log : AbstractContainer {
         return is_open;
     }
 
+    /**
+     * Close the file.
+     */
     public void file_close () {
         DateTime time = new DateTime.now_local ();
 
@@ -268,17 +294,18 @@ public class Cld.Log : AbstractContainer {
             file_stream.printf ("\nLog file: %s closed at %s",
                                 name, time.format ("%F %T"));
             /* setting a GLib.FileStream object to null apparently forces a
-            * call to stdlib's close () */
+             * call to stdlib's close () */
             file_stream = null;
             is_open = false;
             start_time = null;
         }
     }
 
-    public bool file_is_open () {
-        return is_open;
-    }
-
+    /**
+     * Renames the file using the format string.
+     *
+     * @param reopen Whether or not to reopen a new file using the base name.
+     */
     public void file_mv_and_date (bool reopen) {
         string src;
         string dest;
@@ -310,6 +337,9 @@ public class Cld.Log : AbstractContainer {
             file_open ();
     }
 
+    /**
+     * Writes a standard header to the top of the file.
+     */
     public void write_header () {
         string tags = "Time";
         //string units = "[HH:MM:SS.mmm]";
@@ -342,11 +372,14 @@ public class Cld.Log : AbstractContainer {
             }
         }
 
-        header = "%s\nLogging rate: %.2f Hz\n\n%s\n%s\n".printf (cals, rate, tags, units);
+        var header = "%s\nLogging rate: %.2f Hz\n\n%s\n%s\n".printf (cals, rate, tags, units);
 
         file_print (header);
     }
 
+    /**
+     * Write the next line in the file.
+     */
     public void write_next_line () {
         string line = "";
         char sep = '\t';
@@ -541,7 +574,7 @@ public class Cld.Log : AbstractContainer {
 /**
  * A log file entry class which will be pushed onto the tail of the
  * buffer for log file writes.
- **/
+ */
 public class Cld.Entry : GLib.Object {
     private string _as_string;
     public string as_string {
@@ -553,6 +586,6 @@ public class Cld.Entry : GLib.Object {
 /**
  * A log file buffer class to use to be able to write data to a log
  * file without using a rate timer.
- **/
+ */
 public class Cld.Buffer<G> : GLib.Queue<G> {
 }

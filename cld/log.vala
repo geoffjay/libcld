@@ -73,6 +73,71 @@ public class Cld.Column : AbstractObject {
 public class Cld.Log : AbstractContainer {
 
     /**
+     * Possible options to flag when the log file is time stamped.
+     */
+    public enum TimeStampFlag {
+        NEVER,
+        OPEN,
+        CLOSE,
+        BOTH;
+
+        public string to_string () {
+            switch (this) {
+                case NEVER: return "never";
+                case OPEN:  return "open";
+                case CLOSE: return "close";
+                case BOTH:  return "both";
+                default: assert_not_reached ();
+            }
+        }
+
+        public string description () {
+            switch (this) {
+                case NEVER: return "Never time stamp";
+                case OPEN:  return "Time stamp on open";
+                case CLOSE: return "Time stamp on close";
+                case BOTH:  return "Time stamp on open and close";
+                default: assert_not_reached ();
+            }
+        }
+
+        public static TimeStampFlag[] all () {
+            return {
+                NEVER,
+                OPEN,
+                CLOSE,
+                BOTH
+            };
+        }
+
+        public static TimeStampFlag parse (string value) {
+            try {
+                var regex_never = new Regex ("never", RegexCompileFlags.CASELESS);
+                var regex_open = new Regex ("open", RegexCompileFlags.CASELESS);
+                var regex_close = new Regex ("close", RegexCompileFlags.CASELESS);
+                var regex_both = new Regex ("both", RegexCompileFlags.CASELESS);
+
+                if (regex_never.match (value)) {
+                    return NEVER;
+                } else if (regex_open.match (value)) {
+                    return OPEN;
+                } else if (regex_close.match (value)) {
+                    return CLOSE;
+                } else if (regex_both.match (value)) {
+                    return BOTH;
+                } else {
+                    return NEVER;
+                }
+            } catch (RegexError e) {
+                //Cld.message ("TimeStampFlag regex error: %s", e.message);
+                message ("TimeStampFlag regex error: %s", e.message);
+            }
+
+            return NEVER;
+        }
+    }
+
+    /**
      * Property backing fields.
      */
     private Gee.Map<string, Object> _objects;
@@ -125,7 +190,7 @@ public class Cld.Log : AbstractContainer {
     /**
      * Determines whether the file is renamed on open using the format string.
      */
-    public bool format_on_open { get; set; }
+    public TimeStampFlag time_stamp { get; set; }
 
     /**
      * {@inheritDoc}
@@ -161,6 +226,7 @@ public class Cld.Log : AbstractContainer {
         rate = 10.0;          /* Hz */
         active = false;
         is_open = false;
+        time_stamp = TimeStampFlag.OPEN;
 
         objects = new Gee.TreeMap<string, Object> ();
     }
@@ -196,9 +262,9 @@ public class Cld.Log : AbstractContainer {
                         case "format":
                             date_format = iter->get_content ();
                             break;
-                        case "format-on-open":
+                        case "time-stamp":
                             value = iter->get_content ();
-                            format_on_open = bool.parse (value);
+                            time_stamp = TimeStampFlag.parse (value);
                             break;
                         default:
                             break;
@@ -250,12 +316,13 @@ public class Cld.Log : AbstractContainer {
         string temp;
         string tempname;
         string tempext;
-        DateTime time = new DateTime.now_local ();
+
+        start_time = new DateTime.now_local ();
 
         /* if it was requested rename the file on open */
-        if (format_on_open) {
+        if (time_stamp == TimeStampFlag.OPEN || time_stamp == TimeStampFlag.BOTH) {
             disassemble_filename (file, out tempname, out tempext);
-            temp = "%s%s-%s.%s".printf (path, tempname, time.format (date_format), tempext);
+            temp = "%s-%s.%s".printf (tempname, start_time.format (date_format), tempext);
         } else {
             temp = file;
         }
@@ -269,16 +336,15 @@ public class Cld.Log : AbstractContainer {
 >>>>>>> 48eea6d... Added way to set the file name on open
 
         /* open the file */
+        GLib.message (filename);
         file_stream = FileStream.open (filename, "w+");
-        if (file_stream == null)
+        if (file_stream == null) {
             is_open = false;
-        else
-        {
+        } else {
             is_open = true;
-            start_time = new DateTime.now_local ();
             /* add the header */
             file_stream.printf ("Log file: %s created at %s\n\n",
-                                name, time.format ("%F %T"));
+                                name, start_time.format ("%F %T"));
         }
 
         return is_open;
@@ -298,7 +364,6 @@ public class Cld.Log : AbstractContainer {
              * call to stdlib's close () */
             file_stream = null;
             is_open = false;
-            start_time = null;
         }
     }
 
@@ -322,11 +387,17 @@ public class Cld.Log : AbstractContainer {
         /* generate new file name to move to based on date and
            existing name */
         disassemble_filename (file, out dest_name, out dest_ext);
+        if (time_stamp == TimeStampFlag.OPEN || time_stamp == TimeStampFlag.BOTH) {
+            src = "%s-%s.%s".printf (dest_name, start_time.format (date_format), dest_ext);
+        } else {
+            src = file;
+        }
         dest = "%s%s-%s.%s".printf (path, dest_name, time.format (date_format), dest_ext);
+
         if (path.has_suffix ("/"))
-            src = "%s%s".printf (path, file);
+            src = "%s%s".printf (path, src);
         else
-            src = "%s/%s".printf (path, file);
+            src = "%s/%s".printf (path, src);
 
         /* rename the file */
         if (FileUtils.rename (src, dest) < 0)
@@ -540,12 +611,15 @@ public class Cld.Log : AbstractContainer {
         public void * run () {
             Mutex mutex = new Mutex ();
             Cond cond = new Cond ();
+
 #if HAVE_GLIB232
             int64 end_time;
+
 #else
             TimeVal next_time = TimeVal ();
             next_time.get_current_time ();
 #endif
+
 
             while (log.active) {
                 lock (log) {
@@ -554,6 +628,7 @@ public class Cld.Log : AbstractContainer {
 
                 mutex.lock ();
                 try {
+
 #if HAVE_GLIB232
                     end_time = get_monotonic_time () + log.dt * TimeSpan.MILLISECOND;
                     while (cond.wait_until (mutex, end_time))

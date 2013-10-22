@@ -243,13 +243,19 @@ public class Cld.ComediTask : AbstractTask {
         int n = 0;
         instruction_list.n_insns = channels.size;
         foreach (var channel in channels.values) {
-            instructions[n] = Instruction ();
-            instructions[n].insn = InstructionAttribute.READ;
-            instructions[n].n    = NSAMPLES;
-            instructions[n].data = new uint [NSAMPLES];
-            instructions[n].subdev = (channel as Channel).subdevnum;
-            instructions[n].chanspec = pack (n, (channel as AIChannel).
-                                        range, AnalogReference.GROUND);
+            instructions[n]                 = Instruction ();
+            instructions[n].insn            = InstructionAttribute.READ;
+            instructions[n].data            = new uint [NSAMPLES];
+            instructions[n].subdev          = (channel as Channel).subdevnum;
+            if (channel is AIChannel) {
+                instructions[n].chanspec    = pack (n, (channel as AIChannel).
+                                                range, AnalogReference.GROUND);
+                instructions[n].n            = NSAMPLES;
+            }
+            else if (channel is DIChannel) {
+                instructions[n].chanspec     = pack (n, 0, 0);
+                instructions[n].n            = 1;
+            }
             n++;
         }
         instruction_list.insns = instructions;
@@ -286,24 +292,37 @@ public class Cld.ComediTask : AbstractTask {
             perror ("do_insnlist failed:");
         i = 0;
         foreach (var channel in channels.values) {
-            meas = 0.0;
             maxdata = (device as ComediDevice).dev.get_maxdata (
-                        (channel as Channel).subdevnum, (channel as AIChannel).num);
-            for (j = 0; j < NSAMPLES; j++) {
+                        (channel as Channel).subdevnum, (channel as Channel).num);
 
-                range = (device as ComediDevice).dev.get_range (
-                        (channel as Channel).subdevnum, (channel as AIChannel).num,
+            if (channel is AIChannel) {
+                meas = 0.0;
+                for (j = 0; j < NSAMPLES; j++) {
+                    range = (device as ComediDevice).dev.get_range (
+                        (channel as Channel).subdevnum, (channel as Channel).num,
                         (channel as AIChannel).range);
 
-                //message ("range min: %.3f, range max: %.3f, units: %u", range.min, range.max, range.unit);
-                meas += Comedi.to_phys (instruction_list.insns[i].data[j], range, maxdata);
-                //message ("instruction_list.insns[%d].data[%d]: %u, physical value: %.3f", i, j, instruction_list.insns[i].data[j], meas/(j+1));
+                    //message ("range min: %.3f, range max: %.3f, units: %u", range.min, range.max, range.unit);
+                    meas += Comedi.to_phys (instruction_list.insns[i].data[j], range, maxdata);
+                    //message ("instruction_list.insns[%d].data[%d]: %u, physical value: %.3f", i, j, instruction_list.insns[i].data[j], meas/(j+1));
+                }
+                meas = meas / (j);
+                (channel as AIChannel).add_raw_value (meas);
+                //Cld.debug ("Channel: %s, Raw value: %.3f\n", (channel as AIChannel).id, (channel as AIChannel).raw_value);
+                i++;
             }
-            meas = meas / (j);
-            (channel as AIChannel).add_raw_value (meas);
-            //Cld.debug ("Channel: %s, Raw value: %.3f\n", (channel as AIChannel).id, (channel as AIChannel).raw_value);
-            i++;
+
+            else if (channel is DIChannel) {
+                meas = instruction_list.insns[i].data[0];
+                if (meas > 0.0)
+                    (channel as DIChannel).state = true;
+                else
+                    (channel as DIChannel).state = false;
+                Cld.debug ("Channel: %s, Raw value: %.3f\n", (channel as DIChannel).id, meas);
+                i++;
+            }
         }
+        stdout.printf ("\n");
      }
 
      public void execute_polled_output () {

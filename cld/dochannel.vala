@@ -69,10 +69,19 @@ public class Cld.DOChannel : AbstractChannel, DChannel, OChannel {
      */
     public override string desc { get; set; }
 
+    private bool _state;
+
     /**
      * {@inheritDoc}
      */
-    public virtual bool state { get; set; }
+    public virtual bool state {
+        get { return _state; }
+        set {
+            _state = value;
+            new_value (id, value);
+        }
+    }
+
 
     /* default constructor */
     public DOChannel () {

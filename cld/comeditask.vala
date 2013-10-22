@@ -104,6 +104,7 @@ public class Cld.ComediTask : AbstractTask {
      * Construction using an XML node.
      */
     public ComediTask.from_xml_node (Xml.Node *node) {
+        active = false;
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
@@ -241,17 +242,26 @@ public class Cld.ComediTask : AbstractTask {
     public void set_insn_list () {
         Instruction[] instructions = new Instruction [channels.size];
         int n = 0;
+
         instruction_list.n_insns = channels.size;
+
         foreach (var channel in channels.values) {
-            instructions[n] = Instruction ();
-            instructions[n].insn = InstructionAttribute.READ;
-            instructions[n].n    = NSAMPLES;
-            instructions[n].data = new uint [NSAMPLES];
-            instructions[n].subdev = (channel as Channel).subdevnum;
-            instructions[n].chanspec = pack (n, (channel as AIChannel).
-                                        range, AnalogReference.GROUND);
+            instructions[n]                 = Instruction ();
+            instructions[n].insn            = InstructionAttribute.READ;
+            instructions[n].data            = new uint [NSAMPLES];
+            instructions[n].subdev          = (channel as Channel).subdevnum;
+
+            if (channel is AIChannel) {
+                instructions[n].chanspec    = pack (n, (channel as AIChannel).
+                                                    range, AnalogReference.GROUND);
+                instructions[n].n            = NSAMPLES;
+            } else if (channel is DIChannel) {
+                instructions[n].chanspec     = pack (n, 0, 0);
+                instructions[n].n            = 1;
+            }
             n++;
         }
+
         instruction_list.insns = instructions;
     }
 
@@ -278,31 +288,45 @@ public class Cld.ComediTask : AbstractTask {
     public void execute_instruction_list () {
         Comedi.Range range;
         uint maxdata;
-        int ret, i, j;
+        int ret, i = 0, j;
         double meas;
 
         ret = (device as ComediDevice).dev.do_insnlist (instruction_list);
         if (ret < 0)
             perror ("do_insnlist failed:");
-        i = 0;
-        foreach (var channel in channels.values) {
-            meas = 0.0;
-            maxdata = (device as ComediDevice).dev.get_maxdata (
-                        (channel as Channel).subdevnum, (channel as AIChannel).num);
-            for (j = 0; j < NSAMPLES; j++) {
 
-                range = (device as ComediDevice).dev.get_range (
-                        (channel as Channel).subdevnum, (channel as AIChannel).num,
+        foreach (var channel in channels.values) {
+            maxdata = (device as ComediDevice).dev.get_maxdata (
+                        (channel as Channel).subdevnum, (channel as Channel).num);
+
+            /* Analog Input */
+            if (channel is AIChannel) {
+
+                meas = 0.0;
+                for (j = 0; j < NSAMPLES; j++) {
+                    range = (device as ComediDevice).dev.get_range (
+                        (channel as Channel).subdevnum, (channel as Channel).num,
                         (channel as AIChannel).range);
 
-                //message ("range min: %.3f, range max: %.3f, units: %u", range.min, range.max, range.unit);
-                meas += Comedi.to_phys (instruction_list.insns[i].data[j], range, maxdata);
-                //message ("instruction_list.insns[%d].data[%d]: %u, physical value: %.3f", i, j, instruction_list.insns[i].data[j], meas/(j+1));
+                    //message ("range min: %.3f, range max: %.3f, units: %u", range.min, range.max, range.unit);
+                    meas += Comedi.to_phys (instruction_list.insns[i].data[j], range, maxdata);
+                    //message ("instruction_list.insns[%d].data[%d]: %u, physical value: %.3f", i, j, instruction_list.insns[i].data[j], meas/(j+1));
+                }
+
+                meas = meas / (j);
+                (channel as AIChannel).add_raw_value (meas);
+                Cld.debug ("Channel: %s, Raw value: %.3f\n", (channel as AIChannel).id, (channel as AIChannel).raw_value);
+                i++;
+            } else if (channel is DIChannel) {
+
+                meas = instruction_list.insns[i].data[0];
+                if (meas > 0.0)
+                    (channel as DChannel).state = true;
+                else
+                    (channel as DChannel).state = false;
+                Cld.debug ("Channel: %s, Raw value: %.3f\n", (channel as DIChannel).id, meas);
+                i++;
             }
-            meas = meas / (j);
-            (channel as AIChannel).add_raw_value (meas);
-            //Cld.debug ("Channel: %s, Raw value: %.3f\n", (channel as AIChannel).id, (channel as AIChannel).raw_value);
-            i++;
         }
      }
 
@@ -310,19 +334,31 @@ public class Cld.ComediTask : AbstractTask {
         Comedi.Range range;
         uint maxdata,  data;
         double val;
+
         foreach (var channel in channels.values) {
-            val = (channel as AOChannel).scaled_value;
 
-            range = (device as ComediDevice).dev.get_range (
+            if (channel is AOChannel) {
+                val = (channel as AOChannel).scaled_value;
+                range = (device as ComediDevice).dev.get_range (
+                        (channel as Channel).subdevnum, (channel as AOChannel).num,
+                        (channel as AOChannel).range);
+
+                maxdata = (device as ComediDevice).dev.get_maxdata ((channel as Channel).subdevnum, (channel as AOChannel).num);
+                data = (uint)((val / 100.0) * maxdata);
+               // message ("%s scaled_value: %.3f, data: %u", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
+                (device as ComediDevice).dev.data_write (
                     (channel as Channel).subdevnum, (channel as AOChannel).num,
-                    (channel as AOChannel).range);
+                    (channel as AOChannel).range, AnalogReference.GROUND, data);
+            } else if (channel is DOChannel) {
+                if ((channel as DOChannel).state)
+                    data = 1;
+                else
+                    data = 0;
 
-            maxdata = (device as ComediDevice).dev.get_maxdata ((channel as Channel).subdevnum, (channel as AOChannel).num);
-            data = (uint)((val / 100.0) * maxdata);
-           // message ("%s scaled_value: %.3f, data: %u", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
-            (device as ComediDevice).dev.data_write (
-                (channel as Channel).subdevnum, (channel as AOChannel).num,
-                (channel as AOChannel).range, AnalogReference.GROUND, data);
+                (device as ComediDevice).dev.data_write (
+                    (channel as Channel).subdevnum, (channel as DOChannel).num,
+                    0, 0, data);
+            }
         }
      }
 

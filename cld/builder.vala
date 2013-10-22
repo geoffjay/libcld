@@ -245,14 +245,14 @@ public class Cld.Builder : AbstractContainer {
                 ref_id = (object as Channel).devref;
                 Cld.debug ("Assigning Device %s to Channel %s\n", ref_id, object.id);
                 var device = get_object (ref_id);
-                if (device != null && device is Device)
-                    (object as Channel).device = (device as Device);
-
-                ref_id = (object as Channel).taskref;
-                Cld.debug ("Assigning Task %s to Channel %s\n", ref_id, object.id);
-                var task = get_object (ref_id);
-                if (task != null && task is Task)
-                    (object as Channel).task = (task as Task);
+                if (device != null && device is Device) {
+                   // (object as Channel).device = (device as Device);
+                    ref_id = (object as Channel).taskref;
+                    Cld.debug ("Assigning Task %s to Channel %s\n", ref_id, object.id);
+                    var task = (device as Cld.Container).get_object (ref_id);
+                    //if (task != null && task is Task)
+                       // (object as Channel).task = (task as Task);
+                }
             }
 
             /* Channels with a calibration reference */
@@ -342,7 +342,9 @@ public class Cld.Builder : AbstractContainer {
         /* Get all of the channels */
         /* Build a channel list for this task. */
         foreach (var task_channel in channels.values) {
-            if ((task_channel as Channel).taskref == (task as ComediTask).id) {
+            if (((task_channel as Channel).taskref == (task as ComediTask).id) &&
+                    ((task_channel as Channel).devref == (task as ComediTask).devref)) {
+
                 (task as ComediTask).add_channel (task_channel);
             }
         }

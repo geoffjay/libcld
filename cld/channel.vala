@@ -106,6 +106,7 @@ public interface Cld.DChannel : AbstractChannel, Channel {
      * The binary state of the channel.
      */
     public abstract bool state { get; set; }
+
     /**
      * Raised when the binary state changed.
      */

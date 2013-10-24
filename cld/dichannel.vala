@@ -76,7 +76,10 @@ public class Cld.DIChannel : AbstractChannel, DChannel, IChannel {
      */
     public virtual bool state {
         get { return _state; }
-        set { new_value (id, value); }
+        set {
+            _state = value;
+            new_value (id, value);
+        }
     }
 
 

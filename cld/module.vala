@@ -31,6 +31,11 @@ public interface Cld.Module : Cld.Object {
     public abstract bool loaded { get; set; }
 
     /**
+     * Device reference for the module.
+     **/
+    public abstract string devref { get; set; }
+
+    /**
      * Port reference for the module.
      */
     public abstract string portref { get; set; }

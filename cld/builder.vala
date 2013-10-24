@@ -319,6 +319,15 @@ public class Cld.Builder : AbstractContainer {
                     if (port != null && port is Port)
                         (object as Module).port = (port as Port);
                 }
+                ref_id = (object as Module).devref;
+                if (ref_id != null && object is LicorModule)
+                    /* set the virtual channel that are to be referenced by this module */
+                    foreach (var licor_channel in channels.values) {
+                        if ((licor_channel as Channel).devref == ref_id) {
+                            Cld.debug ("Assigning Channel %s to Device %s\n", licor_channel.id, (object as LicorModule).devref);
+                            (object as LicorModule).add_channel (licor_channel);
+                        }
+                    }
             }
 
             /* Each device in daq references tasks.  */

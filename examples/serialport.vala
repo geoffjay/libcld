@@ -2,11 +2,15 @@ using Cld;
 
 class Cld.SerialPortExample : GLib.Object {
 
+    public GLib.MainLoop loop;
     public string received = "";
+    public int b = 0;
+
 
     public void run () {
-        var loop = new MainLoop();
+        loop = new MainLoop();
         var port = new SerialPort ();
+
 
         port.id = "ser0";
         port.device = "/dev/ttyUSB0";
@@ -90,7 +94,10 @@ class Cld.SerialPortExample : GLib.Object {
                     r += "%s\t".printf (token);
                 }
                 r = r.substring (0, r.length - 1);
-                stdout.printf ("%s\n", r);
+                b++;
+                stdout.printf ("%d: %s\n", b, r);
+                if (b > 500)
+                    loop.quit ();
                 received = "";
             }
         }

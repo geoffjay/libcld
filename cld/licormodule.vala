@@ -41,6 +41,11 @@ public class Cld.LicorModule : AbstractModule {
     public override bool loaded { get; set; default = false; }
 
     /**
+     * {@inheritdoc}
+     */
+    public override string devref { get; set; }
+
+    /**
      * {@inheritDoc}
      */
     public override string portref { get; set; }
@@ -111,12 +116,16 @@ public class Cld.LicorModule : AbstractModule {
                         case "port":
                             portref = iter->get_content ();
                             break;
+                        case "devref":
+                            devref = iter->get_content ();
+                            break;
                         default:
                             break;
                     }
                 }
             }
         }
+        channels = new Gee.TreeMap<string, Object> ();
     }
 
     /**
@@ -147,6 +156,7 @@ public class Cld.LicorModule : AbstractModule {
                     /* Assign the channel the value that was received */
                     var channel = channels.get (id);
                     (channel as VChannel).raw_value = double.parse (token);
+                    Cld.debug ("lc%d: %.3f\n", x - 1, double.parse (token));
                 }
 
                 if (tokens[tokens.length - 1] != "0") {
@@ -163,6 +173,14 @@ public class Cld.LicorModule : AbstractModule {
                 n_new_data_seen++;
             }
         }
+    }
+
+    /**
+     * ...
+     */
+    public void add_channel (Object channel) {
+        channels.set (channel.id, channel);
+        Cld.debug ("LicorModule :: add_channel(%s)", channel.id);
     }
 
     /**

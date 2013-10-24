@@ -315,7 +315,7 @@ public class Cld.ComediTask : AbstractTask {
 
                 meas = meas / (j);
                 (channel as AIChannel).add_raw_value (meas);
-                Cld.debug ("Channel: %s, Raw value: %.3f\n", (channel as AIChannel).id, (channel as AIChannel).raw_value);
+                //Cld.debug ("Channel: %s, Raw value: %.3f\n", (channel as AIChannel).id, (channel as AIChannel).raw_value);
                 i++;
             } else if (channel is DIChannel) {
 
@@ -324,7 +324,7 @@ public class Cld.ComediTask : AbstractTask {
                     (channel as DChannel).state = true;
                 else
                     (channel as DChannel).state = false;
-                Cld.debug ("Channel: %s, Raw value: %.3f\n", (channel as DIChannel).id, meas);
+                //Cld.debug ("Channel: %s, Raw value: %.3f\n", (channel as DIChannel).id, meas);
                 i++;
             }
         }
@@ -345,7 +345,7 @@ public class Cld.ComediTask : AbstractTask {
 
                 maxdata = (device as ComediDevice).dev.get_maxdata ((channel as Channel).subdevnum, (channel as AOChannel).num);
                 data = (uint)((val / 100.0) * maxdata);
-               // message ("%s scaled_value: %.3f, data: %u", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
+                //Cld.debug ("%s scaled_value: %.3f, data: %u\n", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
                 (device as ComediDevice).dev.data_write (
                     (channel as Channel).subdevnum, (channel as AOChannel).num,
                     (channel as AOChannel).range, AnalogReference.GROUND, data);
@@ -354,6 +354,7 @@ public class Cld.ComediTask : AbstractTask {
                     data = 1;
                 else
                     data = 0;
+                Cld.debug ("%s data value: %u\n", data);
 
                 (device as ComediDevice).dev.data_write (
                     (channel as Channel).subdevnum, (channel as DOChannel).num,

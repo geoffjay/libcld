@@ -354,7 +354,7 @@ public class Cld.ComediTask : AbstractTask {
                     data = 1;
                 else
                     data = 0;
-                Cld.debug ("%s data value: %u\n", data);
+                //Cld.debug ("%s data value: %u\n", (channel as DOChannel).id, data);
 
                 (device as ComediDevice).dev.data_write (
                     (channel as Channel).subdevnum, (channel as DOChannel).num,

@@ -41,6 +41,11 @@ public class Cld.VelmexModule : AbstractModule {
     public override bool loaded { get; set; default = false; }
 
     /**
+     * {@inheritdoc}
+     */
+    public override string devref { get; set; }
+
+    /**
      * {@inheritDoc}
      */
     public override string portref { get; set; }

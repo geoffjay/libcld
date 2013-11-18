@@ -342,7 +342,7 @@ public class Cld.Pid : AbstractObject {
 
     public void print_process_values () {
         foreach (var process_value in process_values.values) {
-            debug ("PV: %s", process_value.id);
+            Cld.debug ("PV: %s", process_value.id);
         }
     }
 
@@ -373,7 +373,7 @@ public class Cld.Pid : AbstractObject {
             mv.raw_value = (kp * p_err) + (ki * i_err) + (kd * d_err);
         }
 
-        //debug ("SP: %.2f, MV: %.2f, PV: %.2f, PVPR: %.2f, PVPPR: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
+        //Cld.debug ("SP: %.2f, MV: %.2f, PV: %.2f, PVPR: %.2f, PVPPR: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
         //       sp, mv.scaled_value, pv.current_value, pv.previous_value, pv.past_previous_value, p_err, i_err, d_err);
 
         /* XXX Not sure whether or not to raise an output event here, or simple
@@ -499,7 +499,7 @@ public class Cld.Pid : AbstractObject {
             next_time.get_current_time ();
 #endif
 
-            debug ("PID run called");
+            Cld.debug ("PID run called");
 
             while (pid.running) {
                 pid.update ();
@@ -522,7 +522,7 @@ public class Cld.Pid : AbstractObject {
                 mutex.unlock ();
             }
 
-            debug ("PID run thread complete");
+            Cld.debug ("PID run thread complete");
 
             return null;
         }

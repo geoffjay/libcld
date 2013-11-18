@@ -53,7 +53,15 @@ public class Cld.VChannel : AbstractChannel, ScalableChannel {
     /**
      * {@inheritDoc}
      */
-    public override string taskref { get; set; }
+    public override string taskref {
+        get {
+            if (_taskref == null)
+                throw new Cld.Error.NULL_REF ("A taskref has not been set for this virtual channel.");
+            else
+                return _taskref;
+        }
+        set { _taskref = value; }
+    }
 
     /**
      * {@inheritdoc}
@@ -78,6 +86,7 @@ public class Cld.VChannel : AbstractChannel, ScalableChannel {
     /* Property backing fields. */
     private double _scaled_value = 0.0;
     private double _raw_value = 0.0;
+    private string _taskref = null;
 
     /**
      * Calculate value if expression exists or placeholder for dummy channel.

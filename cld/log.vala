@@ -418,11 +418,11 @@ public class Cld.Log : AbstractContainer {
         string cals = "Channel Calibrations:\n\n";
 
         foreach (var object in objects.values) {
-            message ("Found object [%s]", object.id);
+            Cld.debug ("Found object [%s]", object.id);
             if (object is Column) {
                 var channel = ((object as Column).channel as Channel);
                 Type type = (channel as GLib.Object).get_type ();
-                message ("Received object is Column - %s", type.name ());
+                Cld.debug ("Received object is Column - %s", type.name ());
 
                 if (channel is ScalableChannel) {
                     var calibration = (channel as ScalableChannel).calibration;

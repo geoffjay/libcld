@@ -168,7 +168,7 @@ public class Cld.SocketPort : AbstractPort {
             connection = client.connect (new InetSocketAddress (address, (uint16)port));
             _connected = true;
         } catch (Error e) {
-            message ("Received error on connect %s", e.message);
+            Cld.debug ("Received error on connect %s", e.message);
         }
 
         /* XXX should probably be inside try/catch */
@@ -192,7 +192,7 @@ public class Cld.SocketPort : AbstractPort {
             try {
                 fd_channel.shutdown (true);
             } catch (GLib.IOChannelError e) {
-                warning ("%s", e.message);
+                Cld.debug ("%s", e.message);
             }
 
             fd_channel = null;

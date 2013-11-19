@@ -196,16 +196,17 @@ public class Cld.Builder : AbstractContainer {
                             break;
                         case "module":
                             var mtype = iter->get_prop ("mtype");
-                            if (mtype == "velmex")
+                            if (mtype == "velmex") {
                                 object = new VelmexModule.from_xml_node (iter);
-                            else if (mtype == "licor")
+                            } else if (mtype == "licor") {
                                 object = new LicorModule.from_xml_node (iter);
-                            else if (mtype == "brabender") {
+                            } else if  (mtype == "brabender") {
                                 object = new BrabenderModule.from_xml_node (iter);
-                            }
-                            else
+                            } else if  (mtype == "heidolph") {
+                                object = new HeidolphModule.from_xml_node (iter);
+                            } else {
                                 object = null;
-                            break;
+                            } break;
                         case "port":
                             var ptype = iter->get_prop ("ptype");
                             if (ptype == "serial") {

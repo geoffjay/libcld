@@ -384,8 +384,8 @@ public class Cld.BrabenderModule : AbstractModule {
      */
     public override bool load () {
         loaded = true;
-        if (!port.open ()){
-            Cld.debug ("Could notopen port, id:%s", id);
+        if (!port.open ()) {
+            Cld.debug ("Could not open port, id:%s", id);
             loaded = false;
         }
         else {

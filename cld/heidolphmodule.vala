@@ -75,7 +75,6 @@ public class Cld.HeidolphModule : AbstractModule {
      * Default construction.
      */
     public HeidolphModule () {
-        create_vchannels ();
     }
 
     /**
@@ -84,7 +83,6 @@ public class Cld.HeidolphModule : AbstractModule {
     public HeidolphModule.full (string id, Port port) {
        this.id = id;
        this.port = port;
-       create_vchannels ();
     }
 
     /**
@@ -99,8 +97,8 @@ public class Cld.HeidolphModule : AbstractModule {
                  iter != null;
                  iter = iter->next) {
                 if (iter->name == "property") {
-                    switch (iter->get_prop ("mname")) {
-                        case "portref":
+                    switch (iter->get_prop ("name")) {
+                        case "port":
                             portref = iter->get_content ();
                             break;
                         default:
@@ -109,14 +107,6 @@ public class Cld.HeidolphModule : AbstractModule {
                 }
             }
         }
-        create_vchannels ();
-    }
-
-    /**
-     * The heidolph has 2 virtual channels that it must create for itself.
-     */
-    private void create_vchannels () {
-        Cld.debug ("Heidolph: create_vchannels ()");
     }
 
     /**
@@ -162,7 +152,7 @@ public class Cld.HeidolphModule : AbstractModule {
     public override bool load () {
         loaded = true;
         if (!port.open ()) {
-            Cld.debug ("Could not open port, id: %s", id);
+            Cld.debug ("Could not open port, id: %s\n", id);
             loaded = false;
         } else {
             stop ();

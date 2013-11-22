@@ -332,6 +332,16 @@ public class Cld.Builder : AbstractContainer {
                         }
                     }
                 }
+                if (ref_id != null && object is HeidolphModule) {
+                    /* set the virtual channel that are to be referenced by this module */
+                    foreach (var heidolph_channel in channels.values) {
+                        if ((heidolph_channel as Channel).devref == ref_id) {
+                            Cld.debug ("Assigning Channel %s to Module %s\n", heidolph_channel.id, (object as HeidolphModule).id);
+                            (object as HeidolphModule).add_channel (heidolph_channel);
+                        }
+                    }
+                }
+
             }
 
             /* Each device in daq references tasks.  */

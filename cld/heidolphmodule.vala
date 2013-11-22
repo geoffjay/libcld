@@ -37,6 +37,7 @@ public class Cld.HeidolphModule : AbstractModule {
     public int timeout_ms { get; set; default = 400;}
     private string received = "c";
     private uint? source_id;
+    private string _speed_sp;
 
     private string _speed;
     public string speed {
@@ -139,7 +140,7 @@ public class Cld.HeidolphModule : AbstractModule {
      */
      public bool run () {
         Cld.debug ("Heidolph: run ()\n");
-        string msg1 = "R300\r\n";
+        string msg1 = "R" + _speed_sp + "\r\n";
         port.send_bytes (msg1.to_utf8 (), msg1.length);
         running = true;
 
@@ -150,7 +151,7 @@ public class Cld.HeidolphModule : AbstractModule {
      * Stop the mixer
      */
     public bool stop () {
-        Cld.debug ("Heidolph: stop ())\n");
+        Cld.debug ("Heidolph: stop ()\n");
         string msg1 = "R0\r\n";
         port.send_bytes (msg1.to_utf8 (), msg1.length);
         running = false;
@@ -159,10 +160,19 @@ public class Cld.HeidolphModule : AbstractModule {
     }
 
     /**
+     * Set speed control to run from the rheostat.
+     */
+    public void rheostat () {
+        Cld.debug ("Heidolph : rheostat ()\n");
+        string msg1 = "D\r\n";
+        port.send_bytes (msg1.to_utf8 (), msg1.length);
+    }
+
+    /**
      * Callback event that fetches new data from the serial port.
      */
     private bool fetch_data_cb () {
-       // Cld.debug ("fetch_data_cb ()\n");
+        //Cld.debug ("fetch_data_cb ()\n");
         string msg1 = "r\r\n"; // speed request message.
         string msg2 = "m\r\n"; // torque request message.
         string msg3 = "f\r\n"; // request error message.
@@ -178,7 +188,6 @@ public class Cld.HeidolphModule : AbstractModule {
      * Callback to parse received data.
      */
     private void new_data_cb (SerialPort port, uchar[] data, int size) {
-
         for (int i = 0; i < size; i++) {
             //Cld.debug ("new_data_cb ()\n");
             unichar c = "%c".printf (data[i]).get_char ();
@@ -201,15 +210,19 @@ public class Cld.HeidolphModule : AbstractModule {
                 }
                 r = r.substring (0, r.length - 1);
                 if (r.has_prefix ("RPM")) {
-                    Cld.debug ("%s   ", r);
+                    //Cld.debug ("%s   ", r);
                     _speed = r.substring (5, -1);
-                    Cld.debug ("Speed: %s ", speed);
+                    //Cld.debug ("Speed: %s ", speed);
                 } else if (r.has_prefix ("NCM")) {
-                    Cld.debug ("%s", r);
+                    //Cld.debug ("%s", r);
                     _torque = r.substring (5, -1);
-                    Cld.debug ("Torque: %s \n", torque);
-                } else {
-                    Cld.debug ("%s\n", r);
+                    //Cld.debug ("Torque: %s \n", torque);
+                } else if (r.has_prefix ("FLT")) {
+                    //Cld.debug ("%s\n", r);
+                    _error_status = r.substring (5, -1);
+                } else if (r.has_prefix ("SET")) {
+                    _speed_sp = r.substring (5, -1);
+                    Cld.debug ("_speed_sp: %s\n", _speed_sp);
                 }
                 update_raw_values ();
                 received = "";
@@ -219,7 +232,7 @@ public class Cld.HeidolphModule : AbstractModule {
 
     private void update_raw_values () {
         var channel = channels.get ("heidolph00");
-        Cld.debug ("%s: %.3f\n", channel.id, double.parse (_speed));
+        //Cld.debug ("%s: %.3f\n", channel.id, double.parse (_speed));
         (channel as VChannel).raw_value = double.parse (_speed);
         channel = channels.get ("heidolph01");
         (channel as VChannel).raw_value = double.parse (torque);
@@ -228,10 +241,30 @@ public class Cld.HeidolphModule : AbstractModule {
     /**
      * Set the mixer speed [RPM]
      */
-    public bool set_speed (double speed_set) {
+    public void set_speed (string speed_set) {
         Cld.debug ("Heidolph: set_speed ()\n");
+        _speed_sp = speed_set;
+    }
 
-        return true;
+    /**
+     * XXX This doesn't work. Retrieve the speed setpoint.
+     */
+    public string get_speed_sp () {
+        string msg1 = "s\r\n";
+
+        port.send_bytes (msg1.to_utf8 (), msg1.length);
+        Posix.sleep (5); // wait for the new data to appear
+
+        return _speed_sp;
+    }
+
+    /**
+     * Normalize the torque value.
+     */
+    public void normalize () {
+        string msg1 = "N\r\n";
+
+        port.send_bytes (msg1.to_utf8 (), msg1.length);
     }
 
     /**
@@ -265,7 +298,9 @@ public class Cld.HeidolphModule : AbstractModule {
      */
     public override void unload () {
         if (running)
-            stop ();
+            rheostat ();
+            // stop (); // Another possibility for unload.
+            running = false;
         if (loaded)
             port.close ();
         Source.remove (source_id);

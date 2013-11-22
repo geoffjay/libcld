@@ -37,6 +37,7 @@ public class Cld.HeidolphModule : AbstractModule {
     public int timeout_ms { get; set; default = 400;}
     private string received = "c";
     private uint? source_id;
+    private string speed_sp;
 
     private string _speed;
     public string speed {
@@ -139,7 +140,7 @@ public class Cld.HeidolphModule : AbstractModule {
      */
      public bool run () {
         Cld.debug ("Heidolph: run ()\n");
-        string msg1 = "R300\r\n";
+        string msg1 = "R" + speed_sp + "\r\n";
         port.send_bytes (msg1.to_utf8 (), msg1.length);
         running = true;
 
@@ -208,8 +209,9 @@ public class Cld.HeidolphModule : AbstractModule {
                     Cld.debug ("%s", r);
                     _torque = r.substring (5, -1);
                     Cld.debug ("Torque: %s \n", torque);
-                } else {
+                } else if (r.has_prefix ("FLT")) {
                     Cld.debug ("%s\n", r);
+                    _error_status = r.substring (5, -1);
                 }
                 update_raw_values ();
                 received = "";
@@ -228,10 +230,18 @@ public class Cld.HeidolphModule : AbstractModule {
     /**
      * Set the mixer speed [RPM]
      */
-    public bool set_speed (double speed_set) {
+    public void set_speed (string speed_set) {
         Cld.debug ("Heidolph: set_speed ()\n");
+        speed_sp = speed_set;
+    }
 
-        return true;
+    /**
+     * Normalize the torque value.
+     */
+    public void normalize () {
+        string msg1 = "N\r\n";
+
+        port.send_bytes (msg1.to_utf8 (), msg1.length);
     }
 
     /**

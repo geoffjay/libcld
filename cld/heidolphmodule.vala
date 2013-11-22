@@ -37,6 +37,7 @@ public class Cld.HeidolphModule : AbstractModule {
     public int timeout_ms { get; set; default = 400;}
     private string received = "c";
     private uint? source_id;
+    private string _speed_sp;
 
     private string _speed_sp;
     public string speed_sp {
@@ -262,6 +263,16 @@ public class Cld.HeidolphModule : AbstractModule {
     public void add_channel (Cld.Object channel) {
         channels.set (channel.id, channel);
        //Cld.debug ("HeidolphModule :: add_channel(%s)\n", channel.id);
+    }
+
+
+    /**
+     * ...
+     */
+    public void add_channel (Cld.Object channel) {
+message ("3.1");
+        channels.set (channel.id, channel);
+        Cld.debug ("HeidolphModule :: add_channel(%s)\n", channel.id);
     }
 
 

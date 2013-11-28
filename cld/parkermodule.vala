@@ -131,4 +131,25 @@ public class Cld.ParkerModule : AbstractModule {
         r  = "ParkerModule [%s]\n".printf (id);
         return r;
     }
+
+    public void jog (double val) {
+        Cld.debug ("jog: %.3f\n", val);
+   }
+
+    public void home () {
+        Cld.debug ("home ()\n");
+    }
+
+    public void withdraw (double length_mm, double speed_mmps) {
+        Cld.debug ("withdraw (): length: %.3f speed: %.3f\n", length_mm, speed_mmps);
+    }
+
+    public void inject (double speed_mmps) {
+        Cld.debug ("inject (): speed: %.3f\n", speed_mmps);
+    }
+
+    public double get_position () {
+
+        return 123.456;
+    }
 }

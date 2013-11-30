@@ -26,7 +26,7 @@ using Posix;
  * be suitable for a generic scenario.
  */
 public class Cld.ParkerModule : AbstractModule {
-    /* Parker Comapx3 Objects */
+    /* Parker Comapx3 I12 T11 Objects */
     public const string C3_AnalogInput0_Gain                                                = "170.2"     ;
     public const string C3_AnalogInput0_Offseti                                             = "170.4"     ;
     public const string C3_AnalogInput1_Gain                                                = "171.2"     ;
@@ -202,12 +202,21 @@ public class Cld.ParkerModule : AbstractModule {
     public const string C3Plus_TrackingfilterSG1_FilterSpeed_us                             = "2110.6"    ;
     public const string C3Plus_TrackingfilterSG1_TRFSpeed                                   = "2110.1"    ;
 
+    /* Control word constants */
+    public const int CW_ACTIVATE_AXIS = 0x1;
+    public const int CW_HOME = 0x4003;
+    public const int CW_MANUAL_MOTION = 0x4007;
+
+
     /**
      * Property backing fields.
      */
     private Gee.Map<string, Object> _objects;
 
     private string received = "";
+    private bool home_is_known = false;
+    private bool port_available = false;
+    private string active_command = null;
 
     /**
      * {@inheritDoc}
@@ -319,7 +328,6 @@ public class Cld.ParkerModule : AbstractModule {
         return r;
     }
 
-
     public void jog (double val) {
         Cld.debug ("jog: %.3f\n", val);
         string msg1 = "jog: Hello World!\r\n";
@@ -349,6 +357,7 @@ public class Cld.ParkerModule : AbstractModule {
                 }
                 r = r.substring (0, r.length - 1);
                 Cld.debug ("%s   \n", r);
+                parse (r);
                 received = "";
             }
         }
@@ -356,9 +365,22 @@ public class Cld.ParkerModule : AbstractModule {
 
     public void home () {
         Cld.debug ("home ()\n");
-        string msg1 = "O $4003\r";
-        port.send_bytes (msg1.to_utf8 (), msg1.length);
-        Posix.usleep (100000);
+        home_is_known = false;
+        if (port_available) {
+            port_available = false;
+            write_object (C3Plus_DeviceControl_Controlword_1, CW_HOME);
+            while (!home_is_known) {
+                /* TODO: add a timeout on this.*/
+                active_command = C3Plus_DeviceState_Statusword_1;
+                read_object (active_command);
+            }
+        } else {
+            Cld.debug ("Serial port is unavailable.\n");
+        }
+    }
+
+    public void zero () {
+        Cld.debug ("zero ()"\n);
     }
 
     public void withdraw (double length_mm, double speed_mmps) {
@@ -372,5 +394,22 @@ public class Cld.ParkerModule : AbstractModule {
     public double get_position () {
 
         return 123.456;
+    }
+
+    public parse (string response) {
+        if active_command = C3Plus_DeviceState_Statusword_1
+    /**
+     * Build a command from argument list and write it to the serial port.
+     * XXX This could be made to take an index, sublindex and a variable list of values
+     * using a valriable argument list method but it is here in a simpler form for now.
+     */
+    public write_object (string index, int val) {
+        string msg1 = "o" + index + "=" + val.to_string () +"\r";
+        port.send_bytes (msg1.to_utf8 (), msg1.length);
+    }
+
+    public read_object (string index) {
+        string msg1 = "o" + index + "\r";
+        port.send_bytes (msg1.to_utf8 (), msg1.length);
     }
 }

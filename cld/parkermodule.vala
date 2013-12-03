@@ -215,8 +215,11 @@ public class Cld.ParkerModule : AbstractModule {
 
     private string received = "";
     private bool home_is_known = false;
-    private bool port_available = false;
+    private bool data_received = false;
     private string active_command = null;
+    private uint serial_timeout_ms = 1000;
+    private uint home_timeout_ms = 5000;
+    private int count = 0;
 
     /**
      * {@inheritDoc}
@@ -358,29 +361,21 @@ public class Cld.ParkerModule : AbstractModule {
                 r = r.substring (0, r.length - 1);
                 Cld.debug ("%s   \n", r);
                 parse (r);
-                received = "";
             }
         }
     }
 
     public void home () {
-        Cld.debug ("home ()\n");
-        home_is_known = false;
-        if (port_available) {
-            port_available = false;
+        if (active_command == null) {
+            Cld.debug ("home ()\n");
+            home_is_known = false;
             write_object (C3Plus_DeviceControl_Controlword_1, CW_HOME);
-            while (!home_is_known) {
-                /* TODO: add a timeout on this.*/
-                active_command = C3Plus_DeviceState_Statusword_1;
-                read_object (active_command);
-            }
-        } else {
-            Cld.debug ("Serial port is unavailable.\n");
+            uint source_id_home = Timeout.add (home_timeout_ms, home_timeout_cb);
         }
     }
 
     public void zero () {
-        Cld.debug ("zero ()"\n);
+        Cld.debug ("zero ()\n");
     }
 
     public void withdraw (double length_mm, double speed_mmps) {
@@ -396,20 +391,72 @@ public class Cld.ParkerModule : AbstractModule {
         return 123.456;
     }
 
-    public parse (string response) {
-        if active_command = C3Plus_DeviceState_Statusword_1
+    public void parse (string response) {
+        switch (active_command) {
+            case "C3Plus_DeviceState_Statusword_1)":
+                Cld.debug ("%s response: %s\n", active_command, response);
+                home_is_known = true;
+                data_received = true;
+                break;
+            default:
+                Cld.debug ("Unable to parse response: %s\n", response);
+                break;
+        }
+        received = "";
+        active_command = null;
+    }
     /**
      * Build a command from argument list and write it to the serial port.
      * XXX This could be made to take an index, sublindex and a variable list of values
      * using a valriable argument list method but it is here in a simpler form for now.
      */
-    public write_object (string index, int val) {
+    public void write_object (string index, int val) {
         string msg1 = "o" + index + "=" + val.to_string () +"\r";
         port.send_bytes (msg1.to_utf8 (), msg1.length);
     }
 
-    public read_object (string index) {
+    public void read_object (string index) {
+        data_received = false;
         string msg1 = "o" + index + "\r";
         port.send_bytes (msg1.to_utf8 (), msg1.length);
+        uint source_id_serial = Timeout.add (serial_timeout_ms, serial_timeout_cb);
+    }
+
+    private bool serial_timeout_cb () {
+        if (!data_received) {
+            Cld.debug ("Serial port %s timeout\n", port.id);
+        }
+
+        return false;
+    }
+
+    private bool home_timeout_cb () {
+        /* For testing onlly */
+        if (count == 3) {
+            home_is_known = true; //not really, just pretend it is.
+            active_command = null; // no it isn't!
+        }
+        /* >>>>>>>>>>>>>>>>>>>>>>>> */
+
+        if (!home_is_known && (count < home_timeout_ms / serial_timeout_ms)) {
+            active_command = C3Plus_DeviceState_Statusword_1;
+            read_object (active_command);
+            count++;
+            Cld.debug ("count: %d\n", count);
+
+            return true;
+
+        } else if (home_is_known) {
+            Cld.debug ("Home is known.\n");
+            count = 0;
+
+            return false;
+
+        } else {
+            count = 0;
+            Cld.debug ("Homing sequence timed out\n");
+
+            return false;
+        }
     }
 }

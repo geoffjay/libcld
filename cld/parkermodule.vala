@@ -217,9 +217,10 @@ public class Cld.ParkerModule : AbstractModule {
     private bool home_is_known = false;
     private bool data_received = false;
     private string active_command = null;
-    private uint serial_timeout_ms = 1000;
-    private uint home_timeout_ms = 5000;
+    private uint serial_timeout_ms = 5000;
+    private uint home_timeout_ms = 15000;
     private int count = 0;
+    private signal void serial_tick ();
 
     /**
      * {@inheritDoc}
@@ -370,7 +371,8 @@ public class Cld.ParkerModule : AbstractModule {
             Cld.debug ("home ()\n");
             home_is_known = false;
             write_object (C3Plus_DeviceControl_Controlword_1, CW_HOME);
-            uint source_id_home = Timeout.add (home_timeout_ms, home_timeout_cb);
+            this.serial_tick.connect (home_check_cb);
+            home_check_cb ();
         }
     }
 
@@ -393,7 +395,7 @@ public class Cld.ParkerModule : AbstractModule {
 
     public void parse (string response) {
         switch (active_command) {
-            case "C3Plus_DeviceState_Statusword_1)":
+            case C3Plus_DeviceState_Statusword_1:
                 Cld.debug ("%s response: %s\n", active_command, response);
                 home_is_known = true;
                 data_received = true;
@@ -426,16 +428,17 @@ public class Cld.ParkerModule : AbstractModule {
         if (!data_received) {
             Cld.debug ("Serial port %s timeout\n", port.id);
         }
+        serial_tick ();
 
         return false;
     }
 
-    private bool home_timeout_cb () {
-        /* For testing onlly */
-        if (count == 3) {
-            home_is_known = true; //not really, just pretend it is.
-            active_command = null; // no it isn't!
-        }
+    private void home_check_cb () {
+        /* For testing only */
+//        if (count == 3) {
+//            home_is_known = true; //not really, just pretend it is.
+//            active_command = null; // no it isn't!
+//        }
         /* >>>>>>>>>>>>>>>>>>>>>>>> */
 
         if (!home_is_known && (count < home_timeout_ms / serial_timeout_ms)) {
@@ -444,19 +447,15 @@ public class Cld.ParkerModule : AbstractModule {
             count++;
             Cld.debug ("count: %d\n", count);
 
-            return true;
-
         } else if (home_is_known) {
             Cld.debug ("Home is known.\n");
+            this.serial_tick.disconnect (home_check_cb);
             count = 0;
-
-            return false;
 
         } else {
             count = 0;
             Cld.debug ("Homing sequence timed out\n");
 
-            return false;
         }
     }
 }

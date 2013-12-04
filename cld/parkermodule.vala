@@ -203,10 +203,27 @@ public class Cld.ParkerModule : AbstractModule {
     public const string C3Plus_TrackingfilterSG1_TRFSpeed                                   = "2110.1"    ;
 
     /* Control word constants */
-    public const int CW_ACTIVATE_AXIS = 0x1;
-    public const int CW_HOME = 0x4003;
-    public const int CW_MANUAL_MOTION = 0x4007;
+    public const int CW_ACTIVATE_AXIS   = 0x1;
+    public const int CW_HOME            = 0x4003;
+    public const int CW_MANUAL_MOTION   = 0x4007;
 
+    /* Status word 1 constants */
+    public const int I0             = 0x0001;
+    public const int I1             = 0x0002;
+    public const int I2             = 0x0004;
+    public const int I3             = 0x0008;
+    public const int I4             = 0x0010;
+    public const int I5             = 0x0020;
+    public const int I6             = 0x0040;
+    public const int I7             = 0x0080;
+    public const int NO_ERROR       = 0x0100;
+    public const int POS_REACHED    = 0x0200;
+    public const int NO_EXCITATION  = 0x0400;
+    public const int CURRENT_ZERO   = 0x0800;
+    public const int HOME_IS_KNOWN  = 0x1000;
+    public const int PSB0           = 0x2000;
+    public const int PSB1           = 0x4000;
+    public const int PSB2           = 0x8000;
 
     /**
      * Property backing fields.
@@ -217,10 +234,10 @@ public class Cld.ParkerModule : AbstractModule {
     private bool home_is_known = false;
     private bool data_received = false;
     private string active_command = null;
-    private uint serial_timeout_ms = 5000;
-    private uint home_timeout_ms = 15000;
+    private uint serial_timeout_ms = 2000;
+    private uint home_timeout_ms = 10000;
     private int count = 0;
-    private signal void serial_tick ();
+    private signal void serial_timeout ();
 
     /**
      * {@inheritDoc}
@@ -253,6 +270,19 @@ public class Cld.ParkerModule : AbstractModule {
     public override Gee.Map<string, Object> objects {
         get { return (_objects); }
         set { update_objects (value); }
+    }
+
+    /**
+     * A signal that is emitted when the position value changes.
+     */
+    public signal void new_position (double position);
+    private double _position;
+    public double position {
+        get { return _position; }
+        private set {
+            _position = value;
+            new_position (value);
+        }
     }
 
     /**
@@ -351,7 +381,7 @@ public class Cld.ParkerModule : AbstractModule {
 
             port.last_rx_was_cr = (c == '\r');
 
-            if (c == '\n') {
+            if (c == '\r') {
                 string r = "";
                 received = received.chug ();
                 received = received.chomp ();
@@ -371,8 +401,8 @@ public class Cld.ParkerModule : AbstractModule {
             Cld.debug ("home ()\n");
             home_is_known = false;
             write_object (C3Plus_DeviceControl_Controlword_1, CW_HOME);
-            this.serial_tick.connect (home_check_cb);
-            home_check_cb ();
+            this.serial_timeout.connect (home_cb);
+            home_cb ();
         }
     }
 
@@ -388,22 +418,35 @@ public class Cld.ParkerModule : AbstractModule {
         Cld.debug ("inject (): speed: %.3f\n", speed_mmps);
     }
 
-    public double get_position () {
-
-        return 123.456;
+    public void get_position () {
+//        if (position == 123.456) {
+//            position = 654.321;
+//        } else if (position == 654.321) {
+//            position = 123.456;
+//        } else {
+//            position = 123.456;
+//        }
     }
 
     public void parse (string response) {
         switch (active_command) {
             case C3Plus_DeviceState_Statusword_1:
-                Cld.debug ("%s response: %s\n", active_command, response);
-                home_is_known = true;
-                data_received = true;
+                Cld.debug ("%s %s response: string value = %s numerical value = %d\n",
+                            "C3Plus_DeviceState_Statusword_1", active_command, response, int.parse (response));
+                if ((int.parse (response) & HOME_IS_KNOWN) == HOME_IS_KNOWN) {
+                    Cld.debug ("pass\n");
+                    home_is_known = true;
+                } else if (response =="fail") {
+                    Cld.debug ("fail\n");
+                    home_is_known = false;
+                }
                 break;
             default:
                 Cld.debug ("Unable to parse response: %s\n", response);
                 break;
         }
+
+        data_received = true;
         received = "";
         active_command = null;
     }
@@ -428,12 +471,12 @@ public class Cld.ParkerModule : AbstractModule {
         if (!data_received) {
             Cld.debug ("Serial port %s timeout\n", port.id);
         }
-        serial_tick ();
+        serial_timeout ();
 
         return false;
     }
 
-    private void home_check_cb () {
+    private void home_cb () {
         /* For testing only */
 //        if (count == 3) {
 //            home_is_known = true; //not really, just pretend it is.
@@ -449,13 +492,15 @@ public class Cld.ParkerModule : AbstractModule {
 
         } else if (home_is_known) {
             Cld.debug ("Home is known.\n");
-            this.serial_tick.disconnect (home_check_cb);
+            this.serial_timeout.disconnect (home_cb);
             count = 0;
+            //get_position ();
 
         } else {
             count = 0;
             Cld.debug ("Homing sequence timed out\n");
-
+            active_command = null;
+            this.serial_timeout.disconnect (home_cb);
         }
     }
 }

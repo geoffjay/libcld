@@ -202,28 +202,46 @@ public class Cld.ParkerModule : AbstractModule {
     public const string C3Plus_TrackingfilterSG1_FilterSpeed_us                             = "2110.6"    ;
     public const string C3Plus_TrackingfilterSG1_TRFSpeed                                   = "2110.1"    ;
 
-    /* Control word constants */
-    public const int CW_ACTIVATE_AXIS   = 0x1;
-    public const int CW_HOME            = 0x4003;
-    public const int CW_MANUAL_MOTION   = 0x4007;
+    /* Control word bit constants (CWB) */
+    public const int CWB_QUIT            = 0x0001;
+    public const int CWB_NO_STOP1        = 0x0002;
+    public const int CWB_JOG_PLUS        = 0x0004;
+    public const int CWB_JOG_MINUS       = 0x0008;
+    public const int CWB_O0_X12_2        = 0x0010;
+    public const int CWB_O1_X12_3        = 0x0020;
+    public const int CWB_O2_X12_4        = 0x0040;
+    public const int CWB_03_X12_5        = 0x0080;
+    public const int CWB_ADDRESS_0       = 0x0100;
+    public const int CWB_ADDRESS_1       = 0x0200;
+    public const int CWB_ADDRESS_2       = 0x0400;
+    public const int CWB_ADDRESS_3       = 0x0800;
+    public const int CWB_ADDRESS_4       = 0x1000;
+    public const int CWB_START           = 0x2000;
+    public const int CWB_NO_STOP2        = 0x4000;
+    public const int CWB_OPEN_BRAKE      = 0x8000;
 
-    /* Status word 1 constants */
-    public const int I0             = 0x0001;
-    public const int I1             = 0x0002;
-    public const int I2             = 0x0004;
-    public const int I3             = 0x0008;
-    public const int I4             = 0x0010;
-    public const int I5             = 0x0020;
-    public const int I6             = 0x0040;
-    public const int I7             = 0x0080;
-    public const int NO_ERROR       = 0x0100;
-    public const int POS_REACHED    = 0x0200;
-    public const int NO_EXCITATION  = 0x0400;
-    public const int CURRENT_ZERO   = 0x0800;
-    public const int HOME_IS_KNOWN  = 0x1000;
-    public const int PSB0           = 0x2000;
-    public const int PSB1           = 0x4000;
-    public const int PSB2           = 0x8000;
+    /* Derivative control words (CW)*/
+    public int CW_HOME                = CWB_QUIT | CWB_NO_STOP1 | CWB_NO_STOP2;
+    public int CW_MANUAL_MOTION_PLUS  = CWB_QUIT | CWB_NO_STOP1 | CWB_JOG_PLUS | CWB_NO_STOP2;
+
+
+    /* Status word 1 bit (SWB1) constants */
+    public const int SWB1_I0             = 0x0001;
+    public const int SWB1_I1             = 0x0002;
+    public const int SWB1_I2             = 0x0004;
+    public const int SWB1_I3             = 0x0008;
+    public const int SWB1_I4             = 0x0010;
+    public const int SWB1_I5             = 0x0020;
+    public const int SWB1_I6             = 0x0040;
+    public const int SWB1_I7             = 0x0080;
+    public const int SWB1_NO_ERROR       = 0x0100;
+    public const int SWB1_POS_REACHED    = 0x0200;
+    public const int SWB1_NO_EXCITATION  = 0x0400;
+    public const int SWB1_CURRENT_ZERO   = 0x0800;
+    public const int SWB1_HOME_IS_KNOWN  = 0x1000;
+    public const int SWB1_PSB0           = 0x2000;
+    public const int SWB1_PSB1           = 0x4000;
+    public const int SWB1_PSB2           = 0x8000;
 
     /**
      * Property backing fields.
@@ -362,12 +380,23 @@ public class Cld.ParkerModule : AbstractModule {
         return r;
     }
 
-    public void jog (double val) {
-        Cld.debug ("jog: %.3f\n", val);
-        string msg1 = "jog: Hello World!\r\n";
+    public void jog_plus () {
+        Cld.debug ("jog_plus:");
+        string msg1 = "jog_plus: Hello World!\r\n";
         port.send_bytes (msg1.to_utf8 (), msg1.length);
         Posix.usleep (100000);
-   }
+    }
+
+    public void jog_minus () {
+        Cld.debug ("jog_minus:");
+        string msg1 = "jog_minus: Hello World!\r\n";
+        port.send_bytes (msg1.to_utf8 (), msg1.length);
+        Posix.usleep (100000);
+    }
+
+    public void step (int step_size, int direction) {
+        Cld.debug ("step_size: %d direction: %d\n", step_size, direction);
+    }
 
     private void new_data_cb (SerialPort port, uchar[] data, int size) {
         for (int i = 0; i < size; i++) {
@@ -398,7 +427,7 @@ public class Cld.ParkerModule : AbstractModule {
 
     public void home () {
         if (active_command == null) {
-            Cld.debug ("home ()\n");
+            Cld.debug ("home () CW_HOME: %d\n", CW_HOME);
             home_is_known = false;
             write_object (C3Plus_DeviceControl_Controlword_1, CW_HOME);
             this.serial_timeout.connect (home_cb);
@@ -408,6 +437,11 @@ public class Cld.ParkerModule : AbstractModule {
 
     public void zero () {
         Cld.debug ("zero ()\n");
+        if (home_is_known) {
+            position = 0.000;
+        } else {
+            Cld.debug ("Home is not known. Zero command ignored.\n");
+        }
     }
 
     public void withdraw (double length_mm, double speed_mmps) {
@@ -418,22 +452,24 @@ public class Cld.ParkerModule : AbstractModule {
         Cld.debug ("inject (): speed: %.3f\n", speed_mmps);
     }
 
-    public void get_position () {
-//        if (position == 123.456) {
-//            position = 654.321;
-//        } else if (position == 654.321) {
-//            position = 123.456;
-//        } else {
-//            position = 123.456;
-//        }
+    public void update_position () {
+        if (position == 123.456) {
+            position = 654.321;
+        } else if (position == 654.321) {
+            position = 123.456;
+        } else {
+            position = 123.456;
+        }
     }
 
     public void parse (string response) {
         switch (active_command) {
             case C3Plus_DeviceState_Statusword_1:
                 Cld.debug ("%s %s response: string value = %s numerical value = %d\n",
-                            "C3Plus_DeviceState_Statusword_1", active_command, response, int.parse (response));
-                if ((int.parse (response) & HOME_IS_KNOWN) == HOME_IS_KNOWN) {
+                            "C3Plus_DeviceState_Statusword_1",
+                            active_command, response, int.parse (response));
+
+                if ((int.parse (response) & SWB1_HOME_IS_KNOWN) == SWB1_HOME_IS_KNOWN) {
                     Cld.debug ("pass\n");
                     home_is_known = true;
                 } else if (response =="fail") {
@@ -494,7 +530,7 @@ public class Cld.ParkerModule : AbstractModule {
             Cld.debug ("Home is known.\n");
             this.serial_timeout.disconnect (home_cb);
             count = 0;
-            //get_position ();
+            update_position ();
 
         } else {
             count = 0;

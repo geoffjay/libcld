@@ -256,6 +256,9 @@ public class Cld.ParkerModule : AbstractModule {
     private uint home_timeout_ms = 10000;
     private int count = 0;
     private signal void serial_timeout ();
+    private signal void home_found ();
+    private double zero_position;
+    private ulong zero_move_id;
 
     /**
      * {@inheritDoc}
@@ -294,7 +297,7 @@ public class Cld.ParkerModule : AbstractModule {
      * A signal that is emitted when the position value changes.
      */
     public signal void new_position (double position);
-    private double _position;
+    private double _position = 0.0;
     public double position {
         get { return _position; }
         private set {
@@ -381,24 +384,33 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     public void jog_plus () {
-        Cld.debug ("jog_plus:");
-        string msg1 = "jog_plus: Hello World!\r\n";
+        string msg1;
+        _position += 1.0;
+        Cld.debug ("jog_plus: position: %.3f\n", _position);
+        msg1 = "jog_plus: position: %s\r\n".printf (_position.to_string ());
         port.send_bytes (msg1.to_utf8 (), msg1.length);
         Posix.usleep (100000);
     }
 
     public void jog_minus () {
-        Cld.debug ("jog_minus:");
-        string msg1 = "jog_minus: Hello World!\r\n";
+        string msg1;
+        _position += -1.0;
+        Cld.debug ("jog_minus: position: %.3f\n", _position);
+        msg1 = "jog_minus: position: %s\r\n".printf (_position.to_string ());
         port.send_bytes (msg1.to_utf8 (), msg1.length);
         Posix.usleep (100000);
     }
 
-    public void step (int step_size, int direction) {
-        Cld.debug ("step_size: %d direction: %d\n", step_size, direction);
+    public void step (double step_size, int direction) {
+        string msg1;
+        _position += (step_size * direction);
+        Cld.debug ("step_size: %.3f direction: %d position %.3f\n", step_size, direction, position);
+        msg1 = "step: position: %s\r\n".printf (_position.to_string ());
+        port.send_bytes (msg1.to_utf8 (), msg1.length);
     }
 
     private void new_data_cb (SerialPort port, uchar[] data, int size) {
+        Cld.debug ("new_data_cb () size: %d\n", size);
         for (int i = 0; i < size; i++) {
             unichar c = "%c".printf (data[i]).get_char ();
             string s = "%c".printf (data[i]);
@@ -435,14 +447,31 @@ public class Cld.ParkerModule : AbstractModule {
         }
     }
 
-    public void zero () {
-        Cld.debug ("zero ()\n");
+    public void zero_record () {
+        Cld.debug ("zero_record ()\n");
         if (home_is_known) {
+            zero_position = _position;
+            Cld.debug ("zero_position: %.3f", zero_position);
             position = 0.000;
         } else {
             Cld.debug ("Home is not known. Zero command ignored.\n");
         }
     }
+
+    public void home_and_zero () {
+        home ();
+        zero_move_id = home_found.connect (zero_move_cb);
+    }
+
+
+    public void zero_move_cb () {
+        Cld.debug ("zero_move_cb ()\n");
+        //if (GLib.SignalHandler.is_connected (home_found, zero_move_id)) {
+            Cld.debug ("Disconnecting home_found signal from zero_move callback\n");
+            this.home_found.disconnect (zero_move_cb);
+        //}
+    }
+
 
     public void withdraw (double length_mm, double speed_mmps) {
         Cld.debug ("withdraw (): length: %.3f speed: %.3f\n", length_mm, speed_mmps);
@@ -452,7 +481,7 @@ public class Cld.ParkerModule : AbstractModule {
         Cld.debug ("inject (): speed: %.3f\n", speed_mmps);
     }
 
-    public void update_position () {
+    public void fetch_position () {
         if (position == 123.456) {
             position = 654.321;
         } else if (position == 654.321) {
@@ -472,7 +501,8 @@ public class Cld.ParkerModule : AbstractModule {
                 if ((int.parse (response) & SWB1_HOME_IS_KNOWN) == SWB1_HOME_IS_KNOWN) {
                     Cld.debug ("pass\n");
                     home_is_known = true;
-                } else if (response =="fail") {
+                    home_found ();
+                } else if ((int.parse (response) & SWB1_HOME_IS_KNOWN) == 0) {
                     Cld.debug ("fail\n");
                     home_is_known = false;
                 }
@@ -484,7 +514,6 @@ public class Cld.ParkerModule : AbstractModule {
 
         data_received = true;
         received = "";
-        active_command = null;
     }
     /**
      * Build a command from argument list and write it to the serial port.
@@ -492,13 +521,13 @@ public class Cld.ParkerModule : AbstractModule {
      * using a valriable argument list method but it is here in a simpler form for now.
      */
     public void write_object (string index, int val) {
-        string msg1 = "o" + index + "=" + val.to_string () +"\r";
+        string msg1 = "o" + index + "=" + val.to_string () +"\r\n";
         port.send_bytes (msg1.to_utf8 (), msg1.length);
     }
 
     public void read_object (string index) {
         data_received = false;
-        string msg1 = "o" + index + "\r";
+        string msg1 = "o" + index + "\r\n";
         port.send_bytes (msg1.to_utf8 (), msg1.length);
         uint source_id_serial = Timeout.add (serial_timeout_ms, serial_timeout_cb);
     }
@@ -513,24 +542,18 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     private void home_cb () {
-        /* For testing only */
-//        if (count == 3) {
-//            home_is_known = true; //not really, just pretend it is.
-//            active_command = null; // no it isn't!
-//        }
-        /* >>>>>>>>>>>>>>>>>>>>>>>> */
-
         if (!home_is_known && (count < home_timeout_ms / serial_timeout_ms)) {
             active_command = C3Plus_DeviceState_Statusword_1;
             read_object (active_command);
             count++;
-            Cld.debug ("count: %d\n", count);
+            Cld.debug ("count: %d active command: %s\n", count, active_command);
 
         } else if (home_is_known) {
             Cld.debug ("Home is known.\n");
+            active_command = null;
             this.serial_timeout.disconnect (home_cb);
             count = 0;
-            update_position ();
+            //fetch_position ();
 
         } else {
             count = 0;

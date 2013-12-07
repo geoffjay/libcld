@@ -306,6 +306,12 @@ public class Cld.ParkerModule : AbstractModule {
         }
     }
 
+    construct {
+        home_found.connect (() => {
+            position = 0.0;
+        });
+    }
+
     /**
      * Full construction using available settings.
      */
@@ -385,7 +391,7 @@ public class Cld.ParkerModule : AbstractModule {
 
     public void jog_plus () {
         string msg1;
-        _position += 1.0;
+        position += 1.0;
         Cld.debug ("jog_plus: position: %.3f\n", _position);
         msg1 = "jog_plus: position: %s\r\n".printf (_position.to_string ());
         port.send_bytes (msg1.to_utf8 (), msg1.length);
@@ -394,7 +400,7 @@ public class Cld.ParkerModule : AbstractModule {
 
     public void jog_minus () {
         string msg1;
-        _position += -1.0;
+        position += -1.0;
         Cld.debug ("jog_minus: position: %.3f\n", _position);
         msg1 = "jog_minus: position: %s\r\n".printf (_position.to_string ());
         port.send_bytes (msg1.to_utf8 (), msg1.length);
@@ -403,14 +409,13 @@ public class Cld.ParkerModule : AbstractModule {
 
     public void step (double step_size, int direction) {
         string msg1;
-        _position += (step_size * direction);
+        position += (step_size * direction);
         Cld.debug ("step_size: %.3f direction: %d position %.3f\n", step_size, direction, position);
         msg1 = "step: position: %s\r\n".printf (_position.to_string ());
         port.send_bytes (msg1.to_utf8 (), msg1.length);
     }
 
     private void new_data_cb (SerialPort port, uchar[] data, int size) {
-        Cld.debug ("new_data_cb () size: %d\n", size);
         for (int i = 0; i < size; i++) {
             unichar c = "%c".printf (data[i]).get_char ();
             string s = "%c".printf (data[i]);
@@ -465,11 +470,9 @@ public class Cld.ParkerModule : AbstractModule {
 
 
     public void zero_move_cb () {
-        Cld.debug ("zero_move_cb ()\n");
-        //if (GLib.SignalHandler.is_connected (home_found, zero_move_id)) {
-            Cld.debug ("Disconnecting home_found signal from zero_move callback\n");
-            this.home_found.disconnect (zero_move_cb);
-        //}
+        Cld.debug ("zero_move_cb () distance: %.3f\n", zero_position);
+        Cld.debug ("Disconnecting home_found signal from zero_move callback\n");
+        this.home_found.disconnect (zero_move_cb);
     }
 
 

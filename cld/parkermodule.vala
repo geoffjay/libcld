@@ -249,9 +249,11 @@ public class Cld.ParkerModule : AbstractModule {
     private Gee.Map<string, Object> _objects;
 
     private string received = "";
-    private bool home_is_known = false;
+    private uint status1 = 0x0000;
+    private uint flags = 0x0000;
     private bool data_received = false;
     private string active_command = null;
+    private uint timeout_ms;
     private uint serial_timeout_ms = 2000;
     private uint home_timeout_ms = 10000;
     private int count = 0;
@@ -444,17 +446,20 @@ public class Cld.ParkerModule : AbstractModule {
 
     public void home () {
         if (active_command == null) {
-            Cld.debug ("home () CW_HOME: %d\n", CW_HOME);
-            home_is_known = false;
+            status1 &= ~(SWB1_HOME_IS_KNOWN); //Clear bit.
+            Cld.debug ("home () CW_HOME: %d status1: %u\n", CW_HOME, status1);
             write_object (C3Plus_DeviceControl_Controlword_1, CW_HOME);
-            this.serial_timeout.connect (home_cb);
-            home_cb ();
+            active_command = C3Plus_DeviceState_Statusword_1;
+            timeout_ms = home_timeout_ms;
+            flags = SWB1_HOME_IS_KNOWN;
+            this.serial_timeout.connect (check_status_cb);
+            check_status_cb ();
         }
     }
 
     public void zero_record () {
         Cld.debug ("zero_record ()\n");
-        if (home_is_known) {
+        if ((status1 & SWB1_HOME_IS_KNOWN) == SWB1_HOME_IS_KNOWN) {
             zero_position = _position;
             Cld.debug ("zero_position: %.3f", zero_position);
             position = 0.000;
@@ -464,8 +469,8 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     public void home_and_zero () {
-        home ();
         zero_move_id = home_found.connect (zero_move_cb);
+        home ();
     }
 
 
@@ -497,17 +502,16 @@ public class Cld.ParkerModule : AbstractModule {
     public void parse (string response) {
         switch (active_command) {
             case C3Plus_DeviceState_Statusword_1:
+                status1 = int.parse (response);
                 Cld.debug ("%s %s response: string value = %s numerical value = %d\n",
                             "C3Plus_DeviceState_Statusword_1",
-                            active_command, response, int.parse (response));
+                            active_command, response, status1);
 
-                if ((int.parse (response) & SWB1_HOME_IS_KNOWN) == SWB1_HOME_IS_KNOWN) {
-                    Cld.debug ("pass\n");
-                    home_is_known = true;
+                if ((status1 & SWB1_HOME_IS_KNOWN) == SWB1_HOME_IS_KNOWN) {
+                    Cld.debug ("home found\n");
                     home_found ();
-                } else if ((int.parse (response) & SWB1_HOME_IS_KNOWN) == 0) {
-                    Cld.debug ("fail\n");
-                    home_is_known = false;
+                } else if ((status1 & SWB1_HOME_IS_KNOWN) == 0) {
+                    Cld.debug ("home not found\n");
                 }
                 break;
             default:
@@ -544,25 +548,24 @@ public class Cld.ParkerModule : AbstractModule {
         return false;
     }
 
-    private void home_cb () {
-        if (!home_is_known && (count < home_timeout_ms / serial_timeout_ms)) {
-            active_command = C3Plus_DeviceState_Statusword_1;
+    private void check_status_cb () {
+        if (!((status1 & flags) == flags)
+                    && (count < timeout_ms / serial_timeout_ms)) {
             read_object (active_command);
             count++;
             Cld.debug ("count: %d active command: %s\n", count, active_command);
 
-        } else if (home_is_known) {
-            Cld.debug ("Home is known.\n");
+        } else if ((status1 & flags) == flags) {
+            Cld.debug ("Home is known. status1: %u flags: %u\n", status1, flags);
             active_command = null;
-            this.serial_timeout.disconnect (home_cb);
+            this.serial_timeout.disconnect (check_status_cb);
             count = 0;
-            //fetch_position ();
 
         } else {
             count = 0;
             Cld.debug ("Homing sequence timed out\n");
             active_command = null;
-            this.serial_timeout.disconnect (home_cb);
+            this.serial_timeout.disconnect (check_status_cb);
         }
     }
 }

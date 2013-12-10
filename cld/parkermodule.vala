@@ -221,9 +221,10 @@ public class Cld.ParkerModule : AbstractModule {
     public const int CWB_OPEN_BRAKE      = 0x8000;
 
     /* Derivative control words (CW)*/
-    public int CW_HOME                = CWB_QUIT | CWB_NO_STOP1 | CWB_NO_STOP2;
-    public int CW_MANUAL_MOTION_PLUS  = CWB_QUIT | CWB_NO_STOP1 | CWB_JOG_PLUS | CWB_NO_STOP2;
-
+    public int CW_HOME          = CWB_QUIT | CWB_NO_STOP1 | CWB_NO_STOP2;
+    public int CW_JOG_PLUS      = CWB_QUIT | CWB_NO_STOP1 | CWB_JOG_PLUS | CWB_NO_STOP2;
+    public int CW_JOG_MINUS     = CWB_QUIT | CWB_NO_STOP1 | CWB_JOG_MINUS | CWB_NO_STOP2;
+    public int CW_START         = CWB_QUIT | CWB_NO_STOP1 | CWB_START | CWB_NO_STOP2;
 
     /* Status word 1 bit (SWB1) constants */
     public const int SWB1_I0             = 0x0001;
@@ -256,6 +257,7 @@ public class Cld.ParkerModule : AbstractModule {
     private uint timeout_ms;
     private uint serial_timeout_ms = 2000;
     private uint home_timeout_ms = 10000;
+    private uint move_timeout_ms = 5000;
     private int count = 0;
     private signal void serial_timeout ();
     private signal void home_found ();
@@ -392,21 +394,33 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     public void jog_plus () {
-        string msg1;
-        position += 1.0;
-        Cld.debug ("jog_plus: position: %.3f\n", _position);
-        msg1 = "jog_plus: position: %s\r\n".printf (_position.to_string ());
-        port.send_bytes (msg1.to_utf8 (), msg1.length);
-        Posix.usleep (100000);
+        if (active_command == null) {
+            position += 1.0;
+            /* Write out the control word and begin checking the status word */
+            write_object (C3Plus_DeviceControl_Controlword_1, CW_JOG_PLUS);
+            status1 &= ~(SWB1_POS_REACHED); //Clear bit.
+            Cld.debug ("jog_plus: position: %.3f status1: %u\n", _position, status1);
+            flags = SWB1_POS_REACHED;
+            active_command = C3Plus_DeviceState_Statusword_1;
+            timeout_ms = move_timeout_ms;
+            this.serial_timeout.connect (check_status_cb);
+            check_status_cb ();
+        }
     }
 
     public void jog_minus () {
-        string msg1;
-        position += -1.0;
-        Cld.debug ("jog_minus: position: %.3f\n", _position);
-        msg1 = "jog_minus: position: %s\r\n".printf (_position.to_string ());
-        port.send_bytes (msg1.to_utf8 (), msg1.length);
-        Posix.usleep (100000);
+        if (active_command == null) {
+            position -= 1.0;
+            /* Write out the control word and begin checking the status word */
+            write_object (C3Plus_DeviceControl_Controlword_1, CW_JOG_MINUS);
+            status1 &= ~(SWB1_POS_REACHED); //Clear bit.
+            Cld.debug ("jog_minus: position: %.3f status1: %u\n", _position, status1);
+            flags = SWB1_POS_REACHED;
+            active_command = C3Plus_DeviceState_Statusword_1;
+            timeout_ms = move_timeout_ms;
+            this.serial_timeout.connect (check_status_cb);
+            check_status_cb ();
+        }
     }
 
     public void step (double step_size, int direction) {
@@ -448,7 +462,9 @@ public class Cld.ParkerModule : AbstractModule {
         if (active_command == null) {
             status1 &= ~(SWB1_HOME_IS_KNOWN); //Clear bit.
             Cld.debug ("home () CW_HOME: %d status1: %u\n", CW_HOME, status1);
+            /* Write out the control word and begin checking the status word */
             write_object (C3Plus_DeviceControl_Controlword_1, CW_HOME);
+            write_object (C3Plus_DeviceControl_Controlword_1, CW_HOME | CWB_START);// Rising edge on start bit.
             active_command = C3Plus_DeviceState_Statusword_1;
             timeout_ms = home_timeout_ms;
             flags = SWB1_HOME_IS_KNOWN;
@@ -513,6 +529,11 @@ public class Cld.ParkerModule : AbstractModule {
                 } else if ((status1 & SWB1_HOME_IS_KNOWN) == 0) {
                     Cld.debug ("home not found\n");
                 }
+                if (( status1 & SWB1_POS_REACHED) == SWB1_POS_REACHED) {
+                    Cld.debug ("position reached\n");
+                } else {
+                    Cld.debug ("position not reached\n");
+                }
                 break;
             default:
                 Cld.debug ("Unable to parse response: %s\n", response);
@@ -556,14 +577,14 @@ public class Cld.ParkerModule : AbstractModule {
             Cld.debug ("count: %d active command: %s\n", count, active_command);
 
         } else if ((status1 & flags) == flags) {
-            Cld.debug ("Home is known. status1: %u flags: %u\n", status1, flags);
+            Cld.debug ("Check status success. status1: %u flags: %u\n", status1, flags);
             active_command = null;
             this.serial_timeout.disconnect (check_status_cb);
             count = 0;
 
         } else {
             count = 0;
-            Cld.debug ("Homing sequence timed out\n");
+            Cld.debug ("Check status callback timed out\n");
             active_command = null;
             this.serial_timeout.disconnect (check_status_cb);
         }

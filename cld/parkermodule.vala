@@ -305,16 +305,29 @@ public class Cld.ParkerModule : AbstractModule {
         set { update_objects (value); }
     }
 
-    /**
-     * A signal that is emitted when the position value changes.
-     */
+    /* A signal that is emitted when the position value changes.*/
     public signal void new_position (double position);
+
+    /* The position that is tracked locally by the software */
     private double _position = 0.0;
     public double position {
         get { return _position; }
         private set {
             _position = value;
             new_position (value);
+        }
+    }
+
+     /* A signal that is emitted when the position value changes.*/
+    public signal void new_remote_position (double remote_position);
+
+    /* The position that is read directly from the Compax3 */
+    private double _remote_position = 0.0;
+    public double remote_position {
+        get { return _remote_position; }
+        private set {
+            _remote_position = value;
+            new_remote_position (value);
         }
     }
 
@@ -551,7 +564,7 @@ public class Cld.ParkerModule : AbstractModule {
             Cld.debug ("withdraw (): length: %.3f speed: %.3f\n", length_mm);
             /* Write movement to the set table */
             write_object (C3Array_Col01_Row01, zero_position - length_mm);
-            write_object (C3Array_Col02_Row01, default_velocity);
+            write_object (C3Array_Col02_Row01, speed_mmps);
             write_object (C3Array_Col05_Row01, MOVE_ABS);
             write_object (C3Array_Col06_Row01, default_acceleration);
             write_object (C3Array_Col07_Row01, default_deceleration);
@@ -595,13 +608,10 @@ public class Cld.ParkerModule : AbstractModule {
         }
     }
 
-    public void fetch_position () {
-        if (position == 123.456) {
-            position = 654.321;
-        } else if (position == 654.321) {
-            position = 123.456;
-        } else {
-            position = 123.456;
+    public void fetch_remote_position () {
+        if (active_command == null) {
+            active_command = C3_StatusPosition_Actual;
+            read_object (active_command);
         }
     }
 
@@ -624,6 +634,10 @@ public class Cld.ParkerModule : AbstractModule {
                 } else {
                     Cld.debug ("position not reached\n");
                 }
+                break;
+            case C3_StatusPosition_Actual:
+                remote_position = double.parse (response);
+                Cld.debug ("remote_position: %.3f\n", _remote_position);
                 break;
             default:
                 Cld.debug ("Unable to parse response: %s\n", response);

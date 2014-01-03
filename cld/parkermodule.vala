@@ -484,64 +484,42 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     private void new_data_cb (SerialPort port, uchar[] data, int size) {
-//        Cld.debug ("new_data_cb (): (%s) %d\n", data, size);
-//        if (active_command == "write_object") {
-//            port.flush ();
-//            return;
-//        } else {
-            for (int i = 0; i < size; i++) {
-                unichar c = "%c".printf (data[i]).get_char ();
-                Cld.debug ("c: %d\n", (int)c);
-                string s = "%c".printf (data[i]);
+        for (int i = 0; i < size; i++) {
+            unichar c = "%c".printf (data[i]).get_char ();
+//            Cld.debug ("c: %d\n", (int)c);
+            string s = "%c".printf (data[i]);
 
-                /* Ignore LF if last char was CR (CRLF terminator) */
-                if (!(port.last_rx_was_cr && (c == '\n'))) {
-                    received += "%s".printf (s);
-                }
-
-                port.last_rx_was_cr = (c == '\r');
-
-                if (c == '\r') {
-                    string r = "";
-                    received = received.chug ();
-                    received = received.chomp ();
-                    string[] tokens = received.split ("\t");
-                    foreach (string token in tokens[0:tokens.length]) {
-                        r += "%s\t".printf (token);
-                    }
-                    r = r.substring (0, r.length - 1);
-                    Cld.debug ("%s   \n", r);
-                    parse_response (r);
-                }
+            /* Ignore LF if last char was CR (CRLF terminator) */
+            if (!(port.last_rx_was_cr && (c == '\n'))) {
+                received += "%s".printf (s);
             }
-//        }
+
+            port.last_rx_was_cr = (c == '\r');
+
+            if (c == '\r') {
+                string r = "";
+                received = received.chug ();
+                received = received.chomp ();
+                string[] tokens = received.split ("\t");
+                foreach (string token in tokens[0:tokens.length]) {
+                    r += "%s\t".printf (token);
+                }
+                r = r.substring (0, r.length - 1);
+                Cld.debug ("response: %s   \n", r);
+                parse_response (r);
+            }
+        }
     }
 
-    public void home () {
+    public async void home () {
         if (active_command == null) {
             status1 &= ~(SWB1_HOME_IS_KNOWN); //Clear bit.
             Cld.debug ("home () CW_HOME: %d status1: %u\n", CW_HOME, status1);
-            /* Write out the control word and begin checking the status word */
-            write_object.begin (C3Plus_DeviceControl_Controlword_1, CW_HOME, (obj, res) => {
-                // wait for response
-                try {
-                    bool result = write_object.end (res);
-                    Cld.debug ("write result: %s\n", result.to_string ());
-                } catch (ThreadError e) {
-                    GLib.stderr.printf ("Thread error: %s\n", e.message);
-                }
-            });
-
-//            write_object.begin (C3Plus_DeviceControl_Controlword_1, CW_HOME | CWB_START, (obj, res) => {
-//                // wait for response
-//                try {
-//                    bool result = write_object.end (res);
-//                    Cld.debug ("write result: %s\n", result.to_string ());
-//                } catch (ThreadError e) {
-//                    GLib.stderr.printf ("Thread error: %s\n", e.message);
-//                }
-//            });
-            Cld.debug (".. continue\n");
+            /* Write out the control words and begin checking the status word */
+            yield (write_object (C3Plus_DeviceControl_Controlword_1, CW_HOME));
+            Cld.debug ("home (): sent first command CW_HOME    write_success: %s\n", write_success.to_string ());
+            yield (write_object (C3Plus_DeviceControl_Controlword_1, CW_HOME | CWB_START));
+            Cld.debug ("home (): sent second command CW_HOME | CWB_START    write_success: %s\n", write_success.to_string ());
             timeout_ms = home_timeout_ms;
             flags = SWB1_HOME_IS_KNOWN;
             this.serial_timeout.connect (check_status_cb);
@@ -653,7 +631,6 @@ public class Cld.ParkerModule : AbstractModule {
         switch (active_command) {
             case "write_object":
                 if (response == ">") {
-                    active_command = null;
                     write_success = true;
                 }
                 break;
@@ -692,6 +669,7 @@ public class Cld.ParkerModule : AbstractModule {
                 break;
         }
 
+        active_command = null;
         data_received = true;
         received = "";
     }
@@ -700,36 +678,31 @@ public class Cld.ParkerModule : AbstractModule {
      * XXX This could be made to take an index, sublindex and a variable list of values
      * using a valriable argument list method but it is here in a simpler form for now.
      */
-    private async bool write_object (string index, double val) throws ThreadError {
-        Cld.debug ("...inside write: %s\n", index);
-        SourceFunc callback = write_object.callback;
+    public async bool write_object (string index, double val) {
         bool ret = false;
         write_success = false;
         active_command = "write_object";
         string msg1 = "o" + index + "=" + val.to_string () +"\r\n";
         port.send_bytes (msg1.to_utf8 (), msg1.length);
 
-        ThreadFunc<void *> run = () => {
-            Cld.debug ("...inside write thread run\n");
-            /* Run timer */
-            for (var i = 0; i < 5; i++) {
-                Thread.usleep (1000000*i);
-                Cld.debug ("...write %ds delay\n", i);
-                if (i == 4) {
-                    Cld.debug ("write thread timed out.\n");
-                }
-                if (write_success)
-                    break;
+        GLib.Timeout.add (1000, () => {
+message ("");
+            if (write_success == true) {
+                Cld.debug ("write success!\n");
+                write_object.callback ();
+message ("");
+                return false;
+            } else {
+                Cld.debug ("write not successful.\n");
+                return false;
             }
-            ret = true;
-            Idle.add ((owned) callback);
-            return null;
-        };
-        Thread.create<void *>(run, false);
+        }, GLib.Priority.DEFAULT);
 
-        Cld.debug ("...yielding to write thread\n");
+message ("");
         yield;
-        Cld.debug ("...done write\n");
+message ("");
+        ret = true;
+
         return ret;
 
     }

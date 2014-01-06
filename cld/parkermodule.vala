@@ -266,6 +266,7 @@ public class Cld.ParkerModule : AbstractModule {
     private uint timeout_ms;
     private uint serial_timeout_ms = 2000;
     private uint home_timeout_ms = 10000;
+    private uint jog_timeout_ms = 10000;
     private uint move_timeout_ms = 5000;
     private int count = 0;
     private signal void serial_timeout ();
@@ -420,17 +421,14 @@ public class Cld.ParkerModule : AbstractModule {
         return r;
     }
 
-    public void jog_plus () {
+    public async void jog_plus () {
         Cld.debug ("jog_plus ()\n");
-        Cld.debug ("active_command: %s\n", active_command);
         if (active_command == null) {
-            position += 1.0;
             /* Write out the control word and begin checking the status word */
-            write_object (C3Plus_DeviceControl_Controlword_1, CW_JOG_PLUS);
-            write_object (C3Plus_DeviceControl_Controlword_1, CW_JOG_PLUS | CWB_START);
-            //status1 &= ~(SWB1_NO_ERROR); //Clear bit.
-            Cld.debug ("jog_plus: position: %.3f status1: %u\n", _position, status1);
-            //flags = SWB1_NO_ERROR;
+            yield (write_object (C3Plus_DeviceControl_Controlword_1, CW_JOG_PLUS));
+            yield (write_object (C3Plus_DeviceControl_Controlword_1, CW_JOG_PLUS | CWB_START));
+            status1 &= ~(SWB1_NO_ERROR); //Clear bit.
+            flags = SWB1_NO_ERROR;
             timeout_ms = move_timeout_ms;
             this.serial_timeout.connect (check_status_cb);
             check_status_cb ();
@@ -453,9 +451,9 @@ public class Cld.ParkerModule : AbstractModule {
         }
     }
 
-    public void jog_stop () {
+    public async void jog_stop () {
         Cld.debug ("jog_stop\n");
-        write_object (C3Plus_DeviceControl_Controlword_1, CW_JOG_STOP);
+        yield (write_object (C3Plus_DeviceControl_Controlword_1, CW_JOG_STOP));
     }
 
     public void step (double step_size, int direction) {
@@ -632,6 +630,9 @@ public class Cld.ParkerModule : AbstractModule {
             case "write_object":
                 if (response == ">") {
                     write_success = true;
+                } else if (response.has_prefix ("!")) {
+                    write_success = false;
+                    Cld.debug ("write_object error: %s\n", response.substring (1));
                 }
                 break;
             case C3Plus_DeviceState_Statusword_1:
@@ -682,29 +683,31 @@ public class Cld.ParkerModule : AbstractModule {
         bool ret = false;
         write_success = false;
         active_command = "write_object";
+        count = 0;
         string msg1 = "o" + index + "=" + val.to_string () +"\r\n";
         port.send_bytes (msg1.to_utf8 (), msg1.length);
 
-        GLib.Timeout.add (1000, () => {
-message ("");
+        GLib.Timeout.add (100, () => {
             if (write_success == true) {
                 Cld.debug ("write success!\n");
                 write_object.callback ();
-message ("");
+
                 return false;
+            } else if (count < 10) {
+                Cld.debug (".");
+
+                return true;
             } else {
-                Cld.debug ("write not successful.\n");
-                return false;
+                Cld.debug ("\nwrite failed\n");
+
+                return false
             }
         }, GLib.Priority.DEFAULT);
 
-message ("");
         yield;
-message ("");
         ret = true;
 
         return ret;
-
     }
 
     public void read_object (string index) {
@@ -733,15 +736,17 @@ message ("");
                 Cld.debug ("count: %d active command: %s\n", count, active_command);
 
             } else if ((status1 & flags) == flags) {
-                Cld.debug ("Check status: STATUS FLAG EVENT  status1: %u flags: %u\n", status1, flags);
+                Cld.debug ("check_status_cb: All flags are raised status1: %u flags: %u\n", status1, flags);
                 active_command = null;
                 this.serial_timeout.disconnect (check_status_cb);
+                Cld.debug ("check_status_cb: Disconnected\n");
                 count = 0;
             } else {
                 count = 0;
-                Cld.debug ("Check status callback timed out\n");
+                Cld.debug ("check_status_cb: The callback has timed out\n");
                 active_command = null;
                 this.serial_timeout.disconnect (check_status_cb);
+                Cld.debug ("check_status_cb: Disconnected\n");
             }
     //        if (!((status1 & SWB1_NO_ERROR) == SWB1_NO_ERROR)) {
     //            Cld.debug ("Error!\n");

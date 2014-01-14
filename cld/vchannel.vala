@@ -164,6 +164,9 @@ public class Cld.VChannel : AbstractChannel, ScalableChannel {
                              * possibly fix later */
                             taskref = iter->get_content ();
                             break;
+                        case "devref":
+                            devref = iter->get_content ();
+                            break;
                         default:
                             break;
                     }

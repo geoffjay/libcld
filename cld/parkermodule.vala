@@ -277,7 +277,6 @@ public class Cld.ParkerModule : AbstractModule {
     private uint jog_timeout_ms = 1000;
     private uint move_timeout_ms = 10000;
     private signal void serial_timeout ();
-    private signal void parse_finished ();
     private double zero_position = 0.0;
     private double default_velocity = 100.0;
     private double default_acceleration = 10000.0;
@@ -285,6 +284,8 @@ public class Cld.ParkerModule : AbstractModule {
     private double default_jerk = 100000.0;
     private bool write_success = false;
     private int count = 0;
+
+    public signal void error (string message);
 
     /**
      * {@inheritDoc}
@@ -342,6 +343,19 @@ public class Cld.ParkerModule : AbstractModule {
         private set {
             _actual_position = value;
             new_actual_position (value);
+        }
+    }
+
+    /* A signal that is emitted whe the torque value changes. */
+    public signal void new_actual_torque (double actual_torque);
+
+    /* The torque that is read directly from the Compax3 */
+    private double _actual_torque = 0.0;
+    public double actual_torque {
+        get { return _actual_torque; }
+        private set {
+            _actual_torque = value;
+            new_actual_torque (value);
         }
     }
 
@@ -610,6 +624,7 @@ public class Cld.ParkerModule : AbstractModule {
             yield check_status (move_timeout_ms, SWB1_CURRENT_ZERO |
                                     SWB1_NO_ERROR);
             yield fetch_actual_position ();
+            last_error ();
         }
 
     }
@@ -617,6 +632,13 @@ public class Cld.ParkerModule : AbstractModule {
     public async void fetch_actual_position () {
         if (active_command == null) {
             active_command = C3_StatusPosition_Actual;
+            yield read_object (active_command);
+        }
+    }
+
+    public async void fetch_actual_torque () {
+        if (active_command == null) {
+            active_command = C3Plus_StatusTorqueForce_ActualTorque;
             yield read_object (active_command);
         }
     }
@@ -647,6 +669,7 @@ public class Cld.ParkerModule : AbstractModule {
                 }
                 if ((status1 & SWB1_NO_ERROR) == SWB1_NO_ERROR) {
                     Cld.debug ("No Error\n");
+                    error ("No Error");
                 } else {
                     Cld.debug ("Error\n");
                 }
@@ -665,16 +688,18 @@ public class Cld.ParkerModule : AbstractModule {
                 zero_position = double.parse (response);
                 Cld.debug ("zero_positon: %.3f\n", zero_position);
                 break;
-//            case C3Plus_ErrorHistory_LastError:
-//                Cld.debug ("Error: %s\n", response);
-//                write_object (C3Plus_DeviceControl_Controlword_1, CW_ACK_ZERO);
-//                write_object (C3Plus_DeviceControl_Controlword_1, CW_ACK_EDGE);
-//                break;
+            case C3Plus_StatusTorqueForce_ActualTorque:
+                actual_torque = double.parse (response);
+                Cld.debug ("actual_torque: %.3f\n", _actual_torque);
+                break;
+            case C3Plus_ErrorHistory_LastError:
+                Cld.debug ("Error: %s\n", response);
+                parse_error (response);
+                break;
             default:
                 Cld.debug ("Unable to parse response: %s\n", response);
                 break;
         }
-
         active_command = null;
         data_received = true;
         received = "";
@@ -717,6 +742,7 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     public async bool read_object (string index) {
+        active_command = index;
         bool ret = false;
         data_received = false;
         count = 0;
@@ -745,8 +771,8 @@ public class Cld.ParkerModule : AbstractModule {
     private async void check_status (uint timeout_ms, uint flags) {
         if (active_command == null) {
             for (int i = 0; i < timeout_ms / serial_timeout_ms; i++) {
-                active_command = C3Plus_DeviceState_Statusword_1;
-                yield read_object (active_command);
+                //active_command = C3Plus_DeviceState_Statusword_1;
+                yield read_object (C3Plus_DeviceState_Statusword_1);
                 if ((status1 & flags) == flags) {
                     Cld.debug ("check_status: passed status1: %u flags: %u\n", status1, flags);
                     active_command = null;
@@ -758,5 +784,30 @@ public class Cld.ParkerModule : AbstractModule {
             Cld.debug ("check_status: timed out\n");
             active_command = null;
         }
+    }
+
+    public async void last_error () {
+        Cld.debug ("last_error ()\n");
+        yield read_object (C3Plus_ErrorHistory_LastError);
+        active_command = null;
+    }
+
+    private void parse_error (string response) {
+        switch (response) {
+            case "1":
+                error ("No error");
+                break;
+            case "33153":
+                error ("Invalid Velocity");
+                break;
+            default:
+                error (response);
+                break;
+        }
+    }
+
+    public async void ack_error () {
+        yield write_object (C3Plus_DeviceControl_Controlword_1, CW_ACK_ZERO);
+        yield write_object (C3Plus_DeviceControl_Controlword_1, CW_ACK_EDGE);
     }
 }

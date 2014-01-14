@@ -461,6 +461,7 @@ public class Cld.ParkerModule : AbstractModule {
         yield (write_object (C3Plus_DeviceControl_Controlword_1, CWB_QUIT |
                                 CWB_NO_STOP1 | CWB_NO_STOP2));
         yield fetch_actual_position ();
+        last_error ();
     }
 
     public async void step (double step_size, int direction) {
@@ -483,6 +484,7 @@ public class Cld.ParkerModule : AbstractModule {
             yield check_status (move_timeout_ms, SWB1_POS_REACHED |
                                 SWB1_NO_ERROR);
             yield fetch_actual_position ();
+            last_error ();
         }
     }
 
@@ -529,6 +531,7 @@ public class Cld.ParkerModule : AbstractModule {
             yield check_status (serial_timeout_ms * 3, SWB1_HOME_IS_KNOWN |
                                     SWB1_NO_ERROR);
             yield fetch_actual_position ();
+            last_error ();
         }
     }
 
@@ -576,6 +579,7 @@ public class Cld.ParkerModule : AbstractModule {
             yield check_status (serial_timeout_ms * 10, SWB1_HOME_IS_KNOWN |
                                     SWB1_NO_ERROR);
             yield fetch_actual_position ();
+            last_error ();
         }
     }
 
@@ -600,6 +604,7 @@ public class Cld.ParkerModule : AbstractModule {
             yield check_status (move_timeout_ms, SWB1_CURRENT_ZERO |
                                     SWB1_NO_ERROR);
             yield fetch_actual_position ();
+            last_error ();
 
         }
     }
@@ -624,6 +629,8 @@ public class Cld.ParkerModule : AbstractModule {
             yield check_status (move_timeout_ms, SWB1_CURRENT_ZERO |
                                     SWB1_NO_ERROR);
             yield fetch_actual_position ();
+            Posix.sleep (3);
+            yield write_object (C3Plus_DeviceControl_Controlword_1, 0);
             last_error ();
         }
 

@@ -46,6 +46,7 @@ libcld_0_2_la_SOURCES = \
 	log.vala \
 	module.vala \
 	object.vala \
+	parkermodule.vala \
 	pid.vala \
 	port.vala \
 	serialport.vala \

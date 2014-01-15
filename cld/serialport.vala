@@ -457,6 +457,10 @@ public class Cld.SerialPort : AbstractPort {
         }
     }
 
+    public void flush () {
+        Posix.tcflush (fd, Posix.TCIOFLUSH);
+    }
+
     /**
      * {@inheritDoc}
      */

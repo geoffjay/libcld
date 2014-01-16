@@ -243,18 +243,20 @@ public class Cld.Builder : AbstractContainer {
         string ref_id;
 
         foreach (var object in objects.values) {
+message ("object id: %s", object.id);
             /* Setup the device references for all of the channel types */
             if (object is Channel) {
                 ref_id = (object as Channel).devref;
                 Cld.debug ("Assigning Device %s to Channel %s\n", ref_id, object.id);
                 var device = get_object (ref_id);
+message ("1111");
                 if (device != null && device is Device) {
-                   // (object as Channel).device = (device as Device);
+                    (object as Channel).device = (device as Device);
                     ref_id = (object as Channel).taskref;
                     Cld.debug ("Assigning Task %s to Channel %s\n", ref_id, object.id);
                     var task = (device as Cld.Container).get_object (ref_id);
-                    //if (task != null && task is Task)
-                       // (object as Channel).task = (task as Task);
+                    if (task != null && task is Task)
+                        (object as Channel).task = (task as Task);
                 }
             }
 
@@ -327,21 +329,28 @@ public class Cld.Builder : AbstractContainer {
                     /* set the virtual channel that are to be referenced by this module */
                     foreach (var licor_channel in channels.values) {
                         if ((licor_channel as Channel).devref == ref_id) {
-                            Cld.debug ("Assigning Channel %s to Device %s\n", licor_channel.id, (object as LicorModule).devref);
+                            Cld.debug ("Assigning Channel %s to Device %s\n", licor_channel.id,
+                                        (object as LicorModule).devref);
                             (object as LicorModule).add_channel (licor_channel);
                         }
                     }
                 }
                 if (ref_id != null && object is HeidolphModule) {
+//                    var chan0 = get_object ("heidolph00");
+//                    var chan1 = get_object ("heidolph01");
+//                    (object as HeidolphModule).add_channel (chan0 as Channel);
+//                    (object as HeidolphModule).add_channel (chan1 as Channel);
+
                     /* set the virtual channel that are to be referenced by this module */
                     foreach (var heidolph_channel in channels.values) {
+                        Cld.debug ("ref_id: %s heidolph_channel.id: %s\n", ref_id, heidolph_channel.id);
                         if ((heidolph_channel as Channel).devref == ref_id) {
-                            Cld.debug ("Assigning Channel %s to Module %s\n", heidolph_channel.id, (object as HeidolphModule).id);
+                            Cld.debug ("Assigning Channel %s to Module %s\n", heidolph_channel.id,
+                                        (object as HeidolphModule).id);
                             (object as HeidolphModule).add_channel (heidolph_channel);
                         }
                     }
                 }
-
             }
 
             /* Each device in daq references tasks.  */

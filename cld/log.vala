@@ -439,6 +439,8 @@ public class Cld.Log : AbstractContainer {
                     cals += "\t(%s)\n".printf (channel.desc);
                     units += "\t[%s]".printf (calibration.units);
                     tags += "\t%s".printf (channel.tag);
+                } else if (channel is DChannel) {
+                    tags += "\t%s".printf (channel.tag);
                 }
             }
         }

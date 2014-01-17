@@ -336,21 +336,21 @@ message ("1111");
                         }
                     }
                 }
-                if (ref_id != null && object is HeidolphModule) {
-//                    var chan0 = get_object ("heidolph00");
-//                    var chan1 = get_object ("heidolph01");
-//                    (object as HeidolphModule).add_channel (chan0 as Channel);
-//                    (object as HeidolphModule).add_channel (chan1 as Channel);
+                if (object is HeidolphModule) {
+                    var chan0 = get_object ("heidolph00");
+                    var chan1 = get_object ("heidolph01");
+                    (object as HeidolphModule).add_channel (chan0 as Channel);
+                    (object as HeidolphModule).add_channel (chan1 as Channel);
 
                     /* set the virtual channel that are to be referenced by this module */
-                    foreach (var heidolph_channel in channels.values) {
-                        Cld.debug ("ref_id: %s heidolph_channel.id: %s\n", ref_id, heidolph_channel.id);
-                        if ((heidolph_channel as Channel).devref == ref_id) {
-                            Cld.debug ("Assigning Channel %s to Module %s\n", heidolph_channel.id,
-                                        (object as HeidolphModule).id);
-                            (object as HeidolphModule).add_channel (heidolph_channel);
-                        }
-                    }
+//                    foreach (var heidolph_channel in channels.values) {
+//                        Cld.debug ("ref_id: %s heidolph_channel.id: %s\n", ref_id, heidolph_channel.id);
+//                        if ((heidolph_channel as Channel).devref == ref_id) {
+//                            Cld.debug ("Assigning Channel %s to Module %s\n", heidolph_channel.id,
+//                                        (object as HeidolphModule).id);
+//                            (object as HeidolphModule).add_channel (heidolph_channel);
+//                        }
+//                    }
                 }
             }
 

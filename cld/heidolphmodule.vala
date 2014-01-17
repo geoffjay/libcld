@@ -32,7 +32,7 @@ public class Cld.HeidolphModule : AbstractModule {
     /**
      * Property backing fields.
      */
-    private Gee.Map<string, Object> _objects;
+    private Gee.Map<string, Cld.Object> _objects;
 
     public int timeout_ms { get; set; default = 400;}
     private string received = "c";
@@ -82,12 +82,12 @@ public class Cld.HeidolphModule : AbstractModule {
     /**
      * {@inheritDoc}
      */
-    public override Gee.Map<string, Object> objects {
+    public override Gee.Map<string, Cld.Object> objects {
         get { return (_objects); }
         set { update_objects (value); }
     }
 
-    public weak Gee.Map<string, Object> channels { get; set; }
+    public weak Gee.Map<string, Cld.Object> channels { get; set; }
 
 
     public bool running { get; set; default = false; }
@@ -132,7 +132,7 @@ public class Cld.HeidolphModule : AbstractModule {
                 }
             }
         }
-        channels = new Gee.TreeMap<string, Object> ();
+        channels = new Gee.TreeMap<string, Cld.Object> ();
     }
 
     /**
@@ -270,7 +270,7 @@ public class Cld.HeidolphModule : AbstractModule {
     /**
      * ...
      */
-    public void add_channel (Object channel) {
+    public void add_channel (Cld.Object channel) {
         channels.set (channel.id, channel);
         Cld.debug ("HeidolphModule :: add_channel(%s)\n", channel.id);
     }
@@ -313,7 +313,7 @@ public class Cld.HeidolphModule : AbstractModule {
     /**
      * {@inheritDoc}
      */
-    public virtual void add (Object object) {
+    public virtual void add (Cld.Object object) {
         Cld.debug ("HeidolphModule :: add_object(%s)", object.id);
         objects.set (object.id, object);
     }
@@ -321,7 +321,7 @@ public class Cld.HeidolphModule : AbstractModule {
     /**
      * {@inheritDoc}
      */
-    public override void update_objects (Gee.Map<string, Object> val) {
+    public override void update_objects (Gee.Map<string, Cld.Object> val) {
         _objects = val;
     }
 }

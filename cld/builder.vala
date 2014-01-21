@@ -181,41 +181,44 @@ public class Cld.Builder : AbstractContainer {
                         case "channel":
                             var ctype = iter->get_prop ("ctype");
                             direction = iter->get_prop ("direction");
-                            if (ctype == "analog" && direction == "input")
+                            if (ctype == "analog" && direction == "input") {
                                 object = new AIChannel.from_xml_node (iter);
-                            else if (ctype == "analog" && direction == "output")
+                            } else if (ctype == "analog" && direction == "output") {
                                 object = new AOChannel.from_xml_node (iter);
-                            else if (ctype == "digital" && direction == "input")
+                            } else if (ctype == "digital" && direction == "input") {
                                 object = new DIChannel.from_xml_node (iter);
-                            else if (ctype == "digital" && direction == "output")
+                            } else if (ctype == "digital" && direction == "output") {
                                 object = new DOChannel.from_xml_node (iter);
-                            else if (ctype == "calculation" || ctype == "virtual")
+                            } else if (ctype == "calculation" || ctype == "virtual") {
                                 object = new VChannel.from_xml_node (iter);
-                            else
+                            } else {
                                 object = null;
+                            }
                             break;
                         case "module":
                             var mtype = iter->get_prop ("mtype");
-                            if (mtype == "velmex")
+                            if (mtype == "velmex") {
                                 object = new VelmexModule.from_xml_node (iter);
-                            else if (mtype == "licor")
+                            } else if (mtype == "licor") {
                                 object = new LicorModule.from_xml_node (iter);
-                            else if (mtype == "brabender") {
+                            } else if  (mtype == "brabender") {
                                 object = new BrabenderModule.from_xml_node (iter);
-                            }
-                            else
+                            } else if (mtype == "parker") {
+                                object = new ParkerModule.from_xml_node (iter);
+                            } else if  (mtype == "heidolph") {
+                                object = new HeidolphModule.from_xml_node (iter);
+                            } else {
                                 object = null;
-                            break;
+                            } break;
                         case "port":
                             var ptype = iter->get_prop ("ptype");
                             if (ptype == "serial") {
                                 object = new SerialPort.from_xml_node (iter);
-                            }
-                            else if (ptype == "modbus") {
+                            } else if (ptype == "modbus") {
                                 object = new ModbusPort.from_xml_node (iter);
-                            }
-                            else
+                            } else {
                                 object = null;
+                            }
                             break;
                         default:
                             object = null;
@@ -329,6 +332,16 @@ public class Cld.Builder : AbstractContainer {
                         }
                     }
                 }
+                if (ref_id != null && object is HeidolphModule) {
+                    /* set the virtual channel that are to be referenced by this module */
+                    foreach (var heidolph_channel in channels.values) {
+                        if ((heidolph_channel as Channel).devref == ref_id) {
+                            Cld.debug ("Assigning Channel %s to Module %s\n", heidolph_channel.id, (object as HeidolphModule).id);
+                            (object as HeidolphModule).add_channel (heidolph_channel);
+                        }
+                    }
+                }
+
             }
 
             /* Each device in daq references tasks.  */

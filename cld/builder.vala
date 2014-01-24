@@ -244,13 +244,11 @@ public class Cld.Builder : AbstractContainer {
         string ref_id;
 
         foreach (var object in objects.values) {
-message ("object id: %s", object.id);
             /* Setup the device references for all of the channel types */
             if (object is Channel) {
                 ref_id = (object as Channel).devref;
                 Cld.debug ("Assigning Device %s to Channel %s\n", ref_id, object.id);
                 var device = get_object (ref_id);
-message ("1111");
                 if (device != null && device is Device) {
                     (object as Channel).device = (device as Device);
                     ref_id = (object as Channel).taskref;

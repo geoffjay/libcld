@@ -39,12 +39,12 @@ public class Cld.HeidolphModule : AbstractModule {
     private uint? source_id;
     private string _speed_sp;
 
-    private string _speed;
+    private string _speed = "0";
     public string speed {
         get { return _speed; }
         }
 
-    private string _torque;
+    private string _torque = "0";
     public string torque {
         get { return _torque; }
         }
@@ -87,8 +87,9 @@ public class Cld.HeidolphModule : AbstractModule {
         set { update_objects (value); }
     }
 
-    public weak Gee.Map<string, Cld.Object> channels { get; set; }
+//    public weak Gee.Map<string, Cld.Object> channels { get; set; }
 
+    public Gee.Map<string, Cld.Object> channels { get; set; }
 
     public bool running { get; set; default = false; }
 
@@ -140,6 +141,7 @@ public class Cld.HeidolphModule : AbstractModule {
      */
      public bool run () {
         Cld.debug ("Heidolph: run ()\n");
+        source_id = Timeout.add (timeout_ms, fetch_data_cb);
         string msg1 = "R" + _speed_sp + "\r\n";
         port.send_bytes (msg1.to_utf8 (), msg1.length);
         running = true;
@@ -231,11 +233,11 @@ public class Cld.HeidolphModule : AbstractModule {
     }
 
     private void update_raw_values () {
-        var channel = channels.get ("heidolph00");
+        var channel1 = channels.get ("heidolph00");
+        var channel2 = channels.get ("heidolph01");
         //Cld.debug ("%s: %.3f\n", channel.id, double.parse (_speed));
-        (channel as VChannel).raw_value = double.parse (_speed);
-        channel = channels.get ("heidolph01");
-        (channel as VChannel).raw_value = double.parse (_torque);
+        (channel1 as VChannel).raw_value = double.parse (_speed);
+        (channel2 as VChannel).raw_value = double.parse (_torque);
     }
 
     /**
@@ -271,6 +273,7 @@ public class Cld.HeidolphModule : AbstractModule {
      * ...
      */
     public void add_channel (Cld.Object channel) {
+message ("3.1");
         channels.set (channel.id, channel);
         Cld.debug ("HeidolphModule :: add_channel(%s)\n", channel.id);
     }
@@ -287,7 +290,6 @@ public class Cld.HeidolphModule : AbstractModule {
             loaded = false;
         } else {
             (port as SerialPort).new_data.connect (new_data_cb);
-            source_id = Timeout.add (timeout_ms, fetch_data_cb);
             Cld.debug ("HeidolphModule loaded\n");
         }
         return loaded;

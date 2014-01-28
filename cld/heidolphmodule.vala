@@ -37,7 +37,12 @@ public class Cld.HeidolphModule : AbstractModule {
     public int timeout_ms { get; set; default = 400;}
     private string received = "c";
     private uint? source_id;
+
     private string _speed_sp;
+    public string speed_sp {
+        get { return _speed_sp; }
+        set { _speed_sp = value; }
+        }
 
     private string _speed = "0";
     public string speed {
@@ -140,7 +145,7 @@ public class Cld.HeidolphModule : AbstractModule {
      * Start the mixer
      */
      public bool run () {
-        Cld.debug ("Heidolph: run ()\n");
+        //Cld.debug ("Heidolph: run ()\n");
         source_id = Timeout.add (timeout_ms, fetch_data_cb);
         string msg1 = "R" + _speed_sp + "\r\n";
         port.send_bytes (msg1.to_utf8 (), msg1.length);
@@ -153,7 +158,7 @@ public class Cld.HeidolphModule : AbstractModule {
      * Stop the mixer
      */
     public bool stop () {
-        Cld.debug ("Heidolph: stop ()\n");
+        //Cld.debug ("Heidolph: stop ()\n");
         string msg1 = "R0\r\n";
         port.send_bytes (msg1.to_utf8 (), msg1.length);
         running = false;
@@ -165,7 +170,7 @@ public class Cld.HeidolphModule : AbstractModule {
      * Set speed control to run from the rheostat.
      */
     public void rheostat () {
-        Cld.debug ("Heidolph : rheostat ()\n");
+        //Cld.debug ("Heidolph : rheostat ()\n");
         string msg1 = "D\r\n";
         port.send_bytes (msg1.to_utf8 (), msg1.length);
     }
@@ -174,16 +179,23 @@ public class Cld.HeidolphModule : AbstractModule {
      * Callback event that fetches new data from the serial port.
      */
     private bool fetch_data_cb () {
-        //Cld.debug ("fetch_data_cb ()\n");
-        string msg1 = "r\r\n"; // speed request message.
-        string msg2 = "m\r\n"; // torque request message.
-        string msg3 = "f\r\n"; // request error message.
+        if (running) {
+            string msg1 = "r"; // speed request message.
+            string msg2 = "m"; // torque request message.
+            string msg3 = "f"; // request error message.
 
-        port.send_bytes (msg1.to_utf8 (), msg1.length);
-        port.send_bytes (msg2.to_utf8 (), msg2.length);
-        port.send_bytes (msg3.to_utf8 (), msg3.length);
+            port.send_bytes (msg1.to_utf8 (), msg1.length);
+            port.send_bytes (msg2.to_utf8 (), msg2.length);
+            port.send_bytes (msg3.to_utf8 (), msg3.length);
 
-        return true;
+        string msg4 = "R" + _speed_sp + "\r\n";
+        port.send_bytes (msg1.to_utf8 (), msg4.length);
+
+
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -191,7 +203,7 @@ public class Cld.HeidolphModule : AbstractModule {
      */
     private void new_data_cb (SerialPort port, uchar[] data, int size) {
         for (int i = 0; i < size; i++) {
-            //Cld.debug ("new_data_cb ()\n");
+            //Cld.debug ("new_data_cb () size: %d\n", size);
             unichar c = "%c".printf (data[i]).get_char ();
             string s = "%c".printf (data[i]);
 
@@ -212,53 +224,45 @@ public class Cld.HeidolphModule : AbstractModule {
                 }
                 r = r.substring (0, r.length - 1);
                 if (r.has_prefix ("RPM")) {
-                    //Cld.debug ("%s   ", r);
                     _speed = r.substring (5, -1);
-                    //Cld.debug ("Speed: %s ", speed);
+                    var channel = channels.get ("heidolph00");
+                    (channel as VChannel).raw_value = double.parse (_speed);
+                    //Cld.debug ("Speed: %s\n", speed);
                 } else if (r.has_prefix ("NCM")) {
-                    //Cld.debug ("%s", r);
                     _torque = r.substring (5, -1);
-                    //Cld.debug ("Torque: %s \n", torque);
+                    var channel = channels.get ("heidolph01");
+                    (channel as VChannel).raw_value = double.parse (_torque);
+                    //Cld.debug ("Torque: %s\n", torque);
                 } else if (r.has_prefix ("FLT")) {
-                    //Cld.debug ("%s\n", r);
                     _error_status = r.substring (5, -1);
+                    //Cld.debug ("Err: %s\n", error_status);
                 } else if (r.has_prefix ("SET")) {
                     _speed_sp = r.substring (5, -1);
-                    Cld.debug ("_speed_sp: %s\n", _speed_sp);
+                    //Cld.debug ("_speed_sp: %s\n", _speed_sp);
                 }
-                update_raw_values ();
                 received = "";
             }
         }
     }
 
-    private void update_raw_values () {
-        var channel1 = channels.get ("heidolph00");
-        var channel2 = channels.get ("heidolph01");
-        //Cld.debug ("%s: %.3f\n", channel.id, double.parse (_speed));
-        (channel1 as VChannel).raw_value = double.parse (_speed);
-        (channel2 as VChannel).raw_value = double.parse (_torque);
-    }
-
-    /**
-     * Set the mixer speed [RPM]
-     */
-    public void set_speed (string speed_set) {
-        Cld.debug ("Heidolph: set_speed ()\n");
-        _speed_sp = speed_set;
-    }
-
-    /**
-     * XXX This doesn't work. Retrieve the speed setpoint.
-     */
-    public string get_speed_sp () {
-        string msg1 = "s\r\n";
-
-        port.send_bytes (msg1.to_utf8 (), msg1.length);
-        Posix.sleep (5); // wait for the new data to appear
-
-        return _speed_sp;
-    }
+//    /**
+//     * Set the mixer speed [RPM]
+//     */
+//    public void set_speed (string speed_set) {
+//       // Cld.debug ("Heidolph: set_speed ()\n");
+//        _speed_sp = speed_set;
+//    }
+//
+//    /**
+//     * XXX This doesn't work. Retrieve the speed setpoint.
+//     */
+//    public string get_speed_sp () {
+//        string msg1 = "s";
+//
+//        port.send_bytes (msg1.to_utf8 (), msg1.length);
+//
+//        return _speed_sp;
+//    }
 
     /**
      * Normalize the torque value.
@@ -273,9 +277,8 @@ public class Cld.HeidolphModule : AbstractModule {
      * ...
      */
     public void add_channel (Cld.Object channel) {
-message ("3.1");
         channels.set (channel.id, channel);
-        Cld.debug ("HeidolphModule :: add_channel(%s)\n", channel.id);
+       //Cld.debug ("HeidolphModule :: add_channel(%s)\n", channel.id);
     }
 
 
@@ -301,11 +304,12 @@ message ("3.1");
     public override void unload () {
         if (running)
             rheostat ();
-            // stop (); // Another possibility for unload.
+            //stop (); // Another possibility for unload.
             running = false;
         if (loaded)
+            (port as SerialPort).new_data.disconnect (new_data_cb);
             port.close ();
-        Source.remove (source_id);
+        received = "";
         source_id = null;
         loaded = false;
 

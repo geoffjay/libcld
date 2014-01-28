@@ -37,7 +37,6 @@ public class Cld.HeidolphModule : AbstractModule {
     public int timeout_ms { get; set; default = 400;}
     private string received = "c";
     private uint? source_id;
-    private string _speed_sp;
 
     private string _speed_sp;
     public string speed_sp {
@@ -230,18 +229,18 @@ public class Cld.HeidolphModule : AbstractModule {
                     _speed = r.substring (5, -1);
                     var channel = channels.get ("heidolph00");
                     (channel as VChannel).raw_value = double.parse (_speed);
-                    //Cld.debug ("Speed: %s\n", speed);
+                    Cld.debug ("Speed: %s\n", speed);
                 } else if (r.has_prefix ("NCM")) {
                     _torque = r.substring (5, -1);
                     var channel = channels.get ("heidolph01");
                     (channel as VChannel).raw_value = double.parse (_torque);
-                    //Cld.debug ("Torque: %s\n", torque);
+                    Cld.debug ("Torque: %s\n", torque);
                 } else if (r.has_prefix ("FLT")) {
                     _error_status = r.substring (5, -1);
-                    //Cld.debug ("Err: %s\n", error_status);
+                    Cld.debug ("Err: %s\n", error_status);
                 } else if (r.has_prefix ("SET")) {
                     _speed_sp = r.substring (5, -1);
-                    //Cld.debug ("_speed_sp: %s\n", _speed_sp);
+                    Cld.debug ("_speed_sp: %s\n", _speed_sp);
                 }
                 received = "";
             }
@@ -270,9 +269,8 @@ public class Cld.HeidolphModule : AbstractModule {
      * ...
      */
     public void add_channel (Cld.Object channel) {
-message ("3.1");
         channels.set (channel.id, channel);
-        Cld.debug ("HeidolphModule :: add_channel(%s)\n", channel.id);
+       //Cld.debug ("HeidolphModule :: add_channel(%s)\n", channel.id);
     }
 
 

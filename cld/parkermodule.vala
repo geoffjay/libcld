@@ -273,9 +273,9 @@ public class Cld.ParkerModule : AbstractModule {
     private string active_command = null;
     private uint timeout_ms;
     private uint serial_timeout_ms = 2000;
-    private uint home_timeout_ms = 30000;
+    private uint home_timeout_ms = 80000;
     private uint jog_timeout_ms = 1000;
-    private uint move_timeout_ms = 30000;
+    private uint move_timeout_ms = 80000;
     private signal void serial_timeout ();
     private double zero_position = 0.0;
     private double default_velocity = 100.0;

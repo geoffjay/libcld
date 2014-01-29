@@ -43,6 +43,7 @@ public class Cld.HeidolphModule : AbstractModule {
         get { return _speed_sp; }
         set { _speed_sp = value; }
         }
+    private string old_speed_sp = "0";
 
     private string _speed = "0";
     public string speed {
@@ -188,9 +189,13 @@ public class Cld.HeidolphModule : AbstractModule {
             port.send_bytes (msg2.to_utf8 (), msg2.length);
             port.send_bytes (msg3.to_utf8 (), msg3.length);
 
-        string msg4 = "R" + _speed_sp + "\r\n";
-        port.send_bytes (msg1.to_utf8 (), msg4.length);
+            if (_speed_sp != old_speed_sp) {
+                string msg4 = "R" + _speed_sp + "\r\n";
+                port.send_bytes (msg4.to_utf8 (), msg4.length);
+                Cld.debug ("setpoint changed to %s\n", _speed_sp);
+            }
 
+            old_speed_sp = _speed_sp;
 
             return true;
         } else {
@@ -227,18 +232,18 @@ public class Cld.HeidolphModule : AbstractModule {
                     _speed = r.substring (5, -1);
                     var channel = channels.get ("heidolph00");
                     (channel as VChannel).raw_value = double.parse (_speed);
-                    //Cld.debug ("Speed: %s\n", speed);
+                    Cld.debug ("Speed: %s\n", speed);
                 } else if (r.has_prefix ("NCM")) {
                     _torque = r.substring (5, -1);
                     var channel = channels.get ("heidolph01");
                     (channel as VChannel).raw_value = double.parse (_torque);
-                    //Cld.debug ("Torque: %s\n", torque);
+                    Cld.debug ("Torque: %s\n", torque);
                 } else if (r.has_prefix ("FLT")) {
                     _error_status = r.substring (5, -1);
-                    //Cld.debug ("Err: %s\n", error_status);
+                    Cld.debug ("Err: %s\n", error_status);
                 } else if (r.has_prefix ("SET")) {
                     _speed_sp = r.substring (5, -1);
-                    //Cld.debug ("_speed_sp: %s\n", _speed_sp);
+                    Cld.debug ("_speed_sp: %s\n", _speed_sp);
                 }
                 received = "";
             }

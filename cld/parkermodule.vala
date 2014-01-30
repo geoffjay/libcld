@@ -518,6 +518,7 @@ public class Cld.ParkerModule : AbstractModule {
 
     public async void home () {
         if (active_command == null) {
+            yield clear_error_log ();
             status1 &= ~(SWB1_HOME_IS_KNOWN); //Clear bit.
             Cld.debug ("home () CW_HOME: %d status1: %u\n", CW_HOME, status1);
             /* Write out the control words and begin checking the status word */
@@ -528,7 +529,7 @@ public class Cld.ParkerModule : AbstractModule {
                                     SWB1_NO_ERROR);
             yield write_object (C3Plus_DeviceControl_Controlword_1, 0);
             Cld.debug ("home (): power off\n");
-            yield check_status (serial_timeout_ms * 3, SWB1_HOME_IS_KNOWN |
+            yield check_status (3000, SWB1_HOME_IS_KNOWN |
                                     SWB1_NO_ERROR);
             yield fetch_actual_position ();
             yield last_error ();
@@ -564,6 +565,7 @@ public class Cld.ParkerModule : AbstractModule {
 
     public async void zero_move () {
         if (active_command == null) {
+            yield clear_error_log ();
             Cld.debug ("zero_move () distance: %.3f\n", zero_position);
             /* Arm for Adress = 1 */
             yield write_object (C3Plus_DeviceControl_Controlword_1, CWB_QUIT |
@@ -587,6 +589,7 @@ public class Cld.ParkerModule : AbstractModule {
 
     public async void withdraw (double length_mm, double speed_mmps) {
         if (active_command == null) {
+            yield clear_error_log ();
             Cld.debug ("withdraw (): length: %.3f speed: %.3f\n", length_mm);
             /* Write movement to the set table row 2*/
             yield write_object (C3Array_Col01_Row02, zero_position - length_mm);
@@ -613,6 +616,7 @@ public class Cld.ParkerModule : AbstractModule {
 
     public async void inject (double speed_mmps) {
         if (active_command == null) {
+            yield clear_error_log ();
             Cld.debug ("inject () distance: %.3f\n", zero_position);
             /* Write movement to the set table row 2*/
             yield write_object (C3Array_Col01_Row02, zero_position);
@@ -804,7 +808,7 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     /*
-     * Retrieve the current error
+     * Retrieve the current error (ie. n = 1)
      */
     public async void last_error () {
         Cld.debug ("last_error ()\n");
@@ -813,11 +817,22 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     /*
-     * Retrieve the current error
+     * Retrieve the previous to last error (ie. n = 2)
      */
     public async void previous_error () {
         Cld.debug ("last_error ()\n");
         yield read_object (C3_ErrorHistory_1);
+        active_command = null;
+    }
+
+    /*
+     * Clear the error log. This can be used to detect that an error occurred
+     * since it was cleared.
+     */
+    private async void clear_error_log () {
+        yield write_object ("551.1", -1);
+        yield last_error ();
+        yield previous_error ();
         active_command = null;
     }
 

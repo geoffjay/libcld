@@ -247,25 +247,6 @@ public class Cld.HeidolphModule : AbstractModule {
         }
     }
 
-//    /**
-//     * Set the mixer speed [RPM]
-//     */
-//    public void set_speed (string speed_set) {
-//       // Cld.debug ("Heidolph: set_speed ()\n");
-//        _speed_sp = speed_set;
-//    }
-//
-//    /**
-//     * XXX This doesn't work. Retrieve the speed setpoint.
-//     */
-//    public string get_speed_sp () {
-//        string msg1 = "s";
-//
-//        port.send_bytes (msg1.to_utf8 (), msg1.length);
-//
-//        return _speed_sp;
-//    }
-
     /**
      * Normalize the torque value.
      */

@@ -278,7 +278,7 @@ public class Cld.ParkerModule : AbstractModule {
     private uint move_timeout_ms = 80000;
     private signal void serial_timeout ();
     private double zero_position = 0.0;
-    private double default_velocity = 100.0;
+    private double default_velocity = 10.0;
     private double default_acceleration = 100000.0;
     private double default_deceleration = 100000.0;
     private double default_jerk = 100000.0;
@@ -629,7 +629,6 @@ public class Cld.ParkerModule : AbstractModule {
             yield check_status (move_timeout_ms, SWB1_CURRENT_ZERO |
                                     SWB1_NO_ERROR);
             yield fetch_actual_position ();
-            Posix.sleep (3);
             yield write_object (C3Plus_DeviceControl_Controlword_1, 0);
             yield last_error ();
         }
@@ -786,21 +785,31 @@ public class Cld.ParkerModule : AbstractModule {
                     break;
                 } else {
                     Cld.debug ("check_status: failed status1: %u flags: %u\n", status1, flags);
+                    if ((status1 & SWB1_NO_ERROR) == 0) {
+                        Cld.debug ("status word 1 NO_ERROR = 0\n");
+                        break;
+                    }
                 }
             }
             if (!((status1 & flags) == flags)) {
-                 Cld.debug ("check_status: timed out\n");
+                 Cld.debug ("check_status: timed out or error\n");
             }
             active_command = null;
         }
     }
 
+    /*
+     * Retrieve the current error
+     */
     public async void last_error () {
         Cld.debug ("last_error ()\n");
         yield read_object (C3Plus_ErrorHistory_LastError);
         active_command = null;
     }
 
+    /*
+     * Parse the error or simply return its number
+     */
     private void parse_error (string response) {
         switch (response) {
             case "1":
@@ -815,8 +824,12 @@ public class Cld.ParkerModule : AbstractModule {
         }
     }
 
+    /*
+     * Acknowledge an error
+     */
     public async void ack_error () {
         yield write_object (C3Plus_DeviceControl_Controlword_1, CW_ACK_ZERO);
         yield write_object (C3Plus_DeviceControl_Controlword_1, CW_ACK_EDGE);
+        yield last_error ();
     }
 }

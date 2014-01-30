@@ -229,18 +229,18 @@ public class Cld.HeidolphModule : AbstractModule {
                     _speed = r.substring (5, -1);
                     var channel = channels.get ("heidolph00");
                     (channel as VChannel).raw_value = double.parse (_speed);
-                    Cld.debug ("Speed: %s\n", speed);
+                    //Cld.debug ("Speed: %s\n", speed);
                 } else if (r.has_prefix ("NCM")) {
                     _torque = r.substring (5, -1);
                     var channel = channels.get ("heidolph01");
                     (channel as VChannel).raw_value = double.parse (_torque);
-                    Cld.debug ("Torque: %s\n", torque);
+                    //Cld.debug ("Torque: %s\n", torque);
                 } else if (r.has_prefix ("FLT")) {
                     _error_status = r.substring (5, -1);
-                    Cld.debug ("Err: %s\n", error_status);
+                    //Cld.debug ("Err: %s\n", error_status);
                 } else if (r.has_prefix ("SET")) {
                     _speed_sp = r.substring (5, -1);
-                    Cld.debug ("_speed_sp: %s\n", _speed_sp);
+                    //Cld.debug ("_speed_sp: %s\n", _speed_sp);
                 }
                 received = "";
             }

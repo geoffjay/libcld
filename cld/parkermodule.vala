@@ -285,7 +285,7 @@ public class Cld.ParkerModule : AbstractModule {
     private bool write_success = false;
     private int count = 0;
 
-    public signal void error (string message);
+    public signal void error (int n, string message);
 
     /**
      * {@inheritDoc}
@@ -580,6 +580,7 @@ public class Cld.ParkerModule : AbstractModule {
                                     SWB1_NO_ERROR);
             yield fetch_actual_position ();
             yield last_error ();
+            yield previous_error ();
         }
     }
 
@@ -605,6 +606,7 @@ public class Cld.ParkerModule : AbstractModule {
                                     SWB1_NO_ERROR);
             yield fetch_actual_position ();
             yield last_error ();
+            yield previous_error ();
 
         }
     }
@@ -631,6 +633,7 @@ public class Cld.ParkerModule : AbstractModule {
             yield fetch_actual_position ();
             yield write_object (C3Plus_DeviceControl_Controlword_1, 0);
             yield last_error ();
+            yield previous_error ();
         }
 
     }
@@ -670,12 +673,10 @@ public class Cld.ParkerModule : AbstractModule {
                 }
                 if ((status1 & SWB1_POS_REACHED) == SWB1_POS_REACHED) {
                     Cld.debug ("position reached\n");
-                } else {
-                    Cld.debug ("position not reached\n");
                 }
                 if ((status1 & SWB1_NO_ERROR) == SWB1_NO_ERROR) {
                     Cld.debug ("No Error\n");
-                    error ("No Error");
+                    error (0, "No Error");
                 } else {
                     Cld.debug ("Error\n");
                 }
@@ -700,7 +701,11 @@ public class Cld.ParkerModule : AbstractModule {
                 break;
             case C3Plus_ErrorHistory_LastError:
                 Cld.debug ("Error: %s\n", response);
-                parse_error (response);
+                parse_error (0, response);
+                break;
+            case C3_ErrorHistory_1:
+                Cld.debug ("(n-1) Error: %s\n", response);
+                parse_error (1, response);
                 break;
             default:
                 Cld.debug ("Unable to parse response: %s\n", response);
@@ -808,18 +813,32 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     /*
-     * Parse the error or simply return its number
+     * Retrieve the current error
      */
-    private void parse_error (string response) {
+    public async void previous_error () {
+        Cld.debug ("last_error ()\n");
+        yield read_object (C3_ErrorHistory_1);
+        active_command = null;
+    }
+
+    /*
+     * Parse the error or simply return its number
+     * n = 0 is the last error
+     * n = 1 is the error before the last error
+     */
+    private void parse_error (int n, string response) {
         switch (response) {
             case "1":
-                error ("No error");
+                error (n, "No error");
+                break;
+            case "29472":
+                error (n, "29472: Tracking Error");
                 break;
             case "33153":
-                error ("Invalid Velocity");
+                error (n, "33153: Invalid Velocity (");
                 break;
             default:
-                error (response);
+                error (n, response);
                 break;
         }
     }

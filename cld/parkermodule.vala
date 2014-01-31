@@ -640,7 +640,7 @@ public class Cld.ParkerModule : AbstractModule {
             yield write_object (C3Plus_DeviceControl_Controlword_1, CWB_QUIT |
                                     CWB_NO_STOP1 | CWB_NO_STOP2 | CWB_ADDRESS_1 |
                                     CWB_START);
-            yield check_status (move_timeout_ms, SWB1_CURRENT_ZERO |
+            yield check_status (move_timeout_ms, SWB1_POS_REACHED |
                                     SWB1_NO_ERROR);
             /* (finished) Stop the timer. */
             tv.get_current_time ();
@@ -806,7 +806,7 @@ public class Cld.ParkerModule : AbstractModule {
                 } else {
                     Cld.debug ("check_status: failed status1: %.4x flags: %.4x\n", status1, flags);
                     if ((status1 & SWB1_NO_ERROR) == 0) {
-                        Cld.debug ("status word 1 NO_ERROR = 0\n");
+                        //Cld.debug ("status word 1 NO_ERROR = 0\n");
                         break;
                     }
                 }

@@ -806,7 +806,7 @@ public class Cld.ParkerModule : AbstractModule {
                 } else {
                     Cld.debug ("check_status: failed status1: %.4x flags: %.4x\n", status1, flags);
                     if ((status1 & SWB1_NO_ERROR) == 0) {
-                        //Cld.debug ("status word 1 NO_ERROR = 0\n");
+                        Cld.debug ("status word 1 NO_ERROR = 0\n");
                         break;
                     }
                 }

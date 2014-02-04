@@ -581,6 +581,7 @@ public class Cld.ParkerModule : AbstractModule {
             yield check_status (move_timeout_ms, SWB1_HOME_IS_KNOWN |
                                     SWB1_NO_ERROR);
             yield fetch_actual_position ();
+            yield write_object (C3Plus_DeviceControl_Controlword_1, 0);
             yield last_error ();
             yield previous_error ();
         }
@@ -639,7 +640,7 @@ public class Cld.ParkerModule : AbstractModule {
             yield write_object (C3Plus_DeviceControl_Controlword_1, CWB_QUIT |
                                     CWB_NO_STOP1 | CWB_NO_STOP2 | CWB_ADDRESS_1 |
                                     CWB_START);
-            yield check_status (move_timeout_ms, SWB1_CURRENT_ZERO |
+            yield check_status (move_timeout_ms, SWB1_POS_REACHED |
                                     SWB1_NO_ERROR);
             /* (finished) Stop the timer. */
             tv.get_current_time ();
@@ -647,7 +648,6 @@ public class Cld.ParkerModule : AbstractModule {
             Cld.debug ("time_result: %.3f\n", time_result);
 
             yield fetch_actual_position ();
-            yield write_object (C3Plus_DeviceControl_Controlword_1, 0);
             yield last_error ();
             yield previous_error ();
         }

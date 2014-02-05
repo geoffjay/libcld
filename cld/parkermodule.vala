@@ -640,7 +640,7 @@ public class Cld.ParkerModule : AbstractModule {
             yield write_object (C3Plus_DeviceControl_Controlword_1, CWB_QUIT |
                                     CWB_NO_STOP1 | CWB_NO_STOP2 | CWB_ADDRESS_1 |
                                     CWB_START);
-            yield check_status (move_timeout_ms, SWB1_POS_REACHED |
+            yield check_status (move_timeout_ms, SWB1_CURRENT_ZERO |
                                     SWB1_NO_ERROR);
             /* (finished) Stop the timer. */
             tv.get_current_time ();

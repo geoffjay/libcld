@@ -24,30 +24,41 @@
  *
  * Contains common code shared by all container implementations.
  */
-public abstract class Cld.AbstractContainer : AbstractObject, Container {
+public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container {
 
     /**
      * {@inheritDoc}
      */
-    public abstract Gee.Map<string, Object> objects { get; set; }
+    public abstract Gee.Map<string, Cld.Object> objects { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public virtual void add (Object object) {
+    public virtual void add (Cld.Object object) {
         objects.set (object.id, object);
+        object_added (object.id);
     }
 
     /**
      * {@inheritDoc}
      */
-    public abstract void update_objects (Gee.Map<string, Object> val);
+    public virtual void remove (Cld.Object object) {
+        if (objects.unset (object.id)) {
+            Cld.debug ("Removed the object: %s", object.id);
+            object_removed (object.id);
+        }
+    }
 
     /**
      * {@inheritDoc}
      */
-    public virtual Object? get_object (string id) {
-        Object? result = null;
+    public abstract void update_objects (Gee.Map<string, Cld.Object> val);
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual Cld.Object? get_object (string id) {
+        Cld.Object? result = null;
 
         if (objects.has_key (id)) {
             result = objects.get (id);
@@ -69,12 +80,12 @@ public abstract class Cld.AbstractContainer : AbstractObject, Container {
      * {@inheritDoc}
      */
     public virtual void sort_objects () {
-        Gee.List<Object> map_values = new Gee.ArrayList<Object> ();
+        Gee.List<Cld.Object> map_values = new Gee.ArrayList<Cld.Object> ();
 
         map_values.add_all (objects.values);
-        map_values.sort ((GLib.CompareFunc) Object.compare);
+        map_values.sort ((GLib.CompareFunc) Cld.Object.compare);
         objects.clear ();
-        foreach (Object object in map_values) {
+        foreach (Cld.Object object in map_values) {
             objects.set (object.id, object);
         }
     }

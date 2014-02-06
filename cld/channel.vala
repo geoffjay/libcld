@@ -62,7 +62,6 @@ public interface Cld.Channel : Cld.Object {
      */
     public abstract weak Task task { get; set; }
 
-
     /**
      * String name of the channel, could be considered to be the channel's
      * PNID label.

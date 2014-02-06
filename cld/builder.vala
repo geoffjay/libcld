@@ -32,7 +32,7 @@ public class Cld.Builder : AbstractContainer {
     /**
      * The XML configuration to use for building
      */
-    public XmlConfig xml { get; set; }
+    private XmlConfig xml { get; set; }
 
     /**
      * {@inheritDoc}

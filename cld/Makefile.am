@@ -36,6 +36,7 @@ libcld_0_2_la_SOURCES = \
 	coefficient.vala \
 	comedidevice.vala \
 	container.vala \
+	context.vala \
 	control.vala \
 	daq.vala \
 	device.vala \

@@ -19,6 +19,8 @@
  *  Geoff Johnson <geoff.jay@gmail.com>
  */
 
+using Config;
+
 /**
  * Control Logging and Data Acquisition library
  */
@@ -89,22 +91,55 @@ namespace Cld {
     }
 
     /**
+     * Internal variables used for library control... possibly.
+     * XXX seems strange to do option parsing in a library, maybe rethink this
+     */
+    private static int verbosity = 2;
+
+    private const OptionEntry[] options = {{
+        "log-level", 0, 0, OptionArg.INT, ref verbosity,
+        "Control the log level verbosity.", null
+    },{
+        null
+    }};
+
+    /**
      * Library initialization.
      */
     public void init (string[] args) {
-        Cld.verbosity = 1;
+
+        try {
+            var opt_context = new OptionContext (PACKAGE_NAME);
+            opt_context.set_help_enabled (false);
+            opt_context.add_main_entries (options, null);
+            opt_context.parse (ref args);
+        } catch (OptionError e) {
+            Cld.error ("OptionsError %s", e.message);
+        }
     }
 
     /**
      * Logging facilities.
      */
 
-    public static int verbosity = 0;
+    public void error (string format, ...) {
+        va_list va_list = va_list ();
+        string res = "libcld [ERROR] %s\n".printf (format.vprintf (va_list));
+        stderr.puts (res);
+    }
 
-    public void debug (string format, ...) {
+    public void message (string format, ...) {
         if (verbosity >= 1) {
             va_list va_list = va_list ();
-            string res = format.vprintf (va_list);
+            string res = "libcld [MSG] %s\n".printf (format.vprintf (va_list));
+            stdout.puts (res);
+        }
+    }
+
+    public void debug (string format, ...) {
+        if (verbosity >= 2) {
+            va_list va_list = va_list ();
+            string res = "libcld [DEBUG] %s\n".printf (format.vprintf (va_list));
             stdout.puts (res);
         }
     }

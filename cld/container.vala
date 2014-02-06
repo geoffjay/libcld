@@ -29,21 +29,38 @@ public interface Cld.Container : Cld.Object {
     /**
      * The map collection of the objects that belong to the container.
      */
-    public abstract Gee.Map<string, Object> objects { get; set; }
+    public abstract Gee.Map<string, Cld.Object> objects { get; set; }
 
     /**
-     * Add a object to the array list of objects
+     * Signals that an object has been added.
+     */
+    public abstract signal void object_added (string id);
+
+    /**
+     * Signals that an object has been removed.
+     */
+    public abstract signal void object_removed (string id);
+
+    /**
+     * Add an object to the array list of objects
      *
      * @param object object object to add to the list
      */
-    public abstract void add (Object object);
+    public abstract void add (Cld.Object object);
+
+    /**
+     * Remove an object to the array list of objects
+     *
+     * @param object object object to remove from the list
+     */
+    public abstract void remove (Cld.Object object);
 
     /**
      * Update the internal object list.
      *
      * @param val List of objects to replace the existing one
      */
-    public abstract void update_objects (Gee.Map<string, Object> val);
+    public abstract void update_objects (Gee.Map<string, Cld.Object> val);
 
     /**
      * Search the object list for the object with the given ID
@@ -51,7 +68,7 @@ public interface Cld.Container : Cld.Object {
      * @param id ID of the object to retrieve
      * @return The object if found, null otherwise
      */
-    public abstract Object? get_object (string id);
+    public abstract Cld.Object? get_object (string id);
 
     /**
      * Sort the contents of the objects map collection.

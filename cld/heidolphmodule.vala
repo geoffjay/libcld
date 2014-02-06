@@ -235,7 +235,7 @@ public class Cld.HeidolphModule : AbstractModule {
         //Cld.debug ("%s: %.3f\n", channel.id, double.parse (_speed));
         (channel as VChannel).raw_value = double.parse (_speed);
         channel = channels.get ("heidolph01");
-        (channel as VChannel).raw_value = double.parse (torque);
+        (channel as VChannel).raw_value = double.parse (_torque);
     }
 
     /**
@@ -272,7 +272,7 @@ public class Cld.HeidolphModule : AbstractModule {
      */
     public void add_channel (Object channel) {
         channels.set (channel.id, channel);
-        Cld.debug ("HeidolphModule :: add_channel(%s)", channel.id);
+        Cld.debug ("HeidolphModule :: add_channel(%s)\n", channel.id);
     }
 
 

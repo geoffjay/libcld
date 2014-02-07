@@ -201,7 +201,9 @@ public class Cld.Builder : AbstractContainer {
                                 object = new VelmexModule.from_xml_node (iter);
                             } else if (mtype == "licor") {
                                 object = new LicorModule.from_xml_node (iter);
-                            } else if  (mtype == "brabender") {
+                            } else if  (mtype == "heidolph") {
+                                object = new HeidolphModule.from_xml_node (iter);
+                            } else if (mtype == "brabender") {
                                 object = new BrabenderModule.from_xml_node (iter);
                             } else if (mtype == "parker") {
                                 object = new ParkerModule.from_xml_node (iter);

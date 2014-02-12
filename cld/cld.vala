@@ -96,26 +96,30 @@ namespace Cld {
      */
     private static int verbosity = 2;
 
-    private const OptionEntry[] options = {{
-        "log-level", 0, 0, OptionArg.INT, ref verbosity,
-        "Control the log level verbosity.", null
-    },{
-        null
-    }};
+    /*
+     *private const OptionEntry[] options = {{
+     *    "log-level", 0, 0, OptionArg.INT, ref verbosity,
+     *    "Control the log level verbosity.", null
+     *},{
+     *    null
+     *}};
+     */
 
     /**
      * Library initialization.
      */
     public void init (string[] args) {
 
-        try {
-            var opt_context = new OptionContext (PACKAGE_NAME);
-            opt_context.set_help_enabled (false);
-            opt_context.add_main_entries (options, null);
-            opt_context.parse (ref args);
-        } catch (OptionError e) {
-            Cld.error ("OptionsError %s", e.message);
-        }
+        /*
+         *try {
+         *    var opt_context = new OptionContext (PACKAGE_NAME);
+         *    opt_context.set_help_enabled (false);
+         *    opt_context.add_main_entries (options, null);
+         *    opt_context.parse (ref args);
+         *} catch (OptionError e) {
+         *    Cld.error ("OptionsError %s", e.message);
+         *}
+         */
     }
 
     /**
@@ -123,23 +127,23 @@ namespace Cld {
      */
 
     public void error (string format, ...) {
-        va_list va_list = va_list ();
-        string res = "libcld [ERROR] %s\n".printf (format.vprintf (va_list));
+        var list = va_list();
+        string res = "libcld [ERROR] %s\n".printf (format.vprintf (list));
         stderr.puts (res);
     }
 
     public void message (string format, ...) {
         if (verbosity >= 1) {
-            va_list va_list = va_list ();
-            string res = "libcld [MSG] %s\n".printf (format.vprintf (va_list));
+            var list = va_list();
+            string res = "libcld [MSG] %s\n".printf (format.vprintf (list));
             stdout.puts (res);
         }
     }
 
     public void debug (string format, ...) {
         if (verbosity >= 2) {
-            va_list va_list = va_list ();
-            string res = "libcld [DEBUG] %s\n".printf (format.vprintf (va_list));
+            var list = va_list();
+            string res = "libcld [DEBUG] %s\n".printf (format.vprintf (list));
             stdout.puts (res);
         }
     }

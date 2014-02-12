@@ -43,7 +43,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      * {@inheritDoc}
      */
     public virtual void remove (Cld.Object object) {
-        if (objects.unset (object.id) {
+        if (objects.unset (object.id)) {
             Cld.debug ("Removed the object: %s", object.id);
             object_removed (object.id);
         }

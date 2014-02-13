@@ -281,7 +281,7 @@ public class Cld.ParkerModule : AbstractModule {
     private double default_velocity = 10.0;
     private double default_acceleration = 30000.0;
     private double default_deceleration = 30000.0;
-    private double default_jerk = 40000.0;
+    private double default_jerk = 80000.0;
     private bool write_success = false;
     private int count = 0;
 

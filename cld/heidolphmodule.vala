@@ -160,9 +160,10 @@ public class Cld.HeidolphModule : AbstractModule {
      */
     public bool stop () {
         //Cld.debug ("Heidolph: stop ()\n");
+        _speed_sp = "0";
         string msg1 = "R0\r\n";
         port.send_bytes (msg1.to_utf8 (), msg1.length);
-        running = false;
+        fetch_data_cb ();
 
         return true;
     }
@@ -180,22 +181,23 @@ public class Cld.HeidolphModule : AbstractModule {
      * Callback event that fetches new data from the serial port.
      */
     private bool fetch_data_cb () {
-        if (running) {
-            string msg1 = "r"; // speed request message.
-            string msg2 = "m"; // torque request message.
-            string msg3 = "f"; // request error message.
-            string msg4 = "R" + _speed_sp + "\r\n";
+        string msg1 = "r"; // speed request message.
+        string msg2 = "m"; // torque request message.
+        string msg3 = "f"; // request error message.
+        string msg4 = "R" + _speed_sp + "\r\n";
 
-            port.send_bytes (msg1.to_utf8 (), msg1.length);
-            port.send_bytes (msg2.to_utf8 (), msg2.length);
-            port.send_bytes (msg3.to_utf8 (), msg3.length);
-            if (_speed_sp != old_speed_sp) {
-                port.send_bytes (msg4.to_utf8 (), msg4.length);
-                old_speed_sp = _speed_sp;
-            }
+        port.send_bytes (msg1.to_utf8 (), msg1.length);
+        port.send_bytes (msg2.to_utf8 (), msg2.length);
+        port.send_bytes (msg3.to_utf8 (), msg3.length);
+        if (_speed_sp != old_speed_sp) {
+            port.send_bytes (msg4.to_utf8 (), msg4.length);
+            old_speed_sp = _speed_sp;
+        }
+        if (running) {
 
             return true;
         } else {
+
             return false;
         }
     }

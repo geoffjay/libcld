@@ -141,16 +141,6 @@ public interface Cld.ScalableChannel : AbstractChannel, Channel {
     public abstract weak Calibration calibration { get; set; }
 
     /**
-     * A reference to the PID control that this channel belongs to.
-     */
-    public abstract string pidref { get; set; }
-
-    /**
-     * The PID controller that this channel belongs to
-     */
-    public abstract weak Pid pid { get; set; }
-
-    /**
      * The scaled value that is calculated using the calibration.
      */
     public abstract double scaled_value { get; private set; }

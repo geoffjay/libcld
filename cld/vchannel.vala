@@ -68,25 +68,6 @@ public class Cld.VChannel : AbstractChannel, ScalableChannel {
     public override weak Task task { get; set; }
 
     /**
-     * {@inheritdoc}
-     */
-    public virtual string pidref {
-        get {
-            if (_pidref == null)
-                throw new Cld.Error.NULL_REF ("A taskref has not been set for this virtual channel.");
-            else
-                return _pidref;
-        }
-        set { _pidref = value; }
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public virtual weak Pid pid { get; set; }
-
-
-    /**
      * {@inheritDoc}
      */
     public override string tag { get; set; }
@@ -117,6 +98,57 @@ public class Cld.VChannel : AbstractChannel, ScalableChannel {
     /* Property backing fields. */
     private double _scaled_value = 0.0;
     private double _raw_value = 0.0;
+    private string _taskref = null;
+    private double _calculated_value = 0.0;
+    private string? _expression = null;
+    private string[]? _channel_names = null;
+
+    /**
+     * Mathematical expression to be used to evaluate the channel value.
+     * @deprecated cld-0.2
+     */
+    public virtual string? expression {
+        get { return _expression; }
+        set {
+            /* check if expression is parseable */
+            if ( null != ( evaluator = Evaluator.create (value))) {
+
+                /* retain reference to signify we have good expression */
+                _expression = value;
+
+                /* generate channel list for this new expression */
+                evaluator.get_variables (out _channel_names);
+                channel_vals = new double[ _channel_names.length ];
+
+            } else {
+                /* nullify reference to signify we do not have experession */
+                _expression = null;
+            }
+        }
+    }
+
+    /**
+     * @deprecated cld-0.2
+     */
+    public double calculated_value {
+        get {
+            if (_expression != null) {
+                /* Resample channels and return value */
+                for (int i = 0; i < _channel_names.length; i++)
+                    channel_vals[ i ] =
+                        channels.lookup (_channel_names[ i ]).raw_value;
+                return evaluator.evaluate ( channel_names, channel_vals );
+            } else {
+                return 0.0;
+            }
+        }
+        private set { _calculated_value = value; }
+    }
+
+    public void add_channel( string name, Object? channel ) {
+        /* Instantiate dummy channels and populate channels HashTable */
+        channels.insert ( name, (channel as AIChannel) ) ;
+    }
 
     /**
      * Calculate value if expression exists or placeholder for dummy channel.

@@ -106,7 +106,6 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel, ScalableChanne
     /* Property backing fields. */
     private double _scaled_value = 0.0;
     private double _raw_value = 0.0;
-    private string _pidref = null;
 
     /**
      * {@inheritDoc}

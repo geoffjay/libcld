@@ -237,7 +237,6 @@ public class Cld.Builder : AbstractContainer {
                                 object = new AOChannel.from_xml_node (iter);
                             } else if (ctype == "digital" && direction == "input") {
                                 object = new DIChannel.from_xml_node (iter);
-
                             } else if (ctype == "digital" && direction == "output") {
                                 object = new DOChannel.from_xml_node (iter);
                             } else if (ctype == "virtual") {
@@ -325,10 +324,16 @@ public class Cld.Builder : AbstractContainer {
                 }
             }
 
-            if (object is VChannel) {
-                if ((object as VChannel).expression != null) {
-                    foreach( var name in (object as VChannel).channel_names ) {
-                        (object as VChannel).add_channel( name, (get_object (name) as AIChannel));
+            if (object is MathChannel) {
+message ("id: %s expression: %s", object.id, (object as MathChannel).expression);
+                if ((object as MathChannel).expression != null) {
+                    foreach( var name in (object as MathChannel).channel_names ) {
+                        Cld.debug ("Assigning AIChannel %s to VChannel %s\n", name, object.id);
+                        var chan = get_object (name) as AIChannel;
+                        (object as MathChannel).add_channel( name, chan);
+                        (chan as AIChannel).new_value.connect ((id, val) => {
+                            double num = (object as MathChannel).calculated_value;
+                        });
                     }
                 }
             }

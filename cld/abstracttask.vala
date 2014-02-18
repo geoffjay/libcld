@@ -27,17 +27,17 @@
 public abstract class Cld.AbstractTask : AbstractObject, Task {
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      **/
      public abstract bool active { get; set; }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      **/
      public abstract void run ();
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      **/
     public abstract void stop ();
 

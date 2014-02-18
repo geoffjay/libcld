@@ -52,7 +52,7 @@ public abstract class Cld.AbstractChannel : AbstractObject, Channel {
     public abstract string taskref { get; set; }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public abstract weak Task task { get; set; }
 

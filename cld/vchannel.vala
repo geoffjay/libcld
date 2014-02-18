@@ -64,7 +64,7 @@ public class Cld.VChannel : AbstractChannel, ScalableChannel {
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public override weak Task task { get; set; }
 

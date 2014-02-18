@@ -23,8 +23,8 @@
  * Class use to use as an interface to the library.
  *
  * XXX some of this may not make sense functioning as a buildable object but
- *     until more separation is made between those and other library objects
- *     the id and to_string will stay and just be ignored.
+ * until more separation is made between those and other library objects
+ * the id and to_string will stay and just be ignored.
  */
 public class Cld.Context : Cld.AbstractContainer {
 

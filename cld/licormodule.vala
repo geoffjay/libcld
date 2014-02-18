@@ -41,7 +41,7 @@ public class Cld.LicorModule : AbstractModule {
     public override bool loaded { get; set; default = false; }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public override string devref { get; set; }
 

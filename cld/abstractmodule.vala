@@ -32,7 +32,7 @@ public abstract class Cld.AbstractModule : AbstractContainer, Module {
     public abstract bool loaded { get; set; }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public abstract string devref { get; set; }
 

@@ -35,7 +35,7 @@ public class Cld.DIChannel : AbstractChannel, DChannel, IChannel {
     public override int num { get; set; }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public override int subdevnum { get; set; }
 
@@ -55,7 +55,7 @@ public class Cld.DIChannel : AbstractChannel, DChannel, IChannel {
     public override string taskref { get; set; }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public override weak Task task { get; set; }
 

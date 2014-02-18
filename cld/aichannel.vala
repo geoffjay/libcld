@@ -35,7 +35,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChanne
     public override int num { get; set; }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public override int subdevnum { get; set; }
 
@@ -55,7 +55,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChanne
     public override string taskref { get; set; }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public override weak Task task { get; set; }
 
@@ -80,7 +80,7 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChanne
     public virtual weak Calibration calibration { get; set; }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public virtual int range { get; set; }
 

@@ -16,8 +16,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Authors:
- *  Geoff Johnson <geoff.jay@gmail.com>
- *  Steve Roy <sroy1966@gmail.com>
+ * Geoff Johnson <geoff.jay@gmail.com>
+ * Steve Roy <sroy1966@gmail.com>
  */
 
 using Comedi;

@@ -41,7 +41,7 @@ public class Cld.VelmexModule : AbstractModule {
     public override bool loaded { get; set; default = false; }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public override string devref { get; set; }
 

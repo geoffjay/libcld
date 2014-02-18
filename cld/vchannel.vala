@@ -61,7 +61,7 @@ public class Cld.VChannel : AbstractChannel, ScalableChannel {
                                     set {_taskref = value; }}
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public override weak Task task { get; set; }
 

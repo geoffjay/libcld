@@ -22,7 +22,7 @@
 /**
  * Class use to build objects from configuration data.
  */
-public class Cld.Builder : AbstractContainer {
+public class Cld.Builder : Cld.AbstractContainer {
 
     /**
      * {@inheritDoc}
@@ -37,8 +37,8 @@ public class Cld.Builder : AbstractContainer {
     /**
      * {@inheritDoc}
      */
-    private Gee.Map<string, Object> _objects;
-    public override Gee.Map<string, Object> objects {
+    private Gee.Map<string, Cld.Object> _objects;
+    public override Gee.Map<string, Cld.Object> objects {
         get { return (_objects); }
         set { update_objects (value); }
     }
@@ -76,11 +76,11 @@ public class Cld.Builder : AbstractContainer {
      * their changes be reflected in the list they hold - test and change
      * if that's the case */
 
-    private Gee.Map<string, Object>? _calibrations = null;
-    public Gee.Map<string, Object>? calibrations {
+    private Gee.Map<string, Cld.Object>? _calibrations = null;
+    public Gee.Map<string, Cld.Object>? calibrations {
         get {
             if (_calibrations == null) {
-                _calibrations = new Gee.TreeMap<string, Object> ();
+                _calibrations = new Gee.TreeMap<string, Cld.Object> ();
                 foreach (var object in objects.values) {
                     if (object is Calibration)
                         _calibrations.set (object.id, object);
@@ -90,11 +90,11 @@ public class Cld.Builder : AbstractContainer {
         }
     }
 
-    private Gee.Map<string, Object>? _channels = null;
-    public Gee.Map<string, Object>? channels {
+    private Gee.Map<string, Cld.Object>? _channels = null;
+    public Gee.Map<string, Cld.Object>? channels {
         get {
             if (_channels == null) {
-                _channels = new Gee.TreeMap<string, Object> ();
+                _channels = new Gee.TreeMap<string, Cld.Object> ();
                 foreach (var object in objects.values) {
                     if (object is Channel)
                         _channels.set (object.id, object);
@@ -104,11 +104,11 @@ public class Cld.Builder : AbstractContainer {
         }
     }
 
-    private Gee.Map<string, Object>? _logs = null;
-    public Gee.Map<string, Object>? logs {
+    private Gee.Map<string, Cld.Object>? _logs = null;
+    public Gee.Map<string, Cld.Object>? logs {
         get {
             if (_logs == null) {
-                _logs = new Gee.TreeMap<string, Object> ();
+                _logs = new Gee.TreeMap<string, Cld.Object> ();
                 foreach (var object in objects.values) {
                     if (object is Log)
                         _logs.set (object.id, object);
@@ -118,11 +118,11 @@ public class Cld.Builder : AbstractContainer {
         }
     }
 
-    private Gee.Map<string, Object>? _modules = null;
-    public Gee.Map<string, Object>? modules {
+    private Gee.Map<string, Cld.Object>? _modules = null;
+    public Gee.Map<string, Cld.Object>? modules {
         get {
             if (_modules == null) {
-                _modules = new Gee.TreeMap<string, Object> ();
+                _modules = new Gee.TreeMap<string, Cld.Object> ();
                 foreach (var object in objects.values) {
                     if (object is Module)
                         _modules.set (object.id, object);
@@ -132,16 +132,31 @@ public class Cld.Builder : AbstractContainer {
         }
     }
 
+    private Gee.Map<string, Cld.Object>? _dataseries = null;
+    public Gee.Map<string, Cld.Object>? dataseries {
+        get {
+            if (_dataseries == null) {
+                _dataseries = new Gee.TreeMap<string, Cld.Object> ();
+                foreach (var object in objects.values) {
+                    if (object is DataSeries)
+                        _dataseries.set (object.id, object);
+                }
+            }
+            return _dataseries;
+        }
+        set { _dataseries = value; }
+    }
+
     public Builder.from_file (string filename) {
         xml = new XmlConfig.with_file_name (filename);
-        _objects = new Gee.TreeMap<string, Object> ();
+        _objects = new Gee.TreeMap<string, Cld.Object> ();
         build_object_map ();
         setup_references ();
     }
 
     public Builder.from_xml_config (XmlConfig xml) {
         this.xml = xml;
-        _objects = new Gee.TreeMap<string, Object> ();
+        _objects = new Gee.TreeMap<string, Cld.Object> ();
         build_object_map ();
         setup_references ();
     }
@@ -152,33 +167,10 @@ public class Cld.Builder : AbstractContainer {
     }
 
     /**
-     * Add a object to the array list of objects
-     *
-     * @param object object to add to the list
+     * {@inheritDoc}
      */
-    public void add (Object object) {
-        objects.set (object.id, object);
-    }
-
-    public void sort_objects () {
-        Gee.List<Object> map_values = new Gee.ArrayList<Object> ();
-
-        map_values.add_all (objects.values);
-        map_values.sort ((GLib.CompareFunc) Object.compare);
-        objects.clear ();
-        foreach (Object object in map_values) {
-            objects.set (object.id, object);
-        }
-    }
-
-    /**
-     * Search the object list for the object with the given ID
-     *
-     * @param id ID of the object to retrieve
-     * @return The object if found, null otherwise
-     */
-    public Object? get_object (string id) {
-        Object? result = null;
+    public Cld.Object? get_object (string id) {
+        Cld.Object? result = null;
 
         if (objects.has_key (id)) {
             result = objects.get (id);
@@ -213,7 +205,7 @@ public class Cld.Builder : AbstractContainer {
                 iter->type != Xml.ElementType.COMMENT_NODE) {
                 /* load all available objects */
                 if (iter->name == "object") {
-                    Object object;
+                    Cld.Object object;
                     type = iter->get_prop ("type");
                     switch (type) {
                         case "daq":
@@ -274,13 +266,22 @@ public class Cld.Builder : AbstractContainer {
                                 object = null;
                             }
                             break;
+                        case "dataseries":
+                            object = new DataSeries.from_xml_node (iter);
+                            break;
                         default:
                             object = null;
                             break;
                     }
 
-                    Cld.debug ("Loading object of type %s with id %s\n", type, object.id);
-
+                    Cld.debug ("Loading object of type %s with id %s", type, object.id);
+                    if (object is Cld.Container) {
+                        foreach (Cld.Object obj in (object as Cld.Container).objects.values) {
+                            Cld.debug ("Loading object of type %s with id %s",
+                                ((obj as GLib.Object).get_type ()).name, object.id);
+                            add (obj);
+                        }
+                    }
                     /* no point adding an object type that isn't recognized */
                     if (object != null)
                         add (object);
@@ -300,12 +301,12 @@ public class Cld.Builder : AbstractContainer {
             /* Setup the device references for all of the channel types */
             if (object is Channel) {
                 ref_id = (object as Channel).devref;
-                Cld.debug ("Assigning Device %s to Channel %s\n", ref_id, object.id);
+                Cld.debug ("Assigning Device %s to Channel %s", ref_id, object.id);
                 var device = get_object (ref_id);
                 if (device != null && device is Device) {
                     (object as Channel).device = (device as Device);
                     ref_id = (object as Channel).taskref;
-                    Cld.debug ("Assigning Task %s to Channel %s\n", ref_id, object.id);
+                    Cld.debug ("Assigning Task %s to Channel %s", ref_id, object.id);
                     var task = (device as Cld.Container).get_object (ref_id);
                     if (task != null && task is Task)
                         (object as Channel).task = (task as Task);
@@ -315,7 +316,7 @@ public class Cld.Builder : AbstractContainer {
             /* Channels with a calibration reference */
             if (object is ScalableChannel) {
                 ref_id = (object as ScalableChannel).calref;
-                Cld.debug ("Assigning Calibration %s to ScalableChannel %s\n", ref_id, object.id);
+                Cld.debug ("Assigning Calibration %s to ScalableChannel %s", ref_id, object.id);
                 if (ref_id != null) {
                     var calibration = get_object (ref_id);
                     if (calibration != null && calibration is Calibration)
@@ -325,10 +326,9 @@ public class Cld.Builder : AbstractContainer {
             }
 
             if (object is MathChannel) {
-message ("id: %s expression: %s", object.id, (object as MathChannel).expression);
                 if ((object as MathChannel).expression != null) {
                     foreach( var name in (object as MathChannel).channel_names ) {
-                        Cld.debug ("Assigning AIChannel %s to VChannel %s\n", name, object.id);
+                        Cld.debug ("Assigning AIChannel %s to VChannel %s", name, object.id);
                         var chan = get_object (name) as AIChannel;
                         (object as MathChannel).add_channel( name, chan);
                         (chan as AIChannel).new_value.connect ((id, val) => {
@@ -338,48 +338,11 @@ message ("id: %s expression: %s", object.id, (object as MathChannel).expression)
                 }
             }
 
-            if (object is MathChannel) {
-message ("id: %s expression: %s", object.id, (object as MathChannel).expression);
-                if ((object as MathChannel).expression != null) {
-                    foreach( var name in (object as MathChannel).channel_names ) {
-                        Cld.debug ("Assigning AIChannel %s to VChannel %s\n", name, object.id);
-                        var chan = get_object (name) as AIChannel;
-                        (object as MathChannel).add_channel( name, chan);
-                        (chan as AIChannel).new_value.connect ((id, val) => {
-                            double num = (object as MathChannel).calculated_value;
-                        });
-                    }
-                }
-            }
-
-            /* XXX Too much nesting, should break into individual methods. */
-            if (object is Control) {
-                foreach (var control_object in
-                            (object as Container).objects.values) {
-                    if (control_object is Pid) {
-                        foreach (var process_value in
-                                    (control_object as Pid).process_values.values) {
-                            /* Process values reference a channel */
-                            if (process_value is ProcessValue) {
-                                ref_id = (process_value as ProcessValue).chref;
-                                Cld.debug ("Assigning ProcessValue %s to Control %s\n", ref_id, object.id);
-                                if (ref_id != null) {
-                                    var channel = get_object (ref_id);
-                                    if (channel != null && channel is Channel) {
-                                        (process_value as ProcessValue).channel
-                                            = (channel as Channel);
-                                    }
-                                }
-                            }
-                        }
-                        ref_id = (control_object as Pid).sp_chanref;
-                        if (ref_id != null) {
-                            var channel = get_object (ref_id);
-                            if (channel != null && channel is ScalableChannel) {
-                                Cld.debug ("Assigning ScalableChannel %s to Pid %s\n", ref_id, control_object.id);
-                                (control_object as Pid).sp_channel = channel as ScalableChannel;
-                            }
-                        }
+            if (object is VChannel) {
+                /* For now virtual channels do too */
+                if ((object as VChannel).expression != null) {
+                    foreach( var name in (object as VChannel).channel_names ) {
+                        (object as VChannel).add_channel( name, (get_object (name) as AIChannel));
                     }
                 }
             }
@@ -392,7 +355,7 @@ message ("id: %s expression: %s", object.id, (object as MathChannel).expression)
                         if (ref_id != null) {
                             var channel = get_object (ref_id);
                             if (channel != null && channel is Channel) {
-                                Cld.debug ("Assigning channel %s to column %s\n", channel.id, column.id);
+                                Cld.debug ("Assigning channel %s to column %s", channel.id, column.id);
                                 (column as Column).channel = (channel as Channel);
                             }
                         }
@@ -406,7 +369,7 @@ message ("id: %s expression: %s", object.id, (object as MathChannel).expression)
             /* Setup port references for all of the modules */
             if (object is Module) {
                 ref_id = (object as Module).portref;
-                Cld.debug ("Assigning Port %s to Module %s\n", ref_id, object.id);
+                Cld.debug ("Assigning Port %s to Module %s", ref_id, object.id);
                 if (ref_id != null) {
                     var port = get_object (ref_id);
                     if (port != null && port is Port)
@@ -417,7 +380,7 @@ message ("id: %s expression: %s", object.id, (object as MathChannel).expression)
                     /* set the virtual channel that are to be referenced by this module */
                     foreach (var licor_channel in channels.values) {
                         if ((licor_channel as Channel).devref == ref_id) {
-                            Cld.debug ("Assigning Channel %s to Device %s\n", licor_channel.id,
+                            Cld.debug ("Assigning Channel %s to Device %s", licor_channel.id,
                                         (object as LicorModule).devref);
                             (object as LicorModule).add_channel (licor_channel);
                         }
@@ -431,15 +394,80 @@ message ("id: %s expression: %s", object.id, (object as MathChannel).expression)
 
                     /* set the virtual channel that are to be referenced by this module */
 //                    foreach (var heidolph_channel in channels.values) {
-//                        Cld.debug ("ref_id: %s heidolph_channel.id: %s\n", ref_id, heidolph_channel.id);
+//                        Cld.debug ("ref_id: %s heidolph_channel.id: %s", ref_id, heidolph_channel.id);
 //                        if ((heidolph_channel as Channel).devref == ref_id) {
-//                            Cld.debug ("Assigning Channel %s to Module %s\n", heidolph_channel.id,
+//                            Cld.debug ("Assigning Channel %s to Module %s", heidolph_channel.id,
 //                                        (object as HeidolphModule).id);
 //                            (object as HeidolphModule).add_channel (heidolph_channel);
 //                        }
 //                    }
                 }
             }
+
+            /* A  data series references a scalable channel. */
+            if (object is DataSeries) {
+                ref_id = (object as DataSeries).chanref;
+                Cld.debug ("Assigning Channel %s to DataSeries %s", ref_id, object.id);
+                (object as DataSeries).channel = get_object (ref_id) as ScalableChannel;
+                Cld.debug ("Connecting ScalableChannel as input to DataSeries %s", object.id);
+                (object as DataSeries).connect_input ();
+                Cld.debug ("Activating VChannels in DataSeries %s", object.id);
+                (object as DataSeries).activate_vchannels ();
+            }
+
+            /* XXX Too much nesting, should break into individual methods. */
+            if (object is Control) {
+                foreach (var control_object in
+                            (object as Container).objects.values) {
+                    if (control_object is Pid) {
+                        foreach (var process_value in
+                                    (control_object as Pid).process_values.values) {
+                            /* Process values reference a channel */
+                            if (process_value is ProcessValue) {
+                                ref_id = (process_value as ProcessValue).chref;
+                                Cld.debug ("Assigning ProcessValue %s to Control %s", ref_id, object.id);
+                                if (ref_id != null) {
+                                    var channel = get_object (ref_id);
+                                    if (channel != null && channel is Channel) {
+                                        (process_value as ProcessValue).channel
+                                            = (channel as Channel);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (control_object is Pid2) {
+                        foreach (var process_value in
+                                    (control_object as Pid2).process_values.values) {
+                            /* Process values reference a channel */
+                            if (process_value is ProcessValue2) {
+                                ref_id = (process_value as ProcessValue2).dsref;
+                                Cld.debug ("Assigning ProcessValue2 %s to Control %s", ref_id, object.id);
+                                if (ref_id != null) {
+                                    var dataseries = get_object (ref_id);
+                                    if (dataseries != null && dataseries is DataSeries) {
+                                        (process_value as ProcessValue2).dataseries
+                                            = (dataseries as DataSeries);
+                                        var chanref = (dataseries as DataSeries).chanref;
+                                        (process_value as ProcessValue2).channel = get_object (chanref)
+                                                                                    as ScalableChannel;
+                                    }
+                                }
+                            }
+                        }
+                        ref_id = (control_object as Pid2).sp_chanref;
+                        if (ref_id != null) {
+                            var channel = get_object (ref_id);
+                            if (channel != null && channel is ScalableChannel) {
+                                Cld.debug ("Assigning ScalableChannel %s to Pid2 %s", ref_id, control_object.id);
+                                (control_object as Pid2).sp_channel = channel as ScalableChannel;
+                                (control_object as Pid2).connect_sp ();
+                            }
+                        }
+                    }
+                }
+            }
+
 
             /* Each device in daq references tasks.  */
             if (object is Daq) {
@@ -453,6 +481,9 @@ message ("id: %s expression: %s", object.id, (object as MathChannel).expression)
                 }
             }
         }
+        foreach (var object in objects.values) {
+            Cld.debug ("%s", object.id);
+        }
     }
     /**
      * Set a channel list for a Comedi task.
@@ -463,7 +494,6 @@ message ("id: %s expression: %s", object.id, (object as MathChannel).expression)
         foreach (var task_channel in channels.values) {
             if (((task_channel as Channel).taskref == (task as ComediTask).id) &&
                     ((task_channel as Channel).devref == (task as ComediTask).devref)) {
-
                 (task as ComediTask).add_channel (task_channel);
             }
         }
@@ -472,7 +502,7 @@ message ("id: %s expression: %s", object.id, (object as MathChannel).expression)
     /**
      * {@inheritDoc}
      */
-    public override void update_objects (Gee.Map<string, Object> val) {
+    public override void update_objects (Gee.Map<string, Cld.Object> val) {
         _objects = val;
     }
 

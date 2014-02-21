@@ -15,8 +15,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
- * Author:
+ * Authors:
  *  Geoff Johnson <geoff.jay@gmail.com>
+ *  Steve Roy <sroy1966@gmail.com>
  */
 
 /**
@@ -105,6 +106,90 @@ public class Cld.ProcessValue : AbstractObject {
 }
 
 /**
+ * Process value object for use with control objects, typically associated with
+ * input and output measurements.
+ */
+public class Cld.ProcessValue2 : AbstractObject {
+
+    /**
+     * {@inheritDoc}
+     */
+    public override string id { get; set; }
+
+    /**
+     * Read only property for the type (direction) of channel that the process
+     * value represents, input is a process measurement, output is a
+     * manipulated variable.
+     */
+    private int _chtype;
+    public int chtype {
+        get { return _chtype; }
+    }
+
+    /**
+     * ID reference of the dataseries associated with this process value.
+     */
+    public string dsref { get; set; }
+
+    /**
+     * Referenced dataseries to use.
+     */
+    public weak DataSeries dataseries { get; set; }
+
+    /**
+     * Type options to use for channel direction.
+     */
+    public enum Type {
+        INPUT = 0,
+        OUTPUT,
+        INVALID;
+
+        public string to_string () {
+            switch (this) {
+                case INPUT:   return "Input";
+                case OUTPUT:  return "Output";
+                case INVALID: return "Invalid";
+                default:      assert_not_reached ();
+            }
+        }
+    }
+
+    /* constructor */
+    public ProcessValue2 () {
+        id = "pv0";
+        dsref = "ch0";
+    }
+
+    public ProcessValue2.full (string id, DataSeries dataseries) {
+        this.id = id;
+        this.dsref = dataseries.id;
+        this.dataseries = dataseries;
+    }
+
+    public ProcessValue2.from_xml_node (Xml.Node *node) {
+        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+            node->type != Xml.ElementType.COMMENT_NODE) {
+            id = node->get_prop ("id");
+            dsref = node->get_prop ("dsref");
+            string direction = node->get_prop ("direction");
+            if (direction == "input") {
+                _chtype = Type.INPUT;
+            } else if (direction == "output") {
+                _chtype = Type.OUTPUT;
+            } else {
+                _chtype = Type.INVALID;
+            }
+        }
+    }
+
+    public override string to_string () {
+        string str_data  = "[%s] : Process value\n".printf (id);
+               str_data += "\tdsref %s\n\n".printf (dsref);
+        return str_data;
+    }
+}
+
+/**
  * Control object to calculate an output process value.
  */
 public class Cld.Control : AbstractContainer {
@@ -143,9 +228,18 @@ public class Cld.Control : AbstractContainer {
                             break;
                     }
                 } else if (iter->name == "object") {
-                    if (iter->get_prop ("type") == "pid") {
-                        var pid = new Pid.from_xml_node (iter);
-                        objects.set (pid.id, pid);
+                    var type = iter->get_prop ("type");
+                    switch (type) {
+                        case "pid":
+                            var pid = new Pid.from_xml_node (iter);
+                            objects.set (pid.id, pid);
+                            break;
+                        case "pid-2":
+                            var pid = new Pid2.from_xml_node (iter);
+                            objects.set (pid.id, pid);
+                            break;
+                        default:
+                            break;
                     }
                 }
             }

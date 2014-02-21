@@ -62,19 +62,6 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel, ScalableChanne
     /**
      * {@inheritdoc}
      */
-    public virtual string pidref {
-        get {
-            if (_pidref == null)
-                throw new Cld.Error.NULL_REF ("A taskref has not been set for this analog output channel.");
-            else
-                return _pidref;
-        }
-        set { _pidref = value; }
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public virtual weak Pid pid { get; set; }
 
     /**

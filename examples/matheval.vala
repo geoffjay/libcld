@@ -31,10 +31,18 @@ using matheval;
 class Cld.MathEvalExample: GLib.Object {
 
     public void run () {
+<<<<<<< HEAD
         var builder = new Builder.from_file ("matheval.xml");
         /*Create 4 dummy input channels defined in xml*/
         var ai0 = builder.get_object ("ai0");
         message ("%s\n", ai0.to_string ());
+=======
+        var xml = new XmlConfig.with_file_name ("matheval.xml");
+        var builder = new Builder.from_xml_config (xml);
+
+        /*Create 4 dummy input channels defined in xml*/
+        var ai0 = builder.get_object ("ai0");
+>>>>>>> 80ba026... Fixing merge conflicts.
         var ai1 = builder.get_object ("ai1");
         var ai2 = builder.get_object ("ai2");
         var ai3 = builder.get_object ("ai3");
@@ -79,14 +87,13 @@ class Cld.MathEvalExample: GLib.Object {
             }
         }
     }
-
-    public static int main (string[] main) {
-        Xml.Parser.init ();
-        MathEvalExample ex = new MathEvalExample ();
-        ex.run ();
-        Xml.Parser.cleanup ();
-
-        return 0;
-    }
 }
 
+public static int main (string[] main) {
+    Xml.Parser.init ();
+    MathEvalExample ex = new MathEvalExample ();
+    ex.run ();
+    Xml.Parser.cleanup ();
+
+    return 0;
+}

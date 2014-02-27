@@ -908,7 +908,7 @@ public class Cld.Pid2 : AbstractObject {
 
         p_err = sp - previous_value;
         if (ki != 0) {
-                i_err = dt * ((mv.channel as AOChannel).scaled_value - (kp * p_err) - (kd * d_err)) / ki;
+                i_err = ((mv.channel as AOChannel).scaled_value - (kp * p_err) - (kd * d_err)) / ki;
         } else {
             i_err = 0;
         }

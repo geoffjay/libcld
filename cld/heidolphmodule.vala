@@ -266,15 +266,6 @@ public class Cld.HeidolphModule : AbstractModule {
 
 
     /**
-     * ...
-     */
-    public void add_channel (Cld.Object channel) {
-        channels.set (channel.id, channel);
-       //Cld.debug ("HeidolphModule :: add_channel(%s)\n", channel.id);
-    }
-
-
-    /**
      * {@inheritDoc}
      */
     public override bool load () {

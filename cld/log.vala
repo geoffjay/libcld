@@ -201,13 +201,6 @@ public class Cld.Log : AbstractContainer {
     }
 
     /**
-     * Internal thread data for log file output handling.
-     */
-    private unowned GLib.Thread<void *> thread;
-    private Mutex mutex = new Mutex ();
-    private Thread log_thread;
-
-    /**
      * File stream to use as output.
      */
     private FileStream file_stream;
@@ -495,25 +488,46 @@ public class Cld.Log : AbstractContainer {
      * Run the log file output as a thread.
      */
     public void run () {
-        if (!GLib.Thread.supported ()) {
-            stderr.printf ("Cannot run logging without thread support.\n");
-            active = false;
-            return;
-        }
-
-        if (!active) {
-            log_thread = new Thread (this);
-
+        bg_log.begin ((obj, res) => {
             try {
-                active = true;
-                write_header ();
-                thread = GLib.Thread.create<void *> (log_thread.run, true);
+                bg_log.end (res);
+                Cld.debug ("Log file async ended");
             } catch (ThreadError e) {
-                stderr.printf ("%s\n", e.message);
-                active = false;
-                return;
+                string msg = e.message;
+                Cld.error (@"Thread error: $msg");
             }
-        }
+        });
+    }
+
+    private async void bg_log () throws ThreadError {
+        SourceFunc callback = bg_log.callback;
+
+        ThreadFunc<void *> _run = () => {
+            Mutex mutex = new Mutex ();
+            Cond cond = new Cond ();
+            int64 end_time;
+
+            active = true;
+            write_header ();
+
+            while (active) {
+                write_next_line ();
+                mutex.lock ();
+                try {
+                    end_time = get_monotonic_time () + dt * TimeSpan.MILLISECOND;
+                    while (cond.wait_until (mutex, end_time))
+                        ; /* do nothing */
+                } finally {
+                    mutex.unlock ();
+                }
+            }
+
+            Idle.add ((owned) callback);
+            return null;
+        };
+        Thread.create<void *> (_run, false);
+
+        yield;
     }
 
     /**
@@ -522,7 +536,7 @@ public class Cld.Log : AbstractContainer {
     public void stop () {
         if (active) {
             active = false;
-            thread.join ();
+            //thread.join ();
         }
     }
 
@@ -606,51 +620,6 @@ public class Cld.Log : AbstractContainer {
                str_data += "\tfile: %s\n".printf (file);
                str_data += "\trate: %.3f\n".printf (rate);
         return str_data;
-    }
-
-    public class Thread {
-        private Log log;
-
-        public Thread (Log log) {
-            this.log = log;
-        }
-
-        public void * run () {
-            Mutex mutex = new Mutex ();
-            Cond cond = new Cond ();
-
-#if HAVE_GLIB232
-            int64 end_time;
-
-#else
-            TimeVal next_time = TimeVal ();
-            next_time.get_current_time ();
-#endif
-
-
-            while (log.active) {
-                lock (log) {
-                    log.write_next_line ();
-                }
-
-                mutex.lock ();
-                try {
-
-#if HAVE_GLIB232
-                    end_time = get_monotonic_time () + log.dt * TimeSpan.MILLISECOND;
-                    while (cond.wait_until (mutex, end_time))
-#else
-                    next_time.add (log.dt * (long)TimeSpan.MILLISECOND);
-                    while (cond.timed_wait (mutex, next_time))
-#endif
-                        ; /* do nothing */
-                } finally {
-                    mutex.unlock ();
-                }
-            }
-
-            return null;
-        }
     }
 }
 

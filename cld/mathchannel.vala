@@ -143,21 +143,16 @@ public class Cld.MathChannel : VChannel, ScalableChannel {
     public double calculated_value {
         get {
             if (_expression != null) {
-//Cld.debug ("id: %s", id);
                 /* Resample variables and return value */
                 for (int i = 0; i < _variable_names.length; i++ ) {
-//Cld.debug ("_variable_names [%d]: %s", i, _variable_names [i]);
                     foreach (string ref_id in _objects.keys) {
-//Cld.debug ("ref_id: %s", ref_id);
                         if (_variable_names [i].contains (ref_id) && (_objects.get (ref_id) is DataSeries)) {
-//Cld.debug ("match: %s, %s", _variable_names [i], ref_id);
                             int n;
                             double val;
                             if (get_index_from_name (_variable_names [i], out n)) {
                                 if ((_objects.get (ref_id) as DataSeries).
                                                         get_nth_value (n, out val)) {
                                     variable_vals [i] = val;
-Cld.debug ("3) n: %d val: %.3f", n, val);
                                 }
                             }
                         } else if (_objects.get (ref_id) is ScalableChannel) {
@@ -284,14 +279,11 @@ Cld.debug ("3) n: %d val: %.3f", n, val);
 
             return false;
         } else {
-//Cld.debug ("0) start: %d", start);
             substr = name.substring (start + 1, -1);
-//Cld.debug ("1) name: %s substring: %s", name, substr);
             if (substr.contains ("n")) {
                 substr = substr.replace ("n", "-");
             }
             n = int.parse (substr);
-Cld.debug ("2) name: %s substring: %s", name, substr);
             return true;
         }
     }

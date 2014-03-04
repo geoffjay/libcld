@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <cld xmlns:cld="urn:libcld">
+<<<<<<< HEAD
     <cld:objects>
         <cld:object id="cal0" type="calibration">
             <cld:property name="units">Volts</cld:property>
@@ -43,4 +44,49 @@
             <cld:property name="expression">(ai0 + ai1 + ai2 + ai3)/4</cld:property>
         </cld:object>
     </cld:objects>
+=======
+    <objects>
+        <object id="cal0" type="calibration">
+            <property name="units">Volts</property>
+            <object id="cft0" type="coefficient">
+                <property name="n">0</property>
+                <property name="value">0.000</property>
+            </object>
+            <object id="cft1" type="coefficient">
+                <property name="n">1</property>
+                <property name="value">1.000</property>
+            </object>
+        </object>
+        <object id="ai0" type="channel" ref="dev0" ctype="analog" direction="input">
+            <property name="tag">AI0</property>
+            <property name="desc">Sample Input</property>
+            <property name="num">0</property>
+            <property name="calref">cal0</property>
+        </object>
+        <object id="ai1" type="channel" ref="dev1" ctype="analog" direction="input">
+            <property name="tag">AI1</property>
+            <property name="desc">Sample Input</property>
+            <property name="num">1</property>
+            <property name="calref">cal0</property>
+        </object>
+        <object id="ai2" type="channel" ref="dev2" ctype="analog" direction="input">
+            <property name="tag">AI2</property>
+            <property name="desc">Sample Input</property>
+            <property name="num">2</property>
+            <property name="calref">cal0</property>
+        </object>
+        <object id="ai3" type="channel" ref="dev3" ctype="analog" direction="input">
+            <property name="tag">AI3</property>
+            <property name="desc">Sample Input</property>
+            <property name="num">3</property>
+            <property name="calref">cal0</property>
+        </object>
+        <object id="vc0" type="channel" ref="vdev0" ctype="virtual">
+            <property name="tag">VC0</property>
+            <property name="desc">Sample Calculation</property>
+            <property name="num">4</property>
+            <property name="expression">(ai0 + ai1 + ai2 + ai3)/4</property>
+        </object>
+    </objects>
+>>>>>>> 80ba026... Fixing merge conflicts.
 </cld>

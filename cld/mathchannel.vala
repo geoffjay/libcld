@@ -82,6 +82,7 @@ public class Cld.MathChannel : VChannel, ScalableChannel {
     public override string desc { get; set; }
 
     /* Evaluator fields */
+    /* XXX TBD This should work with ScalableChannel. */
     private Evaluator evaluator = null;
     private HashTable<string, AIChannel> channels =
         new HashTable<string, AIChannel> (str_hash, str_equal);

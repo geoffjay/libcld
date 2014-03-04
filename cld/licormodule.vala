@@ -156,7 +156,7 @@ public class Cld.LicorModule : AbstractModule {
                     /* Assign the channel the value that was received */
                     var channel = channels.get (id);
                     (channel as VChannel).raw_value = double.parse (token);
-//                    Cld.debug ("lc%d: %.3f\n", x - 1, double.parse (token));
+//                    Cld.debug ("lc%d: %.3f", x - 1, double.parse (token));
                 }
 
                 if (tokens[tokens.length - 1] != "0") {
@@ -190,9 +190,9 @@ public class Cld.LicorModule : AbstractModule {
         (port as SerialPort).new_data.connect (new_data_cb);
         loaded = (port.open ()) ? true : false;
         if (loaded)
-            Cld.debug ("LicorModule :: load ()\n");
+            Cld.debug ("LicorModule :: load ()");
         else
-            Cld.debug ("LicorModule not loaded \n");
+            Cld.debug ("LicorModule not loaded ");
         return loaded;
     }
 
@@ -203,7 +203,7 @@ public class Cld.LicorModule : AbstractModule {
         port.close ();
         loaded = false; // XXX There is currently no way to verify this.
 
-        Cld.debug ("LicorModule :: unload ()\n");
+        Cld.debug ("LicorModule :: unload ()");
     }
 
     /**

@@ -38,6 +38,7 @@ libcld_0_2_la_SOURCES = \
 	context.vala \
 	control.vala \
 	daq.vala \
+	dataseries.vala \
 	device.vala \
 	dichannel.vala \
 	dochannel.vala \

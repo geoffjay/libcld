@@ -153,7 +153,6 @@ public class Cld.VChannel : AbstractChannel, ScalableChannel {
         channels.insert ( name, (channel as AIChannel) ) ;
     }
 
-
     /**
      * Calculate value if expression exists or placeholder for dummy channel.
      */

@@ -84,7 +84,7 @@ public class Cld.SerialPort : AbstractPort {
                     return SPACE;
                 }
             } catch (RegexError e) {
-                Cld.debug ("Error %s\n", e.message);
+                Cld.debug ("Error %s", e.message);
             }
 
             /* XXX need to return something */
@@ -132,7 +132,7 @@ public class Cld.SerialPort : AbstractPort {
                     return BOTH;
                 }
             } catch (RegexError e) {
-                Cld.debug ("Error %s\n", e.message);
+                Cld.debug ("Error %s", e.message);
             }
 
             /* XXX need to return something */
@@ -175,7 +175,7 @@ public class Cld.SerialPort : AbstractPort {
                     return WRITEONLY;
                 }
             } catch (RegexError e) {
-                Cld.debug ("Error %s\n", e.message);
+                Cld.debug ("Error %s", e.message);
             }
 
             /* XXX need to return something */

@@ -22,9 +22,9 @@
 using matheval;
 
 /**
- * Math channel extends Virtual channel such that the scaled value returned is
+ * Math variable extends Virtual channel such that the scaled value returned is
  * the same as the calculated value of the Virtual channel. As a scaleable channel
- * it can be connected to a PID control object.
+ * it can be connected to a PID control object, for example.
  */
 public class Cld.MathChannel : VChannel, ScalableChannel {
 
@@ -58,9 +58,9 @@ public class Cld.MathChannel : VChannel, ScalableChannel {
      */
     public override string taskref {
         get {
-            if (_taskref == null)
-                throw new Cld.Error.NULL_REF ("A taskref has not been set for this math channel.");
-            else
+//            if (_taskref == null)
+//                throw new Cld.Error.NULL_REF ("A taskref has not been set for this math channel.");
+//            else
                 return _taskref;
         }
         set { _taskref = value; }
@@ -82,18 +82,23 @@ public class Cld.MathChannel : VChannel, ScalableChannel {
     public override string desc { get; set; }
 
     /* Evaluator fields */
-    /* XXX TBD This should work with ScalableChannel. */
+    /* XXX TBD This should work with ScalableChannel asn DataSeries. */
     private Evaluator evaluator = null;
-    private HashTable<string, AIChannel> channels =
-        new HashTable<string, AIChannel> (str_hash, str_equal);
-    private double[]? channel_vals;
+
+    private Gee.Map<string, Cld.Object>? _objects = null;
+    public Gee.Map<string, Cld.Object> objects {
+        get { return _objects; }
+        set { _objects = value; }
+    }
+
+    private double[]? variable_vals;
 
     /**
      * Names of variables used in expression
      */
-    public string[]? channel_names {
-        get { return _channel_names; }
-        private set { _channel_names = value; }
+    public string[]? variable_names {
+        get { return _variable_names; }
+        private set { _variable_names = value; }
     }
 
     /* Property backing fields. */
@@ -102,23 +107,31 @@ public class Cld.MathChannel : VChannel, ScalableChannel {
     private string _taskref = null;
     private double _calculated_value = 0.0;
     private string? _expression = null;
-    private string[]? _channel_names = null;
+    private string[]? _variable_names = null;
 
     /**
-     * Mathematical expression to be used to evaluate the channel value.
+     * Mathematical expression to be used to evaluate the variable value.
+     * eg. ai01 + ai02 - ds00[20] + ds00[-10]
+     * where ds00[-10] is the 11th element counter clockwisein the DataSeries
+     * circular buffer. "[" and "]" only apply to DataSeries.
      */
     public override string? expression {
         get { return _expression; }
         set {
+            string str = value;
+            /* Replacement of characters to make expression matheval compatible.*/
+            str = str.replace ("[-", "_n");
+            str = str.replace ("[", "_");
+            str = str.replace ("]", "");
             /* check if expression is parseable */
-            if ( null != ( evaluator = Evaluator.create (value))) {
+            if ( null != ( evaluator = Evaluator.create (str))) {
 
                 /* retain reference to signify we have good expression */
-                _expression = value;
+                _expression = str;
 
-                /* generate channel list for this new expression */
-                evaluator.get_variables (out _channel_names);
-                channel_vals = new double[ _channel_names.length ];
+                /* generate variable list for this new expression */
+                evaluator.get_variables (out _variable_names);
+                variable_vals = new double [_variable_names.length];
 
             } else {
                 /* nullify reference to signify we do not have experession */
@@ -130,15 +143,27 @@ public class Cld.MathChannel : VChannel, ScalableChannel {
     public double calculated_value {
         get {
             if (_expression != null) {
-                /* Resample channels and return value */
-                for (int i = 0; i < _channel_names.length; i++ ) {
-                    channel_vals[ i ] =
-                        channels.lookup (_channel_names[ i ]).raw_value;
-                    _calculated_value = evaluator.evaluate ( channel_names, channel_vals );
-                    new_value (id, _calculated_value);
+                /* Resample variables and return value */
+                for (int i = 0; i < _variable_names.length; i++ ) {
+                    foreach (string ref_id in _objects.keys) {
+                        if (_variable_names [i].contains (ref_id) && (_objects.get (ref_id) is DataSeries)) {
+                            int n;
+                            double val;
+                            if (get_index_from_name (_variable_names [i], out n)) {
+                                if ((_objects.get (ref_id) as DataSeries).
+                                                        get_nth_value (n, out val)) {
+                                    variable_vals [i] = val;
+                                }
+                            }
+                        } else if (_objects.get (ref_id) is ScalableChannel) {
+                            variable_vals [i] = (_objects.get (ref_id) as ScalableChannel).scaled_value;
+                        }
+                    }
                 }
+            _calculated_value = evaluator.evaluate (variable_names, variable_vals);
+            new_value (id, _calculated_value);
 
-                return _calculated_value;
+            return _calculated_value;
             } else {
                 return 0.0;
             }
@@ -149,9 +174,9 @@ public class Cld.MathChannel : VChannel, ScalableChannel {
         }
     }
 
-    public void add_channel( string name, Object? channel ) {
-        /* Instantiate dummy channels and populate channels HashTable */
-        channels.insert ( name, (channel as AIChannel) ) ;
+    public void add_object (string name, Cld.Object? object) {
+        /* Instantiate dummy objects and populate objectss TreeMap */
+        _objects.set ( name, (object as Cld.Object) ) ;
     }
 
     /**
@@ -187,6 +212,9 @@ public class Cld.MathChannel : VChannel, ScalableChannel {
     public virtual weak Calibration calibration { get; set; }
 
     /* default constructor */
+    construct {
+        _objects = new Gee.TreeMap <string, Cld.Object> ();
+    }
 
     public MathChannel () {
         /* set defaults */
@@ -241,9 +269,28 @@ public class Cld.MathChannel : VChannel, ScalableChannel {
         }
     }
 
+    /**
+     * Parses a string containing an encoded integer value.
+     */
+    private bool get_index_from_name (string name, out int n) {
+        string substr;
+        int start = name.index_of ("_");
+        if (start == -1) {
+
+            return false;
+        } else {
+            substr = name.substring (start + 1, -1);
+            if (substr.contains ("n")) {
+                substr = substr.replace ("n", "-");
+            }
+            n = int.parse (substr);
+            return true;
+        }
+    }
+
     ~MathChannel () {
-        if (channels != null)
-            channels.remove_all ();
+        if (objects != null)
+            objects.clear ();
     }
 
     public override string to_string () {

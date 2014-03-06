@@ -74,7 +74,7 @@ libcld_0_2_la_VALAFLAGS = \
 	--internal-vapi cld-internals-0.2.vapi \
 	--library cld-0.2 --gir Cld-0.2.gir \
 	--vapidir=$(srcdir)/../vapi --pkg config \
-	@VALA_PACKAGES@ --pkg linux --pkg posix --pkg libmatheval \
+	@VALA_PACKAGES@ --pkg linux --pkg posix --pkg libmatheval --pkg gsl \
 	$(NULL)
 
 libcld_0_2_la_CPPFLAGS = \
@@ -86,6 +86,7 @@ libcld_0_2_la_CPPFLAGS = \
 	$(MODBUS_CFLAGS) \
 	$(COMEDI_CFLAGS) \
 	$(MATH_CFLAGS) \
+	$(GSL_CFLAGS) \
 	$(NULL)
 
 libcld_0_2_la_LIBADD = \
@@ -97,6 +98,7 @@ libcld_0_2_la_LIBADD = \
 	$(MODBUS_LIBS) \
 	$(COMEDI_LIBS) \
 	$(MATH_LIBS) \
+	$(GSL_LIBS) \
 	$(NULL)
 
 libcld_0_2_la_LDFLAGS = \

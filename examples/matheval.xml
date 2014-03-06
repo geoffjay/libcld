@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <cld xmlns:cld="urn:libcld">
 <<<<<<< HEAD
+<<<<<<< HEAD
     <cld:objects>
         <cld:object id="cal0" type="calibration">
             <cld:property name="units">Volts</cld:property>
@@ -45,6 +46,8 @@
         </cld:object>
     </cld:objects>
 =======
+=======
+>>>>>>> 80ba026... Fixing merge conflicts.
     <objects>
         <object id="cal0" type="calibration">
             <property name="units">Volts</property>
@@ -88,5 +91,8 @@
             <property name="expression">(ai0 + ai1 + ai2 + ai3)/4</property>
         </object>
     </objects>
+<<<<<<< HEAD
+>>>>>>> 80ba026... Fixing merge conflicts.
+=======
 >>>>>>> 80ba026... Fixing merge conflicts.
 </cld>

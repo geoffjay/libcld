@@ -38,7 +38,7 @@ tests_DEPENDENCIES = \
 tests_VALAFLAGS = \
 	--basedir $(top_srcdir) \
 	--vapidir $(top_srcdir)/cld \
-	--pkg cld-0.2 @VALA_PACKAGES@ --pkg libmatheval \
+	--pkg cld-0.2 @VALA_PACKAGES@ \
 	$(NULL)
 
 tests_CPPFLAGS = \
@@ -48,6 +48,7 @@ tests_CPPFLAGS = \
 	$(XML_CFLAGS) \
 	$(JSON_CFLAGS) \
 	$(MATH_CFLAGS) \
+	$(GSL_CFLAGS) \
 	$(NULL)
 
 tests_LDADD = \
@@ -57,4 +58,5 @@ tests_LDADD = \
 	$(XML_LIBS) \
 	$(JSON_LIBS) \
 	$(MATH_LIBS) \
+	$(GSL_LIBS) \
 	$(NULL)

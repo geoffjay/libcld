@@ -19,6 +19,7 @@
  *  Steve Roy <sroy1966@gmail.com>
  */
 using Cld;
+using Gsl;
 
 /**
  * A data series or array of values
@@ -49,6 +50,21 @@ public class Cld.DataSeries : AbstractContainer {
      * The number of elements in the series
      */
     public int length { get; set; default = 3; }
+
+    /**
+     * The stride is the step-size from one element to the next. Setting this
+     * property will affect the number of points that are used in the calculation
+     * of the mean value, for example.
+     */
+    public int stride { get; set; default = 1; }
+
+    private double _mean_value;
+    public double mean_value {
+        get {
+            _mean_value = Gsl.Stats.mean (buffer, stride * sizeof (double), buffer.length * sizeof (double));
+            return _mean_value;
+        }
+    }
 
     /**
      * The reference id of the scalable channel that is buffered.

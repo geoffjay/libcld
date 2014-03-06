@@ -71,6 +71,10 @@ PKG_CHECK_MODULES([MATH], libmatheval,
     [VALA_PACKAGES="$VALA_PACKAGES --pkg libmatheval"],
 	[AC_MSG_ERROR(libmatheval is required)])
 
+PKG_CHECK_MODULES([GSL], gsl,
+    [VALA_PACKAGES="$VALA_PACKAGES --pkg gsl"],
+	[AC_MSG_ERROR(gsl is required)])
+
 dnl libmodbus support
 AC_ARG_WITH(modbus,
 [  --with-modbus         Use Modbus library],

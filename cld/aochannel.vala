@@ -60,11 +60,6 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel, ScalableChanne
     public override weak Task task { get; set; }
 
     /**
-     * {@inheritdoc}
-     */
-    public virtual weak Pid pid { get; set; }
-
-    /**
      * {@inheritDoc}
      */
     public override string tag { get; set; }

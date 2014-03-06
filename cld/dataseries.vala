@@ -73,11 +73,16 @@ public class Cld.DataSeries : AbstractContainer {
     public int[]? taps { get; set; default = null; }
 
     private double [] buffer;
+    private int j;
+
     public signal void new_value (string id, double val);
 
     /**
      * Default constructor
      */
+    construct {
+        j = 0;
+    }
     public DataSeries () {
         _objects = new Gee.TreeMap<string, Cld.Object> ();
     }
@@ -154,10 +159,7 @@ public class Cld.DataSeries : AbstractContainer {
      */
     public void connect_input () {
         (channel as ScalableChannel).new_value.connect ((id, val) => {
-            for (int i = buffer.length - 1; i > 0; i--) {
-                buffer [i] = buffer [i - 1];
-            }
-            buffer [0] = val;
+            buffer [j] = val;
             /*
             Cld.debug ("buffer [0 : %d]: ", buffer.length);
             for (int i = 0; i < buffer.length; i++) {
@@ -165,7 +167,11 @@ public class Cld.DataSeries : AbstractContainer {
             }
             Cld.debug ("\n");
             */
-            new_value (this.id, buffer [0]);
+            new_value (this.id, buffer [j]);
+            j++;
+            if (j > (buffer.length - 1)) {
+                j = 0;
+            }
         });
     }
 
@@ -177,41 +183,18 @@ public class Cld.DataSeries : AbstractContainer {
      */
     public bool get_nth_value (int n, out double val) {
         int i;
-
-        if (n >= 0.0)
-            i = n % length;
-        else
-            i = length + n % length;
-        if (n % length == 0)
-            i = 0;
+        i = (j - n) % length;
+        if (i < 0) {
+            i = length + ((j - n) % length);
+        }
         if ((i > length) || (i < 0)) {
-            Cld.debug ("Pid2 :: get_nth_value: Index out of range n: %d i: %d", n, i);
+            Cld.debug ("DataSeries.get_nth_value (n) Failed!");
 
             return false;
         } else {
             val = buffer [i];
 
             return true;
-        }
-    }
-
-    /**
-     * XXX Virtual channels from a list of tap values may not be that useful.
-     */
-    public void activate_vchannels () {
-        foreach (Cld.Object object in objects.values) {
-            if (object is VChannel && object.id.contains (this.id)) {
-                (object as VChannel).desc = "%s [n - %d]".printf (((channel as Channel).id),
-                            (object as VChannel).num);
-                (object as VChannel).calref = (channel as ScalableChannel).calref;
-                (object as VChannel).calibration = (channel as ScalableChannel).calibration;
-                (channel as ScalableChannel).new_value.connect ((id, val) => {
-                    double nth_value;
-                    if (get_nth_value ((object as VChannel).num, out nth_value)) {
-                        (object as VChannel).raw_value = nth_value;
-                    }
-                });
-            }
         }
     }
 

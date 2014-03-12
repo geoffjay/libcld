@@ -24,7 +24,7 @@ using Gsl;
 /**
  * A data series or array of values
  */
-public class Cld.DataSeries : AbstractContainer {
+public class Cld.DataSeries : Cld.AbstractContainer {
     /**
      * {@inheritDoc}
      */

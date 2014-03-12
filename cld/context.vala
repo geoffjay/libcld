@@ -90,8 +90,8 @@ public class Cld.Context : Cld.AbstractContainer {
      */
     public Gee.Map<string, Cld.Object> get_object_map (Type type) {
         Gee.Map<string, Cld.Object> map = new Gee.TreeMap<string, Cld.Object> ();
-        foreach (var object in objects) {
-            if (object.get_type () == type) {
+        foreach (Cld.Object object in objects.values) {
+            if ((object.get_type ()).is_a (type)) {
                 map.set (object.id, object);
             }
         }

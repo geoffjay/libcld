@@ -279,9 +279,9 @@ public class Cld.ParkerModule : AbstractModule {
     private signal void serial_timeout ();
     private double zero_position = 0.0;
     private double default_velocity = 10.0;
-    private double default_acceleration = 100000.0;
-    private double default_deceleration = 100000.0;
-    private double default_jerk = 100000.0;
+    private double default_acceleration = 30000.0;
+    private double default_deceleration = 30000.0;
+    private double default_jerk = 200000.0;
     private bool write_success = false;
     private int count = 0;
 
@@ -435,6 +435,13 @@ public class Cld.ParkerModule : AbstractModule {
         string r;
         r  = "ParkerModule [%s]\n".printf (id);
         return r;
+    }
+
+    /*
+     * Deactivate the drive.
+     */
+    public async void deactivate () {
+            yield write_object (C3Plus_DeviceControl_Controlword_1, 0);
     }
 
     public async void jog_plus () {
@@ -612,7 +619,6 @@ public class Cld.ParkerModule : AbstractModule {
             yield fetch_actual_position ();
             yield last_error ();
             yield previous_error ();
-
         }
     }
 
@@ -641,7 +647,7 @@ public class Cld.ParkerModule : AbstractModule {
             yield write_object (C3Plus_DeviceControl_Controlword_1, CWB_QUIT |
                                     CWB_NO_STOP1 | CWB_NO_STOP2 | CWB_ADDRESS_1 |
                                     CWB_START);
-            yield check_status (move_timeout_ms, SWB1_POS_REACHED |
+            yield check_status (move_timeout_ms, SWB1_CURRENT_ZERO |
                                     SWB1_NO_ERROR);
             /* (finished) Stop the timer. */
             tv.get_current_time ();
@@ -651,6 +657,7 @@ public class Cld.ParkerModule : AbstractModule {
             yield fetch_actual_position ();
             yield last_error ();
             yield previous_error ();
+            yield write_object (C3Plus_DeviceControl_Controlword_1, 0);
         }
     }
 

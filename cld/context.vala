@@ -98,12 +98,6 @@ public class Cld.Context : Cld.AbstractContainer {
         return map;
     }
 
-    /**
-     * ...
-     *
-     * @param config ...
-     */
-    public void update_config (Cld.XmlConfig config) { }
 
     /**
      * {@inheritDoc}

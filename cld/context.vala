@@ -46,11 +46,13 @@ public class Cld.Context : Cld.AbstractContainer {
      * Default construction.
      */
     public Context () {
-        _objects = new Gee.HashMap<string, Cld.Object> ();
+        _objects = new Gee.TreeMap<string, Cld.Object> ();
     }
 
     /**
      * Connects all object signals where a reference has been requested.
+     *
+     * XXX not sure if this should actually happen here, or in builder
      */
     public void connect_signals () {
 
@@ -75,6 +77,27 @@ public class Cld.Context : Cld.AbstractContainer {
             }
         }
     }
+
+    /**
+     * Retrieves a map set of objects of a certain type.
+     *
+     * {{{
+     *  var sc_map = ctx.get_object_map (typeof (Cld.ScalableChannel));
+     * }}}
+     *
+     * @param type class type to retrieve
+     * @return flattened map of all objects of a certain class type
+     */
+    public Gee.Map<string, Cld.Object> get_object_map (Type type) {
+        Gee.Map<string, Cld.Object> map = new Gee.TreeMap<string, Cld.Object> ();
+        foreach (Cld.Object object in objects.values) {
+            if ((object.get_type ()).is_a (type)) {
+                map.set (object.id, object);
+            }
+        }
+        return map;
+    }
+
 
     /**
      * {@inheritDoc}

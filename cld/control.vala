@@ -157,7 +157,7 @@ public class Cld.ProcessValue2 : AbstractObject {
     /* constructor */
     public ProcessValue2 () {
         id = "pv0";
-        dsref = "ch0";
+        dsref = "ds0";
     }
 
     public ProcessValue2.full (string id, DataSeries dataseries) {

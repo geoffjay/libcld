@@ -44,6 +44,7 @@ public class Cld.XmlConfig : GLib.Object {
     private Xml.Doc *doc;
     private Xml.XPath.Context *ctx;
     private Xml.XPath.Object *obj;
+    private Xml.TextWriter writer;
 
     /**
      * Default construction
@@ -250,6 +251,30 @@ public class Cld.XmlConfig : GLib.Object {
             var xpath = "%s[@type=\"calibration\" and @id=\"%s\"]/cld:object[@type=\"coefficient\" and @id=\"%s\"]/cld:property[@name=\"value\"]".printf (xpath_base, calibration_id, coefficient.id);
             edit_node_content (xpath, value);
         }
+    }
+
+    /**
+     * Start a new xml text document and write its contents to file.
+     */
+    public void write_xml_document (string file_name, Gee.Map<string, Cld.Object> objects) {
+        writer = new Xml.TextWriter.filename (file_name);
+        writer.start_document ("1.0","ISO-8859-1");
+        write_xml_body (objects);
+        writer.end_document ();
+    }
+
+    /**
+     * Write the main body of an xml text document.
+     */
+    public void write_xml_body (Gee.Map<string, Cld.Object> objects) {
+        writer.set_indent (true);
+        writer.start_element ("cld:objects");
+        foreach (var object in objects.values) {
+            if (object is Cld.SerialPort) {
+                (object as SerialPort).write_xml (writer);
+            }
+        }
+        writer.end_element ();
     }
 
     /**

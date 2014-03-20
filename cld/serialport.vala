@@ -60,6 +60,17 @@ public class Cld.SerialPort : AbstractPort {
             }
         }
 
+        public string to_xml_string () {
+            switch (this) {
+                case NONE:  return "none";
+                case ODD:   return "odd";
+                case EVEN:  return "even";
+                case MARK:  return "mark";
+                case SPACE: return "space";
+                default: assert_not_reached ();
+            }
+        }
+
         public static Parity[] all () {
             return { NONE, ODD, EVEN, MARK, SPACE };
         }
@@ -111,6 +122,16 @@ public class Cld.SerialPort : AbstractPort {
             }
         }
 
+        public string to_xml_string () {
+            switch (this) {
+                case NONE:     return "none";
+                case HARDWARE: return "hardware";
+                case SOFTWARE: return "software";
+                case BOTH:     return "both";
+                default: assert_not_reached ();
+            }
+        }
+
         public static Handshake[] all () {
             return { NONE, HARDWARE, SOFTWARE, BOTH };
         }
@@ -153,6 +174,15 @@ public class Cld.SerialPort : AbstractPort {
                 case READWRITE: return "Read and Write";
                 case READONLY:  return "Read Only";
                 case WRITEONLY: return "Write Only";
+                default: assert_not_reached ();
+            }
+        }
+
+        public string to_xml_string () {
+            switch (this) {
+                case READWRITE: return "rw";
+                case READONLY:  return "ro";
+                case WRITEONLY: return "wo";
                 default: assert_not_reached ();
             }
         }
@@ -597,5 +627,53 @@ public class Cld.SerialPort : AbstractPort {
             newtio.c_cflag |= Linux.Termios.CRTSCTS;
         else
             newtio.c_cflag &= ~Linux.Termios.CRTSCTS;
+    }
+
+    public void write_xml (Xml.TextWriter writer) {
+        writer.start_element ("cld:object");
+            writer.write_attribute ("id", id.to_string ());
+            writer.write_attribute ("type", "port");
+            writer.write_attribute ("ptype","serial");
+
+            writer.start_element ("cld:property");
+            writer.write_attribute ("name", "device");
+            writer.write_string (device);
+            writer.end_element ();
+
+            writer.start_element ("cld:property");
+            writer.write_attribute ("name", "baudrate");
+            writer.write_string (baud_rate.to_string ());
+            writer.end_element ();
+
+            writer.start_element ("cld:property");
+            writer.write_attribute ("name", "databits");
+            writer.write_string (data_bits.to_string ());
+            writer.end_element ();
+
+            writer.start_element ("cld:property");
+            writer.write_attribute ("name", "stopbits");
+            writer.write_string (stop_bits.to_string ());
+            writer.end_element ();
+
+            writer.start_element ("cld:property");
+            writer.write_attribute ("name", "parity");
+            writer.write_string (parity.to_xml_string ());
+            writer.end_element ();
+
+            writer.start_element ("cld:property");
+            writer.write_attribute ("name", "handshake");
+            writer.write_string (handshake.to_xml_string ());
+            writer.end_element ();
+
+            writer.start_element ("cld:property");
+            writer.write_attribute ("name", "accessmode");
+            writer.write_string (access_mode.to_xml_string ());
+            writer.end_element ();
+
+            writer.start_element ("cld:property");
+            writer.write_attribute ("name", "echo");
+            writer.write_string (echo.to_string());
+            writer.end_element ();
+        writer.end_element ();
     }
 }

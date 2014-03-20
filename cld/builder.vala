@@ -507,9 +507,6 @@ public class Cld.Builder : Cld.AbstractContainer {
                 }
             }
         }
-        foreach (var object in objects.values) {
-            Cld.debug ("%s", object.id);
-        }
     }
     /**
      * Set a channel list for a Comedi task.

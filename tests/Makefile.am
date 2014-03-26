@@ -13,13 +13,13 @@ tests_SOURCES = \
 	testchannel.vala \
 	testcoefficient.vala \
 	testcontrol.vala \
+	testcsvlog.vala \
 	testdaq.vala \
 	testdevice.vala \
 	testdichannel.vala \
 	testdochannel.vala \
 	testfilter.vala \
 	testlicormodule.vala \
-	testlog.vala \
 	testmain.vala \
 	testmodule.vala \
 	testobject.vala \

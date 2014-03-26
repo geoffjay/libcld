@@ -372,7 +372,7 @@ public class Cld.Builder : Cld.AbstractContainer {
             }
 
             /* Setup the channel references for all of the log columns. */
-            if (object is Cld.Log) {
+            if (object is Cld.CsvLog) {
                 foreach (var column in (object as Container).objects.values) {
                     if (column is Column) {
                         ref_id = (column as Column).chref;
@@ -386,7 +386,7 @@ public class Cld.Builder : Cld.AbstractContainer {
                     }
                 }
                 /* Following the setup of the log columns, the log needs to attach the signals. */
-                (object as Cld.Log).connect_signals ();
+                (object as Cld.CsvLog).connect_signals ();
             }
 
             /* Setup port references for all of the modules */

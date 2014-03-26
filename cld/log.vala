@@ -141,7 +141,7 @@ public interface Cld.Log : Cld.Object {
     public abstract void start ();
 
     /**
-     * Stop a log that is executing.
+     * ID reference of the channel associated with this column.
      */
     public abstract void stop ();
 }

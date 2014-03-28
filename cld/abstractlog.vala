@@ -22,7 +22,7 @@
 /**
  * Skeletal implementation of the {@link Log} interface.
  */
-public class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
+public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
 
     /**
      * {@inheritDoc}
@@ -63,6 +63,16 @@ public class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
      * {@inheritDoc}
      */
     public abstract string date_format { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract Gee.Deque<Cld.LogEntry> queue { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract Cld.LogEntry entry { get; set; }
 
     /**
      * {@inheritDoc}

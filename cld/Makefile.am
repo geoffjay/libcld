@@ -22,6 +22,7 @@ libcld_0_2_la_SOURCES = \
 	abstractcontainer.vala \
 	abstractdevice.vala \
 	abstractfilter.vala \
+	abstractlog.vala \
 	abstractmodule.vala \
 	abstractobject.vala \
 	abstractport.vala \
@@ -37,6 +38,7 @@ libcld_0_2_la_SOURCES = \
 	container.vala \
 	context.vala \
 	control.vala \
+	csvlog.vala \
 	daq.vala \
 	dataseries.vala \
 	device.vala \
@@ -46,6 +48,8 @@ libcld_0_2_la_SOURCES = \
 	heidolphmodule.vala \
 	licormodule.vala \
 	log.vala \
+	logcolumn.vala \
+	logentry.vala \
 	mathchannel.vala \
 	module.vala \
 	object.vala \
@@ -54,6 +58,7 @@ libcld_0_2_la_SOURCES = \
 	port.vala \
 	serialport.vala \
 	socketport.vala \
+	sqlitelog.vala \
 	task.vala \
 	vchannel.vala \
 	velmexmodule.vala \

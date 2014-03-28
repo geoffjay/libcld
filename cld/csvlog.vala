@@ -22,12 +22,13 @@
 /**
  * A CSV style log file.
  */
-public class Cld.CsvLog : AbstractContainer {
+public class Cld.CsvLog : Cld.AbstractLog {
 
     /**
      * Property backing fields.
      */
     private Gee.Map<string, Object> _objects;
+    private Cld.LogEntry _entry;
 
     /**
      * {@inheritDoc}
@@ -88,12 +89,26 @@ public class Cld.CsvLog : AbstractContainer {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public override Gee.Deque<Cld.LogEntry> queue { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override Cld.LogEntry entry {
+        get { return _entry; }
+        set { _entry = value; }
+    }
+
+
+    /**
      * File stream to use as output.
      */
     private FileStream file_stream;
 
     /**
-     * DateTime data to use for time stamping log entries.
+     * DateTime data to use for time stamping log file.
      */
     private DateTime start_time;
 
@@ -109,12 +124,13 @@ public class Cld.CsvLog : AbstractContainer {
         time_stamp = TimeStampFlag.OPEN;
 
         objects = new Gee.TreeMap<string, Object> ();
+        entry = new Cld.LogEntry ();
     }
 
     public CsvLog.from_xml_node (Xml.Node *node) {
         string value;
-
         objects = new Gee.TreeMap<string, Object> ();
+        entry = new Cld.LogEntry ();
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -157,6 +173,7 @@ public class Cld.CsvLog : AbstractContainer {
                 }
             }
         }
+        (this as Cld.Container).sort_objects ();
     }
 
     ~CsvLog () {
@@ -374,10 +391,10 @@ public class Cld.CsvLog : AbstractContainer {
      * {@inheritDoc}
      */
     public override void start () {
-        bg_log.begin ((obj, res) => {
+        bg_log_timer.begin ((obj, res) => {
             try {
-                bg_log.end (res);
-                Cld.debug ("Log file async ended");
+                bg_log_timer.end (res);
+                Cld.debug ("Log file timer async ended");
             } catch (ThreadError e) {
                 string msg = e.message;
                 Cld.error (@"Thread error: $msg");
@@ -385,8 +402,8 @@ public class Cld.CsvLog : AbstractContainer {
         });
     }
 
-    private async void bg_log () throws ThreadError {
-        SourceFunc callback = bg_log.callback;
+    private async void bg_log_timer () throws ThreadError {
+        SourceFunc callback = bg_log_timer.callback;
 
         ThreadFunc<void *> _run = () => {
             Mutex mutex = new Mutex ();
@@ -397,7 +414,9 @@ public class Cld.CsvLog : AbstractContainer {
             write_header ();
 
             while (active) {
-                write_next_line ();
+                entry.update (objects);
+//                add the entry to the queue
+//                write_next_line ();
                 mutex.lock ();
                 try {
                     end_time = get_monotonic_time () + dt * TimeSpan.MILLISECOND;
@@ -414,6 +433,17 @@ public class Cld.CsvLog : AbstractContainer {
         Thread.create<void *> (_run, false);
 
         yield;
+    }
+
+    private async void bg_log_watch () throws ThreadError {
+
+        /// ...
+
+            //while (!queue.empty) {
+                // write line or insert db entry
+            //}
+
+        /// ...
     }
 
     /**

@@ -21,15 +21,15 @@
 
 using Cld;
 
-public class LogTests : ObjectTests {
+public class CsvLogTests : ObjectTests {
 
-    public LogTests () {
-        base ("Log");
-        add_test ("[Log] ...", test_foo);
+    public CsvLogTests () {
+        base ("CsvLog");
+        add_test ("[CsvLog] ...", test_foo);
     }
 
     public override void set_up () {
-        test_object = new Cld.Log ();
+        test_object = new Cld.CsvLog ();
     }
 
     public override void tear_down () {
@@ -37,7 +37,7 @@ public class LogTests : ObjectTests {
     }
 
     private void test_foo () {
-        var test_log = test_object as Cld.Log;
+        var test_log = test_object as Cld.CsvLog;
 
         // Check the Log exists
         assert (test_log != null);

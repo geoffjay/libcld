@@ -96,12 +96,12 @@ public interface Cld.Log : Cld.Object {
     public abstract string name { get; set; }
 
     /**
-     * File system path to write the log file to.
+     * File system path to write the log file or database file to.
      */
     public abstract string path { get; set; }
 
     /**
-     * Base file name to use for the log file.
+     * Base file name to use for the log file or database file.
      */
     public abstract string file { get; set; }
 
@@ -131,6 +131,16 @@ public interface Cld.Log : Cld.Object {
     public abstract string date_format { get; set; }
 
     /**
+     * A queue to buffer the data before storage.
+     */
+    public abstract Gee.Deque<Cld.LogEntry> queue { get; set; }
+
+    /**
+     * An entry representing a row of data.
+     */
+    public abstract Cld.LogEntry entry { get; set; }
+
+    /**
      * Start the log file output as an async method.
      */
     public abstract void start ();
@@ -139,75 +149,4 @@ public interface Cld.Log : Cld.Object {
      * Stop a log that is executing.
      */
     public abstract void stop ();
-}
-
-/**
- * XXX consider moving
- */
-
-/**
- * Column class to reference channels to log.
- */
-public class Cld.Column : Cld.AbstractObject {
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string id { get; set; }
-
-    /**
-     * ID reference of the channel associated with this column.
-     */
-    public string chref { get; set; }
-
-    /**
-     * Referenced channel to use.
-     */
-    public weak Channel channel { get; set; }
-
-    /**
-     * Channel value for tracking.
-     */
-    public double channel_value { get; set; }
-
-    /**
-     * Default constructor.
-     */
-    public Column () {
-        id = "col0";
-        chref = "ch0";
-    }
-
-    public Column.from_xml_node (Xml.Node *node) {
-        if (node->type == Xml.ElementType.ELEMENT_NODE &&
-            node->type != Xml.ElementType.COMMENT_NODE) {
-            id = node->get_prop ("id");
-            chref = node->get_prop ("chref");
-        }
-    }
-
-    public override string to_string () {
-        string str_data  = "[%s] : Column\n".printf (id);
-               str_data += "\tchref %s\n\n".printf (chref);
-        return str_data;
-    }
-}
-
-/**
- * A log file entry class which will be pushed onto the tail of the
- * buffer for log file writes.
- */
-public class Cld.Entry : GLib.Object {
-    private string _as_string;
-    public string as_string {
-        get { return _as_string; }
-        set { _as_string = value; }
-    }
-}
-
-/**
- * A log file buffer class to use to be able to write data to a log
- * file without using a rate timer.
- */
-public class Cld.Buffer<G> : GLib.Queue<G> {
 }

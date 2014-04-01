@@ -75,6 +75,10 @@ PKG_CHECK_MODULES([GSL], gsl,
     [VALA_PACKAGES="$VALA_PACKAGES --pkg gsl"],
 	[AC_MSG_ERROR(gsl is required)])
 
+PKG_CHECK_MODULES([SQLITE], sqlite3,
+    [VALA_PACKAGES="$VALA_PACKAGES --pkg sqlite3"],
+	[AC_MSG_ERROR(sqlite3 is required)])
+
 dnl libmodbus support
 AC_ARG_WITH(modbus,
 [  --with-modbus         Use Modbus library],

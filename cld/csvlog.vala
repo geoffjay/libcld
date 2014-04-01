@@ -101,7 +101,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
         set { _entry = value; }
     }
 
-
     /**
      * File stream to use as output.
      */
@@ -112,7 +111,19 @@ public class Cld.CsvLog : Cld.AbstractLog {
      */
     private DateTime start_time;
 
+    /**
+     * A LogEntry that is retrieved from the queue.
+     */
+    private Cld.LogEntry tail_entry;
+
     /* constructor */
+    construct {
+        objects = new Gee.TreeMap<string, Object> ();
+        entry = new Cld.LogEntry ();
+        tail_entry = new Cld.LogEntry ();
+        queue = new Gee.LinkedList<Cld.LogEntry> ();
+    }
+
     public CsvLog () {
         id = "log0";
         name = "Log File";
@@ -122,16 +133,10 @@ public class Cld.CsvLog : Cld.AbstractLog {
         active = false;
         is_open = false;
         time_stamp = TimeStampFlag.OPEN;
-
-        objects = new Gee.TreeMap<string, Object> ();
-        entry = new Cld.LogEntry ();
     }
 
     public CsvLog.from_xml_node (Xml.Node *node) {
         string value;
-        objects = new Gee.TreeMap<string, Object> ();
-        entry = new Cld.LogEntry ();
-
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
@@ -173,7 +178,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
                 }
             }
         }
-        (this as Cld.Container).sort_objects ();
     }
 
     ~CsvLog () {
@@ -355,11 +359,12 @@ public class Cld.CsvLog : Cld.AbstractLog {
     /**
      * Write the next line in the file.
      */
-    public void write_next_line () {
+    public void write_next_line (Cld.LogEntry tail_entry) {
         string line = "";
         char sep = '\t';
         DateTime curr_time = new DateTime.now_local ();
         TimeSpan diff = curr_time.difference (start_time);
+
         //int h = (int)diff / 3600000000;
         //int m = (int)diff / 60000000 - (h * 60);
         //int s = (int)diff / 1000000 - (h * 3600 + m * 60);
@@ -368,18 +373,8 @@ public class Cld.CsvLog : Cld.AbstractLog {
         //line = "%02d:%02d:%02d.%03d\t".printf (h, m, s, ms);
         line = "%lld\t".printf ((int64)diff);
 
-        foreach (var object in objects.values) {
-            if (object is Column) {
-                var channel = ((object as Column).channel as Channel);
-                if (channel is ScalableChannel) {
-                    line += "%f%c".printf ((object as Column).channel_value, sep);
-                } else if (channel is DChannel) {
-                    if ((channel as DChannel).state)
-                        line += "on%c".printf (sep);
-                    else
-                        line += "off%c".printf (sep);
-                }
-            }
+        foreach (string datum in tail_entry.data) {
+            line += "%s%c".printf (datum, sep);
         }
 
         line = line.substring (0, line.length - 1);
@@ -391,16 +386,32 @@ public class Cld.CsvLog : Cld.AbstractLog {
      * {@inheritDoc}
      */
     public override void start () {
+        file_open ();
         bg_log_timer.begin ((obj, res) => {
             try {
                 bg_log_timer.end (res);
-                Cld.debug ("Log file timer async ended");
+                Cld.debug ("Log queue timer async ended");
+            } catch (ThreadError e) {
+                string msg = e.message;
+                Cld.error (@"Thread error: $msg");
+            }
+        });
+
+        bg_log_watch.begin ((obj, res) => {
+            try {
+                bg_log_watch.end (res);
+                Cld.debug ("Log file watch async ended");
             } catch (ThreadError e) {
                 string msg = e.message;
                 Cld.error (@"Thread error: $msg");
             }
         });
     }
+
+    /**
+     * Launches a backround thread that pushes a LogEntry to the queue at regular time
+     * intervals.
+     */
 
     private async void bg_log_timer () throws ThreadError {
         SourceFunc callback = bg_log_timer.callback;
@@ -415,8 +426,10 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
             while (active) {
                 entry.update (objects);
-//                add the entry to the queue
-//                write_next_line ();
+                if (!queue.offer_head (entry))
+                    Cld.error ("Element %s was not added to the queue.", entry.id);
+//                if (queue.size > 0)
+//                    Cld.debug ("queue size: %d", (queue as Gee.LinkedList).size);
                 mutex.lock ();
                 try {
                     end_time = get_monotonic_time () + dt * TimeSpan.MILLISECOND;
@@ -435,15 +448,34 @@ public class Cld.CsvLog : Cld.AbstractLog {
         yield;
     }
 
+    /**
+     * Launches a thread that pulls a LogEntry from the queue and writes
+     * it to the log file.
+     */
     private async void bg_log_watch () throws ThreadError {
+        SourceFunc callback = bg_log_watch.callback;
 
-        /// ...
+        ThreadFunc<void *> _run = () => {
+            Mutex mutex = new Mutex ();
+            active = true;
 
-            //while (!queue.empty) {
-                // write line or insert db entry
-            //}
+            while (active) {
+                mutex.lock ();
+                if (queue.size == 0) {
+                       ;
+                } else {
+                    tail_entry = queue.poll_tail ();
+                    write_next_line (tail_entry);
+                }
+                mutex.unlock ();
+            }
 
-        /// ...
+            Idle.add ((owned) callback);
+            return null;
+        };
+        Thread.create<void *> (_run, false);
+
+        yield;
     }
 
     /**
@@ -452,8 +484,8 @@ public class Cld.CsvLog : Cld.AbstractLog {
     public override void stop () {
         if (active) {
             active = false;
-            //thread.join ();
         }
+        file_close ();
     }
 
     /**

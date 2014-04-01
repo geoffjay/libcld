@@ -60,13 +60,18 @@ public class Cld.LogEntry : Cld.AbstractObject {
                 }
             }
         }
-        foreach (var object in objects.values) {
-            Cld.debug ("%s ", object.id);
-        }
-        for (int i = 0; i < data.size; i++) {
-            string ref_id = data.get (i);
-            Cld.debug ("%s", ref_id);
-        }
-        Cld.debug ("%s", timestamp.to_string ());
+//        foreach (var object in objects.values) {
+//            Cld.debug ("%s ", object.id);
+//        }
+//        for (int i = 0; i < data.size; i++) {
+//            string ref_id = data.get (i);
+//            Cld.debug ("%s", ref_id);
+//        }
+//        Cld.debug ("%s", timestamp.to_string ());
     }
+
+    /**
+     * A LogEntry that is retrieved from the queue.
+     */
+    private Cld.LogEntry tail_entry;
 }

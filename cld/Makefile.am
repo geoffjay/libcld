@@ -93,6 +93,7 @@ libcld_0_2_la_CPPFLAGS = \
 	$(COMEDI_CFLAGS) \
 	$(MATH_CFLAGS) \
 	$(GSL_CFLAGS) \
+	$(SQLITE_CFLAGS) \
 	$(NULL)
 
 libcld_0_2_la_LIBADD = \
@@ -105,6 +106,7 @@ libcld_0_2_la_LIBADD = \
 	$(COMEDI_LIBS) \
 	$(MATH_LIBS) \
 	$(GSL_LIBS) \
+	$(SQLITE_LIBS) \
 	$(NULL)
 
 libcld_0_2_la_LDFLAGS = \

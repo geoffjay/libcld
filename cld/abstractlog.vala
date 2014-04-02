@@ -67,11 +67,6 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     /**
      * {@inheritDoc}
      */
-    public abstract Gee.Deque<Cld.LogEntry> queue { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
     public abstract Cld.LogEntry entry { get; set; }
 
     /**

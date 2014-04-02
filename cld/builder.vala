@@ -372,7 +372,7 @@ public class Cld.Builder : Cld.AbstractContainer {
             }
 
             /* Setup the channel references for all of the log columns. */
-            if (object is Cld.CsvLog) {
+            if (object is Cld.Log) {
                 foreach (var column in (object as Container).objects.values) {
                     if (column is Column) {
                         ref_id = (column as Column).chref;
@@ -385,9 +385,12 @@ public class Cld.Builder : Cld.AbstractContainer {
                         }
                     }
                 }
-
                 /* Following the setup of the log columns, the log needs to attach the signals. */
-                (object as Cld.CsvLog).connect_signals ();
+                if (object is Cld.CsvLog) {
+                    (object as Cld.CsvLog).connect_signals ();
+                } else if (object is Cld.SqliteLog) {
+                    (object as Cld.SqliteLog).connect_signals ();
+                }
             }
 
             /* Setup port references for all of the modules */
@@ -475,13 +478,6 @@ public class Cld.Builder : Cld.AbstractContainer {
                                         var chanref = (dataseries as DataSeries).chanref;
                                         (process_value as ProcessValue2).dataseries.channel = get_object (chanref)
                                                                                     as ScalableChannel;
-       //                                 Cld.debug ("Pid2: %s ProcessValue2: %s mv: %s pv: %s mv channel: %s pv channel: %s>>>>>>>>>>>>>",
-       //                                     (control_object as Pid2).id,
-       //                                     process_value.id,
-       //                                     (((control_object as Pid2).mv) as DataSeries).id,
-       //                                     (((control_object as Pid2).pv) as DataSeries).id,
-       //                                     (((control_object as Pid2).mv) as DataSeries).channel.id,
-       //                                     (((control_object as Pid2).pv) as DataSeries).channel.id);
                                     }
                                 }
                             }
@@ -499,7 +495,6 @@ public class Cld.Builder : Cld.AbstractContainer {
                 }
             }
 
-
             /* Each device in daq references tasks.  */
             if (object is Daq) {
                 foreach (var device in (object as Container).objects.values) {
@@ -511,9 +506,6 @@ public class Cld.Builder : Cld.AbstractContainer {
                     }
                 }
             }
-        }
-        foreach (var object in objects.values) {
-            Cld.debug ("%s", object.id);
         }
     }
     /**

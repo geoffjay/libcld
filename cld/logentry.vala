@@ -14,9 +14,11 @@ public class Cld.LogEntry : Cld.AbstractObject {
 
     /**
      * A list representing a single row of data in a table or file.
+     * XXX It would be preferable for the array to be of a generic type rather
+     * than double for the sake of efficient memory useage.
      */
-    private Gee.ArrayList<string?> _data;
-    public Gee.ArrayList<string?> data {
+    private Gee.ArrayList<double?> _data;
+    public Gee.ArrayList<double?> data {
         get { return _data; }
         set { _data = value; }
     }
@@ -34,7 +36,7 @@ public class Cld.LogEntry : Cld.AbstractObject {
     }
 
     public LogEntry () {
-        data = new Gee.ArrayList<string> ();
+        data = new Gee.ArrayList<double?> ();
     }
     /**
      * {@inheritDoc}
@@ -51,12 +53,12 @@ public class Cld.LogEntry : Cld.AbstractObject {
             if (object is Column) {
                 var channel = ((object as Column).channel as Channel);
                 if (channel is ScalableChannel) {
-                    data.add ((channel as ScalableChannel).scaled_value.to_string ());
+                    data.add ((channel as ScalableChannel).scaled_value);
                 } else if (channel is DChannel) {
                     if ((channel as DChannel).state)
-                        data.add ("on");
+                        data.add (1);
                     else
-                        data.add ("off");
+                        data.add (0);
                 }
             }
         }

@@ -89,9 +89,9 @@ public class Cld.CsvLog : Cld.AbstractLog {
     }
 
     /**
-     * {@inheritDoc}
+     * A FIFO stack of LogEntry objects
      */
-    public override Gee.Deque<Cld.LogEntry> queue { get; set; }
+    private Gee.Deque<Cld.LogEntry> queue { get; set; }
 
     /**
      * {@inheritDoc}
@@ -192,9 +192,15 @@ public class Cld.CsvLog : Cld.AbstractLog {
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
                 var channel = (column as Cld.Column).channel;
-                (channel as Cld.ScalableChannel).new_value.connect ((id, value) => {
-                    (column as Cld.Column).channel_value = value;
-                });
+                if (channel is Cld.ScalableChannel) {
+                    (channel as Cld.ScalableChannel).new_value.connect ((id, value) => {
+                        (column as Cld.Column).channel_value = value;
+                    });
+                } else if (channel is Cld.DChannel) {
+                    (channel as Cld.DChannel).new_value.connect ((id, value) => {
+                        (column as Cld.Column).channel_value = (double) value;
+                    });
+                }
             }
         }
     }
@@ -373,8 +379,8 @@ public class Cld.CsvLog : Cld.AbstractLog {
         //line = "%02d:%02d:%02d.%03d\t".printf (h, m, s, ms);
         line = "%lld\t".printf ((int64)diff);
 
-        foreach (string datum in tail_entry.data) {
-            line += "%s%c".printf (datum, sep);
+        foreach (double datum in tail_entry.data) {
+            line += "%f%c".printf (datum, sep);
         }
 
         line = line.substring (0, line.length - 1);
@@ -412,7 +418,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
      * Launches a backround thread that pushes a LogEntry to the queue at regular time
      * intervals.
      */
-
     private async void bg_log_timer () throws ThreadError {
         SourceFunc callback = bg_log_timer.callback;
 
@@ -425,11 +430,13 @@ public class Cld.CsvLog : Cld.AbstractLog {
             write_header ();
 
             while (active) {
-                entry.update (objects);
-                if (!queue.offer_head (entry))
-                    Cld.error ("Element %s was not added to the queue.", entry.id);
-//                if (queue.size > 0)
-//                    Cld.debug ("queue size: %d", (queue as Gee.LinkedList).size);
+                lock (queue) {
+                    entry.update (objects);
+                    if (!queue.offer_head (entry))
+                        Cld.error ("Element %s was not added to the queue.", entry.id);
+    //                if (queue.size > 0)
+    //                    Cld.debug ("queue size: %d", (queue as Gee.LinkedList).size);
+                }
                 mutex.lock ();
                 try {
                     end_time = get_monotonic_time () + dt * TimeSpan.MILLISECOND;
@@ -456,18 +463,17 @@ public class Cld.CsvLog : Cld.AbstractLog {
         SourceFunc callback = bg_log_watch.callback;
 
         ThreadFunc<void *> _run = () => {
-            Mutex mutex = new Mutex ();
             active = true;
 
             while (active) {
-                mutex.lock ();
-                if (queue.size == 0) {
-                       ;
-                } else {
-                    tail_entry = queue.poll_tail ();
-                    write_next_line (tail_entry);
+                lock (queue) {
+                    if (queue.size == 0) {
+                        ;
+                    } else {
+                        tail_entry = queue.poll_tail ();
+                        write_next_line (tail_entry);
+                    }
                 }
-                mutex.unlock ();
             }
 
             Idle.add ((owned) callback);

@@ -131,11 +131,6 @@ public interface Cld.Log : Cld.Object {
     public abstract string date_format { get; set; }
 
     /**
-     * A queue to buffer the data before storage.
-     */
-    public abstract Gee.Deque<Cld.LogEntry> queue { get; set; }
-
-    /**
      * An entry representing a row of data.
      */
     public abstract Cld.LogEntry entry { get; set; }

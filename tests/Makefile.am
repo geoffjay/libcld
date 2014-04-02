@@ -49,6 +49,7 @@ tests_CPPFLAGS = \
 	$(JSON_CFLAGS) \
 	$(MATH_CFLAGS) \
 	$(GSL_CFLAGS) \
+	$(SQLITE_CFLAGS) \
 	$(NULL)
 
 tests_LDADD = \
@@ -59,4 +60,5 @@ tests_LDADD = \
 	$(JSON_LIBS) \
 	$(MATH_LIBS) \
 	$(GSL_LIBS) \
+	$(SQLITE_LIBS) \
 	$(NULL)

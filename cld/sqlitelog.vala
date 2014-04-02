@@ -17,6 +17,7 @@
  *
  * Author:
  *  Geoff Johnson <geoff.jay@gmail.com>
+ *  Steve Roy <sroy1966@gmail.com>
  */
 
 /**
@@ -90,9 +91,9 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     }
 
     /**
-     * {@inheritDoc}
+     * A FIFO stack of LogEntry objects.
      */
-    public override Gee.Deque<Cld.LogEntry> queue { get; set; }
+    private Gee.Deque<Cld.LogEntry> queue { get; set; }
 
     /**
      * {@inheritDoc}
@@ -103,29 +104,24 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     }
 
     /**
-     * A string value that is the name of the current Log table.
+     * The name of the current Log table.
      */
     public string log_name {
         get { return _log_name; }
     }
 
     /**
-     * DateTime data to use for time stamping log entries.
+     * A time stamp for log entries.
      */
     private DateTime start_time;
 
     /**
-     * A LogEntry that is retrieved from the queue.
-     */
-    private Cld.LogEntry tail_entry;
-
-    /**
-     * An SQLite database object
+     * An SQLite database object.
      */
     private Sqlite.Database db;
 
     /**
-     * An SQLite statement created from a prepared query
+     * An SQLite statement created from a prepared query.
      */
     private Sqlite.Statement stmt;
 
@@ -144,14 +140,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     construct {
         objects = new Gee.TreeMap<string, Object> ();
         entry = new Cld.LogEntry ();
-        tail_entry = new Cld.LogEntry ();
         queue = new Gee.LinkedList<Cld.LogEntry> ();
-
-        /* Open the database */
-        int ec = Sqlite.Database.open ("test.db", out db);
-        if (ec != Sqlite.OK) {
-            stderr.printf ("Can't open database: %d: %s\n", db.errcode (), db.errmsg ());
-        }
 
     }
 
@@ -164,11 +153,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         active = false;
         is_open = false;
         time_stamp = TimeStampFlag.OPEN;
-        create_tables ();
     }
 
     public SqliteLog.from_xml_node (Xml.Node *node) {
         string value;
+
+        active = false;
+        is_open = false;
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -208,16 +199,31 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                         var column = new Column.from_xml_node (iter);
                         objects.set (column.id, column);
                     }
-
                 }
             }
         }
-        create_tables ();
     }
 
     ~CsvLog () {
         if (_objects != null)
             _objects.clear ();
+    }
+
+    /**
+     * Open the database file for logging.
+     */
+    public void file_open () {
+        string filename;
+        if (!path.has_suffix ("/"))
+            path = "%s%s".printf (path, "/");
+        filename = "%s%s".printf (path, file);
+        /* Open the database file*/
+        int ec = Sqlite.Database.open (filename, out db);
+        if (ec != Sqlite.OK) {
+            stderr.printf ("Can't open database: %d: %s\n", db.errcode (), db.errmsg ());
+            is_open = false;
+        } else {
+            is_open = true;
     }
 
     /**
@@ -273,9 +279,15 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
                 var channel = (column as Cld.Column).channel;
-                (channel as Cld.ScalableChannel).new_value.connect ((id, value) => {
-                    (column as Cld.Column).channel_value = value;
-                });
+                if (channel is Cld.ScalableChannel) {
+                    (channel as Cld.ScalableChannel).new_value.connect ((id, value) => {
+                        (column as Cld.Column).channel_value = value;
+                    });
+                } else if (channel is Cld.DChannel) {
+                    (channel as Cld.DChannel).new_value.connect ((id, value) => {
+                        (column as Cld.Column).channel_value = (double) value;
+                    });
+                }
             }
         }
     }
@@ -284,6 +296,8 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * {@inheritDoc}
      */
     public override void start () {
+        file_open ();
+        create_tables ();
         start_time = new DateTime.now_local ();
         stdout.printf ("start_time: %s\n", start_time.to_string ());
         update_experiment_table ();
@@ -293,8 +307,96 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             );
 
         add_log_table ();
-        log_data ();
+
+        bg_log_timer.begin ((obj, res) => {
+            try {
+                bg_log_timer.end (res);
+                Cld.debug ("Log queue timer async ended");
+            } catch (ThreadError e) {
+                string msg = e.message;
+                Cld.error (@"Thread error: $msg");
+            }
+        });
+
+        bg_log_watch.begin ((obj, res) => {
+            try {
+                bg_log_watch.end (res);
+                Cld.debug ("Log file watch async ended");
+            } catch (ThreadError e) {
+                string msg = e.message;
+                Cld.error (@"Thread error: $msg");
+            }
+        });
     }
+
+    /**
+     * Launches a backround thread that pushes a LogEntry to the queue at regular time
+     * intervals.
+     */
+    private async void bg_log_timer () throws ThreadError {
+        SourceFunc callback = bg_log_timer.callback;
+
+        ThreadFunc<void *> _run = () => {
+            Mutex mutex = new Mutex ();
+            Cond cond = new Cond ();
+            int64 end_time;
+
+            active = true;
+
+            while (active) {
+                lock (queue) {
+                    entry.update (objects);
+                    if (!queue.offer_head (entry))
+                        Cld.error ("Element %s was not added to the queue.", entry.id);
+                }
+                mutex.lock ();
+                try {
+                    end_time = get_monotonic_time () + dt * TimeSpan.MILLISECOND;
+                    while (cond.wait_until (mutex, end_time))
+                        ; /* do nothing */
+                } finally {
+                    mutex.unlock ();
+                }
+            }
+
+            Idle.add ((owned) callback);
+            return null;
+        };
+        Thread.create<void *> (_run, false);
+
+        yield;
+    }
+
+    /**
+     * Launches a thread that pulls a LogEntry from the queue and writes
+     * it to the log file.
+     */
+    private async void bg_log_watch () throws ThreadError {
+        SourceFunc callback = bg_log_watch.callback;
+        Cld.LogEntry tail_entry = new Cld.LogEntry ();
+
+        ThreadFunc<void *> _run = () => {
+            active = true;
+
+            while (active) {
+                lock (queue) {
+                    if (queue.size == 0) {
+                        ;
+                    } else {
+                        tail_entry = queue.poll_tail ();
+                        log_entry (tail_entry);
+                    }
+                }
+            }
+
+            Idle.add ((owned) callback);
+            return null;
+        };
+        Thread.create<void *> (_run, false);
+
+        yield;
+    }
+
 
     private void update_experiment_table () {
         string experiment_name;
@@ -336,8 +438,8 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         parameter_index = stmt.bind_parameter_index ("$LOG_RATE");
         stmt.bind_double (parameter_index, rate);
 
-        stdout.printf ("stmt.step () returns: %d\n", stmt.step ());
-        stdout.printf ("stmt.reset () returns: %d\n", stmt.reset ());
+        stmt.step ();
+        stmt.reset ();
 
         query = "SELECT COUNT(id) FROM Experiment;";
         ec = db.prepare_v2 (query, query.length, out stmt);
@@ -345,25 +447,39 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
         }
 
-        stdout.printf ("stmt.step () returns: %d\n", stmt.step ());
+        stmt.step ();
         experiment_id = int.parse (stmt.column_text (0));
-        while (stmt.step () == Sqlite.ROW) {
-            stdout.printf ("number of ids in Experiment: %d\n",  experiment_id);
-        }
-        stdout.printf ("stmt.reset () returns: %d\n", stmt.reset ());
+        stmt.reset ();
     }
 
     private void update_channel_table () {
-        for (int i = 0; i < 5; i++) {
-            string chan_id = "chan_id %d".printf (i);
-            string desc = "description %d".printf (i);
-            string tag = "tag %d".printf (i);
-            string type = "type %d".printf (i);
-            string expression = "expression %d".printf (i);
-            string coeff_x0 = "coeff_x0 %d".printf (i);
-            string coeff_x1 = "coeff_x1 %d".printf (i);
-            string coeff_x2 = "coeff_x2 %d".printf (i);
-            string coeff_x3 = "coeff_x3 %d".printf (i);
+        double[] coeff = new double [4];
+        string chan_id = "";
+        string desc = "";
+        string tag = "";
+        string type = "";
+        string expression = "";
+
+        foreach (var column in objects.values) {
+            if (column is Cld.Column) {
+                var channel = (column as Cld.Column).channel;
+                chan_id = "%s".printf (channel.id);
+                desc = "%s".printf (channel.desc);
+                tag = "%s".printf (channel.tag);
+                type = "%s".printf (((channel as GLib.Object).get_type ()).name ());
+                if (channel is VChannel) {
+                    expression = "%s".printf ((channel as VChannel).expression);
+                }
+                for (int i = 0; i < 4; i++) {
+                    coeff [i] = double.MIN;
+                    if (channel is ScalableChannel) {
+                        var coefficient = (channel as ScalableChannel).calibration.get_coefficient (i);
+                        if (coefficient != null) {
+                            coeff [i] = (coefficient as Cld.Coefficient).value;
+                        }
+                    }
+                }
+            }
 
             query = """
                 INSERT INTO Channel
@@ -417,68 +533,16 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             stmt.bind_text (parameter_index, expression, -1, GLib.g_free);
 
             parameter_index = stmt.bind_parameter_index ("$COEFF_X0");
-            stmt.bind_text (parameter_index, coeff_x0, -1, GLib.g_free);
+            stmt.bind_double (parameter_index, coeff [0]);
 
             parameter_index = stmt.bind_parameter_index ("$COEFF_X1");
-            stmt.bind_text (parameter_index, coeff_x1, -1, GLib.g_free);
+            stmt.bind_double (parameter_index, coeff [1]);
 
             parameter_index = stmt.bind_parameter_index ("$COEFF_X2");
-            stmt.bind_text (parameter_index, coeff_x2, -1, GLib.g_free);
+            stmt.bind_double (parameter_index, coeff [2]);
 
             parameter_index = stmt.bind_parameter_index ("$COEFF_X3");
-            stmt.bind_text (parameter_index, coeff_x3, -1, GLib.g_free);
-
-            stdout.printf ("update_channel_table stmt.step () returns: %d\n", stmt.step ());
-            stdout.printf ("update_channel_table stmt.reset () returns: %d\n", stmt.reset ());
-        }
-    }
-
-    private void log_data () {
-        for (int row = 0; row < 10; row++) {
-            string query = """
-                INSERT INTO %s
-                (
-                experiment_id,
-                time,
-                ai0,
-                ai1,
-                ai2,
-                ai3,
-                ai4,
-                ai5
-                )
-                VALUES
-                (
-                $EXPERIMENT_ID,
-                TIME ('now', 'localtime'),
-                $VAL0,
-                $VAL1,
-                $VAL2,
-                $VAL3,
-                $VAL4,
-                $VAL5
-                );
-            """.printf (log_name);
-//            stdout.printf ("%s\n", query);
-            ec = db.prepare_v2 (query, query.length, out stmt);
-            if (ec != Sqlite.OK) {
-                stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
-            }
-            parameter_index = stmt.bind_parameter_index ("$EXPERIMENT_ID");
-            stmt.bind_int (parameter_index, experiment_id);
-
-            parameter_index = stmt.bind_parameter_index ("$VAL0");
-            stmt.bind_double (parameter_index, row);
-            parameter_index = stmt.bind_parameter_index ("$VAL1");
-            stmt.bind_double (parameter_index, row);
-            parameter_index = stmt.bind_parameter_index ("$VAL2");
-            stmt.bind_double (parameter_index, row);
-            parameter_index = stmt.bind_parameter_index ("$VAL3");
-            stmt.bind_double (parameter_index, row);
-            parameter_index = stmt.bind_parameter_index ("$VAL4");
-            stmt.bind_double (parameter_index, row);
-            parameter_index = stmt.bind_parameter_index ("$VAL5");
-            stmt.bind_double (parameter_index, row);
+            stmt.bind_double (parameter_index, coeff [3]);
 
             stmt.step ();
             stmt.reset ();
@@ -500,49 +564,75 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             stderr.printf ("Error: %s\n", errmsg);
         }
 
-        for (int i = 0; i < 6; i++) {
-            string chan_id = "ai%d".printf (i);
-            query = "ALTER TABLE %s ADD COLUMN %s REAL;".printf (log_name, chan_id);
-            ec = db.exec (query, null, out errmsg);
-            if (ec != Sqlite.OK) {
-                stderr.printf ("Error: %s\n", errmsg);
+        foreach (var column in objects.values) {
+            if (column is Cld.Column) {
+                query = "ALTER TABLE %s ADD COLUMN %s REAL;".printf (log_name,
+                                                    (column as Cld.Column).chref);
+                ec = db.exec (query, null, out errmsg);
+                if (ec != Sqlite.OK) {
+                    stderr.printf ("Error: %s\n", errmsg);
+                }
             }
         }
     }
 
-    private async void bg_log_timer () throws ThreadError {
-        SourceFunc callback = bg_log_timer.callback;
+    private void log_entry (Cld.LogEntry entry) {
+        TimeSpan diff = entry.timestamp.difference (start_time);
+        string query = """
+            INSERT INTO %s
+            (
+            experiment_id,
+            time,
+        """.printf (log_name);
 
-        ThreadFunc<void *> _run = () => {
-            Mutex mutex = new Mutex ();
-            Cond cond = new Cond ();
-            int64 end_time;
-
-            active = true;
-            //write_header ();
-
-            while (active) {
-                /// update entry
-                //entry.update (get_object_map (typeof (Cld.Column)));
-                /// add the entry to the queue
-                queue.offer (entry);
-
-                mutex.lock ();
-                try {
-                    end_time = get_monotonic_time () + dt * TimeSpan.MILLISECOND;
-                    while (cond.wait_until (mutex, end_time))
-                        ; /* do nothing */
-                } finally {
-                    mutex.unlock ();
-                }
+        foreach (var column in objects.values) {
+            if (column is Cld.Column) {
+                query = "%s%s,".printf (query, (column as Cld.Column).chref);
             }
+        }
+        query = query.substring (0, query.length - 1);
+        query = "%s%s".printf (query, ") VALUES ($EXPERIMENT_ID, $MICROSECONDS,");
+        int i = 0;
+        foreach (var column in objects.values) {
+            if (column is Cld.Column) {
+                query = "%s%s".printf (query, "$VAL%d,".printf (i));
+            }
+            i++;
+        }
+        query = query.substring (0, query.length - 1);
+        query = "%s%s".printf (query, ");");
 
-            Idle.add ((owned) callback);
-            return null;
-        };
-        Thread.create<void *> (_run, false);
+        ec = db.prepare_v2 (query, query.length, out stmt);
+        if (ec != Sqlite.OK) {
+            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+        }
+        parameter_index = stmt.bind_parameter_index ("$EXPERIMENT_ID");
+        stmt.bind_int (parameter_index, experiment_id);
 
-        yield;
+        parameter_index = stmt.bind_parameter_index ("$MICROSECONDS");
+        stmt.bind_double (parameter_index, (double) diff);
+
+        i = 0;
+        double val = double.MIN;
+        foreach (var column in objects.values) {
+            if (column is Cld.Column) {
+                parameter_index = stmt.bind_parameter_index ("$VAL%d".printf (i));
+                var channel = (column as Cld.Column).channel;
+                if (channel is Cld.ScalableChannel) {
+                    val = (channel as Cld.ScalableChannel).scaled_value;
+                } else if (channel is DChannel) {
+                    if ((channel as DChannel).state) {
+                        val = 1;
+                    } else {
+                        val = 0;
+                    }
+                }
+                stmt.bind_double (parameter_index, val);
+            }
+            i++;
+        }
+        stmt.step ();
+        stmt.reset ();
     }
 
     /**
@@ -552,6 +642,30 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         if (active) {
             active = false;
         }
+    }
+
+    /**
+     * A convenience method to retrieve a list of the Log tables
+     */
+    public string get_log_names () {
+        string names = "";
+        string query = "SELECT name from Experiment;";
+
+        if (!is_open) {
+            file_open ();
+        }
+        ec = db.prepare_v2 (query, query.length, out stmt);
+        if (ec != Sqlite.OK) {
+            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+        }
+
+        while (stmt.step () == Sqlite.ROW) {
+            names = stmt.column_text (0);
+            Cld.debug ("%s", names);
+        }
+        stmt.reset ();
+
+        return names;
     }
 
     /**

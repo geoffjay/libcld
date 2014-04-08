@@ -30,7 +30,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      */
     private Gee.Map<string, Object> _objects;
     private Cld.LogEntry _entry;
-    private string _log_name;
+    private string _experiment_name;
 
     /**
      * {@inheritDoc}
@@ -106,8 +106,8 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * The name of the current Log table.
      */
-    public string log_name {
-        get { return _log_name; }
+    public string experiment_name {
+        get { return _experiment_name; }
     }
 
     /**
@@ -134,7 +134,18 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     private int ec;
     private int experiment_id;
 
-
+    /**
+     * Enumerated Experiment table column names.
+     */
+    public enum Experiment_Columns {
+        ID          = 0,
+        NAME        = 1,
+        START_DATE  = 2,
+        STOP_DATE   = 3,
+        START_TIME  = 4,
+        STOP_TIME   = 5,
+        LOG_RATE    = 6
+    }
 
     /* constructor */
     construct {
@@ -224,6 +235,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             is_open = false;
         } else {
             is_open = true;
+        }
     }
 
     /**
@@ -300,11 +312,11 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         create_tables ();
         start_time = new DateTime.now_local ();
         stdout.printf ("start_time: %s\n", start_time.to_string ());
-        update_experiment_table ();
-        update_channel_table ();
-        _log_name = "Log_%s".printf (
+        _experiment_name = "Experiment_%s".printf (
             start_time.to_string ().replace ("-", "_").replace (":", "_")
             );
+        update_experiment_table ();
+        update_channel_table ();
 
         add_log_table ();
 
@@ -399,7 +411,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
 
     private void update_experiment_table () {
-        string experiment_name;
         query = """
             INSERT INTO Experiment
             (
@@ -426,8 +437,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
         }
         parameter_index = stmt.bind_parameter_index ("$NAME");
-        experiment_name = "Experiment_%s".printf (start_time.to_string ());
-        stmt.bind_text (parameter_index, experiment_name, -1, GLib.g_free);
+        stmt.bind_text (parameter_index, _experiment_name, -1, GLib.g_free);
 
         parameter_index = stmt.bind_parameter_index ("$STOP_DATE");
         stmt.bind_text (parameter_index, "<none>", -1, GLib.g_free);
@@ -557,7 +567,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             experiment_id   INTEGER,
             time            REAL
             );
-        """.printf (log_name);
+        """.printf (_experiment_name);
 
         ec = db.exec (query, null, out errmsg);
         if (ec != Sqlite.OK) {
@@ -566,7 +576,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
-                query = "ALTER TABLE %s ADD COLUMN %s REAL;".printf (log_name,
+                query = "ALTER TABLE %s ADD COLUMN %s REAL;".printf (_experiment_name,
                                                     (column as Cld.Column).chref);
                 ec = db.exec (query, null, out errmsg);
                 if (ec != Sqlite.OK) {
@@ -583,7 +593,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             (
             experiment_id,
             time,
-        """.printf (log_name);
+        """.printf (_experiment_name);
 
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
@@ -610,7 +620,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         stmt.bind_int (parameter_index, experiment_id);
 
         parameter_index = stmt.bind_parameter_index ("$MICROSECONDS");
-        stmt.bind_double (parameter_index, (double) diff);
+        stmt.bind_int (parameter_index, (int) diff);
 
         i = 0;
         double val = double.MIN;
@@ -639,6 +649,21 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * {@inheritDoc}
      */
     public override void stop () {
+        query = """
+            UPDATE Experiment
+            SET stop_date = DATE('now'),
+                stop_time = TIME('now', 'localtime')
+            WHERE id = %s;
+        """.printf (experiment_id.to_string ());
+
+        ec = db.prepare_v2 (query, query.length, out stmt);
+        if (ec != Sqlite.OK) {
+            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+        }
+
+        stmt.step ();
+        stmt.reset ();
+
         if (active) {
             active = false;
         }
@@ -647,25 +672,34 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * A convenience method to retrieve a list of the Log tables
      */
-    public string get_log_names () {
-        string names = "";
-        string query = "SELECT name from Experiment;";
+    public Gee.Map<string, Cld.ExperimentEntry> get_experiments () {
+        Gee.Map<string, Cld.ExperimentEntry> experiments = new Gee.HashMap<string, Cld.ExperimentEntry> ();
+        string query;
 
         if (!is_open) {
             file_open ();
         }
+
+        query = "SELECT * from Experiment;";
         ec = db.prepare_v2 (query, query.length, out stmt);
         if (ec != Sqlite.OK) {
             stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
         }
-
         while (stmt.step () == Sqlite.ROW) {
-            names = stmt.column_text (0);
-            Cld.debug ("%s", names);
+            Cld.ExperimentEntry experiment = new Cld.ExperimentEntry ();
+            experiment.experiment_id = stmt.column_int (Experiment_Columns.ID);
+            experiment.id = "ee%d".printf (experiment.experiment_id);
+            experiment.name = stmt.column_text (Experiment_Columns.NAME);
+            experiment.start_date = stmt.column_text (Experiment_Columns.START_DATE);
+            experiment.stop_date = stmt.column_text (Experiment_Columns.STOP_DATE);
+            experiment.start_time = stmt.column_text (Experiment_Columns.START_TIME);
+            experiment.stop_time = stmt.column_text (Experiment_Columns.STOP_TIME);
+            experiment.log_rate = stmt.column_double (Experiment_Columns.LOG_RATE);
+            experiments.set (experiment.id, experiment);
         }
         stmt.reset ();
 
-        return names;
+        return experiments;
     }
 
     /**
@@ -675,4 +709,3 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         _objects = val;
     }
 }
-

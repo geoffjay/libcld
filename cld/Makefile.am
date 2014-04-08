@@ -44,12 +44,12 @@ libcld_0_2_la_SOURCES = \
 	device.vala \
 	dichannel.vala \
 	dochannel.vala \
+	entries.vala \
 	filter.vala \
 	heidolphmodule.vala \
 	licormodule.vala \
 	log.vala \
 	logcolumn.vala \
-	logentry.vala \
 	mathchannel.vala \
 	module.vala \
 	object.vala \

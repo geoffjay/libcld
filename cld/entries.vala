@@ -62,18 +62,38 @@ public class Cld.LogEntry : Cld.AbstractObject {
                 }
             }
         }
-//        foreach (var object in objects.values) {
-//            Cld.debug ("%s ", object.id);
-//        }
-//        for (int i = 0; i < data.size; i++) {
-//            string ref_id = data.get (i);
-//            Cld.debug ("%s", ref_id);
-//        }
-//        Cld.debug ("%s", timestamp.to_string ());
+    }
+}
+
+/**
+ * Contains data from a single row from the "Experiment" table in a Log database.
+ */
+public class Cld.ExperimentEntry : Cld.AbstractObject {
+    /**
+     * {@inheritDoc}
+     */
+    public override string id { get; set; }
+    public int experiment_id { get; set; }
+    public string name { get; set; }
+    public string start_date { get; set; }
+    public string stop_date { get; set; }
+    public string start_time { get; set; }
+    public string stop_time { get; set; }
+    public double log_rate { get; set; }
+
+    public ExperimentEntry () {
+
     }
 
     /**
-     * A LogEntry that is retrieved from the queue.
+     * {@inheritDoc}
      */
-    private Cld.LogEntry tail_entry;
+    public override string to_string () {
+        string str_data = "id: %s\n".printf (id);
+        str_data = "%s%s".printf (str_data, "experiment_id: %d\n".printf (experiment_id));
+        str_data = "%s%s".printf (str_data, "name: %s\n".printf (name));
+
+        return str_data;
+    }
+
 }

@@ -95,5 +95,39 @@ public class Cld.ExperimentEntry : Cld.AbstractObject {
 
         return str_data;
     }
+}
+
+/**
+ * Contains data from a single row from the "Channel" table in a Log database.
+ * Channels are not accessed directly from Cld because the channel lists can change.
+ */
+public class Cld.ChannelEntry : Cld.AbstractObject {
+    /**
+     * {@inheritdoc}
+     */
+    public override string id { get; set; }
+    public int chan_tbl_id { get; set ; }
+    public int experiment_id {get; set; }
+    public string chan_id { get; set; }
+    public string desc { get; set; }
+    public string tag { get; set; }
+    public string cld_type { get; set; }
+    public string expression { get; set; }
+    public double coeff_x0 { get; set; }
+    public double coeff_x1 { get; set; }
+    public double coeff_x2 { get; set; }
+    public double coeff_x3 { get; set; }
+    public double coeff_x4 { get; set; }
+
+    public ChannelEntry () {
+
+    }
+
+    public override string to_string () {
+    string str_data = "id: %s\n".printf (id);
+    str_data = "%s%s".printf (str_data, "chan_tbl_id: %d\n".printf (chan_tbl_id));
+
+    return str_data;
+    }
 
 }

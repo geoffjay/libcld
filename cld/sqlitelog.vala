@@ -164,7 +164,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         COEFF_X1,
         COEFF_X2,
         COEFF_X3,
-        COEFF_X4
+        UNITS
+    }
+
+    public enum Experiment_Data_Columns {
+        ID,
+        EXPERIMENT_ID,
+        TIME
     }
 
     /* constructor */
@@ -294,6 +300,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             coeff_x1        REAL,
             coeff_x2        REAL,
             coeff_x3        REAL,
+            units           TEXT,
             FOREIGN KEY(experiment_id) REFERENCES Experiment(id)
             );
         """;
@@ -351,58 +358,101 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     }
 
     /**
-     * Writes a standard header to the top of the file.
+     * Print a string to the log file.
+     *
+     * @param toprint The string to print
      */
-    public void write_header () {
+    public void file_print (string toprint) {
+        if (true) {
+            lock (file_stream) {
+                file_stream.printf ("%s", toprint);
+            }
+        }
+    }
+
+
+    /**
+     * Writes a standard header to the top of the file.
+     * @param id The unique id from the Experiment table.
+     */
+    public void write_header (int id) {
         Gee.Map<string, Cld.ChannelEntry> channel_entries = new Gee.HashMap<string, Cld.ExperimentEntry> ();
         string tags = "Time";
         //string units = "[HH:MM:SS.mmm]";
         string units = "[us]";
         string cals = "Channel Calibrations:\n\n";
+        string expressions = "MathChannel Expressions:\n\n";
 
-        channel_entries = get_channel_entries (experiment_id);
+        channel_entries = get_channel_entries (id);
         foreach (var channel_entry in channel_entries.values) {
-            //Cld.debug ("chan_tbl_id: %d chan_id: %s", (channel_entry as Cld.ChannelEntry).chan_tbl_id,
-              //                                        (channel_entry as Cld.ChannelEntry).chan_id);
-
+            cals += "%s:\ty = ".printf ((channel_entry as Cld.ChannelEntry).chan_id);
+            cals += "%.3f * x^0 + ".printf ((channel_entry as Cld.ChannelEntry).coeff_x0);
+            cals += "%.3f * x^1 + ".printf ((channel_entry as Cld.ChannelEntry).coeff_x1);
+            cals += "%.3f * x^2 + ".printf ((channel_entry as Cld.ChannelEntry).coeff_x2);
+            cals += "%.3f * x^3 + ".printf ((channel_entry as Cld.ChannelEntry).coeff_x3);
+            cals = cals.substring (0, cals.length - 3);
+            cals += "\t(%s)\n".printf ((channel_entry as Cld.ChannelEntry).desc);
+            tags += "\t%s".printf ((channel_entry as Cld.ChannelEntry).tag);
+            if ((channel_entry as Cld.ChannelEntry).cld_type == "CldMathChannel") {
+                expressions += "%s:\t %s\n".printf ((channel_entry as Cld.ChannelEntry).chan_id,
+                                                    (channel_entry as Cld.ChannelEntry).expression);
+            }
+            units += "\t[%s]".printf ((channel_entry as Cld.ChannelEntry).units);
         }
 
-        var header = "%s\nLogging rate: %.2f Hz\n\n%s\n%s\n".printf (cals, rate, tags, units);
+        var header = "%s\n%s\nLogging rate: %.2f Hz\n\n%s\n%s\n".printf (cals, expressions, rate, tags, units);
 
-//        file_print (header);
+       file_print (header);
+    }
 
+    /**
+     * Writes the data values of an Experiment to a csv file.
+     * @param exp_id The unique id from the Experiment table.
+     * @param start The time value of the first entry in the file.
+     * @param stop The time value of the last entry in the file.
+     * @param step The time increment of the entries in the file.
+     * @param is_averaged True if file entries values are averaged between steps.
+     */
+    public void write_csv_data (int exp_id, int start, int stop, int step, bool is_averaged) {
+        string query;
+        string name = "";
+        string line = "";
+        char sep = '\t';
+        int count = 0;
+        Cld.LogEntry ent = new Cld.LogEntry ();
 
-//        foreach (var object in objects.values) {
-//            Cld.debug ("Found object [%s]", object.id);
-//            if (object is Column) {
-//                var channel = ((object as Column).channel as Channel);
-//                Type type = (channel as GLib.Object).get_type ();
-//                Cld.debug ("Received object is Column - %s", type.name ());
-//
-//                if (channel is ScalableChannel) {
-//                    var calibration = (channel as ScalableChannel).calibration;
-//                    cals += "%s:\ty = ".printf (channel.id);
-//
-//                    foreach (var coefficient in (calibration as Container).objects.values) {
-//                        cals += "%.3f * x^%d + ".printf (
-//                                (coefficient as Coefficient).value,
-//                                (coefficient as Coefficient).n
-//                            );
-//                    }
-//
-//                    cals = cals.substring (0, cals.length - 3);
-//                    cals += "\t(%s)\n".printf (channel.desc);
-//                    units += "\t[%s]".printf (calibration.units);
-//                    tags += "\t%s".printf (channel.tag);
-//                } else if (channel is DChannel) {
-//                    tags += "\t%s".printf (channel.tag);
-//                }
-//            }
-//        }
-//
-//        var header = "%s\nLogging rate: %.2f Hz\n\n%s\n%s\n".printf (cals, rate, tags, units);
-//
-//        file_print (header);
+        query = "SELECT * FROM Experiment WHERE id=$ID;";
+        ec = db.prepare_v2 (query, query.length, out stmt);
+        if (ec != Sqlite.OK) {
+            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+        }
+        parameter_index = stmt.bind_parameter_index ("$ID");
+        stmt.bind_int (parameter_index, exp_id);
+
+        while (stmt.step () == Sqlite.ROW) {
+           name = stmt.column_text (Experiment_Columns.NAME);
+        }
+        stmt.reset ();
+
+        query = "SELECT Count(id) FROM %s;".printf (name);
+        ec = db.prepare_v2 (query, query.length, out stmt);
+        if (ec != Sqlite.OK) {
+            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+        }
+
+        stmt.step ();
+        count = int.parse (stmt.column_text (0));
+        stmt.reset ();
+
+        for (int row = 1; row < (count + 1); row++) {
+            ent = get_log_entry (name, exp_id,  row);
+            line = "%lld\t".printf ((int64)ent.time);
+            for (int i = 0; i < ent.data.size; i++) {
+                Cld.debug ("%.3f", ent.data.get (i));
+            }
+            line += "\n";
+            file_print (line);
+        }
     }
 
 
@@ -499,7 +549,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                         ;
                     } else {
                         tail_entry = queue.poll_tail ();
-                        log_entry (tail_entry);
+                        log_entry_write (tail_entry);
                     }
                 }
             }
@@ -572,6 +622,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         string tag = "";
         string type = "";
         string expression = "";
+        string units = "";
 
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
@@ -583,9 +634,10 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 if (channel is VChannel) {
                     expression = "%s".printf ((channel as VChannel).expression);
                 }
-                for (int i = 0; i < 4; i++) {
-                    coeff [i] = 0;
-                    if (channel is ScalableChannel) {
+                if (channel is ScalableChannel) {
+                    units = "%s".printf ((channel as ScalableChannel).calibration.units);
+                    for (int i = 0; i < 4; i++) {
+                        coeff [i] = 0;
                         var coefficient = (channel as ScalableChannel).calibration.get_coefficient (i);
                         if (coefficient != null) {
                             coeff [i] = (coefficient as Cld.Coefficient).value;
@@ -606,7 +658,8 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 coeff_x0,
                 coeff_x1,
                 coeff_x2,
-                coeff_x3
+                coeff_x3,
+                units
                 )
                 VALUES
                 (
@@ -619,7 +672,8 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 $COEFF_X0,
                 $COEFF_X1,
                 $COEFF_X2,
-                $COEFF_X3
+                $COEFF_X3,
+                $UNITS
                 );
             """;
 
@@ -657,6 +711,9 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             parameter_index = stmt.bind_parameter_index ("$COEFF_X3");
             stmt.bind_double (parameter_index, coeff [3]);
 
+            parameter_index = stmt.bind_parameter_index ("$UNITS");
+            stmt.bind_text (parameter_index, units, -1, GLib.g_free);
+
             stmt.step ();
             stmt.reset ();
         }
@@ -689,7 +746,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         }
     }
 
-    private void log_entry (Cld.LogEntry entry) {
+    private void log_entry_write (Cld.LogEntry entry) {
         TimeSpan diff = entry.timestamp.difference (start_time);
         string query = """
             INSERT INTO %s
@@ -704,7 +761,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             }
         }
         query = query.substring (0, query.length - 1);
-        query = "%s%s".printf (query, ") VALUES ($EXPERIMENT_ID, $MICROSECONDS,");
+        query = "%s%s".printf (query, ") VALUES ($EXPERIMENT_ID, $TIME,");
         int i = 0;
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
@@ -722,7 +779,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         parameter_index = stmt.bind_parameter_index ("$EXPERIMENT_ID");
         stmt.bind_int (parameter_index, experiment_id);
 
-        parameter_index = stmt.bind_parameter_index ("$MICROSECONDS");
+        parameter_index = stmt.bind_parameter_index ("$TIME");
         stmt.bind_int (parameter_index, (int) diff);
 
         i = 0;
@@ -747,6 +804,60 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         stmt.step ();
         stmt.reset ();
     }
+
+    /**
+     * Get a single entry from an Experiment.
+     * @param table_name The table name of the experiment.
+     * @param exp_id The SQL id of the experiment from the Experiment table.
+     * @param entry_id The unique id of an entry in the table.
+     *
+     * @return A Cld.LogEntry containg row data from the table.
+     */
+    private Cld.LogEntry get_log_entry (string table_name, int exp_id, int entry_id) {
+        string query;
+        Cld.LogEntry ent = new Cld.LogEntry ();
+        Gee.ArrayList<double?> data_list = new Gee.ArrayList<double?> ();
+
+Cld.debug ("table_name: %s  exp_id: %d entry_id: %d", table_name, exp_id, entry_id);
+
+        /* Count the number of columns in the table */
+        query = "SELECT Count (*) from Channel WHERE experiment_id=$EXPERIMENT_ID;";
+        ec = db.prepare_v2 (query, query.length, out stmt);
+        if (ec != Sqlite.OK) {
+            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+        }
+        parameter_index = stmt.bind_parameter_index ("$EXPERIMENT_ID");
+        stmt.bind_int (parameter_index, exp_id);
+        stmt.step ();
+        int columns = int.parse (stmt.column_text (0));
+Cld.debug ("Columns in Channels: %d", int.parse (stmt.column_text (0)));
+        stmt.reset ();
+
+        query = "SELECT * FROM %s WHERE id=$ID;".printf (table_name);
+        ec = db.prepare_v2 (query, query.length, out stmt);
+        if (ec != Sqlite.OK) {
+            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+        }
+        parameter_index = stmt.bind_parameter_index ("$ID");
+        stmt.bind_int (parameter_index, entry_id);
+
+        while (stmt.step () == Sqlite.ROW) {
+            ent.time = stmt.column_int (Experiment_Data_Columns.TIME);
+            for (int i = 3; i < columns; i++) {
+                data_list.insert (i - 3, stmt.column_double (i));
+Cld.debug ("stmt.column_double (i): %.8f", stmt.column_double (i));
+            }
+            ent.data = data_list;
+            for (int i = 0; i < columns - 3; i++) {
+                Cld.debug ("data_list (i): %.3f, ent.data (i): %.3f", data_list.get (i), ent.data.get (i));
+            }
+
+        }
+        stmt.reset ();
+
+        return ent;
+    }
+
 
     /**
      * {@inheritDoc}
@@ -791,16 +902,16 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
         }
         while (stmt.step () == Sqlite.ROW) {
-            Cld.ExperimentEntry entry = new Cld.ExperimentEntry ();
-            entry.experiment_id = stmt.column_int (Experiment_Columns.ID);
-            entry.id = "ee%d".printf (entry.experiment_id);
-            entry.name = stmt.column_text (Experiment_Columns.NAME);
-            entry.start_date = stmt.column_text (Experiment_Columns.START_DATE);
-            entry.stop_date = stmt.column_text (Experiment_Columns.STOP_DATE);
-            entry.start_time = stmt.column_text (Experiment_Columns.START_TIME);
-            entry.stop_time = stmt.column_text (Experiment_Columns.STOP_TIME);
-            entry.log_rate = stmt.column_double (Experiment_Columns.LOG_RATE);
-            entries.set (entry.id, entry);
+            Cld.ExperimentEntry ent = new Cld.ExperimentEntry ();
+            ent.experiment_id = stmt.column_int (Experiment_Columns.ID);
+            ent.id = "ee%d".printf (ent.experiment_id);
+            ent.name = stmt.column_text (Experiment_Columns.NAME);
+            ent.start_date = stmt.column_text (Experiment_Columns.START_DATE);
+            ent.stop_date = stmt.column_text (Experiment_Columns.STOP_DATE);
+            ent.start_time = stmt.column_text (Experiment_Columns.START_TIME);
+            ent.stop_time = stmt.column_text (Experiment_Columns.STOP_TIME);
+            ent.log_rate = stmt.column_double (Experiment_Columns.LOG_RATE);
+            entries.set (ent.id, ent);
         }
         stmt.reset ();
 
@@ -820,7 +931,8 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public void export_csv (string filename, int experiment_id, int start, int stop, int step, bool is_averaged) {
 
         file_open (filename);
-        write_header ();
+        write_header (experiment_id);
+        write_csv_data (experiment_id, start, stop, step, is_averaged);
     }
 
     public Gee.Map<string, Cld.ChannelEntry> get_channel_entries (int experiment_id) {
@@ -836,20 +948,21 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
         }
         while (stmt.step () == Sqlite.ROW) {
-            Cld.ChannelEntry entry  = new Cld.ChannelEntry ();
-            entry.chan_tbl_id = stmt.column_int (Channel_Columns.ID);
-            entry.id = "ce%d".printf (entry.chan_tbl_id);
-            entry.experiment_id = stmt.column_int (Channel_Columns.EXPERIMENT_ID);
-            entry.chan_id = stmt.column_text (Channel_Columns.CHAN_ID);
-            entry.desc = stmt.column_text (Channel_Columns.DESC);
-            entry.tag = stmt.column_text (Channel_Columns.TAG);
-            entry.cld_type = stmt.column_text (Channel_Columns.TYPE);
-            entry.expression = stmt.column_text (Channel_Columns.EXPRESSION);
-            entry.coeff_x0 = stmt.column_double (Channel_Columns.COEFF_X0);
-            entry.coeff_x1 = stmt.column_double (Channel_Columns.COEFF_X1);
-            entry.coeff_x2 = stmt.column_double (Channel_Columns.COEFF_X2);
-            entry.coeff_x3 = stmt.column_double (Channel_Columns.COEFF_X3);
-            entries.set (entry.id, entry);
+            Cld.ChannelEntry ent  = new Cld.ChannelEntry ();
+            ent.chan_tbl_id = stmt.column_int (Channel_Columns.ID);
+            ent.id = "ce%d".printf (ent.chan_tbl_id);
+            ent.experiment_id = stmt.column_int (Channel_Columns.EXPERIMENT_ID);
+            ent.chan_id = stmt.column_text (Channel_Columns.CHAN_ID);
+            ent.desc = stmt.column_text (Channel_Columns.DESC);
+            ent.tag = stmt.column_text (Channel_Columns.TAG);
+            ent.cld_type = stmt.column_text (Channel_Columns.TYPE);
+            ent.expression = stmt.column_text (Channel_Columns.EXPRESSION);
+            ent.coeff_x0 = stmt.column_double (Channel_Columns.COEFF_X0);
+            ent.coeff_x1 = stmt.column_double (Channel_Columns.COEFF_X1);
+            ent.coeff_x2 = stmt.column_double (Channel_Columns.COEFF_X2);
+            ent.coeff_x3 = stmt.column_double (Channel_Columns.COEFF_X3);
+            ent.units = stmt.column_text (Channel_Columns.UNITS);
+            entries.set (ent.id, ent);
         }
         stmt.reset ();
 

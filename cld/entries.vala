@@ -7,10 +7,16 @@ public class Cld.LogEntry : Cld.AbstractObject {
      * {@inheritDoc}
      */
     public override string id { get; set; }
+
     /**
      * DateTime data to use for time stamping log entries.
      */
-    public DateTime timestamp;
+    public DateTime timestamp { get; set; }
+
+    /**
+     * Time difference in microseconds from the start timestamp.
+     */
+    public int time { get; set; }
 
     /**
      * A list representing a single row of data in a table or file.
@@ -118,6 +124,7 @@ public class Cld.ChannelEntry : Cld.AbstractObject {
     public double coeff_x2 { get; set; }
     public double coeff_x3 { get; set; }
     public double coeff_x4 { get; set; }
+    public string units { get; set; }
 
     public ChannelEntry () {
 

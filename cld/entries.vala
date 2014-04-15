@@ -74,12 +74,8 @@ public class Cld.LogEntry : Cld.AbstractObject {
 /**
  * Contains data from a single row from the "Experiment" table in a Log database.
  */
-public class Cld.ExperimentEntry : Cld.AbstractObject {
-    /**
-     * {@inheritDoc}
-     */
-    public override string id { get; set; }
-    public int experiment_id { get; set; }
+public struct Cld.ExperimentEntry {
+    public int id { get; set; }
     public string name { get; set; }
     public string start_date { get; set; }
     public string stop_date { get; set; }
@@ -91,12 +87,8 @@ public class Cld.ExperimentEntry : Cld.AbstractObject {
 
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string str_data = "id: %s\n".printf (id);
-        str_data = "%s%s".printf (str_data, "experiment_id: %d\n".printf (experiment_id));
+    public string to_string () {
+        string str_data = "id: %d\n".printf (id);
         str_data = "%s%s".printf (str_data, "name: %s\n".printf (name));
 
         return str_data;
@@ -107,12 +99,8 @@ public class Cld.ExperimentEntry : Cld.AbstractObject {
  * Contains data from a single row from the "Channel" table in a Log database.
  * Channels are not accessed directly from Cld because the channel lists can change.
  */
-public class Cld.ChannelEntry : Cld.AbstractObject {
-    /**
-     * {@inheritdoc}
-     */
-    public override string id { get; set; }
-    public int chan_tbl_id { get; set ; }
+public struct Cld.ChannelEntry {
+    public int id { get; set ; }
     public int experiment_id {get; set; }
     public string chan_id { get; set; }
     public string desc { get; set; }
@@ -130,9 +118,8 @@ public class Cld.ChannelEntry : Cld.AbstractObject {
 
     }
 
-    public override string to_string () {
-    string str_data = "id: %s\n".printf (id);
-    str_data = "%s%s".printf (str_data, "chan_tbl_id: %d\n".printf (chan_tbl_id));
+    public string to_string () {
+    string str_data = "id: %d\n".printf (id);
 
     return str_data;
     }

@@ -85,7 +85,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * {@inheritDoc}
      */
-    public override Gee.Map<string, Object> objects {
+    public override Gee.Map<string, Cld.Object> objects {
         get { return (_objects); }
         set { update_objects (value); }
     }
@@ -129,15 +129,33 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * Contains the query that is to be prepared by SQLite.
      */
     private string query;
+
+    /**
+     * An SQLite error message;
+     */
     private string errmsg;
+
+    /**
+     * Used for binding a parameter to an SQLite prepared statement.
+     */
     private int parameter_index;
+
+    /**
+     * An SQLite error code;
+     */
     private int ec;
+
+    /**
+     * The id frome the Experiment table of the experiment that is
+     * currently logging data. This should not be used for querying
+     * the database
+     */
     private int experiment_id;
+
     /**
      * File stream to use as output to a .csv file.
      */
     private FileStream file_stream;
-
 
     /**
      * Enumerated Experiment table column names.
@@ -152,6 +170,9 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         LOG_RATE    = 6
     }
 
+    /**
+     * Enumerated Channel table column names.
+     */
     public enum Channel_Columns {
         ID,
         EXPERIMENT_ID,
@@ -167,6 +188,9 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         UNITS
     }
 
+    /**
+     * Enumerated subset of the column names in an experiment table.
+     */
     public enum Experiment_Data_Columns {
         ID,
         EXPERIMENT_ID,
@@ -178,7 +202,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         objects = new Gee.TreeMap<string, Object> ();
         entry = new Cld.LogEntry ();
         queue = new Gee.LinkedList<Cld.LogEntry> ();
-
     }
 
     public SqliteLog () {
@@ -342,9 +365,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         /* open the file */
         Cld.debug ("filename: %s ", filename);
+//        if ((Posix.access (Posix.R_OK) != 0) ||
+//            (Posix.access (Posix.W_OK) != 0)) {
+//            throw new Cld.FileError.ACCESS (
+//                "Requested access to %s is not permitted.", filename);
+//        }
         file_stream = FileStream.open (filename, "w+");
         if (file_stream == null) {
-           // XXX Throw an error?;
            success = false;
         } else {
            // is_open = true;
@@ -376,7 +403,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * @param id The unique id from the Experiment table.
      */
     public void write_header (int id) {
-        Gee.Map<string, Cld.ChannelEntry> channel_entries = new Gee.HashMap<string, Cld.ExperimentEntry> ();
+        Gee.ArrayList<Cld.ChannelEntry?> channel_entries = new Gee.ArrayList<Cld.ChannelEntry?> ();
         string tags = "Time";
         //string units = "[HH:MM:SS.mmm]";
         string units = "[us]";
@@ -384,23 +411,23 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         string expressions = "MathChannel Expressions:\n\n";
 
         channel_entries = get_channel_entries (id);
-        foreach (var channel_entry in channel_entries.values) {
-            cals += "%s:\ty = ".printf ((channel_entry as Cld.ChannelEntry).chan_id);
-            cals += "%.3f * x^0 + ".printf ((channel_entry as Cld.ChannelEntry).coeff_x0);
-            cals += "%.3f * x^1 + ".printf ((channel_entry as Cld.ChannelEntry).coeff_x1);
-            cals += "%.3f * x^2 + ".printf ((channel_entry as Cld.ChannelEntry).coeff_x2);
-            cals += "%.3f * x^3 + ".printf ((channel_entry as Cld.ChannelEntry).coeff_x3);
+        foreach (var channel_entry in channel_entries) {
+            cals += "%s:\ty = ".printf (channel_entry.chan_id);
+            cals += "%.3f * x^0 + ".printf (channel_entry.coeff_x0);
+            cals += "%.3f * x^1 + ".printf (channel_entry.coeff_x1);
+            cals += "%.3f * x^2 + ".printf (channel_entry.coeff_x2);
+            cals += "%.3f * x^3 + ".printf (channel_entry.coeff_x3);
             cals = cals.substring (0, cals.length - 3);
-            cals += "\t(%s)\n".printf ((channel_entry as Cld.ChannelEntry).desc);
-            tags += "\t%s".printf ((channel_entry as Cld.ChannelEntry).tag);
-            if ((channel_entry as Cld.ChannelEntry).cld_type == "CldMathChannel") {
-                expressions += "%s:\t %s\n".printf ((channel_entry as Cld.ChannelEntry).chan_id,
-                                                    (channel_entry as Cld.ChannelEntry).expression);
+            cals += "\t(%s)\n".printf (channel_entry.desc);
+            tags += "\t%s".printf (channel_entry.tag);
+            if (channel_entry.cld_type == "CldMathChannel") {
+                expressions += "%s:\t %s\n".printf (channel_entry.chan_id,
+                                                    channel_entry.expression);
             }
-            units += "\t[%s]".printf ((channel_entry as Cld.ChannelEntry).units);
+            units += "\t[%s]".printf (channel_entry.units);
         }
-
-        var header = "%s\n%s\nLogging rate: %.2f Hz\n\n%s\n%s\n".printf (cals, expressions, rate, tags, units);
+        var header = "%s\n%s\nLogging rate: %.2f Hz\n\n%s\n%s\n".printf (cals,
+                                                            expressions, rate, tags, units);
 
        file_print (header);
     }
@@ -444,18 +471,28 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         count = int.parse (stmt.column_text (0));
         stmt.reset ();
 
-        for (int row = 1; row < (count + 1); row++) {
-            ent = get_log_entry (name, exp_id,  row);
-            line = "%lld\t".printf ((int64)ent.time);
-            for (int i = 0; i < ent.data.size; i++) {
-                Cld.debug ("%.3f", ent.data.get (i));
+//        if (is_averaged) {
+//            for (int row = 1; row < (count + 1) ; row++) {
+//                int i = 1;
+//                while (i < step) {
+//                    ent = get_log_entry (name, exp_id, row);
+//                    if ((ent.time >= start) && (ent.time <= stop)) {
+//                    }
+//                }
+//            }
+//        } else {
+        for (int row = 1; row < (count + 1); row += step) {
+            ent = get_log_entry (name, exp_id, row);
+            if ((ent.time >= start) && (ent.time <= stop)) {
+                line = "%lld\t".printf ((int64)ent.time);
+                foreach (double datum in ent.data) {
+                    line += "%f%c".printf (datum, sep);
+                }
+                line += "\n";
             }
-            line += "\n";
             file_print (line);
         }
     }
-
-
 
     /**
      * {@inheritDoc}
@@ -784,6 +821,16 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         i = 0;
         double val = 0;
+//        /* sort objects */
+//        Gee.List<Cld.Object> map_values = new Gee.ArrayList<Cld.Object> ();
+//
+//        map_values.add_all (objects.values);
+//        map_values.sort ((GLib.CompareFunc) Cld.Object.compare);
+//        objects.clear ();
+//        foreach (Cld.Object object in map_values) {
+//            objects.set (object.id, object);
+//        }
+
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
                 parameter_index = stmt.bind_parameter_index ("$VAL%d".printf (i));
@@ -818,7 +865,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         Cld.LogEntry ent = new Cld.LogEntry ();
         Gee.ArrayList<double?> data_list = new Gee.ArrayList<double?> ();
 
-Cld.debug ("table_name: %s  exp_id: %d entry_id: %d", table_name, exp_id, entry_id);
 
         /* Count the number of columns in the table */
         query = "SELECT Count (*) from Channel WHERE experiment_id=$EXPERIMENT_ID;";
@@ -830,7 +876,6 @@ Cld.debug ("table_name: %s  exp_id: %d entry_id: %d", table_name, exp_id, entry_
         stmt.bind_int (parameter_index, exp_id);
         stmt.step ();
         int columns = int.parse (stmt.column_text (0));
-Cld.debug ("Columns in Channels: %d", int.parse (stmt.column_text (0)));
         stmt.reset ();
 
         query = "SELECT * FROM %s WHERE id=$ID;".printf (table_name);
@@ -843,15 +888,10 @@ Cld.debug ("Columns in Channels: %d", int.parse (stmt.column_text (0)));
 
         while (stmt.step () == Sqlite.ROW) {
             ent.time = stmt.column_int (Experiment_Data_Columns.TIME);
-            for (int i = 3; i < columns; i++) {
-                data_list.insert (i - 3, stmt.column_double (i));
-Cld.debug ("stmt.column_double (i): %.8f", stmt.column_double (i));
+            for (int i = 0; i < columns; i++) {
+                data_list.add (stmt.column_double (i + 3));
             }
             ent.data = data_list;
-            for (int i = 0; i < columns - 3; i++) {
-                Cld.debug ("data_list (i): %.3f, ent.data (i): %.3f", data_list.get (i), ent.data.get (i));
-            }
-
         }
         stmt.reset ();
 
@@ -888,8 +928,8 @@ Cld.debug ("stmt.column_double (i): %.8f", stmt.column_double (i));
      * @return A Gee.Map of all Cld.ExperimentEntry entries representing the
      *         row entries in the database Experiment table.
      */
-    public Gee.Map<string, Cld.ExperimentEntry> get_experiment_entries () {
-        Gee.Map<string, Cld.ExperimentEntry> entries = new Gee.HashMap<string, Cld.ExperimentEntry> ();
+    public Gee.ArrayList<Cld.ExperimentEntry?> get_experiment_entries () {
+        Gee.ArrayList<Cld.ExperimentEntry?> entries = new Gee.ArrayList<Cld.ExperimentEntry?> ();
         string query;
 
         if (!is_open) {
@@ -902,16 +942,15 @@ Cld.debug ("stmt.column_double (i): %.8f", stmt.column_double (i));
             stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
         }
         while (stmt.step () == Sqlite.ROW) {
-            Cld.ExperimentEntry ent = new Cld.ExperimentEntry ();
-            ent.experiment_id = stmt.column_int (Experiment_Columns.ID);
-            ent.id = "ee%d".printf (ent.experiment_id);
+            Cld.ExperimentEntry ent = Cld.ExperimentEntry ();
+            ent.id = stmt.column_int (Experiment_Columns.ID);
             ent.name = stmt.column_text (Experiment_Columns.NAME);
             ent.start_date = stmt.column_text (Experiment_Columns.START_DATE);
             ent.stop_date = stmt.column_text (Experiment_Columns.STOP_DATE);
             ent.start_time = stmt.column_text (Experiment_Columns.START_TIME);
             ent.stop_time = stmt.column_text (Experiment_Columns.STOP_TIME);
             ent.log_rate = stmt.column_double (Experiment_Columns.LOG_RATE);
-            entries.set (ent.id, ent);
+            entries.add (ent);
         }
         stmt.reset ();
 
@@ -928,15 +967,18 @@ Cld.debug ("stmt.column_double (i): %.8f", stmt.column_double (i));
      * @param step The time step increment (in microseconds) for the output csv file.
      * @param is_averaged if true the ouput values are average over the time step otherwise a single value is recorded.
      */
-    public void export_csv (string filename, int experiment_id, int start, int stop, int step, bool is_averaged) {
+    public void export_csv (string filename,
+                            int experiment_id,
+                            int start, int stop, int step,
+                            bool is_averaged) {
 
         file_open (filename);
         write_header (experiment_id);
         write_csv_data (experiment_id, start, stop, step, is_averaged);
     }
 
-    public Gee.Map<string, Cld.ChannelEntry> get_channel_entries (int experiment_id) {
-        Gee.Map<string, Cld.ChannelEntry> entries = new Gee.HashMap<string, Cld.ExperimentEntry> ();
+    public Gee.ArrayList<Cld.ChannelEntry?> get_channel_entries (int experiment_id) {
+        Gee.ArrayList<Cld.ChannelEntry?> entries = new Gee.ArrayList<Cld.ChannelEntry?> ();
         string query;
         if (!is_open) {
             database_open ();
@@ -948,9 +990,8 @@ Cld.debug ("stmt.column_double (i): %.8f", stmt.column_double (i));
             stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
         }
         while (stmt.step () == Sqlite.ROW) {
-            Cld.ChannelEntry ent  = new Cld.ChannelEntry ();
-            ent.chan_tbl_id = stmt.column_int (Channel_Columns.ID);
-            ent.id = "ce%d".printf (ent.chan_tbl_id);
+            Cld.ChannelEntry ent  = Cld.ChannelEntry ();
+            ent.id = stmt.column_int (Channel_Columns.ID);
             ent.experiment_id = stmt.column_int (Channel_Columns.EXPERIMENT_ID);
             ent.chan_id = stmt.column_text (Channel_Columns.CHAN_ID);
             ent.desc = stmt.column_text (Channel_Columns.DESC);
@@ -962,7 +1003,7 @@ Cld.debug ("stmt.column_double (i): %.8f", stmt.column_double (i));
             ent.coeff_x2 = stmt.column_double (Channel_Columns.COEFF_X2);
             ent.coeff_x3 = stmt.column_double (Channel_Columns.COEFF_X3);
             ent.units = stmt.column_text (Channel_Columns.UNITS);
-            entries.set (ent.id, ent);
+            entries.add (ent);
         }
         stmt.reset ();
 

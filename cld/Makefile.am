@@ -45,7 +45,7 @@ libcld_0_2_la_SOURCES = \
 	device.vala \
 	dichannel.vala \
 	dochannel.vala \
-	entries.vala \
+	entry.vala \
 	filter.vala \
 	heidolphmodule.vala \
 	licormodule.vala \

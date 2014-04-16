@@ -384,11 +384,7 @@ public class Cld.Builder : Cld.AbstractContainer {
                     }
                 }
                 /* Following the setup of the log columns, the log needs to attach the signals. */
-                if (object is Cld.CsvLog) {
-                    (object as Cld.CsvLog).connect_signals ();
-                } else if (object is Cld.SqliteLog) {
-                    (object as Cld.SqliteLog).connect_signals ();
-                }
+                (object as Cld.Log).connect_signals ();
             }
 
             /* Setup port references for all of the modules */

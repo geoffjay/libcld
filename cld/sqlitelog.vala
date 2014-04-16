@@ -29,7 +29,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * Property backing fields.
      */
     private Gee.Map<string, Object> _objects;
-    private Cld.LogEntry _entry;
     private string _experiment_name;
 
     /**
@@ -96,14 +95,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     private Gee.Deque<Cld.LogEntry> queue { get; set; }
 
     /**
-     * {@inheritDoc}
-     */
-    public override Cld.LogEntry entry {
-        get { return _entry; }
-        set { _entry = value; }
-    }
-
-    /**
      * The name of the current Log table.
      */
     public string experiment_name {
@@ -124,11 +115,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * An SQLite statement created from a prepared query.
      */
     private Sqlite.Statement stmt;
-
-    /**
-     * Contains the query that is to be prepared by SQLite.
-     */
-    private string query;
 
     /**
      * An SQLite error message;
@@ -160,7 +146,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * Enumerated Experiment table column names.
      */
-    public enum Experiment_Columns {
+    public enum ExperimentColumn {
         ID          = 0,
         NAME        = 1,
         START_DATE  = 2,
@@ -173,7 +159,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * Enumerated Channel table column names.
      */
-    public enum Channel_Columns {
+    public enum ChannelColumn {
         ID,
         EXPERIMENT_ID,
         CHAN_ID,
@@ -200,7 +186,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /* constructor */
     construct {
         objects = new Gee.TreeMap<string, Object> ();
-        entry = new Cld.LogEntry ();
+        Cld.LogEntry entry = new Cld.LogEntry ();
         queue = new Gee.LinkedList<Cld.LogEntry> ();
     }
 
@@ -272,18 +258,28 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * Open the database file for logging.
      */
-    public void database_open () {
+    public void database_open () throws Cld.FileError {
         string db_filename;
         if (!path.has_suffix ("/"))
             path = "%s%s".printf (path, "/");
         db_filename = "%s%s".printf (path, file);
-        /* Open the database file*/
-        int ec = Sqlite.Database.open (db_filename, out db);
-        if (ec != Sqlite.OK) {
-            stderr.printf ("Can't open database: %d: %s\n", db.errcode (), db.errmsg ());
+        if (!(Posix.access (db_filename, Posix.W_OK) == 0) &&
+           !(Posix.access (db_filename, Posix.R_OK) == 0)) {
+            throw new Cld.FileError.ACCESS (
+                    "Can't open database file %s: %d: %s", db_filename, db.errcode (), db.errmsg ()
+                );
             is_open = false;
+
+            return;
         } else {
-            is_open = true;
+            /* Open the database file*/
+            int ec = Sqlite.Database.open (db_filename, out db);
+            if (ec != Sqlite.OK) {
+                stderr.printf ("Can't open database: %d: %s\n", db.errcode (), db.errmsg ());
+                is_open = false;
+            } else {
+                is_open = true;
+            }
         }
     }
 
@@ -292,7 +288,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      */
     private void create_tables () {
         string query = """
-            CREATE TABLE IF NOT EXISTS Experiment
+            CREATE TABLE IF NOT EXISTS experiment
             (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             name        TEXT,
@@ -310,7 +306,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         }
 
         query = """
-            CREATE TABLE IF NOT EXISTS Channel
+            CREATE TABLE IF NOT EXISTS channel
             (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
             experiment_id   INTEGER,
@@ -331,26 +327,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         ec = db.exec (query, null, out errmsg);
         if (ec != Sqlite.OK) {
             stderr.printf ("Error: %s\n", errmsg);
-        }
-    }
-
-    /**
-     * Connect the columns to their corresponding channel signals.
-     */
-    public void connect_signals () {
-        foreach (var column in objects.values) {
-            if (column is Cld.Column) {
-                var channel = (column as Cld.Column).channel;
-                if (channel is Cld.ScalableChannel) {
-                    (channel as Cld.ScalableChannel).new_value.connect ((id, value) => {
-                        (column as Cld.Column).channel_value = value;
-                    });
-                } else if (channel is Cld.DChannel) {
-                    (channel as Cld.DChannel).new_value.connect ((id, value) => {
-                        (column as Cld.Column).channel_value = (double) value;
-                    });
-                }
-            }
         }
     }
 
@@ -457,7 +433,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         stmt.bind_int (parameter_index, exp_id);
 
         while (stmt.step () == Sqlite.ROW) {
-           name = stmt.column_text (Experiment_Columns.NAME);
+           name = stmt.column_text (ExperimentColumn.NAME);
         }
         stmt.reset ();
 
@@ -502,7 +478,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         create_tables ();
         start_time = new DateTime.now_local ();
         stdout.printf ("start_time: %s\n", start_time.to_string ());
-        _experiment_name = "Experiment_%s".printf (
+        _experiment_name = "experiment_%s".printf (
             start_time.to_string ().replace ("-", "_").replace (":", "_")
             );
         update_experiment_table ();
@@ -537,6 +513,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      */
     private async void bg_log_timer () throws ThreadError {
         SourceFunc callback = bg_log_timer.callback;
+        Cld.LogEntry entry = new Cld.LogEntry ();
 
         ThreadFunc<void *> _run = () => {
             Mutex mutex = new Mutex ();
@@ -575,7 +552,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      */
     private async void bg_log_watch () throws ThreadError {
         SourceFunc callback = bg_log_watch.callback;
-        Cld.LogEntry tail_entry = new Cld.LogEntry ();
+        Cld.LogEntry entry = new Cld.LogEntry ();
 
         ThreadFunc<void *> _run = () => {
             active = true;
@@ -585,8 +562,8 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                     if (queue.size == 0) {
                         ;
                     } else {
-                        tail_entry = queue.poll_tail ();
-                        log_entry_write (tail_entry);
+                        entry = queue.poll_tail ();
+                        log_entry_write (entry);
                     }
                 }
             }
@@ -601,7 +578,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
 
     private void update_experiment_table () {
-        query = """
+        string query = """
             INSERT INTO Experiment
             (
             name,
@@ -660,6 +637,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         string type = "";
         string expression = "";
         string units = "";
+        string query;
 
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
@@ -903,7 +881,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * {@inheritDoc}
      */
     public override void stop () {
-        query = """
+        string query = """
             UPDATE Experiment
             SET stop_date = DATE('now'),
                 stop_time = TIME('now', 'localtime')
@@ -933,7 +911,18 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         string query;
 
         if (!is_open) {
-            database_open ();
+            try {
+                database_open ();
+            } catch (Cld.FileError e) {
+                if (e is Cld.FileError.ACCESS) {
+                    Cld.error ("File access error: %s%s", path, file);
+                    is_open = false;
+
+                    return null;
+                } else {
+                    is_open = true;
+                }
+            }
         }
 
         query = "SELECT * from Experiment;";
@@ -943,13 +932,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         }
         while (stmt.step () == Sqlite.ROW) {
             Cld.ExperimentEntry ent = Cld.ExperimentEntry ();
-            ent.id = stmt.column_int (Experiment_Columns.ID);
-            ent.name = stmt.column_text (Experiment_Columns.NAME);
-            ent.start_date = stmt.column_text (Experiment_Columns.START_DATE);
-            ent.stop_date = stmt.column_text (Experiment_Columns.STOP_DATE);
-            ent.start_time = stmt.column_text (Experiment_Columns.START_TIME);
-            ent.stop_time = stmt.column_text (Experiment_Columns.STOP_TIME);
-            ent.log_rate = stmt.column_double (Experiment_Columns.LOG_RATE);
+            ent.id = stmt.column_int (ExperimentColumn.ID);
+            ent.name = stmt.column_text (ExperimentColumn.NAME);
+            ent.start_date = stmt.column_text (ExperimentColumn.START_DATE);
+            ent.stop_date = stmt.column_text (ExperimentColumn.STOP_DATE);
+            ent.start_time = stmt.column_text (ExperimentColumn.START_TIME);
+            ent.stop_time = stmt.column_text (ExperimentColumn.STOP_TIME);
+            ent.log_rate = stmt.column_double (ExperimentColumn.LOG_RATE);
             entries.add (ent);
         }
         stmt.reset ();
@@ -991,18 +980,18 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         }
         while (stmt.step () == Sqlite.ROW) {
             Cld.ChannelEntry ent  = Cld.ChannelEntry ();
-            ent.id = stmt.column_int (Channel_Columns.ID);
-            ent.experiment_id = stmt.column_int (Channel_Columns.EXPERIMENT_ID);
-            ent.chan_id = stmt.column_text (Channel_Columns.CHAN_ID);
-            ent.desc = stmt.column_text (Channel_Columns.DESC);
-            ent.tag = stmt.column_text (Channel_Columns.TAG);
-            ent.cld_type = stmt.column_text (Channel_Columns.TYPE);
-            ent.expression = stmt.column_text (Channel_Columns.EXPRESSION);
-            ent.coeff_x0 = stmt.column_double (Channel_Columns.COEFF_X0);
-            ent.coeff_x1 = stmt.column_double (Channel_Columns.COEFF_X1);
-            ent.coeff_x2 = stmt.column_double (Channel_Columns.COEFF_X2);
-            ent.coeff_x3 = stmt.column_double (Channel_Columns.COEFF_X3);
-            ent.units = stmt.column_text (Channel_Columns.UNITS);
+            ent.id = stmt.column_int (ChannelColumn.ID);
+            ent.experiment_id = stmt.column_int (ChannelColumn.EXPERIMENT_ID);
+            ent.chan_id = stmt.column_text (ChannelColumn.CHAN_ID);
+            ent.desc = stmt.column_text (ChannelColumn.DESC);
+            ent.tag = stmt.column_text (ChannelColumn.TAG);
+            ent.cld_type = stmt.column_text (ChannelColumn.TYPE);
+            ent.expression = stmt.column_text (ChannelColumn.EXPRESSION);
+            ent.coeff_x0 = stmt.column_double (ChannelColumn.COEFF_X0);
+            ent.coeff_x1 = stmt.column_double (ChannelColumn.COEFF_X1);
+            ent.coeff_x2 = stmt.column_double (ChannelColumn.COEFF_X2);
+            ent.coeff_x3 = stmt.column_double (ChannelColumn.COEFF_X3);
+            ent.units = stmt.column_text (ChannelColumn.UNITS);
             entries.add (ent);
         }
         stmt.reset ();

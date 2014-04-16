@@ -67,7 +67,23 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     /**
      * {@inheritDoc}
      */
-    public abstract Cld.LogEntry entry { get; set; }
+    public virtual void connect_signals () {
+        foreach (var column in objects.values) {
+            if (column is Cld.Column) {
+                var channel = (column as Cld.Column).channel;
+                if (channel is Cld.ScalableChannel) {
+                    (channel as Cld.ScalableChannel).new_value.connect ((id, value) => {
+                        (column as Cld.Column).channel_value = value;
+                    });
+                } else if (channel is Cld.DChannel) {
+                    (channel as Cld.DChannel).new_value.connect ((id, value) => {
+                        (column as Cld.Column).channel_value = (double) value;
+                    });
+                }
+            }
+        }
+    }
+
 
     /**
      * {@inheritDoc}

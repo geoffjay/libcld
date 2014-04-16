@@ -28,7 +28,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
      * Property backing fields.
      */
     private Gee.Map<string, Object> _objects;
-    private Cld.LogEntry _entry;
 
     /**
      * {@inheritDoc}
@@ -94,14 +93,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
     private Gee.Deque<Cld.LogEntry> queue { get; set; }
 
     /**
-     * {@inheritDoc}
-     */
-    public override Cld.LogEntry entry {
-        get { return _entry; }
-        set { _entry = value; }
-    }
-
-    /**
      * File stream to use as output.
      */
     private FileStream file_stream;
@@ -111,16 +102,10 @@ public class Cld.CsvLog : Cld.AbstractLog {
      */
     private DateTime start_time;
 
-    /**
-     * A LogEntry that is retrieved from the queue.
-     */
-    private Cld.LogEntry tail_entry;
 
     /* constructor */
     construct {
         objects = new Gee.TreeMap<string, Object> ();
-        entry = new Cld.LogEntry ();
-        tail_entry = new Cld.LogEntry ();
         queue = new Gee.LinkedList<Cld.LogEntry> ();
     }
 
@@ -137,6 +122,10 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
     public CsvLog.from_xml_node (Xml.Node *node) {
         string value;
+
+        active = false;
+        is_open = false;
+
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
@@ -183,26 +172,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
     ~CsvLog () {
         if (_objects != null)
             _objects.clear ();
-    }
-
-    /**
-     * Connect the columns to their corresponding channel signals.
-     */
-    public void connect_signals () {
-        foreach (var column in objects.values) {
-            if (column is Cld.Column) {
-                var channel = (column as Cld.Column).channel;
-                if (channel is Cld.ScalableChannel) {
-                    (channel as Cld.ScalableChannel).new_value.connect ((id, value) => {
-                        (column as Cld.Column).channel_value = value;
-                    });
-                } else if (channel is Cld.DChannel) {
-                    (channel as Cld.DChannel).new_value.connect ((id, value) => {
-                        (column as Cld.Column).channel_value = (double) value;
-                    });
-                }
-            }
-        }
     }
 
     /**
@@ -365,11 +334,9 @@ public class Cld.CsvLog : Cld.AbstractLog {
     /**
      * Write the next line in the file.
      */
-    public void write_next_line (Cld.LogEntry tail_entry) {
+    public void write_next_line (Cld.LogEntry entry) {
         string line = "";
         char sep = '\t';
-        DateTime curr_time = new DateTime.now_local ();
-        TimeSpan diff = curr_time.difference (start_time);
 
         //int h = (int)diff / 3600000000;
         //int m = (int)diff / 60000000 - (h * 60);
@@ -377,9 +344,9 @@ public class Cld.CsvLog : Cld.AbstractLog {
         //int ms = (int)diff % 1000000;
 
         //line = "%02d:%02d:%02d.%03d\t".printf (h, m, s, ms);
-        line = "%lld\t".printf ((int64)diff);
+        line = "%lld\t".printf ((int64) entry.time);
 
-        foreach (double datum in tail_entry.data) {
+        foreach (double datum in entry.data) {
             line += "%f%c".printf (datum, sep);
         }
 
@@ -420,6 +387,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
      */
     private async void bg_log_timer () throws ThreadError {
         SourceFunc callback = bg_log_timer.callback;
+        LogEntry entry = new LogEntry ();
 
         ThreadFunc<void *> _run = () => {
             Mutex mutex = new Mutex ();
@@ -461,6 +429,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
      */
     private async void bg_log_watch () throws ThreadError {
         SourceFunc callback = bg_log_watch.callback;
+        LogEntry entry = new LogEntry ();
 
         ThreadFunc<void *> _run = () => {
             active = true;
@@ -470,8 +439,8 @@ public class Cld.CsvLog : Cld.AbstractLog {
                     if (queue.size == 0) {
                         ;
                     } else {
-                        tail_entry = queue.poll_tail ();
-                        write_next_line (tail_entry);
+                        entry = queue.poll_tail ();
+                        write_next_line (entry);
                     }
                 }
             }

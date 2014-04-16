@@ -131,9 +131,9 @@ public interface Cld.Log : Cld.Object {
     public abstract string date_format { get; set; }
 
     /**
-     * An entry representing a row of data.
+     * Connect the columns to their corresponding channel signals.
      */
-    public abstract Cld.LogEntry entry { get; set; }
+    public abstract void connect_signals ();
 
     /**
      * Start the log file output as an async method.

@@ -13,13 +13,13 @@ tests_SOURCES = \
 	testchannel.vala \
 	testcoefficient.vala \
 	testcontrol.vala \
+	testcsvlog.vala \
 	testdaq.vala \
 	testdevice.vala \
 	testdichannel.vala \
 	testdochannel.vala \
 	testfilter.vala \
 	testlicormodule.vala \
-	testlog.vala \
 	testmain.vala \
 	testmodule.vala \
 	testobject.vala \
@@ -49,6 +49,7 @@ tests_CPPFLAGS = \
 	$(JSON_CFLAGS) \
 	$(MATH_CFLAGS) \
 	$(GSL_CFLAGS) \
+	$(SQLITE_CFLAGS) \
 	$(NULL)
 
 tests_LDADD = \
@@ -59,4 +60,5 @@ tests_LDADD = \
 	$(JSON_LIBS) \
 	$(MATH_LIBS) \
 	$(GSL_LIBS) \
+	$(SQLITE_LIBS) \
 	$(NULL)

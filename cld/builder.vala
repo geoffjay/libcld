@@ -205,14 +205,19 @@ public class Cld.Builder : Cld.AbstractContainer {
                 iter->type != Xml.ElementType.COMMENT_NODE) {
                 /* load all available objects */
                 if (iter->name == "object") {
-                    Cld.Object object;
+                    Cld.Object object = null;
                     type = iter->get_prop ("type");
                     switch (type) {
                         case "daq":
                             object = new Daq.from_xml_node (iter);
                             break;
                         case "log":
-                            object = new Log.from_xml_node (iter);
+                            var ltype = iter->get_prop ("ltype");
+                            if (ltype == "csv") {
+                                object = new CsvLog.from_xml_node (iter);
+                            } else if (ltype == "sqlite") {
+                                object = new SqliteLog.from_xml_node (iter);
+                            }
                             break;
                         case "control":
                             object = new Control.from_xml_node (iter);
@@ -380,7 +385,6 @@ public class Cld.Builder : Cld.AbstractContainer {
                         }
                     }
                 }
-
                 /* Following the setup of the log columns, the log needs to attach the signals. */
                 (object as Cld.Log).connect_signals ();
             }
@@ -470,13 +474,6 @@ public class Cld.Builder : Cld.AbstractContainer {
                                         var chanref = (dataseries as DataSeries).chanref;
                                         (process_value as ProcessValue2).dataseries.channel = get_object (chanref)
                                                                                     as ScalableChannel;
-       //                                 Cld.debug ("Pid2: %s ProcessValue2: %s mv: %s pv: %s mv channel: %s pv channel: %s>>>>>>>>>>>>>",
-       //                                     (control_object as Pid2).id,
-       //                                     process_value.id,
-       //                                     (((control_object as Pid2).mv) as DataSeries).id,
-       //                                     (((control_object as Pid2).pv) as DataSeries).id,
-       //                                     (((control_object as Pid2).mv) as DataSeries).channel.id,
-       //                                     (((control_object as Pid2).pv) as DataSeries).channel.id);
                                     }
                                 }
                             }
@@ -494,7 +491,6 @@ public class Cld.Builder : Cld.AbstractContainer {
                 }
             }
 
-
             /* Each device in daq references tasks.  */
             if (object is Daq) {
                 foreach (var device in (object as Container).objects.values) {
@@ -506,9 +502,6 @@ public class Cld.Builder : Cld.AbstractContainer {
                     }
                 }
             }
-        }
-        foreach (var object in objects.values) {
-            Cld.debug ("%s", object.id);
         }
     }
     /**

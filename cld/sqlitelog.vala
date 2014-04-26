@@ -177,11 +177,17 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * Enumerated subset of the column names in an experiment table.
      */
-    public enum Experiment_Data_Columns {
+    public enum ExperimentDataColumns {
         ID,
         EXPERIMENT_ID,
         TIME
     }
+
+    /**
+     * Report the backup progress.
+     * % Completion = 100% * (pagecount - remaining) / pagecount
+     */
+    public signal void backup_progress_updated (int remaining, int pagecount);
 
     /* constructor */
     construct {
@@ -290,13 +296,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         string query = """
             CREATE TABLE IF NOT EXISTS experiment
             (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            name        TEXT,
-            start_date  TEXT,
-            stop_date   TEXT,
-            start_time  TEXT,
-            stop_time   TEXT,
-            log_rate    REAL
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                name        TEXT,
+                start_date  TEXT,
+                stop_date   TEXT,
+                start_time  TEXT,
+                stop_time   TEXT,
+                log_rate    REAL
             );
         """;
 
@@ -308,19 +314,19 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         query = """
             CREATE TABLE IF NOT EXISTS channel
             (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            experiment_id   INTEGER,
-            chan_id         TEXT,
-            desc            TEXT,
-            tag             TEXT,
-            type            TEXT,
-            expression      TEXT,
-            coeff_x0        REAL,
-            coeff_x1        REAL,
-            coeff_x2        REAL,
-            coeff_x3        REAL,
-            units           TEXT,
-            FOREIGN KEY(experiment_id) REFERENCES Experiment(id)
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                experiment_id   INTEGER,
+                chan_id         TEXT,
+                desc            TEXT,
+                tag             TEXT,
+                type            TEXT,
+                expression      TEXT,
+                coeff_x0        REAL,
+                coeff_x1        REAL,
+                coeff_x2        REAL,
+                coeff_x3        REAL,
+                units           TEXT,
+                FOREIGN KEY(experiment_id) REFERENCES experiment(id)
             );
         """;
 
@@ -424,7 +430,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         int count = 0;
         Cld.LogEntry ent = new Cld.LogEntry ();
 
-        query = "SELECT * FROM Experiment WHERE id=$ID;";
+        query = "SELECT * FROM experiment WHERE id=$ID;";
         ec = db.prepare_v2 (query, query.length, out stmt);
         if (ec != Sqlite.OK) {
             stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
@@ -437,7 +443,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         }
         stmt.reset ();
 
-        query = "SELECT Count(id) FROM %s;".printf (name);
+        query = "SELECT count(id) FROM %s;".printf (name);
         ec = db.prepare_v2 (query, query.length, out stmt);
         if (ec != Sqlite.OK) {
             stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
@@ -579,23 +585,23 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
     private void update_experiment_table () {
         string query = """
-            INSERT INTO Experiment
+            INSERT INTO experiment
             (
-            name,
-            start_date,
-            stop_date,
-            start_time,
-            stop_time,
-            log_rate
+                name,
+                start_date,
+                stop_date,
+                start_time,
+                stop_time,
+                log_rate
             )
             VALUES
             (
-            $NAME,
-            DATE('now'),
-            $STOP_DATE,
-            TIME ('now', 'localtime'),
-            $STOP_TIME,
-            $LOG_RATE
+                $NAME,
+                DATE('now'),
+                $STOP_DATE,
+                TIME ('now', 'localtime'),
+                $STOP_TIME,
+                $LOG_RATE
             );
         """;
 
@@ -618,7 +624,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         stmt.step ();
         stmt.reset ();
 
-        query = "SELECT COUNT(id) FROM Experiment;";
+        query = "SELECT COUNT(id) FROM experiment;";
         ec = db.prepare_v2 (query, query.length, out stmt);
         if (ec != Sqlite.OK) {
             stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
@@ -662,33 +668,32 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             }
 
             query = """
-                INSERT INTO Channel
-                (
-                experiment_id,
-                chan_id,
-                desc,
-                tag,
-                type,
-                expression,
-                coeff_x0,
-                coeff_x1,
-                coeff_x2,
-                coeff_x3,
-                units
+                INSERT INTO channel (
+                    experiment_id,
+                    chan_id,
+                    desc,
+                    tag,
+                    type,
+                    expression,
+                    coeff_x0,
+                    coeff_x1,
+                    coeff_x2,
+                    coeff_x3,
+                    units
                 )
                 VALUES
                 (
-                $EXPERIMENT_ID,
-                $CHAN_ID,
-                $DESC,
-                $TAG,
-                $TYPE,
-                $EXPRESSION,
-                $COEFF_X0,
-                $COEFF_X1,
-                $COEFF_X2,
-                $COEFF_X3,
-                $UNITS
+                    $EXPERIMENT_ID,
+                    $CHAN_ID,
+                    $DESC,
+                    $TAG,
+                    $TYPE,
+                    $EXPRESSION,
+                    $COEFF_X0,
+                    $COEFF_X1,
+                    $COEFF_X2,
+                    $COEFF_X3,
+                    $UNITS
                 );
             """;
 
@@ -738,9 +743,9 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         string query = """
             CREATE TABLE IF NOT EXISTS %s
             (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            experiment_id   INTEGER,
-            time            REAL
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                experiment_id   INTEGER,
+                time            REAL
             );
         """.printf (_experiment_name);
 
@@ -845,7 +850,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
 
         /* Count the number of columns in the table */
-        query = "SELECT Count (*) from Channel WHERE experiment_id=$EXPERIMENT_ID;";
+        query = "SELECT Count (*) FROM channel WHERE experiment_id=$EXPERIMENT_ID;";
         ec = db.prepare_v2 (query, query.length, out stmt);
         if (ec != Sqlite.OK) {
             stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
@@ -865,7 +870,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         stmt.bind_int (parameter_index, entry_id);
 
         while (stmt.step () == Sqlite.ROW) {
-            ent.time = stmt.column_int (Experiment_Data_Columns.TIME);
+            ent.time = stmt.column_int (ExperimentDataColumns.TIME);
             for (int i = 0; i < columns; i++) {
                 data_list.add (stmt.column_double (i + 3));
             }
@@ -882,7 +887,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      */
     public override void stop () {
         string query = """
-            UPDATE Experiment
+            UPDATE experiment
             SET stop_date = DATE('now'),
                 stop_time = TIME('now', 'localtime')
             WHERE id = %s;
@@ -925,7 +930,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             }
         }
 
-        query = "SELECT * from Experiment;";
+        query = "SELECT * FROM experiment;";
         ec = db.prepare_v2 (query, query.length, out stmt);
         if (ec != Sqlite.OK) {
             stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
@@ -946,26 +951,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         return entries;
     }
 
-    /**
-     * Generates a csv data file from an Experiment table in the database
-     *
-     * @param filename The full path and filename of the csv file.
-     * @param experiment_name A database table name of a logged experiment.
-     * @param start The start time (in microseconds) for the output csv file.
-     * @param stop The stop time (in microseconds) for the output csv file.
-     * @param step The time step increment (in microseconds) for the output csv file.
-     * @param is_averaged if true the ouput values are average over the time step otherwise a single value is recorded.
-     */
-    public void export_csv (string filename,
-                            int experiment_id,
-                            int start, int stop, int step,
-                            bool is_averaged) {
-
-        file_open (filename);
-        write_header (experiment_id);
-        write_csv_data (experiment_id, start, stop, step, is_averaged);
-    }
-
     public Gee.ArrayList<Cld.ChannelEntry?> get_channel_entries (int experiment_id) {
         Gee.ArrayList<Cld.ChannelEntry?> entries = new Gee.ArrayList<Cld.ChannelEntry?> ();
         string query;
@@ -973,7 +958,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             database_open ();
         }
 
-        query = "SELECT * FROM Channel WHERE experiment_id=%d".printf (experiment_id);
+        query = "SELECT * FROM channel WHERE experiment_id=%d".printf (experiment_id);
         ec = db.prepare_v2 (query, query.length, out stmt);
         if (ec != Sqlite.OK) {
             stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
@@ -999,6 +984,66 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         return entries;
     }
 
+    /**
+     * Backup the database to the location provided.
+     *
+     * @param destination The location to use for the database backup.
+     */
+    public void backup (string destination) throws Cld.FileError {
+        Sqlite.Database backup_db;
+
+        if (!is_open) {
+            database_open ();
+        }
+
+        /* TODO: Create method to open database file */
+        if (!(Posix.access (destination, Posix.W_OK) == 0) &&
+            !(Posix.access (destination, Posix.R_OK) == 0)) {
+            throw new Cld.FileError.ACCESS ("Can't open database file: %s",
+                                            destination);
+            return;
+        } else {
+            int ec = Sqlite.Database.open (destination, out backup_db);
+            if (ec != Sqlite.OK) {
+                stderr.printf ("Can't open database: %d: %s\n",
+                               backup_db.errcode (), backup_db.errmsg ());
+            }
+        }
+
+        var backup = new Sqlite.Backup (backup_db, "main", db, "main");
+
+        /* Stepping the database avoids locking the database preventing it from
+         * writing to the backup. */
+        int ret = 0;
+        do {
+            ret = backup.step (5);
+            backup_progress_updated (backup.remaining (), backup.pagecount ());
+            /* XXX not sure, but if this is a blocking sleep it would be bad */
+            if (ret == Sqlite.OK || ret == Sqlite.BUSY || ret == Sqlite.LOCKED) {
+                Posix.usleep (250000);
+            }
+        } while (ret == Sqlite.OK || ret == Sqlite.BUSY || ret == Sqlite.LOCKED);
+    }
+
+    /**
+     * Generates a csv data file from an Experiment table in the database
+     *
+     * @param filename The full path and filename of the csv file.
+     * @param experiment_name A database table name of a logged experiment.
+     * @param start The start time (in microseconds) for the output csv file.
+     * @param stop The stop time (in microseconds) for the output csv file.
+     * @param step The time step increment (in microseconds) for the output csv file.
+     * @param is_averaged if true the ouput values are average over the time step otherwise a single value is recorded.
+     */
+    public void export_csv (string filename,
+                            int experiment_id,
+                            int start, int stop, int step,
+                            bool is_averaged) {
+
+        file_open (filename);
+        write_header (experiment_id);
+        write_csv_data (experiment_id, start, stop, step, is_averaged);
+    }
 
     /**
      * {@inheritDoc}

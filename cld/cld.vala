@@ -37,6 +37,10 @@ namespace Cld {
         NULL_REF
     }
 
+    public errordomain FileError {
+        ACCESS
+    }
+
     /**
      * Future plan is to incorporate more device-specific setup and features
      * including information about the hardware, eg. bit count of a DAC or

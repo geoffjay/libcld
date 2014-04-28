@@ -22,6 +22,7 @@ libcld_0_2_la_SOURCES = \
 	abstractcontainer.vala \
 	abstractdevice.vala \
 	abstractfilter.vala \
+	abstractlog.vala \
 	abstractmodule.vala \
 	abstractobject.vala \
 	abstractport.vala \
@@ -37,15 +38,18 @@ libcld_0_2_la_SOURCES = \
 	container.vala \
 	context.vala \
 	control.vala \
+	csvlog.vala \
 	daq.vala \
 	dataseries.vala \
 	device.vala \
 	dichannel.vala \
 	dochannel.vala \
+	entry.vala \
 	filter.vala \
 	heidolphmodule.vala \
 	licormodule.vala \
 	log.vala \
+	logcolumn.vala \
 	mathchannel.vala \
 	module.vala \
 	object.vala \
@@ -54,6 +58,7 @@ libcld_0_2_la_SOURCES = \
 	port.vala \
 	serialport.vala \
 	socketport.vala \
+	sqlitelog.vala \
 	task.vala \
 	vchannel.vala \
 	velmexmodule.vala \
@@ -87,6 +92,7 @@ libcld_0_2_la_CPPFLAGS = \
 	$(COMEDI_CFLAGS) \
 	$(MATH_CFLAGS) \
 	$(GSL_CFLAGS) \
+	$(SQLITE_CFLAGS) \
 	$(NULL)
 
 libcld_0_2_la_LIBADD = \
@@ -99,6 +105,7 @@ libcld_0_2_la_LIBADD = \
 	$(COMEDI_LIBS) \
 	$(MATH_LIBS) \
 	$(GSL_LIBS) \
+	$(SQLITE_LIBS) \
 	$(NULL)
 
 libcld_0_2_la_LDFLAGS = \

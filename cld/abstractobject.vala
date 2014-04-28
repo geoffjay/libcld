@@ -47,11 +47,7 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
      * {@inheritDoc}
      */
     public virtual int compare (Cld.Object a) {
-        if (id == a.id) {
-            return 0;
-        } else {
-            return 1;
-        }
+        return id.ascii_casecmp (a.id);
     }
 
     /**

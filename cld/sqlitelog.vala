@@ -62,7 +62,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public override int dt { get { return (int)(1e3 / rate); } }
 
     /**
-     * {@inheritDoc}
+     * {linheritDoc}
      */
     public override bool active { get; set; default = false; }
 
@@ -90,9 +90,15 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     }
 
     /**
-     * A FIFO stack of LogEntry objects.
+     * File path to backup location.
      */
-    private Gee.Deque<Cld.LogEntry> queue { get; set; }
+    public string backup_path;
+
+    /**
+     * Backup file name.
+     */
+    public string backup_file;
+
 
     /**
      * The name of the current Log table.
@@ -102,14 +108,24 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     }
 
     /**
+     * A FIFO stack of LogEntry objects.
+     */
+    private Gee.Deque<Cld.LogEntry> queue { get; set; }
+
+    /**
      * A time stamp for log entries.
      */
     private DateTime start_time;
 
     /**
-     * An SQLite database object.
+     * An SQLite database object for logging data.
      */
     private Sqlite.Database db;
+
+    /**
+     * An SQLite database object for backups.\
+     */
+    private Sqlite.Database backup_db;
 
     /**
      * An SQLite statement created from a prepared query.
@@ -143,17 +159,23 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      */
     private FileStream file_stream;
 
+
+    /**
+     * Flag if backup database is open.
+     */
+    private bool backup_is_open;
+
     /**
      * Enumerated Experiment table column names.
      */
     public enum ExperimentColumn {
-        ID          = 0,
-        NAME        = 1,
-        START_DATE  = 2,
-        STOP_DATE   = 3,
-        START_TIME  = 4,
-        STOP_TIME   = 5,
-        LOG_RATE    = 6
+        ID,
+        NAME,
+        START_DATE,
+        STOP_DATE,
+        START_TIME,
+        STOP_TIME,
+        LOG_RATE
     }
 
     /**
@@ -180,7 +202,8 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public enum ExperimentDataColumns {
         ID,
         EXPERIMENT_ID,
-        TIME
+        TIME,
+        DATA0
     }
 
     /**
@@ -243,6 +266,12 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                             value = iter->get_content ();
                             time_stamp = TimeStampFlag.parse (value);
                             break;
+                        case "backup-path":
+                            backup_path = iter->get_content ();
+                            break;
+                        case "backup-file":
+                            backup_file = iter->get_content ();
+                            break;
                         default:
                             break;
                     }
@@ -256,9 +285,10 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         }
     }
 
-    ~CsvLog () {
-        if (_objects != null)
+    ~SqliteLog () {
+        if (_objects != null) {
             _objects.clear ();
+        }
     }
 
     /**
@@ -266,13 +296,14 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      */
     public void database_open () throws Cld.FileError {
         string db_filename;
-        if (!path.has_suffix ("/"))
+        if (!path.has_suffix ("/")) {
             path = "%s%s".printf (path, "/");
+        }
         db_filename = "%s%s".printf (path, file);
         if (!(Posix.access (db_filename, Posix.W_OK) == 0) &&
            !(Posix.access (db_filename, Posix.R_OK) == 0)) {
             throw new Cld.FileError.ACCESS (
-                    "Can't open database file %s: %d: %s", db_filename, db.errcode (), db.errmsg ()
+                    "Can't open database file %s", db_filename
                 );
             is_open = false;
 
@@ -281,7 +312,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             /* Open the database file*/
             int ec = Sqlite.Database.open (db_filename, out db);
             if (ec != Sqlite.OK) {
-                stderr.printf ("Can't open database: %d: %s\n", db.errcode (), db.errmsg ());
+                Cld.error ("Can't open database: %d: %s\n", db.errcode (), db.errmsg ());
                 is_open = false;
             } else {
                 is_open = true;
@@ -412,68 +443,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                                                             expressions, rate, tags, units);
 
        file_print (header);
-    }
-
-    /**
-     * Writes the data values of an Experiment to a csv file.
-     * @param exp_id The unique id from the Experiment table.
-     * @param start The time value of the first entry in the file.
-     * @param stop The time value of the last entry in the file.
-     * @param step The time increment of the entries in the file.
-     * @param is_averaged True if file entries values are averaged between steps.
-     */
-    public void write_csv_data (int exp_id, int start, int stop, int step, bool is_averaged) {
-        string query;
-        string name = "";
-        string line = "";
-        char sep = '\t';
-        int count = 0;
-        Cld.LogEntry ent = new Cld.LogEntry ();
-
-        query = "SELECT * FROM experiment WHERE id=$ID;";
-        ec = db.prepare_v2 (query, query.length, out stmt);
-        if (ec != Sqlite.OK) {
-            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
-        }
-        parameter_index = stmt.bind_parameter_index ("$ID");
-        stmt.bind_int (parameter_index, exp_id);
-
-        while (stmt.step () == Sqlite.ROW) {
-           name = stmt.column_text (ExperimentColumn.NAME);
-        }
-        stmt.reset ();
-
-        query = "SELECT count(id) FROM %s;".printf (name);
-        ec = db.prepare_v2 (query, query.length, out stmt);
-        if (ec != Sqlite.OK) {
-            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
-        }
-
-        stmt.step ();
-        count = int.parse (stmt.column_text (0));
-        stmt.reset ();
-
-//        if (is_averaged) {
-//            for (int row = 1; row < (count + 1) ; row++) {
-//                int i = 1;
-//                while (i < step) {
-//                    ent = get_log_entry (name, exp_id, row);
-//                    if ((ent.time >= start) && (ent.time <= stop)) {
-//                    }
-//                }
-//            }
-//        } else {
-        for (int row = 1; row < (count + 1); row += step) {
-            ent = get_log_entry (name, exp_id, row);
-            if ((ent.time >= start) && (ent.time <= stop)) {
-                line = "%lld\t".printf ((int64)ent.time);
-                foreach (double datum in ent.data) {
-                    line += "%f%c".printf (datum, sep);
-                }
-                line += "\n";
-            }
-            file_print (line);
-        }
     }
 
     /**
@@ -745,7 +714,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             (
                 id              INTEGER PRIMARY KEY AUTOINCREMENT,
                 experiment_id   INTEGER,
-                time            REAL
+                time            TEXT
             );
         """.printf (_experiment_name);
 
@@ -767,7 +736,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     }
 
     private void log_entry_write (Cld.LogEntry entry) {
-        TimeSpan diff = entry.timestamp.difference (start_time);
         string query = """
             INSERT INTO %s
             (
@@ -800,7 +768,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         stmt.bind_int (parameter_index, experiment_id);
 
         parameter_index = stmt.bind_parameter_index ("$TIME");
-        stmt.bind_int (parameter_index, (int) diff);
+        stmt.bind_text (parameter_index, entry.time_as_string);
 
         i = 0;
         double val = 0;
@@ -870,7 +838,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         stmt.bind_int (parameter_index, entry_id);
 
         while (stmt.step () == Sqlite.ROW) {
-            ent.time = stmt.column_int (ExperimentDataColumns.TIME);
+            ent.time_as_string = stmt.column_text (ExperimentDataColumns.TIME);
             for (int i = 0; i < columns; i++) {
                 data_list.add (stmt.column_double (i + 3));
             }
@@ -986,28 +954,16 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
     /**
      * Backup the database to the location provided.
-     *
-     * @param destination The location to use for the database backup.
      */
-    public void backup (string destination) throws Cld.FileError {
-        Sqlite.Database backup_db;
-
+    public async void backup_database () {
+        SourceFunc callback = backup_database.callback;
         if (!is_open) {
             database_open ();
         }
 
         /* TODO: Create method to open database file */
-        if (!(Posix.access (destination, Posix.W_OK) == 0) &&
-            !(Posix.access (destination, Posix.R_OK) == 0)) {
-            throw new Cld.FileError.ACCESS ("Can't open database file: %s",
-                                            destination);
-            return;
-        } else {
-            int ec = Sqlite.Database.open (destination, out backup_db);
-            if (ec != Sqlite.OK) {
-                stderr.printf ("Can't open database: %d: %s\n",
-                               backup_db.errcode (), backup_db.errmsg ());
-            }
+        if (!backup_is_open) {
+            backup_open ();
         }
 
         var backup = new Sqlite.Backup (backup_db, "main", db, "main");
@@ -1015,34 +971,152 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         /* Stepping the database avoids locking the database preventing it from
          * writing to the backup. */
         int ret = 0;
-        do {
-            ret = backup.step (5);
-            backup_progress_updated (backup.remaining (), backup.pagecount ());
-            /* XXX not sure, but if this is a blocking sleep it would be bad */
-            if (ret == Sqlite.OK || ret == Sqlite.BUSY || ret == Sqlite.LOCKED) {
-                Posix.usleep (250000);
+        ThreadFunc<void*> run = () => {
+            do {
+                ret = backup.step (5);
+                backup_progress_updated (backup.remaining (), backup.pagecount ());
+                /* XXX not sure, but if this is a blocking sleep it would be bad */
+                if (ret == Sqlite.OK || ret == Sqlite.BUSY || ret == Sqlite.LOCKED) {
+                    stdout.printf (".");
+                }
+            } while (ret == Sqlite.OK || ret == Sqlite.BUSY || ret == Sqlite.LOCKED);
+            Idle.add ((owned) callback);
+
+            return;
+        };
+        Thread.create<void*>(run, false);
+        yield;
+    }
+
+    /**
+     * Open the backup database file.
+     */
+    public void backup_open () throws Cld.FileError {
+        string db_filename;
+        if (!backup_path.has_suffix ("/"))
+            backup_path = "%s%s".printf (backup_path, "/");
+        db_filename = "%s%s".printf (backup_path, backup_file);
+        if (!(Posix.access (db_filename, Posix.F_OK) == 0)) { // if file doesn't exist...
+            FileStream.open (db_filename, "a+");
+        }
+        if (!(Posix.access (db_filename, Posix.W_OK) == 0) &&
+           !(Posix.access (db_filename, Posix.R_OK) == 0)) {
+            throw new Cld.FileError.ACCESS (
+                    "Can't open database file %s: %d: %s", db_filename
+                );
+            backup_is_open = false;
+
+            return;
+        } else {
+            /* Open the database file*/
+            int ec = Sqlite.Database.open (db_filename, out backup_db);
+            if (ec != Sqlite.OK) {
+                stderr.printf ("Can't open database: %d: %s\n", backup_db.errcode (),
+                    backup_db.errmsg ());
+                backup_is_open = false;
+            } else {
+                backup_is_open = true;
             }
-        } while (ret == Sqlite.OK || ret == Sqlite.BUSY || ret == Sqlite.LOCKED);
+        }
     }
 
     /**
      * Generates a csv data file from an Experiment table in the database
      *
      * @param filename The full path and filename of the csv file.
-     * @param experiment_name A database table name of a logged experiment.
-     * @param start The start time (in microseconds) for the output csv file.
-     * @param stop The stop time (in microseconds) for the output csv file.
+     * @param exp_id A database table name of a logged experiment.
+     * @param start The start time for the output csv file.
+     * @param stop The stop time for the output csv file.
      * @param step The time step increment (in microseconds) for the output csv file.
      * @param is_averaged if true the ouput values are average over the time step otherwise a single value is recorded.
      */
     public void export_csv (string filename,
-                            int experiment_id,
-                            int start, int stop, int step,
+                            int exp_id,
+                            DateTime start, DateTime stop, int step,
                             bool is_averaged) {
+        string query;
+        string name = "";
+        string line = "";
+        char sep = '\t';
+        int count = 0;
 
         file_open (filename);
-        write_header (experiment_id);
-        write_csv_data (experiment_id, start, stop, step, is_averaged);
+        write_header (exp_id);
+
+        /* Get the table name of the experiment */
+        query = "SELECT * FROM experiment WHERE id=$ID;";
+        ec = db.prepare_v2 (query, query.length, out stmt);
+        if (ec != Sqlite.OK) {
+            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+        }
+        parameter_index = stmt.bind_parameter_index ("$ID");
+        stmt.bind_int (parameter_index, exp_id);
+
+        while (stmt.step () == Sqlite.ROW) {
+           name = stmt.column_text (ExperimentColumn.NAME);
+        }
+        stmt.reset ();
+
+        /* Count the number of columns in the table */
+        query = "SELECT Count (*) FROM channel WHERE experiment_id=$EXPERIMENT_ID;";
+        ec = db.prepare_v2 (query, query.length, out stmt);
+        if (ec != Sqlite.OK) {
+            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+        }
+        parameter_index = stmt.bind_parameter_index ("$EXPERIMENT_ID");
+        stmt.bind_int (parameter_index, exp_id);
+        stmt.step ();
+        int columns = int.parse (stmt.column_text (0));
+        stmt.reset ();
+
+        /* Select data between start and stop time boundaries. */
+        query = """
+            SELECT * FROM %s
+            WHERE datetime (time)
+            BETWEEN datetime ("%s")
+            AND datetime ("%s")
+            ;
+        """.printf (name, start.to_string ().substring (0, 19),
+                    stop.to_string ().substring (0, 19));
+        ec = db.prepare_v2 (query, query.length, out stmt);
+        if (ec != Sqlite.OK) {
+            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+        }
+
+        while (stmt.step () == Sqlite.ROW) {
+            line = "%s\t".printf (stmt.column_text (ExperimentDataColumns.TIME));
+            for (int column = 0; column < columns; column++) {
+                line += "%f%c".printf (stmt.column_double (column +
+                                        ExperimentDataColumns.DATA0), sep);
+            }
+            line += "\n";
+            file_print (line);
+        }
+        stmt.reset ();
+
+        /* Build data strings from query result. */
+
+//        if (is_averaged) {
+//            for (int row = 1; row < (count + 1) ; row++) {
+//                int i = 1;
+//                while (i < step) {
+//                    ent = get_log_entry (name, exp_id, row);
+//                    if ((ent.time >= start) && (ent.time <= stop)) {
+//                    }
+//                }
+//            }
+//        } else {
+//        for (int row = 1; row < (count + 1); row += step) {
+//            ent = get_log_entry (name, exp_id, row);
+//            if ((ent.time_us >= start) && (ent.time_us <= stop)) {
+//                line = "%lld\t".printf ((int64)ent.time_us);
+//                foreach (double datum in ent.data) {
+//                    line += "%f%c".printf (datum, sep);
+//                }
+//                line += "\n";
+//            }
+//            file_print (line);
+//        }
     }
 
     /**

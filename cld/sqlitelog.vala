@@ -956,7 +956,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * Backup the database to the location provided.
      */
     public async void backup_database () {
-        SourceFunc callback = backup_database.callback;
         if (!is_open) {
             database_open ();
         }
@@ -971,21 +970,17 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         /* Stepping the database avoids locking the database preventing it from
          * writing to the backup. */
         int ret = 0;
-        ThreadFunc<void*> run = () => {
             do {
                 ret = backup.step (5);
                 backup_progress_updated (backup.remaining (), backup.pagecount ());
                 /* XXX not sure, but if this is a blocking sleep it would be bad */
                 if (ret == Sqlite.OK || ret == Sqlite.BUSY || ret == Sqlite.LOCKED) {
-                    stdout.printf (".");
+                    Idle.add (backup_database.callback);
+                    yield;
                 }
             } while (ret == Sqlite.OK || ret == Sqlite.BUSY || ret == Sqlite.LOCKED);
-            Idle.add ((owned) callback);
 
             return;
-        };
-        Thread.create<void*>(run, false);
-        yield;
     }
 
     /**

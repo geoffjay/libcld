@@ -334,11 +334,10 @@ public class Cld.CsvLog : Cld.AbstractLog {
     /**
      * Write the next line in the file.
      */
-    public void write_next_line () {
+    public void write_next_line (Cld.LogEntry entry) {
         string line = "";
         char sep = '\t';
-        DateTime curr_time = new DateTime.now_local ();
-        TimeSpan diff = curr_time.difference (start_time);
+
         //int h = (int)diff / 3600000000;
         //int m = (int)diff / 60000000 - (h * 60);
         //int s = (int)diff / 1000000 - (h * 3600 + m * 60);
@@ -422,17 +421,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
         Thread.create<void *> (_run, false);
 
         yield;
-    }
-
-    private async void bg_log_watch () throws ThreadError {
-
-        /// ...
-
-            //while (!queue.empty) {
-                // write line or insert db entry
-            //}
-
-        /// ...
     }
 
     /**

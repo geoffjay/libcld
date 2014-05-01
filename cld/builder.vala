@@ -370,7 +370,7 @@ public class Cld.Builder : Cld.AbstractContainer {
             }
 
             /* Setup the channel references for all of the log columns. */
-            if (object is Cld.CsvLog) {
+            if (object is Cld.Log) {
                 foreach (var column in (object as Container).objects.values) {
                     if (column is Column) {
                         ref_id = (column as Column).chref;
@@ -384,7 +384,7 @@ public class Cld.Builder : Cld.AbstractContainer {
                     }
                 }
                 /* Following the setup of the log columns, the log needs to attach the signals. */
-                (object as Cld.CsvLog).connect_signals ();
+                (object as Cld.Log).connect_signals ();
             }
 
             /* Setup port references for all of the modules */
@@ -396,8 +396,10 @@ public class Cld.Builder : Cld.AbstractContainer {
                     if (port != null && port is Port)
                         (object as Module).port = (port as Port);
                 }
+
                 ref_id = (object as Module).devref;
-                if (ref_id != null && object is LicorModule)
+
+                if (ref_id != null && object is LicorModule) {
                     /* set the virtual channel that are to be referenced by this module */
                     foreach (var licor_channel in channels.values) {
                         if ((licor_channel as Channel).devref == ref_id) {
@@ -406,6 +408,24 @@ public class Cld.Builder : Cld.AbstractContainer {
                             (object as LicorModule).add_channel (licor_channel);
                         }
                     }
+                }
+
+                if (ref_id != null && object is HeidolphModule) {
+                    var chan0 = get_object ("heidolph00");
+                    var chan1 = get_object ("heidolph01");
+                    (object as HeidolphModule).add_channel (chan0 as Channel);
+                    (object as HeidolphModule).add_channel (chan1 as Channel);
+
+                    /* set the virtual channel that are to be referenced by this module */
+//                    foreach (var heidolph_channel in channels.values) {
+//                        Cld.debug ("ref_id: %s heidolph_channel.id: %s", ref_id, heidolph_channel.id);
+//                        if ((heidolph_channel as Channel).devref == ref_id) {
+//                            Cld.debug ("Assigning Channel %s to Module %s", heidolph_channel.id,
+//                                        (object as HeidolphModule).id);
+//                            (object as HeidolphModule).add_channel (heidolph_channel);
+//                        }
+//                    }
+                }
             }
 
             /* A  data series references a scalable channel. */

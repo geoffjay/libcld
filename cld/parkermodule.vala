@@ -232,7 +232,7 @@ public class Cld.ParkerModule : AbstractModule {
     public const int CWB_NO_STOP2        = 0x4000;
     public const int CWB_OPEN_BRAKE      = 0x8000;
 
-    /* Derivative control words (CW)*/
+    /* Agreagated bit control words (CW)*/
     public int CW_HOME          = CWB_QUIT | CWB_NO_STOP1 | CWB_NO_STOP2;
     public int CW_ACK_ZERO      = 0x0;
     public int CW_ACK_EDGE      = CWB_QUIT | CWB_NO_STOP1 | CWB_NO_STOP2;
@@ -261,6 +261,270 @@ public class Cld.ParkerModule : AbstractModule {
     public const int MOVE_ABS = 1;
     public const int MOVE_REL = 2;
 
+    /**
+     * Used to link virtual channels to variale values.
+     */
+    public enum VariableName {
+        NONE,
+        POSITION;
+
+        public static VariableName parse (string value) {
+            try {
+                var regex_position  = new Regex ("Position", RegexCompileFlags.CASELESS);
+                if (regex_position.match (value)) {
+                    return POSITION; // etc..
+                }            } catch (RegexError e) {
+                Cld.debug ("Error %s", e.message);
+            }
+
+            /* XXX need to return something */
+            return NONE;
+        }
+
+    }
+
+    /**
+     * Parker Comapx3 I12 T11 Objects
+     */
+    public enum C3 {
+        NONE,
+        FLASH_WRITE,
+        FLASH_READWRITE,
+        ANALOGINPUT0_GAIN,
+        ANALOGINPUT0_OFFSET,
+        ANALOGINPUT1_GAIN,
+        ANALOGINPUT1_OFFSET,
+        D_CURRENTCONTROLLER_LD_LQ_RATIO,
+        CONTROLLERTUNING_ACTUATINGSPEEDSIGNALFILT_US,
+        CONTROLLERTUNING_CURRENTBANDWIDTH,
+        CONTROLLERTUNING_CURRENTDAMPING,
+        CONTROLLERTUNING_FILTERACCEL_US,
+        CONTROLLERTUNING_FILTERACCEL2,
+        CONTROLLERTUNING_FILTERSPEED2,
+        D_CURRENTCONTROLLER_VOLTAGEDECOUPLINGENABLE,
+        DELAY_MASTERDELAY,
+        DEVICESUPERVISION_DEVICEADR,
+        DEVICESUPERVISION_DEVICECOUNTER,
+        DEVICESUPERVISION_OPERATINGTIME,
+        DEVICESUPERVISION_THISDEVICE,
+        DIAGNOSTICS_DEVICESTATE,
+        DIGITALINPUT_DEBOUNCEDVALUE,
+        DIGITALINPUT_VALUE,
+        DIGITALINPUTADDITION_VALUE,
+        DIGITALOUTPUTADDITION_VALUE,
+        ERRORHISTORY_1,
+        ERRORHISTORYNUMBER_1,
+        ERRORHISTORYPOINTER_LASTENTRY,
+        ERRORHISTORYTIME_1,
+        EXTERNALSIGNAL_POSITION,
+        FEEDFORWARD_EMF,
+        FEEDFORWARDEXTERNAL_FILTERACCEL,
+        FEEDFORWARDEXTERNAL_FILTERACCEL_US,
+        FEEDFORWARDEXTERNAL_FILTERSPEED,
+        FEEDFORWARDEXTERNAL_FILTERSPEED_US,
+        MAGNETIZATION_CURRENT_CONTROLLER_BANDWIDTH,
+        MAGNETIZATION_CURRENT_CONTROLLER_DAMPING,
+        MAGNETIZATION_CURRENT_CONTROLLER_FIELD,
+        MAGNETIZATION_CURRENT_CONTROLLER_IMRN_DEMANDVALUETUNING,
+        MAGNETIZATION_CURRENT_CONTROLLER_ROTORTIMECONSTANT,
+        MAGNETIZATION,
+        Q_CURRENTCONTROLLER_BACKEMF,
+        Q_CURRENTCONTROLLER_INDUCTANCE,
+        Q_CURRENTCONTROLLER_RESISTANCE,
+        Q_CURRENTCONTROLLER_STRUCTURESELECTION,
+        STATUSCURRENT_PHASEU,
+        STATUSCURRENT_PHASEV,
+        STATUSCURRENT_REFERENCE,
+        STATUSCURRENT_REFERENCEDINT,
+        STATUSSPEED_ERROR,
+        STATUSSPEED_FEEDFORWARDSPEED,
+        STATUSSPEED_LOADCONTROLFILTERED,
+        SPEEDCONTROLLER_ACTUALBANDWIDTH,
+        SPEEDCONTROLLER_I_PART_GAIN,
+        SPEEDCONTROLLER_P_PART_GAIN,
+        SPEEDOBSERVER_DISTURBANCEADDITIONENABLE,
+        SPEEDOBSERVER_DISTURBANCEFILTER,
+        SPEEDOBSERVER_TIMECONSTANT,
+        STATUSACCEL_ACTUAL,
+        STATUSACCEL_ACTUALFILTER,
+        STATUSACCEL_DEMANDVALUE,
+        STATUSACCEL_FEEDFORWARDACCEL,
+        STATUSAUTOCOMMUTATION_ITTERATIONS,
+        STATUSCURRENT_ACTUAL,
+        STATUSCURRENT_ACTUALDINT,
+        STATUSCURRENT_CONTROLDEVIATIONIQ,
+        STATUSCURRENT_DECOUPLINGVOLTAGEUD,
+        STATUSCURRENT_FEEDFORWARDBACKEMF,
+        STATUSCURRENT_FEEDFORWORDCURRENTJERK,
+        STATUSCURRENT_REFERENCEJERK,
+        STATUSCURRENT_REFERENCEVOLTAGEUQ,
+        STATUSCURRENT_REFERENCEVOLTAGEVECTOR,
+        STATUSCURRENT_VOLTAGEUD,
+        STATUSCURRENT_VOLTAGEUQ,
+        STATUSDEVICE_ACTUALDEVICELOAD,
+        STATUSDEVICE_ACTUALMOTORLOAD,
+        STATUSDEVICE_OBSERVEDDISTURBANCE,
+        STATUSFEEDBACK_ENCODERCOSINE,
+        STATUSFEEDBACK_ENCODERSINE,
+        STATUSFEEDBACK_FEEDBACKCOSINEDSP,
+        STATUSFEEDBACK_FEEDBACKSINEDSP,
+        STATUSFEEDBACK_FEEDBACKVOLTAGE_VPP,
+        STATUSPOSITION_ACTUAL,
+        STATUSPOSITION_ACTUALCONTROLLER,
+        STATUSPOSITION_DEMANDCONTROLLER,
+        STATUSPOSITION_DEMANDVALUE,
+        STATUSPOSITION_FOLLOWINGERROR,
+        STATUSPOSITION_LOADCONTROLACTUAL,
+        STATUSPOSITION_LOADCONTROLDEVIATION,
+        STATUSPOSITION_LOADCONTROLDEVIATIONFILTERED,
+        STATUSSPEED_ACTUAL,
+        STATUSSPEED_ACTUALFILTERED,
+        STATUSSPEED_ACTUALSCALED,
+        STATUSSPEED_DEMANDSCALED,
+        STATUSSPEED_DEMANDSPEEDCONTROLLER,
+        STATUSSPEED_DEMANDVALUE,
+        STATUSSPEED_NEGATIVELIMIT,
+        STATUSSPEED_POSITIVELIMIT,
+        STATUSTEMPERATURE_MOTOR,
+        STATUSTEMPERATURE_POWERSTAGE,
+        STATUSVOLTAGE_ANALOGINPUT0,
+        STATUSVOLTAGE_ANALOGINPUT1,
+        STATUSVOLTAGE_AUXILIARYVOLTAGE,
+        STATUSVOLTAGE_BUSVOLTAGE;
+
+        public string to_string () {
+             switch (this) {
+                case STATUSPOSITION_ACTUAL:  return "680.5";
+                default: assert_not_reached ();
+            }
+        }
+
+        public static C3 parse (string value) {
+            try {
+                var regex_status_position_actual  = new Regex ("C3_StatusPosition_Actual", RegexCompileFlags.CASELESS);
+                if (regex_status_position_actual.match (value)) {
+                    return STATUSPOSITION_ACTUAL; // etc..
+                }            } catch (RegexError e) {
+                Cld.debug ("Error %s", e.message);
+            }
+
+            /* XXX need to return something */
+            return NONE;
+        }
+    }
+
+    /**
+     * Parker Comapx3 I12 T11 Move Tables
+     */
+    public enum C3Array {
+        COL01_ROW01,
+        COL02_ROW01,
+        COL03_ROW01,
+        COL04_ROW01,
+        COL05_ROW01,
+        COL06_ROW01,
+        COL07_ROW01,
+        COL08_ROW01,
+        COL09_ROW01,
+        COL01_ROW02,
+        COL02_ROW02,
+        COL03_ROW02,
+        COL04_ROW02,
+        COL05_ROW02,
+        COL06_ROW02,
+        COL07_ROW02,
+        COL08_ROW02,
+        COL09_ROW02,
+        INDIRECT_COL01,
+        Pointer_Row
+    }
+
+    /**
+     * Parker Comapx3 I12 T11 Objects
+     */
+    public enum C3Plus {
+        NONE,
+        ANALOGINPUT0_FILTERCOEFFICIENT,
+        ANALOGINPUT1_FILTERCOEFFICIENT,
+        AUTOCOMMUTATIONCONTROL_INITIALCURRENT,
+        AUTOCOMMUTATIONCONTROL_MOTIONREDUCTION,
+        AUTOCOMMUTATIONCONTROL_PEAKCURRENT,
+        AUTOCOMMUTATIONCONTROL_POSITIONTHRESHOLD,
+        AUTOCOMMUTATIONCONTROL_RAMPTIME,
+        AUTOCOMMUTATIONCONTROL_RESET,
+        AUTOCOMMUTATIONCONTROL_STANDSTILLTHRESHOLD,
+        DEVICECONTROL_CONTROLWORD_1,
+        DEVICESTATE_STATUSWORD_1,
+        DEVICESTATE_STATUSWORD_2,
+        DIAGNOSTICS_CHOPPEROFF_VOLTAGE,
+        DIAGNOSTICS_CHOPPERON_VOLTAGE,
+        DIAGNOSTICS_DCBUS_CURRENT,
+        DIAGNOSTICS_DCBUS_VOLTAGE,
+        DIAGNOSTICS_DCBUS_VOLTAGEMAX,
+        DIAGNOSTICS_RECTIFIERLOAD,
+        DIAGNOSTICS_TEMPERATUREHEATSINK,
+        ERRORHISTORY_LASTERROR,
+        EXTERNALSIGNAL_ACCEL_MUNITS,
+        EXTERNALSIGNAL_SPEED_MUNITS,
+        HEDA_SIGNALPROCESSING_OUTPUTGREAT,
+        HOMING_EDGE_POSITION,
+        LOADCONTROL_COMMAND,
+        LOADCONTROL_ENABLE,
+        LOADCONTROL_FILTERLAGGINGPART,
+        LOADCONTROL_STATUS,
+        LOADCONTROL_VELOCITYFILTER,
+        LOADCONTROL_VELOCITYLIMIT,
+        NOTCHFILTER_BANDWIDTHFILTER1,
+        NOTCHFILTER_BANDWIDTHFILTER2,
+        NOTCHFILTER_DEPTHFILTER1,
+        NOTCHFILTER_DEPTHFILTER2,
+        NOTCHFILTER_FREQUENCYFILTER1,
+        NOTCHFILTER_FREQUENCYFILTER2,
+        PG2REGMOVE_PARAMETERSMODIFIED,
+        POSITION_ACCEL,
+        POSITION_DECEL,
+        POSITION_JERK_ACCEL,
+        POSITION_JERK_DECEL,
+        POSITION_POSITION,
+        POSITION_SPEED,
+        POSITIONCONTROLLER_DEADBAND,
+        POSITIONCONTROLLER_FRICTIONCOMPENSATION,
+        POSITIONCONTROLLER_INTEGRALPART,
+        POSITIONCONTROLLER_TRACKINGERRORFILTER,
+        POSITIONCONTROLLER_TRACKINGERRORFILTER_US,
+        TOUCHPROBE_IGNOREZONE_END,
+        TOUCHPROBE_IGNOREZONE_START,
+        TRACKINGFILTERHEDA_TRFSPEED,
+        REGMOVE_PARAMETERSMODIFIED,
+        STATUSCURRENT_FIELDWEAKENINGFACTOR,
+        STATUSTORQUEFORCE_ACTUALFORCE,
+        STATUSTORQUEFORCE_ACTUALTORQUE,
+        SWITCH_DEVICEFUNCTION,
+        TRACKINGFILTERPHYSICALSOURCE_TRFSPEED,
+        TRACKINGFILTERSG1_ACCELFILTER,
+        TRACKINGFILTERSG1_ACCELFILTER_US,
+        TRACKINGFILTERSG1_FILTERSPEED,
+        TRACKINGFILTERSG1_FILTERSPEED_US,
+        TRACKINGFILTERSG1_TRFSPEED;
+
+        public static C3Plus parse (string value) {
+            try {
+                var regex_status_torque_force_actual_torque  = new Regex
+                    (
+                    "C3Plus_StatusTorqueForce_ActualTorque",
+                    RegexCompileFlags.CASELESS
+                    );
+                if (regex_status_torque_force_actual_torque.match (value)) {
+                    return STATUSTORQUEFORCE_ACTUALTORQUE; // etc..
+                }            } catch (RegexError e) {
+                Cld.debug ("Error %s", e.message);
+            }
+
+            /* XXX need to return something */
+            return NONE;
+        }
+
+    }
     /**
      * Property backing fields.
      */
@@ -394,7 +658,8 @@ public class Cld.ParkerModule : AbstractModule {
                             portref = iter->get_content ();
                             break;
                         case "has-brake":
-                            has_brake = bool.parse (iter-get_content ());
+                            has_brake = bool.parse (iter->get_content ());
+                            break;
                         default:
                             break;
                     }
@@ -409,7 +674,6 @@ public class Cld.ParkerModule : AbstractModule {
      */
     public void add_channel (Cld.Object channel) {
         channels.set (channel.id, channel);
-       //Cld.debug ("HeidolphModule :: add_channel(%s)", channel.id);
     }
 
     /**
@@ -535,8 +799,8 @@ public class Cld.ParkerModule : AbstractModule {
                 MoveRel: distance: %.3f, speed: %.3f, accel.: %.3f decel.: %.3f jerk: %.3f
                 """, distance, speed, acceleration, deceleration, jerk);
             /* Write movement to the set table */
-            yield write_object (C3Array_Col01_Row02, step_size * direction);
-            yield write_object (C3Array_Col02_Row02, velocity);
+            yield write_object (C3Array_Col01_Row02, distance);
+            yield write_object (C3Array_Col02_Row02, speed);
             yield write_object (C3Array_Col05_Row02, MOVE_REL);
             yield write_object (C3Array_Col06_Row02, acceleration);
             yield write_object (C3Array_Col07_Row02, deceleration);

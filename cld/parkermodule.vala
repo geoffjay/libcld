@@ -360,6 +360,22 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     /**
+     * Map of virtual channels.
+     */
+    public Gee.Map<string, Cld.Object> channels { get; set; }
+
+    /**
+     * True if the drive has a brake.
+     */
+    public bool has_brake { get; set; }
+
+    public ParkerModule.full (string id, Port port) {
+       this.id = id;
+       this.port = port;
+       this.channels = channels;
+    }
+
+    /**
      * Alternate construction that uses an XML node to populate the settings.
      */
     public ParkerModule.from_xml_node (Xml.Node *node) {
@@ -377,12 +393,23 @@ public class Cld.ParkerModule : AbstractModule {
                         case "port":
                             portref = iter->get_content ();
                             break;
+                        case "has-brake":
+                            has_brake = bool.parse (iter-get_content ());
                         default:
                             break;
                     }
                 }
             }
         }
+        channels = new Gee.TreeMap<string, Cld.Object> ();
+    }
+
+    /**
+     * ...
+     */
+    public void add_channel (Cld.Object channel) {
+        channels.set (channel.id, channel);
+       //Cld.debug ("HeidolphModule :: add_channel(%s)", channel.id);
     }
 
     /**
@@ -471,6 +498,10 @@ public class Cld.ParkerModule : AbstractModule {
         yield last_error ();
     }
 
+    /**
+     * @deprecated
+     * This method is application specific. Use move_relative instead.
+     */
     public async void step (double step_size, int direction) {
         if (active_command == null) {
             Cld.debug ("step_size: %.3f direction: %d position %.3f", step_size, direction, position);
@@ -488,6 +519,9 @@ public class Cld.ParkerModule : AbstractModule {
             yield write_object (C3Plus_DeviceControl_Controlword_1, CWB_QUIT |
                                     CWB_NO_STOP1 | CWB_NO_STOP2 | CWB_ADDRESS_1 |
                                     CWB_START);
+            yield write_object (C3Plus_DeviceControl_Controlword_1, CWB_QUIT |
+                        CWB_NO_STOP1 | CWB_NO_STOP2 | CWB_ADDRESS_1);
+            /* Wait for timeout or position reached */
             yield check_status (move_timeout_ms, SWB1_POS_REACHED |
                                 SWB1_NO_ERROR);
             yield fetch_actual_position ();
@@ -495,6 +529,41 @@ public class Cld.ParkerModule : AbstractModule {
         }
     }
 
+    /**
+     * Make a relative move (MoveRel).
+     */
+    public async void move_relative (double distance,
+                                     double speed,
+                                     double acceleration,
+                                     double deceleration,
+                                     double jerk) {
+        if (active_command == null) {
+            Cld.debug ("""
+                MoveRel: distance: %.3f, speed: %.3f, accel.: %.3f decel.: %.3f jerk: %.3f
+                """, distance, speed, acceleration, deceleration, jerk);
+            /* Write movement to the set table */
+            yield write_object (C3Array_Col01_Row02, step_size * direction);
+            yield write_object (C3Array_Col02_Row02, velocity);
+            yield write_object (C3Array_Col05_Row02, MOVE_REL);
+            yield write_object (C3Array_Col06_Row02, acceleration);
+            yield write_object (C3Array_Col07_Row02, deceleration);
+            yield write_object (C3Array_Col08_Row02, jerk);
+            /* Arm for Adress = 1 */
+            yield write_object (C3Plus_DeviceControl_Controlword_1, CWB_QUIT |
+                                CWB_NO_STOP1 | CWB_NO_STOP2 | CWB_ADDRESS_1);
+            /* Toggle the start bit */
+            yield write_object (C3Plus_DeviceControl_Controlword_1, CWB_QUIT |
+                                    CWB_NO_STOP1 | CWB_NO_STOP2 | CWB_ADDRESS_1 |
+                                    CWB_START);
+            yield write_object (C3Plus_DeviceControl_Controlword_1, CWB_QUIT |
+                        CWB_NO_STOP1 | CWB_NO_STOP2 | CWB_ADDRESS_1);
+            /* Wait for timeout or position reached */
+            yield check_status (move_timeout_ms, SWB1_POS_REACHED |
+                                SWB1_NO_ERROR);
+            yield fetch_actual_position ();
+            yield last_error ();
+        }
+    }
     private void new_data_cb (SerialPort port, uchar[] data, int size) {
         for (int i = 0; i < size; i++) {
             unichar c = "%c".printf (data[i]).get_char ();

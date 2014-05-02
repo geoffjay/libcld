@@ -409,8 +409,17 @@ public class Cld.Builder : Cld.AbstractContainer {
                         }
                     }
                 }
-
-                if (ref_id != null && object is HeidolphModule) {
+                if (ref_id != null && object is ParkerModule) {
+                    /* set the virtual channels that are to be referenced by this module */
+                    foreach (var parker_channel in channels.values) {
+                        if ((parker_channel as Channel).devref == ref_id) {
+                            Cld.debug ("Assigning Channel %s to Device %s", parker_channel.id,
+                                        (object as ParkerModule).devref);
+                            (object as ParkerModule).add_channel (parker_channel);
+                        }
+                    }
+                }
+                if (object is HeidolphModule) {
                     var chan0 = get_object ("heidolph00");
                     var chan1 = get_object ("heidolph01");
                     (object as HeidolphModule).add_channel (chan0 as Channel);

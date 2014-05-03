@@ -266,14 +266,24 @@ public class Cld.ParkerModule : AbstractModule {
      */
     public enum VariableName {
         NONE,
-        POSITION;
+        POSITION,
+        ACTUAL_POSITION,
+        ACTUAL_TORQUE;
 
         public static VariableName parse (string value) {
             try {
-                var regex_position  = new Regex ("Position", RegexCompileFlags.CASELESS);
+                var regex_position  = new Regex ("position", RegexCompileFlags.CASELESS);
+                var regex_actual_position = new Regex ("actual_position", RegexCompileFlags.CASELESS);
+                var regex_actual_torque = new Regex ("actual_torque", RegexCompileFlags.CASELESS);
+
                 if (regex_position.match (value)) {
-                    return POSITION; // etc..
-                }            } catch (RegexError e) {
+                    return POSITION;
+                } else if (regex_actual_position.match (value)) {
+                    return ACTUAL_POSITION;
+                } else if (regex_actual_torque.match (value)) {
+                    return ACTUAL_TORQUE;
+                }
+            } catch (RegexError e) {
                 Cld.debug ("Error %s", e.message);
             }
 
@@ -670,10 +680,30 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     /**
-     * ...
+     * Add virtual channels an connect to signalled values.
      */
     public void add_channel (Cld.Object channel) {
         channels.set (channel.id, channel);
+        VariableName vn = VariableName.parse ((channel as Channel).desc);
+        switch (vn) {
+            case VariableName.POSITION:
+                new_position.connect ((position) => {
+                    (channel as VChannel).raw_value = position;
+                });
+                break;
+            case VariableName.ACTUAL_POSITION:
+                new_actual_position.connect ((actual_position) => {
+                    (channel as VChannel).raw_value = actual_position;
+                });
+                break;
+            case VariableName.ACTUAL_TORQUE:
+                new_actual_torque.connect ((actual_torque) => {
+                    (channel as VChannel).raw_value = actual_torque;
+                });
+                break;
+            default:
+                break;
+        }
     }
 
     /**

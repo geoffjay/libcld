@@ -344,7 +344,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
         //int ms = (int)diff % 1000000;
 
         //line = "%02d:%02d:%02d.%03d\t".printf (h, m, s, ms);
-        line = "%lld\t".printf ((int64) entry.time);
+        line = "%lld\t".printf ((int64) entry.time_us);
 
         foreach (double datum in entry.data) {
             line += "%f%c".printf (datum, sep);

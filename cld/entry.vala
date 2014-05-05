@@ -11,12 +11,43 @@ public class Cld.LogEntry : Cld.AbstractObject {
     /**
      * DateTime data to use for time stamping log entries.
      */
-    public DateTime timestamp { get; set; }
+    private DateTime _timestamp;
+    public DateTime timestamp {
+        get {
+            TimeZone tz = new TimeZone.local ();
+            _timestamp = new DateTime
+                (
+                tz,                                               // TimeZone
+                int.parse (_time_as_string.substring (0, 4)),     // year
+                int.parse (_time_as_string.substring (5, 2)),     // month
+                int.parse (_time_as_string.substring (8, 2)),     // day
+                int.parse (_time_as_string.substring (11, 2)),    // hour
+                int.parse (_time_as_string.substring (14, 2)),    // minute
+                double.parse (_time_as_string.substring (17, 6))  // seconds
+                );
+
+            return _timestamp;
+            }
+    }
 
     /**
      * Time difference in microseconds from the start timestamp.
      */
-    public int time { get; set; }
+    public int time_us { get; set; }
+
+    /**
+     * The timestamp as a string value.
+     */
+    private string _time_as_string;
+    public string time_as_string {
+        get {
+            _time_as_string = "%s%s".printf (_timestamp.format ("%F %T"),
+            ("%.3f".printf (_timestamp.get_seconds () - _timestamp.get_second ())).substring (1, -1));
+
+            return _time_as_string;
+            }
+        set { _time_as_string = value; }
+    }
 
     /**
      * A list representing a single row of data in a table or file.
@@ -53,7 +84,7 @@ public class Cld.LogEntry : Cld.AbstractObject {
     }
 
     public void update (Gee.Map<string, Object> objects) {
-        timestamp = new DateTime.now_local ();
+        _timestamp = new DateTime.now_local ();
         data.clear ();
         foreach (var object in objects.values) {
             if (object is Column) {

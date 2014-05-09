@@ -273,7 +273,7 @@ public class Cld.ParkerModule : AbstractModule {
 
         public static VariableName parse (string value) {
             try {
-                var regex_position  = new Regex ("position", RegexCompileFlags.CASELESS);
+                var regex_position  = new Regex ("position$", RegexCompileFlags.CASELESS);
                 var regex_actual_position = new Regex ("actual_position", RegexCompileFlags.CASELESS);
                 var regex_actual_torque = new Regex ("actual_torque", RegexCompileFlags.CASELESS);
                 var regex_position_requested = new Regex ("position_requested", RegexCompileFlags.CASELESS);
@@ -615,7 +615,7 @@ public class Cld.ParkerModule : AbstractModule {
     public signal void new_actual_position (double actual_position);
 
     /* The position that is read directly from the Compax3 */
-    private double _actual_position = 0.0;
+    private double _actual_position;
     public double actual_position {
         get { return _actual_position; }
         private set {
@@ -683,6 +683,9 @@ public class Cld.ParkerModule : AbstractModule {
                     switch (iter->get_prop ("name")) {
                         case "port":
                             portref = iter->get_content ();
+                            break;
+                        case "devref":
+                            devref = iter->get_content ();
                             break;
                         case "has-brake":
                             has_brake = bool.parse (iter->get_content ());
@@ -832,6 +835,10 @@ public class Cld.ParkerModule : AbstractModule {
                            CWB_NO_STOP1 |
                            CWB_NO_STOP2
                            );
+        if (has_brake && use_brake) {
+            /* Close the brake */
+            yield write_object (C3Plus_DeviceControl_Controlword_1, 0);
+        }
         yield fetch_actual_position ();
         yield last_error ();
     }
@@ -973,26 +980,38 @@ public class Cld.ParkerModule : AbstractModule {
         if (active_command == null) {
             yield clear_error_log ();
             status1 &= ~(SWB1_HOME_IS_KNOWN); //Clear bit.
-            Cld.debug ("home () CW_HOME: %d status1: %u", CW_HOME, status1);
-            /* Write out the control words and begin checking the status word */
+            Cld.debug ("home () CW_HOME: %.4x status1: %.4x", CW_HOME, status1);
+            /* Arm for adress = 0 (home), activate and toggle start bit */
             yield write_object (
                                C3Plus_DeviceControl_Controlword_1,
-                               CW_HOME
+                               CWB_QUIT |
+                               CWB_NO_STOP1 |
+                               CWB_NO_STOP2
                                );
             yield write_object (
                                C3Plus_DeviceControl_Controlword_1,
-                               CW_HOME |
-                               CWB_START
+                               CWB_QUIT |
+                               CWB_NO_STOP1 |
+                               CWB_NO_STOP2 |
+                               CWB_START |
+                               CWB_OPEN_BRAKE
                                );
+
+            yield write_object (
+                               C3Plus_DeviceControl_Controlword_1,
+                               CWB_QUIT |
+                               CWB_NO_STOP1 |
+                               CWB_NO_STOP2 |
+                               CWB_OPEN_BRAKE
+                               );
+
             yield check_status (
                                home_timeout_ms,
                                SWB1_POS_REACHED |
+                               SWB1_HOME_IS_KNOWN |
                                SWB1_NO_ERROR
                                );
-            //Cld.debug ("home (): power off");
             yield write_object (C3Plus_DeviceControl_Controlword_1, 0);
-            yield check_status (3000, SWB1_HOME_IS_KNOWN |
-                                    SWB1_NO_ERROR);
             yield fetch_actual_position ();
             yield last_error ();
         }
@@ -1196,7 +1215,7 @@ public class Cld.ParkerModule : AbstractModule {
             case C3Plus_DeviceState_Statusword_1:
                 status1 = int.parse (response);
                 if ((status1 & SWB1_HOME_IS_KNOWN) == SWB1_HOME_IS_KNOWN) {
-                    //Cld.debug ("home found");
+                    Cld.debug ("home found");
                     active_command = null;
                 } else if ((status1 & SWB1_HOME_IS_KNOWN) == 0) {
                     //Cld.debug ("home not found");
@@ -1238,7 +1257,7 @@ public class Cld.ParkerModule : AbstractModule {
                 parse_error (1, response);
                 break;
             default:
-                //Cld.debug ("Unable to parse response: %s", response);
+                Cld.debug ("Unable to parse response: %s", response);
                 break;
         }
         active_command = null;

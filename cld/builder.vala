@@ -389,6 +389,7 @@ public class Cld.Builder : Cld.AbstractContainer {
 
             /* Setup port references for all of the modules */
             if (object is Module) {
+
                 ref_id = (object as Module).portref;
                 Cld.debug ("Assigning Port %s to Module %s", ref_id, object.id);
                 if (ref_id != null) {
@@ -409,6 +410,7 @@ public class Cld.Builder : Cld.AbstractContainer {
                         }
                     }
                 }
+
                 if (ref_id != null && object is ParkerModule) {
                     /* set the virtual channels that are to be referenced by this module */
                     foreach (var parker_channel in channels.values) {

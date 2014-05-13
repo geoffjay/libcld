@@ -99,6 +99,11 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      */
     public string backup_file;
 
+    /**
+     * The interval at which the database will be automativcally backed up.
+     */
+    public int backup_interval_ms;
+
 
     /**
      * The name of the current Log table.
@@ -271,6 +276,12 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                             break;
                         case "backup-file":
                             backup_file = iter->get_content ();
+                            break;
+                        case "backup-interval-hrs":
+                            value = iter->get_content ();
+                            backup_interval_ms = (int) (double.parse (value) *
+                                                  60 * 60 * 1000);
+Cld.debug ("backup interval in ms = %d", backup_interval_ms);
                             break;
                         default:
                             break;
@@ -458,9 +469,8 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             );
         update_experiment_table ();
         update_channel_table ();
-
         add_log_table ();
-
+        GLib.Timeout.add_full (GLib.Priority.DEFAULT_IDLE, backup_interval_ms, backup_cb);
         bg_log_timer.begin ((obj, res) => {
             try {
                 bg_log_timer.end (res);
@@ -481,6 +491,22 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             }
         });
     }
+
+    /**
+     * A callback function that automatically backs up the database.
+     */
+    private bool backup_cb () {
+Cld.debug ("back it up!!!");
+        backup_database.begin ();
+        if (active) {
+
+            return true;
+        } else {
+
+            return false;
+        }
+    }
+
 
     /**
      * Launches a backround thread that pushes a LogEntry to the queue at regular time
@@ -973,7 +999,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             do {
                 ret = backup.step (5);
                 backup_progress_updated (backup.remaining (), backup.pagecount ());
-                /* XXX not sure, but if this is a blocking sleep it would be bad */
+Cld.debug ("backing up %.3f", 100 * ((double)backup.remaining () / (double) backup.pagecount ()));
                 if (ret == Sqlite.OK || ret == Sqlite.BUSY || ret == Sqlite.LOCKED) {
                     Idle.add (backup_database.callback);
                     yield;
@@ -988,9 +1014,12 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      */
     public void backup_open () throws Cld.FileError {
         string db_filename;
-        if (!backup_path.has_suffix ("/"))
+        if (!backup_path.has_suffix ("/")) {
             backup_path = "%s%s".printf (backup_path, "/");
-        db_filename = "%s%s".printf (backup_path, backup_file);
+        }
+        var now = new DateTime.now_local ();
+        string stamp = now.to_string ();
+        db_filename = "%s%s%s".printf (backup_path, backup_file, stamp);
         if (!(Posix.access (db_filename, Posix.F_OK) == 0)) { // if file doesn't exist...
             FileStream.open (db_filename, "a+");
         }

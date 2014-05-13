@@ -269,23 +269,18 @@ public class Cld.ParkerModule : AbstractModule {
         POSITION,
         ACTUAL_POSITION,
         ACTUAL_TORQUE,
-        POSITION_REQUESTED;
+        REQUESTED_POSITION;
 
         public static VariableName parse (string value) {
             try {
-                var regex_position  = new Regex ("position$", RegexCompileFlags.CASELESS);
-                var regex_actual_position = new Regex ("actual_position", RegexCompileFlags.CASELESS);
-                var regex_actual_torque = new Regex ("actual_torque", RegexCompileFlags.CASELESS);
-                var regex_position_requested = new Regex ("position_requested", RegexCompileFlags.CASELESS);
-
-                if (regex_position.match (value)) {
+                if (value == "position") {
                     return POSITION;
-                } else if (regex_actual_position.match (value)) {
+                } else if (value == "actual_position") {
                     return ACTUAL_POSITION;
-                } else if (regex_actual_torque.match (value)) {
+                } else if (value == "actual_torque") {
                     return ACTUAL_TORQUE;
-                } else if (regex_position_requested.match (value)) {
-                    return POSITION_REQUESTED;
+                } else if (value == "requested_position") {
+                    return REQUESTED_POSITION;
                 }
             } catch (RegexError e) {
                 Cld.debug ("Error %s", e.message);
@@ -625,14 +620,14 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     /* A signal that is emitted when a new relative position is requested */
-    public signal void new_requested_position (double position_requested);
+    public signal void new_requested_position (double requested_position);
 
     /* The requested position of a relative move. */
-    private double _position_requested;
-    public double position_requested {
-        get { return _position_requested; }
+    private double _requested_position;
+    public double requested_position {
+        get { return _requested_position; }
         private set {
-            _position_requested = value;
+            _requested_position = value;
             new_requested_position (value);
         }
     }
@@ -659,6 +654,11 @@ public class Cld.ParkerModule : AbstractModule {
      * True if the drive has a brake.
      */
     public bool has_brake { get; set; }
+
+    /**
+     * A flag to indicate that the drive should stop.
+     */
+    public bool quit { get; set; default = false; }
 
     public ParkerModule.full (string id, Port port) {
        this.id = id;
@@ -721,9 +721,9 @@ public class Cld.ParkerModule : AbstractModule {
                     (channel as VChannel).raw_value = actual_torque;
                 });
                 break;
-            case VariableName.POSITION_REQUESTED:
+            case VariableName.REQUESTED_POSITION:
                 new_requested_position.connect ((position_requsted) => {
-                    (channel as VChannel).raw_value = position_requested;
+                    (channel as VChannel).raw_value = requested_position;
                 });
                 break;
             default:
@@ -896,7 +896,7 @@ public class Cld.ParkerModule : AbstractModule {
                                      double acceleration,
                                      double deceleration,
                                      double jerk) {
-        position_requested = position + distance;
+        requested_position = position + distance;
         if (active_command == null) {
             Cld.debug ("""
                 MoveRel: distance: %.3f, speed: %.3f, accel.: %.3f decel.: %.3f jerk: %.3f
@@ -948,6 +948,68 @@ public class Cld.ParkerModule : AbstractModule {
             yield last_error ();
         }
     }
+
+    /**
+     * Make an absolute move (MoveAbs).
+     */
+    public async void move_absolute (double pos,
+                                     double speed,
+                                     double acceleration,
+                                     double deceleration,
+                                     double jerk) {
+        requested_position = pos;
+        if (active_command == null) {
+            Cld.debug ("""
+                MoveAbs: position: %.3f, speed: %.3f, accel.: %.3f decel.: %.3f jerk: %.3f
+                """, pos, speed, acceleration, deceleration, jerk);
+            /* Write movement to the set table */
+            yield write_object (C3Array_Col01_Row02, pos);
+            yield write_object (C3Array_Col02_Row02, speed);
+            yield write_object (C3Array_Col05_Row02, MOVE_ABS);
+            yield write_object (C3Array_Col06_Row02, acceleration);
+            yield write_object (C3Array_Col07_Row02, deceleration);
+            yield write_object (C3Array_Col08_Row02, jerk);
+            /* Arm for Adress = 1 */
+            yield write_object (
+                               C3Plus_DeviceControl_Controlword_1,
+                               CWB_QUIT |
+                               CWB_NO_STOP1 |
+                               CWB_NO_STOP2 |
+                               CWB_ADDRESS_1
+                               );
+            /* Toggle the start bit */
+            yield write_object (
+                               C3Plus_DeviceControl_Controlword_1,
+                               CWB_QUIT |
+                               CWB_NO_STOP1 |
+                               CWB_NO_STOP2 |
+                               CWB_ADDRESS_1 |
+                               CWB_START |
+                               CWB_OPEN_BRAKE
+                               );
+            yield write_object (
+                               C3Plus_DeviceControl_Controlword_1,
+                               CWB_QUIT |
+                               CWB_NO_STOP1 |
+                               CWB_NO_STOP2 |
+                               CWB_ADDRESS_1 |
+                               CWB_OPEN_BRAKE
+                               );
+            /* Wait for timeout or position reached */
+            yield check_status (
+                               move_timeout_ms,
+                               SWB1_POS_REACHED |
+                               SWB1_NO_ERROR
+                               );
+            if (has_brake && use_brake) {
+                /* Close the brake */
+                yield write_object (C3Plus_DeviceControl_Controlword_1, 0);
+            }
+            yield fetch_actual_position ();
+            yield last_error ();
+        }
+    }
+
     private void new_data_cb (SerialPort port, uchar[] data, int size) {
         for (int i = 0; i < size; i++) {
             unichar c = "%c".printf (data[i]).get_char ();

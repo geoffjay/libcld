@@ -102,7 +102,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
      */
     private DateTime start_time;
 
-
     /* constructor */
     construct {
         objects = new Gee.TreeMap<string, Object> ();
@@ -335,6 +334,8 @@ public class Cld.CsvLog : Cld.AbstractLog {
      * Write the next line in the file.
      */
     public void write_next_line (Cld.LogEntry entry) {
+        DateTime curr_time = new DateTime.now_local ();
+        TimeSpan diff = curr_time.difference (start_time);
         string line = "";
         char sep = '\t';
 

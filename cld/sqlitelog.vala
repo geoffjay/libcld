@@ -496,7 +496,6 @@ Cld.debug ("backup interval in ms = %d", backup_interval_ms);
      * A callback function that automatically backs up the database.
      */
     private bool backup_cb () {
-Cld.debug ("back it up!!!");
         backup_database.begin ();
         if (active) {
 
@@ -999,12 +998,12 @@ Cld.debug ("back it up!!!");
             do {
                 ret = backup.step (5);
                 backup_progress_updated (backup.remaining (), backup.pagecount ());
-Cld.debug ("backing up %.3f", 100 * ((double)backup.remaining () / (double) backup.pagecount ()));
                 if (ret == Sqlite.OK || ret == Sqlite.BUSY || ret == Sqlite.LOCKED) {
-                    Idle.add (backup_database.callback);
+                    Idle.add_full (GLib.Priority.DEFAULT_IDLE, backup_database.callback);
                     yield;
                 }
             } while (ret == Sqlite.OK || ret == Sqlite.BUSY || ret == Sqlite.LOCKED);
+            backup_is_open = false;
 
             return;
     }
@@ -1055,7 +1054,8 @@ Cld.debug ("backing up %.3f", 100 * ((double)backup.remaining () / (double) back
      * @param is_averaged if true the ouput values are average over the time step otherwise a single value is recorded.
      */
     public void export_csv (string filename,
-                            int exp_id,
+                            int exp_id_begin,
+                            int exp_id_end,
                             DateTime start, DateTime stop, int step,
                             bool is_averaged) {
         string query;
@@ -1065,7 +1065,7 @@ Cld.debug ("backing up %.3f", 100 * ((double)backup.remaining () / (double) back
         int count = 0;
 
         file_open (filename);
-        write_header (exp_id);
+        write_header (exp_id_begin);
 
         /* Get the table name of the experiment */
         query = "SELECT * FROM experiment WHERE id=$ID;";

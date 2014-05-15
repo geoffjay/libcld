@@ -33,7 +33,7 @@ public class Cld.LogEntry : Cld.AbstractObject {
     /**
      * Time difference in microseconds from the start timestamp.
      */
-    public int time_us { get; set; }
+    public int64 time_us { get; set; }
 
     /**
      * The timestamp as a string value.

@@ -1086,18 +1086,18 @@ public class Cld.ParkerModule : AbstractModule {
             zero_position = _actual_position;
             Cld.debug ("zero_position: %.3f", zero_position);
             position = 0.000;
+            /* Write movement to the set table row 1*/
+            yield write_object (C3Array_Col01_Row01, zero_position);
+            yield write_object (C3Array_Col02_Row01, default_velocity);
+            yield write_object (C3Array_Col05_Row01, MOVE_ABS);
+            yield write_object (C3Array_Col06_Row01, default_acceleration);
+            yield write_object (C3Array_Col07_Row01, default_deceleration);
+            yield write_object (C3Array_Col08_Row01, default_jerk);
+          /* Save move 1 to flash */
+            yield write_object (C3_Flash_Write, 1);
         } else {
             Cld.debug ("Home is not known. Zero command ignored.");
         }
-        /* Write movement to the set table row 1*/
-        yield write_object (C3Array_Col01_Row01, zero_position);
-        yield write_object (C3Array_Col02_Row01, default_velocity);
-        yield write_object (C3Array_Col05_Row01, MOVE_ABS);
-        yield write_object (C3Array_Col06_Row01, default_acceleration);
-        yield write_object (C3Array_Col07_Row01, default_deceleration);
-        yield write_object (C3Array_Col08_Row01, default_jerk);
-      /* Save move 1 to flash */
-        yield write_object (C3_Flash_Write, 1);
     }
 
     public async void home_and_zero () {

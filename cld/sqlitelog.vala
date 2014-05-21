@@ -409,6 +409,23 @@ Cld.debug ("backup interval in ms = %d", backup_interval_ms);
     }
 
     /**
+     * Close the file.
+     */
+    public void file_close () {
+        DateTime time = new DateTime.now_local ();
+
+        if (is_open) {
+            /* add the footer */
+            file_stream.printf ("\nLog file: %s closed at %s",
+                                name, time.format ("%F %T"));
+            /* setting a GLib.FileStream object to null apparently forces a
+             * call to stdlib's close () */
+            file_stream = null;
+            is_open = false;
+        }
+    }
+
+    /**
      * Print a string to the log file.
      *
      * @param toprint The string to print
@@ -1065,58 +1082,62 @@ Cld.debug ("backup interval in ms = %d", backup_interval_ms);
         int count = 0;
 
         file_open (filename);
-        write_header (exp_id_begin);
+        for (int exp_id = exp_id_begin; exp_id < exp_id_end; exp_id++) {
+            write_header (exp_id);
 
-        /* Get the table name of the experiment */
-        query = "SELECT * FROM experiment WHERE id=$ID;";
-        ec = db.prepare_v2 (query, query.length, out stmt);
-        if (ec != Sqlite.OK) {
-            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
-        }
-        parameter_index = stmt.bind_parameter_index ("$ID");
-        stmt.bind_int (parameter_index, exp_id);
-
-        while (stmt.step () == Sqlite.ROW) {
-           name = stmt.column_text (ExperimentColumn.NAME);
-        }
-        stmt.reset ();
-
-        /* Count the number of columns in the table */
-        query = "SELECT Count (*) FROM channel WHERE experiment_id=$EXPERIMENT_ID;";
-        ec = db.prepare_v2 (query, query.length, out stmt);
-        if (ec != Sqlite.OK) {
-            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
-        }
-        parameter_index = stmt.bind_parameter_index ("$EXPERIMENT_ID");
-        stmt.bind_int (parameter_index, exp_id);
-        stmt.step ();
-        int columns = int.parse (stmt.column_text (0));
-        stmt.reset ();
-
-        /* Select data between start and stop time boundaries. */
-        query = """
-            SELECT * FROM %s
-            WHERE datetime (time)
-            BETWEEN datetime ("%s")
-            AND datetime ("%s")
-            ;
-        """.printf (name, start.to_string ().substring (0, 19),
-                    stop.to_string ().substring (0, 19));
-        ec = db.prepare_v2 (query, query.length, out stmt);
-        if (ec != Sqlite.OK) {
-            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
-        }
-
-        while (stmt.step () == Sqlite.ROW) {
-            line = "%s\t".printf (stmt.column_text (ExperimentDataColumns.TIME));
-            for (int column = 0; column < columns; column++) {
-                line += "%f%c".printf (stmt.column_double (column +
-                                        ExperimentDataColumns.DATA0), sep);
+            /* Get the table name of the experiment */
+            query = "SELECT * FROM experiment WHERE id=$ID;";
+            ec = db.prepare_v2 (query, query.length, out stmt);
+            if (ec != Sqlite.OK) {
+                stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
             }
-            line += "\n";
-            file_print (line);
+            parameter_index = stmt.bind_parameter_index ("$ID");
+            stmt.bind_int (parameter_index, exp_id);
+
+            while (stmt.step () == Sqlite.ROW) {
+               name = stmt.column_text (ExperimentColumn.NAME);
+            }
+            stmt.reset ();
+
+            /* Count the number of columns in the table */
+            query = "SELECT Count (*) FROM channel WHERE experiment_id=$EXPERIMENT_ID;";
+            ec = db.prepare_v2 (query, query.length, out stmt);
+            if (ec != Sqlite.OK) {
+                stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+            }
+            parameter_index = stmt.bind_parameter_index ("$EXPERIMENT_ID");
+            stmt.bind_int (parameter_index, exp_id);
+            stmt.step ();
+            int columns = int.parse (stmt.column_text (0));
+            stmt.reset ();
+
+            /* Select data between start and stop time boundaries. */
+            query = """
+                SELECT * FROM %s
+                WHERE datetime (time)
+                BETWEEN datetime ("%s")
+                AND datetime ("%s")
+                ;
+            """.printf (name, start.to_string ().substring (0, 19),
+                        stop.to_string ().substring (0, 19));
+            Cld.debug ("%s", query);
+            ec = db.prepare_v2 (query, query.length, out stmt);
+            if (ec != Sqlite.OK) {
+                stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+            }
+
+            while (stmt.step () == Sqlite.ROW) {
+                line = "%s\t".printf (stmt.column_text (ExperimentDataColumns.TIME));
+                for (int column = 0; column < columns; column++) {
+                    line += "%f%c".printf (stmt.column_double (column +
+                                            ExperimentDataColumns.DATA0), sep);
+                }
+                line += "\n";
+                file_print (line);
+            }
+            stmt.reset ();
         }
-        stmt.reset ();
+        file_close ();
 
         /* Build data strings from query result. */
 

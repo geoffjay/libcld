@@ -1073,8 +1073,9 @@ Cld.debug ("backup interval in ms = %d", backup_interval_ms);
     public void export_csv (string filename,
                             int exp_id_begin,
                             int exp_id_end,
-                            DateTime start, DateTime stop, int step,
-                            bool is_averaged) {
+                            DateTime start,
+                            DateTime stop,
+                            int step) {
         string query;
         string name = "";
         string line = "";
@@ -1082,7 +1083,7 @@ Cld.debug ("backup interval in ms = %d", backup_interval_ms);
         int count = 0;
 
         file_open (filename);
-        for (int exp_id = exp_id_begin; exp_id < exp_id_end; exp_id++) {
+        for (int exp_id = exp_id_begin; exp_id <= exp_id_end; exp_id++) {
             write_header (exp_id);
 
             /* Get the table name of the experiment */
@@ -1133,7 +1134,13 @@ Cld.debug ("backup interval in ms = %d", backup_interval_ms);
                                             ExperimentDataColumns.DATA0), sep);
                 }
                 line += "\n";
-                file_print (line);
+                if (count == 0) {
+                    file_print (line);
+                }
+                count++;
+                if (count == step) {
+                    count = 0;
+                }
             }
             stmt.reset ();
         }

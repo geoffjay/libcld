@@ -281,7 +281,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                             value = iter->get_content ();
                             backup_interval_ms = (int) (double.parse (value) *
                                                   60 * 60 * 1000);
-Cld.debug ("backup interval in ms = %d", backup_interval_ms);
                             break;
                         default:
                             break;
@@ -307,10 +306,18 @@ Cld.debug ("backup interval in ms = %d", backup_interval_ms);
      */
     public void database_open () throws Cld.FileError {
         string db_filename;
+
         if (!path.has_suffix ("/")) {
             path = "%s%s".printf (path, "/");
         }
+
         db_filename = "%s%s".printf (path, file);
+
+        /* Create the file if it doesn't exist already */
+        if (!(Posix.access (db_filename, Posix.F_OK) == 0)) {
+            FileStream.open (db_filename, "a+");
+        }
+
         if (!(Posix.access (db_filename, Posix.W_OK) == 0) &&
            !(Posix.access (db_filename, Posix.R_OK) == 0)) {
             throw new Cld.FileError.ACCESS (

@@ -1,5 +1,7 @@
+AUTOMAKE_OPTIONS = subdir-objects
+ACLOCAL_AMFLAGS = -I m4
+
 include $(top_srcdir)/Makefile.decl
-NULL =
 
 if ENABLE_DOC
 DOC_SUBDIR = \
@@ -15,6 +17,7 @@ endif
 
 SUBDIRS = \
 	cld \
+	rpm \
 	tests \
 	vapi \
 	$(DOC_SUBDIR) \
@@ -38,6 +41,16 @@ gen-ChangeLog:
 	  rm -f $(distdir)/ChangeLog; \
 	  mv $(distdir)/cl-t $(distdir)/ChangeLog; \
 	fi
+
+ctags:
+	$(RM) $(top_srcdir)/tags
+	find $(top_srcdir) -name .git -prune -o -name '*.vala' | xargs ctags
+
+etags:
+	$(RM) $(top_srcdir)/TAGS
+	find $(top_srcdir) -name .pc -prune -o -name '*.vala' | xargs etags -a
+
+tags: ctags etags
 
 EXTRA_DIST += \
 	gitlog-to-changelog \

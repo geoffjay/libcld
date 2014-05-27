@@ -234,7 +234,6 @@ public class Cld.DataSeries : Cld.AbstractContainer {
     }
 
     public override string to_string () {
-
         return base.to_string ();
     }
 }

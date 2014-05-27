@@ -31,30 +31,17 @@ using matheval;
 class Cld.MathEvalExample: GLib.Object {
 
     public void run () {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        var builder = new Builder.from_file ("matheval.xml");
-        /*Create 4 dummy input channels defined in xml*/
-        var ai0 = builder.get_object ("ai0");
-        message ("%s\n", ai0.to_string ());
-=======
-=======
->>>>>>> 80ba026... Fixing merge conflicts.
-=======
->>>>>>> e346880... Libmatheval added to VChannel.  Expression can only be assigned before Builder is run, so only once.  Expression cannot be assigned at 'runtime' ie after Builder has finished creating references.
         var xml = new XmlConfig.with_file_name ("matheval.xml");
         var builder = new Builder.from_xml_config (xml);
 
         /*Create 4 dummy input channels defined in xml*/
         var ai0 = builder.get_object ("ai0");
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> 80ba026... Fixing merge conflicts.
-=======
->>>>>>> 80ba026... Fixing merge conflicts.
-=======
->>>>>>> e346880... Libmatheval added to VChannel.  Expression can only be assigned before Builder is run, so only once.  Expression cannot be assigned at 'runtime' ie after Builder has finished creating references.
+        message ("%s\n", ai0.to_string ());
+        var xml = new XmlConfig.with_file_name ("matheval.xml");
+        var builder = new Builder.from_xml_config (xml);
+
+        /*Create 4 dummy input channels defined in xml*/
+        var ai0 = builder.get_object ("ai0");
         var ai1 = builder.get_object ("ai1");
         var ai2 = builder.get_object ("ai2");
         var ai3 = builder.get_object ("ai3");
@@ -99,8 +86,6 @@ class Cld.MathEvalExample: GLib.Object {
             }
         }
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
 }
 
 public static int main (string[] main) {
@@ -108,25 +93,6 @@ public static int main (string[] main) {
     MathEvalExample ex = new MathEvalExample ();
     ex.run ();
     Xml.Parser.cleanup ();
-=======
-=======
->>>>>>> e346880... Libmatheval added to VChannel.  Expression can only be assigned before Builder is run, so only once.  Expression cannot be assigned at 'runtime' ie after Builder has finished creating references.
-
-    public static int main (string[] main) {
-        Xml.Parser.init ();
-        MathEvalExample ex = new MathEvalExample ();
-        ex.run ();
-        Xml.Parser.cleanup ();
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> 80ba026... Fixing merge conflicts.
 
     return 0;
 }
-=======
->>>>>>> f90aadc... Fixing merge conflicts.
-=======
->>>>>>> e346880... Libmatheval added to VChannel.  Expression can only be assigned before Builder is run, so only once.  Expression cannot be assigned at 'runtime' ie after Builder has finished creating references.
-
-        return 0;
-    }

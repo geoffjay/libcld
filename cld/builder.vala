@@ -382,6 +382,7 @@ public class Cld.Builder : Cld.AbstractContainer {
                         }
                     }
                 }
+
                 /* Following the setup of the log columns, the log needs to attach the signals. */
                 (object as Cld.Log).connect_signals ();
             }

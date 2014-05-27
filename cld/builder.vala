@@ -475,6 +475,13 @@ public class Cld.Builder : Cld.AbstractContainer {
                                         var chanref = (dataseries as DataSeries).chanref;
                                         (process_value as ProcessValue2).dataseries.channel = get_object (chanref)
                                                                                     as ScalableChannel;
+       //                                 Cld.debug ("Pid2: %s ProcessValue2: %s mv: %s pv: %s mv channel: %s pv channel: %s>>>>>>>>>>>>>",
+       //                                     (control_object as Pid2).id,
+       //                                     process_value.id,
+       //                                     (((control_object as Pid2).mv) as DataSeries).id,
+       //                                     (((control_object as Pid2).pv) as DataSeries).id,
+       //                                     (((control_object as Pid2).mv) as DataSeries).channel.id,
+       //                                     (((control_object as Pid2).pv) as DataSeries).channel.id);
                                     }
                                 }
                             }

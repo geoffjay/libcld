@@ -441,7 +441,7 @@ public class Cld.ParkerModule : AbstractModule {
      * Deactivate the drive.
      */
     public async void deactivate () {
-            yield write_object (C3Plus_DeviceControl_Controlword_1, 0);
+        yield write_object (C3Plus_DeviceControl_Controlword_1, 0);
     }
 
     public async void jog_plus () {

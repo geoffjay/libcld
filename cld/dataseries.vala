@@ -209,7 +209,6 @@ public class Cld.DataSeries : Cld.AbstractContainer {
             return false;
         } else {
             val = buffer [i];
-
             return true;
         }
     }

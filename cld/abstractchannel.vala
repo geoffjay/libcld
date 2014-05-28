@@ -81,4 +81,9 @@ public abstract class Cld.AbstractChannel : AbstractObject, Channel {
                str_data += " [taskref]: %s\n".printf (taskref);
         return str_data;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual DateTime timestamp { get; set; }
 }

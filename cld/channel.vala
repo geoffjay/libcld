@@ -72,6 +72,11 @@ public interface Cld.Channel : Cld.Object {
      * Description of the channel's purpose.
      */
     public abstract string desc { get; set; }
+
+    /**
+     * A Timestamp to that should be updated when the value or state changes.
+     */
+    public abstract DateTime timestamp { get; set; }
 }
 
 /**

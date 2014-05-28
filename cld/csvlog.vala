@@ -371,14 +371,26 @@ public class Cld.CsvLog : Cld.AbstractLog {
             }
         });
 
-        bg_log_watch.begin ((obj, res) => {
-            try {
-                bg_log_watch.end (res);
-                Cld.debug ("Log file watch async ended");
-            } catch (ThreadError e) {
-                string msg = e.message;
-                Cld.error (@"Thread error: $msg");
-            }
+                /* Periodically write the queue to the log file. */
+        GLib.Timeout.add (dt, () => {
+            Cld.LogEntry entry = new Cld.LogEntry ();
+                if (active) {
+                    lock (queue) {
+                        if (queue.size == 0) {
+                            ;
+                        } else {
+                            for (int i = 0; i < queue.size; i++) {
+                                entry = queue.poll_tail ();
+                                write_next_line (entry);
+                            }
+                        }
+                    }
+
+                    return true;
+                } else {
+
+                    return false;
+                }
         });
     }
 
@@ -406,8 +418,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
                     entry.update (objects);
                     if (!queue.offer_head (entry))
                         Cld.error ("Element %s was not added to the queue.", entry.id);
-    //                if (queue.size > 0)
-    //                    Cld.debug ("queue size: %d", (queue as Gee.LinkedList).size);
                 }
                 mutex.lock ();
                 try {
@@ -416,36 +426,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
                         ; /* do nothing */
                 } finally {
                     mutex.unlock ();
-                }
-            }
-
-            Idle.add ((owned) callback);
-            return null;
-        };
-        Thread.create<void *> (_run, false);
-
-        yield;
-    }
-
-    /**
-     * Launches a thread that pulls a LogEntry from the queue and writes
-     * it to the log file.
-     */
-    private async void bg_log_watch () throws ThreadError {
-        SourceFunc callback = bg_log_watch.callback;
-        LogEntry entry = new LogEntry ();
-
-        ThreadFunc<void *> _run = () => {
-            active = true;
-
-            while (active) {
-                lock (queue) {
-                    if (queue.size == 0) {
-                        ;
-                    } else {
-                        entry = queue.poll_tail ();
-                        write_next_line (entry);
-                    }
                 }
             }
 

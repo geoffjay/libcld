@@ -290,12 +290,14 @@ public class Cld.ComediTask : AbstractTask {
         uint maxdata;
         int ret, i = 0, j;
         double meas;
+        GLib.DateTime timestamp = new DateTime.now_local ();
 
         ret = (device as ComediDevice).dev.do_insnlist (instruction_list);
         if (ret < 0)
             perror ("do_insnlist failed:");
 
         foreach (var channel in channels.values) {
+            (channel as Channel).timestamp = timestamp;
             maxdata = (device as ComediDevice).dev.get_maxdata (
                         (channel as Channel).subdevnum, (channel as Channel).num);
 
@@ -334,9 +336,11 @@ public class Cld.ComediTask : AbstractTask {
         Comedi.Range range;
         uint maxdata,  data;
         double val;
+        GLib.DateTime timestamp = new DateTime.now_local ();
 
         foreach (var channel in channels.values) {
 
+            (channel as Channel).timestamp = timestamp;
             if (channel is AOChannel) {
                 val = (channel as AOChannel).scaled_value;
                 range = (device as ComediDevice).dev.get_range (

@@ -14,20 +14,9 @@ public class Cld.LogEntry : Cld.AbstractObject {
     private DateTime _timestamp;
     public DateTime timestamp {
         get {
-            TimeZone tz = new TimeZone.local ();
-            _timestamp = new DateTime
-                (
-                tz,                                               // TimeZone
-                int.parse (_time_as_string.substring (0, 4)),     // year
-                int.parse (_time_as_string.substring (5, 2)),     // month
-                int.parse (_time_as_string.substring (8, 2)),     // day
-                int.parse (_time_as_string.substring (11, 2)),    // hour
-                int.parse (_time_as_string.substring (14, 2)),    // minute
-                double.parse (_time_as_string.substring (17, 6))  // seconds
-                );
-
             return _timestamp;
             }
+        set { _timestamp = value; }
     }
 
     /**
@@ -41,8 +30,8 @@ public class Cld.LogEntry : Cld.AbstractObject {
     private string _time_as_string;
     public string time_as_string {
         get {
-            _time_as_string = "%s%s".printf (_timestamp.format ("%F %T"),
-            ("%.3f".printf (_timestamp.get_seconds () - _timestamp.get_second ())).substring (1, -1));
+            _time_as_string = "%s%s".printf (timestamp.format ("%F %T"),
+            ("%.3f".printf (timestamp.get_seconds () - timestamp.get_second ())).substring (1, -1));
 
             return _time_as_string;
             }
@@ -84,11 +73,16 @@ public class Cld.LogEntry : Cld.AbstractObject {
     }
 
     public void update (Gee.Map<string, Object> objects) {
-        _timestamp = new DateTime.now_local ();
+        //timestamp = new DateTime.now_local ();
+        int i = 0;
         data.clear ();
         foreach (var object in objects.values) {
             if (object is Column) {
                 var channel = ((object as Column).channel as Channel);
+                if (i > 0) {
+                    timestamp = (channel as Channel).timestamp;
+                    i++;
+                }
                 if (channel is ScalableChannel) {
                     data.add ((channel as ScalableChannel).scaled_value);
                 } else if (channel is DChannel) {

@@ -453,8 +453,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public void write_header (int id) {
         Gee.ArrayList<Cld.ChannelEntry?> channel_entries = new Gee.ArrayList<Cld.ChannelEntry?> ();
         string tags = "Time";
-        //string units = "[HH:MM:SS.mmm]";
-        string units = "[us]";
+        string units = "[YYYY-MM-DD HH:MM:SS.mmm]";
         string cals = "Channel Calibrations:\n\n";
         string expressions = "MathChannel Expressions:\n\n";
 
@@ -494,6 +493,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         update_experiment_table ();
         update_channel_table ();
         add_log_table ();
+
         GLib.Timeout.add_full (GLib.Priority.DEFAULT_IDLE, backup_interval_ms, backup_cb);
         bg_log_timer.begin ((obj, res) => {
             try {
@@ -505,15 +505,27 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             }
         });
 
-        bg_log_watch.begin ((obj, res) => {
-            try {
-                bg_log_watch.end (res);
-                Cld.debug ("Log file watch async ended");
-            } catch (ThreadError e) {
-                string msg = e.message;
-                Cld.error (@"Thread error: $msg");
-            }
-        });
+        /* Periodically write the queue to the database. */
+        GLib.Timeout.add (dt, () => {
+            Cld.LogEntry entry = new Cld.LogEntry ();
+                if (active) {
+                    lock (queue) {
+                        if (queue.size == 0) {
+                            ;
+                        } else {
+                            for (int i = 0; i < queue.size; i++) {
+                                entry = queue.poll_tail ();
+                                log_entry_write (entry);
+                            }
+                        }
+                    }
+
+                    return true;
+                } else {
+
+                    return false;
+                }
+        }, GLib.Priority.DEFAULT_IDLE);
     }
 
     /**
@@ -562,44 +574,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 }
             }
 
-            Idle.add ((owned) callback);
+            Idle.add_full (GLib.Priority.HIGH_IDLE, (owned) callback);
             return null;
         };
         Thread.create<void *> (_run, false);
 
         yield;
     }
-
-    /**
-     * Launches a thread that pulls a LogEntry from the queue and writes
-     * it to the log file.
-     */
-    private async void bg_log_watch () throws ThreadError {
-        SourceFunc callback = bg_log_watch.callback;
-        Cld.LogEntry entry = new Cld.LogEntry ();
-
-        ThreadFunc<void *> _run = () => {
-            active = true;
-
-            while (active) {
-                lock (queue) {
-                    if (queue.size == 0) {
-                        ;
-                    } else {
-                        entry = queue.poll_tail ();
-                        log_entry_write (entry);
-                    }
-                }
-            }
-
-            Idle.add ((owned) callback);
-            return null;
-        };
-        Thread.create<void *> (_run, false);
-
-        yield;
-    }
-
 
     private void update_experiment_table () {
         string query = """
@@ -821,16 +802,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         i = 0;
         double val = 0;
-//        /* sort objects */
-//        Gee.List<Cld.Object> map_values = new Gee.ArrayList<Cld.Object> ();
-//
-//        map_values.add_all (objects.values);
-//        map_values.sort ((GLib.CompareFunc) Cld.Object.compare);
-//        objects.clear ();
-//        foreach (Cld.Object object in map_values) {
-//            objects.set (object.id, object);
-//        }
-
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
                 parameter_index = stmt.bind_parameter_index ("$VAL%d".printf (i));
@@ -1152,30 +1123,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             stmt.reset ();
         }
         file_close ();
-
-        /* Build data strings from query result. */
-
-//        if (is_averaged) {
-//            for (int row = 1; row < (count + 1) ; row++) {
-//                int i = 1;
-//                while (i < step) {
-//                    ent = get_log_entry (name, exp_id, row);
-//                    if ((ent.time >= start) && (ent.time <= stop)) {
-//                    }
-//                }
-//            }
-//        } else {
-//        for (int row = 1; row < (count + 1); row += step) {
-//            ent = get_log_entry (name, exp_id, row);
-//            if ((ent.time_us >= start) && (ent.time_us <= stop)) {
-//                line = "%lld\t".printf ((int64)ent.time_us);
-//                foreach (double datum in ent.data) {
-//                    line += "%f%c".printf (datum, sep);
-//                }
-//                line += "\n";
-//            }
-//            file_print (line);
-//        }
     }
 
     /**

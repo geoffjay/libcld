@@ -48,11 +48,6 @@ public class Cld.LicorModule : AbstractModule {
     /**
      * {@inheritDoc}
      */
-    public override string devref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
     public override string portref { get; set; }
 
     /**
@@ -209,20 +204,6 @@ public class Cld.LicorModule : AbstractModule {
         loaded = false; // XXX There is currently no way to verify this.
 
         Cld.debug ("LicorModule :: unload ()");
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Object> val) {
-        _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Object> val) {
-        _objects = val;
     }
 
     /**

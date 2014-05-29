@@ -130,11 +130,6 @@ public interface Cld.Log : Cld.Object {
      */
     public abstract string date_format { get; set; }
 
-    ~Log () {
-        if (_objects != null)
-            _objects.clear ();
-    }
-
     /**
      * Connect the columns to their corresponding channel signals.
      */

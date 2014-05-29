@@ -301,13 +301,11 @@ public class Cld.Builder : Cld.AbstractContainer {
         string ref_id;
 
         foreach (var object in objects.values) {
-message ("object id: %s", object.id);
             /* Setup the device references for all of the channel types */
             if (object is Channel) {
                 ref_id = (object as Channel).devref;
                 Cld.debug ("Assigning Device %s to Channel %s", ref_id, object.id);
                 var device = get_object (ref_id);
-message ("1111");
                 if (device != null && device is Device) {
                     (object as Channel).device = (device as Device);
                     ref_id = (object as Channel).taskref;
@@ -438,7 +436,6 @@ message ("1111");
 //                        }
 //                    }
                 }
-                }
             }
 
             /* A  data series references a scalable channel. */
@@ -488,13 +485,6 @@ message ("1111");
                                         var chanref = (dataseries as DataSeries).chanref;
                                         (process_value as ProcessValue2).dataseries.channel = get_object (chanref)
                                                                                     as ScalableChannel;
-       //                                 Cld.debug ("Pid2: %s ProcessValue2: %s mv: %s pv: %s mv channel: %s pv channel: %s>>>>>>>>>>>>>",
-       //                                     (control_object as Pid2).id,
-       //                                     process_value.id,
-       //                                     (((control_object as Pid2).mv) as DataSeries).id,
-       //                                     (((control_object as Pid2).pv) as DataSeries).id,
-       //                                     (((control_object as Pid2).mv) as DataSeries).channel.id,
-       //                                     (((control_object as Pid2).pv) as DataSeries).channel.id);
                                     }
                                 }
                             }
@@ -509,9 +499,8 @@ message ("1111");
                             }
                         }
                     }
+                }
             }
-
->>>>>>> bd84c83... Pointless change, squash me.
 
             /* Each device in daq references tasks.  */
             if (object is Daq) {
@@ -524,9 +513,6 @@ message ("1111");
                     }
                 }
             }
-        }
-        foreach (var object in objects.values) {
-            Cld.debug ("%s", object.id);
         }
     }
     /**

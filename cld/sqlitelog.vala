@@ -104,7 +104,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      */
     public int backup_interval_ms;
 
-
     /**
      * The name of the current Log table.
      */
@@ -508,23 +507,21 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         /* Periodically write the queue to the database. */
         GLib.Timeout.add (dt, () => {
             Cld.LogEntry entry = new Cld.LogEntry ();
-                if (active) {
-                    lock (queue) {
-                        if (queue.size == 0) {
-                            ;
-                        } else {
-                            for (int i = 0; i < queue.size; i++) {
-                                entry = queue.poll_tail ();
-                                log_entry_write (entry);
-                            }
+            if (active) {
+                lock (queue) {
+                    if (queue.size == 0) {
+                        ;
+                    } else {
+                        for (int i = 0; i < queue.size; i++) {
+                            entry = queue.poll_tail ();
+                            log_entry_write (entry);
                         }
                     }
-
-                    return true;
-                } else {
-
-                    return false;
                 }
+                return true;
+            } else {
+                return false;
+            }
         }, GLib.Priority.DEFAULT_IDLE);
     }
 
@@ -534,10 +531,8 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     private bool backup_cb () {
         backup_database.begin ();
         if (active) {
-
             return true;
         } else {
-
             return false;
         }
     }

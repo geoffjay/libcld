@@ -13,9 +13,7 @@ public class Cld.LogEntry : Cld.AbstractObject {
      */
     private DateTime _timestamp;
     public DateTime timestamp {
-        get {
-            return _timestamp;
-            }
+        get { return _timestamp; }
         set { _timestamp = value; }
     }
 
@@ -32,9 +30,8 @@ public class Cld.LogEntry : Cld.AbstractObject {
         get {
             _time_as_string = "%s%s".printf (timestamp.format ("%F %T"),
             ("%.3f".printf (timestamp.get_seconds () - timestamp.get_second ())).substring (1, -1));
-
             return _time_as_string;
-            }
+        }
         set { _time_as_string = value; }
     }
 
@@ -57,7 +54,7 @@ public class Cld.LogEntry : Cld.AbstractObject {
         get {
             _as_string = this.to_string ();
             return _as_string;
-            }
+        }
         set { _as_string = value; }
     }
 
@@ -108,14 +105,11 @@ public struct Cld.ExperimentEntry {
     public string stop_time { get; set; }
     public double log_rate { get; set; }
 
-    public ExperimentEntry () {
-
-    }
+    public ExperimentEntry () { }
 
     public string to_string () {
         string str_data = "id: %d\n".printf (id);
         str_data = "%s%s".printf (str_data, "name: %s\n".printf (name));
-
         return str_data;
     }
 }
@@ -139,14 +133,11 @@ public struct Cld.ChannelEntry {
     public double coeff_x4 { get; set; }
     public string units { get; set; }
 
-    public ChannelEntry () {
-
-    }
+    public ChannelEntry () { }
 
     public string to_string () {
-    string str_data = "id: %d\n".printf (id);
-
-    return str_data;
+        string str_data = "id: %d\n".printf (id);
+        return str_data;
     }
 
 }

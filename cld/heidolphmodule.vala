@@ -33,46 +33,33 @@ public class Cld.HeidolphModule : AbstractModule {
      * Property backing fields.
      */
     private Gee.Map<string, Cld.Object> _objects;
+    private string _speed_sp;
+    private string old_speed_sp = "0";
+    private string _speed = "0";
+    private string _torque = "0";
+    private string _error_status;
 
-    public int timeout_ms { get; set; default = 400;}
     private string received = "c";
     private uint? source_id;
 
-    private string _speed_sp;
+    public int timeout_ms { get; set; default = 400;}
+
     public string speed_sp {
         get { return _speed_sp; }
         set { _speed_sp = value; }
-        }
-    private string old_speed_sp = "0";
+    }
 
-    private string _speed_sp;
-    public string speed_sp {
-        get { return _speed_sp; }
-        set { _speed_sp = value; }
-        }
-    private string old_speed_sp = "0";
-
-    private string _speed_sp;
-    public string speed_sp {
-        get { return _speed_sp; }
-        set { _speed_sp = value; }
-        }
-    private string old_speed_sp = "0";
-
-    private string _speed = "0";
     public string speed {
         get { return _speed; }
-        }
+    }
 
-    private string _torque = "0";
     public string torque {
         get { return _torque; }
-        }
+    }
 
-    private string _error_status;
     public string error_status {
         get { return _error_status; }
-        }
+    }
 
     /**
      * {@inheritDoc}
@@ -116,8 +103,7 @@ public class Cld.HeidolphModule : AbstractModule {
     /**
      * Default construction.
      */
-    public HeidolphModule () {
-    }
+    public HeidolphModule () { }
 
     /**
      * Full construction using available settings.
@@ -278,14 +264,6 @@ public class Cld.HeidolphModule : AbstractModule {
        //Cld.debug ("HeidolphModule :: add_channel(%s)", channel.id);
     }
 
-
-    /**
-     * ...
-     */
-    public void add_channel (Cld.Object channel) {
-        channels.set (channel.id, channel);
-       //Cld.debug ("HeidolphModule :: add_channel(%s)\n", channel.id);
-=======
     public void set_speed (string speed_set) {
         Cld.debug ("Heidolph: set_speed ()\n");
         _speed_sp = speed_set;
@@ -310,7 +288,6 @@ public class Cld.HeidolphModule : AbstractModule {
         string msg1 = "N\r\n";
 
         port.send_bytes (msg1.to_utf8 (), msg1.length);
->>>>>>> 62fce25... HeidolphModule is working. May need minor changes upon review.
     }
 
 
@@ -321,8 +298,6 @@ public class Cld.HeidolphModule : AbstractModule {
         channels.set (channel.id, channel);
        //Cld.debug ("HeidolphModule :: add_channel(%s)\n", channel.id);
     }
-
-
     /**
      * {@inheritDoc}
      */
@@ -372,5 +347,3 @@ public class Cld.HeidolphModule : AbstractModule {
         _objects = val;
     }
 }
-
-

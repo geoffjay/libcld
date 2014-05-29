@@ -371,26 +371,24 @@ public class Cld.CsvLog : Cld.AbstractLog {
             }
         });
 
-                /* Periodically write the queue to the log file. */
+        /* Periodically write the queue to the log file. */
         GLib.Timeout.add (dt, () => {
             Cld.LogEntry entry = new Cld.LogEntry ();
-                if (active) {
-                    lock (queue) {
-                        if (queue.size == 0) {
-                            ;
-                        } else {
-                            for (int i = 0; i < queue.size; i++) {
-                                entry = queue.poll_tail ();
-                                write_next_line (entry);
-                            }
+            if (active) {
+                lock (queue) {
+                    if (queue.size == 0) {
+                        ;
+                    } else {
+                        for (int i = 0; i < queue.size; i++) {
+                            entry = queue.poll_tail ();
+                            write_next_line (entry);
                         }
                     }
-
-                    return true;
-                } else {
-
-                    return false;
                 }
+                return true;
+            } else {
+                return false;
+            }
         });
     }
 

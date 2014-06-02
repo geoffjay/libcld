@@ -494,6 +494,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         add_log_table ();
 
         GLib.Timeout.add_full (GLib.Priority.DEFAULT_IDLE, backup_interval_ms, backup_cb);
+
         bg_log_timer.begin ((obj, res) => {
             try {
                 bg_log_timer.end (res);
@@ -504,25 +505,15 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             }
         });
 
-        /* Periodically write the queue to the database. */
-        GLib.Timeout.add (dt, () => {
-            Cld.LogEntry entry = new Cld.LogEntry ();
-            if (active) {
-                lock (queue) {
-                    if (queue.size == 0) {
-                        ;
-                    } else {
-                        for (int i = 0; i < queue.size; i++) {
-                            entry = queue.poll_tail ();
-                            log_entry_write (entry);
-                        }
-                    }
-                }
-                return true;
-            } else {
-                return false;
+        bg_log_watch.begin ((obj, res) => {
+            try {
+                bg_log_watch.end (res);
+                Cld.debug ("Log file watch async ended");
+            } catch (ThreadError e) {
+                string msg = e.message;
+                Cld.error (@"Thread error: $msg");
             }
-        }, GLib.Priority.DEFAULT_IDLE);
+        });
     }
 
     /**
@@ -537,6 +528,8 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         }
     }
 
+    private Cond queue_cond = new Cond ();
+    private Mutex queue_mutex = new Mutex ();
 
     /**
      * Launches a backround thread that pushes a LogEntry to the queue at regular time
@@ -550,18 +543,28 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             Mutex mutex = new Mutex ();
             Cond cond = new Cond ();
             int64 end_time;
+            int64 start = get_monotonic_time ();
+            int64 counter = 1;
 
             active = true;
 
             while (active) {
+                /* Update the entry and push it onto the queue */
+                entry.update (objects);
+                queue_mutex.lock ();
                 lock (queue) {
-                    entry.update (objects);
                     if (!queue.offer_head (entry))
                         Cld.error ("Element %s was not added to the queue.", entry.id);
+                    else {
+                        queue_cond.signal ();
+                        queue_mutex.unlock ();
+                    }
                 }
+
+                /* Perform timing control */
                 mutex.lock ();
                 try {
-                    end_time = get_monotonic_time () + dt * TimeSpan.MILLISECOND;
+                    end_time = start + counter++ * dt * TimeSpan.MILLISECOND;
                     while (cond.wait_until (mutex, end_time))
                         ; /* do nothing */
                 } finally {
@@ -569,7 +572,40 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 }
             }
 
-            Idle.add_full (GLib.Priority.HIGH_IDLE, (owned) callback);
+            Idle.add ((owned) callback);
+            return null;
+        };
+        Thread.create<void *> (_run, false);
+
+        yield;
+    }
+
+    private int min_queue_size = 1;
+
+    /**
+     * Launches a thread that pulls a LogEntry from the queue and writes
+     * it to the log file.
+     */
+    private async void bg_log_watch () throws ThreadError {
+        SourceFunc callback = bg_log_watch.callback;
+        Cld.LogEntry entry = new Cld.LogEntry ();
+
+        ThreadFunc<void *> _run = () => {
+            active = true;
+
+            while (active) {
+                while (queue.size < min_queue_size)
+                    queue_cond.wait (queue_mutex);
+
+                while (queue.size != 0) {
+                    lock (queue) {
+                        entry = queue.poll_tail ();
+                    }
+                    log_entry_write (entry);
+                }
+            }
+
+            Idle.add ((owned) callback);
             return null;
         };
         Thread.create<void *> (_run, false);
@@ -761,6 +797,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     }
 
     private void log_entry_write (Cld.LogEntry entry) {
+//Cld.debug ("log_entry_write (), time as string: %s", entry.time_as_string);
         string query = """
             INSERT INTO %s
             (
@@ -1097,7 +1134,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             Cld.debug ("%s", query);
             ec = db.prepare_v2 (query, query.length, out stmt);
             if (ec != Sqlite.OK) {
-                stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+                Cld.debug ("Error: %d: %s\n", db.errcode (), db.errmsg ());
             }
 
             while (stmt.step () == Sqlite.ROW) {

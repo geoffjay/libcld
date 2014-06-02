@@ -270,35 +270,6 @@ public class Cld.HeidolphModule : AbstractModule {
     }
 
     /**
-     * XXX This doesn't work. Retrieve the speed setpoint.
-     */
-    public string get_speed_sp () {
-        string msg1 = "s\r\n";
-
-        port.send_bytes (msg1.to_utf8 (), msg1.length);
-        Posix.sleep (5); // wait for the new data to appear
-
-        return _speed_sp;
-    }
-
-    /**
-     * Normalize the torque value.
-     */
-    public void normalize () {
-        string msg1 = "N\r\n";
-
-        port.send_bytes (msg1.to_utf8 (), msg1.length);
-    }
-
-
-    /**
-     * ...
-     */
-    public void add_channel (Cld.Object channel) {
-        channels.set (channel.id, channel);
-       //Cld.debug ("HeidolphModule :: add_channel(%s)\n", channel.id);
-    }
-    /**
      * {@inheritDoc}
      */
     public override bool load () {

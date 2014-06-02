@@ -371,26 +371,19 @@ public class Cld.CsvLog : Cld.AbstractLog {
             }
         });
 
-        /* Periodically write the queue to the log file. */
-        GLib.Timeout.add (dt, () => {
-            Cld.LogEntry entry = new Cld.LogEntry ();
-            if (active) {
-                lock (queue) {
-                    if (queue.size == 0) {
-                        ;
-                    } else {
-                        for (int i = 0; i < queue.size; i++) {
-                            entry = queue.poll_tail ();
-                            write_next_line (entry);
-                        }
-                    }
-                }
-                return true;
-            } else {
-                return false;
+        bg_log_watch.begin ((obj, res) => {
+            try {
+                bg_log_watch.end (res);
+                Cld.debug ("Log file watch async ended");
+            } catch (ThreadError e) {
+                string msg = e.message;
+                Cld.error (@"Thread error: $msg");
             }
         });
     }
+
+    private Cond queue_cond = new Cond ();
+    private Mutex queue_mutex = new Mutex ();
 
     /**
      * Launches a backround thread that pushes a LogEntry to the queue at regular time
@@ -403,27 +396,68 @@ public class Cld.CsvLog : Cld.AbstractLog {
         ThreadFunc<void *> _run = () => {
             Mutex mutex = new Mutex ();
             Cond cond = new Cond ();
-            int64 end_time;
+            int64 start = get_monotonic_time ();
+            int64 end_time = start;
+            int64 counter = 1;
 
             active = true;
             write_header ();
 
             while (active) {
+                /* Update the entry and push it onto the queue */
+                entry.update (objects);
+                entry.time_us = end_time - start;
+                queue_mutex.lock ();
                 lock (queue) {
-                    DateTime curr_time = new DateTime.now_local ();
-                    TimeSpan diff = curr_time.difference (start_time);
-                    entry.time_us = (int64) diff;
-                    entry.update (objects);
                     if (!queue.offer_head (entry))
                         Cld.error ("Element %s was not added to the queue.", entry.id);
+                    else {
+                        queue_cond.signal ();
+                        queue_mutex.unlock ();
+                    }
                 }
+
+                /* Perform timing control */
                 mutex.lock ();
                 try {
-                    end_time = get_monotonic_time () + dt * TimeSpan.MILLISECOND;
+                    end_time = start + counter++ * dt * TimeSpan.MILLISECOND;
                     while (cond.wait_until (mutex, end_time))
                         ; /* do nothing */
                 } finally {
                     mutex.unlock ();
+                }
+            }
+
+            Idle.add ((owned) callback);
+            return null;
+        };
+        Thread.create<void *> (_run, false);
+
+        yield;
+    }
+
+    private int min_queue_size = 1;
+
+     /**
+     * Launches a thread that pulls a LogEntry from the queue and writes
+     * it to the log file.
+     */
+    private async void bg_log_watch () throws ThreadError {
+        SourceFunc callback = bg_log_watch.callback;
+        Cld.LogEntry entry = new Cld.LogEntry ();
+
+        ThreadFunc<void *> _run = () => {
+            active = true;
+
+            while (active) {
+                while (queue.size < min_queue_size)
+                    queue_cond.wait (queue_mutex);
+
+                while (queue.size != 0) {
+                    lock (queue) {
+                        entry = queue.poll_tail ();
+                    }
+                    write_next_line (entry);
                 }
             }
 

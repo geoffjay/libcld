@@ -292,6 +292,8 @@ public class Cld.ComediTask : AbstractTask {
         double meas;
         GLib.DateTime timestamp = new DateTime.now_local ();
 
+//Cld.debug ("\t\t\t\texecute_instruction_list (), get_seconds (): %.3f", timestamp.get_seconds ());
+
         ret = (device as ComediDevice).dev.do_insnlist (instruction_list);
         if (ret < 0)
             perror ("do_insnlist failed:");
@@ -366,12 +368,13 @@ public class Cld.ComediTask : AbstractTask {
         }
      }
 
-
     /**
      * A thread that is used to implement a polling task.
      */
     public class Thread {
         private ComediTask task;
+        private static int64 start_time = get_monotonic_time ();
+        private static int64 count = 1;
 
         public Thread (ComediTask task) {
             this.task = task;
@@ -383,12 +386,7 @@ public class Cld.ComediTask : AbstractTask {
         public void * run () {
             Mutex mutex = new Mutex ();
             Cond cond = new Cond ();
-#if HAVE_GLIB232
             int64 end_time;
-#else
-            TimeVal next_time = TimeVal ();
-            next_time.get_current_time ();
-#endif
 
             while (task.active) {
                 lock (task) {
@@ -397,13 +395,8 @@ public class Cld.ComediTask : AbstractTask {
 
                 mutex.lock ();
                 try {
-#if HAVE_GLIB232
-                    end_time = get_monotonic_time () + task.interval_ms * TimeSpan.MILLISECOND;
+                    end_time = start_time + count++ * task.interval_ms * TimeSpan.MILLISECOND;
                     while (cond.wait_until (mutex, end_time))
-#else
-                    next_time.add (task.interval_ms * (long)TimeSpan.MILLISECOND);
-                    while (cond.timed_wait (mutex, next_time))
-#endif
                         ; /* do nothing */
                 } finally {
                     mutex.unlock ();

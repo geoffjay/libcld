@@ -59,8 +59,10 @@ public class Cld.LogEntry : Cld.AbstractObject {
     }
 
     public LogEntry () {
+        timestamp = new DateTime.now_local ();
         data = new Gee.ArrayList<double?> ();
     }
+
     /**
      * {@inheritDoc}
      */
@@ -76,10 +78,10 @@ public class Cld.LogEntry : Cld.AbstractObject {
         foreach (var object in objects.values) {
             if (object is Column) {
                 var channel = ((object as Column).channel as Channel);
-                if (i > 0) {
+
+                if (i++ == 0)
                     timestamp = (channel as Channel).timestamp;
-                    i++;
-                }
+
                 if (channel is ScalableChannel) {
                     data.add ((channel as ScalableChannel).scaled_value);
                 } else if (channel is DChannel) {

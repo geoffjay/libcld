@@ -48,18 +48,17 @@ cld/cld-0.2.vapi
 cld/cld-internals-0.2.vapi
 cld/libcld-0.2.la
 cld/libcld_0_2_la_vala.stamp
+cld/libcld_0_2_la_vala.stamp-t
+
+# Documentation
+!docs/Makefile
 
 # Example programs
-!examples/gtk-log.c
-!examples/threads.c
 examples/*.stamp
 examples/.deps/
 examples/.libs/
+examples/async-acquisition
 examples/builder
-examples/builder_vala.stamp-t
-examples/pid
-examples/gtk-log
-examples/application-data.h
 examples/serialport
 examples/serialport-xml
 examples/socketport

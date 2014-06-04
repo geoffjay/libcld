@@ -4,10 +4,14 @@ noinst_PROGRAMS = $(EXAMPLE_PROGS)
 
 EXAMPLE_PROGS += \
 	builder \
-	pid \
+	async-acquisition \
 	$(NULL)
 
 ### Shared build flags and dependencies
+
+example_SOURCES = \
+	example.vala \
+	$(NULL)
 
 example_DEPENDENCIES = \
 	$(top_srcdir)/cld/cld-0.2.vapi \
@@ -37,20 +41,14 @@ example_LDADD = \
 
 ### individual example applications
 
-builder_SOURCES = \
-	builder.vala \
-	$(NULL)
-
+builder_SOURCES = builder.vala $(example_SOURCES)
 builder_DEPENDENCIES = $(example_DEPENDENCIES)
 builder_VALAFLAGS = $(example_VALAFLAGS)
 builder_CPPFLAGS = $(example_CPPFLAGS)
 builder_LDADD = $(example_LDADD)
 
-pid_SOURCES = \
-	pid.vala \
-	$(NULL)
-
-pid_DEPENDENCIES = $(example_DEPENDENCIES)
-pid_VALAFLAGS = $(example_VALAFLAGS)
-pid_CPPFLAGS = $(example_CPPFLAGS)
-pid_LDADD = $(example_LDADD)
+async_acquisition_SOURCES = async-acquisition.vala $(example_SOURCES)
+async_acquisition_DEPENDENCIES = $(example_DEPENDENCIES)
+async_acquisition_VALAFLAGS = $(example_VALAFLAGS)
+async_acquisition_CPPFLAGS = $(example_CPPFLAGS)
+async_acquisition_LDADD = $(example_LDADD)

@@ -385,6 +385,9 @@ public class Cld.Builder : Cld.AbstractContainer {
 
                 /* Following the setup of the log columns, the log needs to attach the signals. */
                 (object as Cld.Log).connect_signals ();
+
+                /* Add a FIFO buffer to the Log for data from each ComediTask. */
+                add_fifos (object as Cld.Log);
             }
 
             /* Setup port references for all of the modules */
@@ -529,6 +532,29 @@ public class Cld.Builder : Cld.AbstractContainer {
             }
         }
      }
+
+     /**
+      * Add FIFOS to a Cld.Log.
+      * XXX This method is quite cumbersome and should be simplified.
+      */
+    public void add_fifos (Log log) {
+        foreach (var daq in objects.values) {
+            if (daq is Daq) {
+                foreach (var device in (daq as Cld.Container).objects.values) {
+                    if (device is Device) {
+                        foreach (var task in (device as Cld.Container).objects.values) {
+                            if (task is ComediTask) {
+                                /* Request a FIFO and add it to fifos */
+                                int fd;
+                                string fname = (task as ComediTask).connect_fifo (log.id, out fd);
+                                log.fifos.set (fname, fd);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * {@inheritDoc}

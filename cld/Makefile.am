@@ -20,6 +20,7 @@ MODBUS_SOURCES = \
 libcld_0_2_la_SOURCES = \
 	abstractchannel.vala \
 	abstractcontainer.vala \
+	abstractcontroller.vala \
 	abstractdevice.vala \
 	abstractfilter.vala \
 	abstractlog.vala \
@@ -29,6 +30,8 @@ libcld_0_2_la_SOURCES = \
 	abstracttask.vala \
 	aichannel.vala \
 	aochannel.vala \
+	acquisitioncontroller.vala \
+	automationcontroller.vala \
 	brabendermodule.vala\
 	builder.vala \
 	calibration.vala \
@@ -39,6 +42,7 @@ libcld_0_2_la_SOURCES = \
 	container.vala \
 	context.vala \
 	control.vala \
+	controller.vala \
 	csvlog.vala \
 	daq.vala \
 	dataseries.vala \
@@ -51,6 +55,7 @@ libcld_0_2_la_SOURCES = \
 	licormodule.vala \
 	log.vala \
 	logcolumn.vala \
+	logcontroller.vala \
 	mathchannel.vala \
 	module.vala \
 	object.vala \

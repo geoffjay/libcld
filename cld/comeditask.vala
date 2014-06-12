@@ -27,10 +27,12 @@ using Comedi;
 
 public class Cld.ComediTask : AbstractTask {
 
+bool b = true;
    /**
     * Property backing fields.
     */
     private Gee.Map<string, Object>? _channels = null;
+    private Gee.Map<string, int>? _fifos = null;
 
    /**
     * {@inheritDoc}
@@ -75,6 +77,15 @@ public class Cld.ComediTask : AbstractTask {
         set { _channels = value; }
     }
 
+    /**
+     * A list of FIFO file descriptors used for inter process data transfer.
+     */
+    public Gee.Map<string, int>? fifos {
+        get { return _fifos; }
+        set { _fifos = value; }
+    }
+
+
     private Comedi.InstructionList instruction_list;
     private const int NSAMPLES = 10; //XXX Why is this set to 10 (Steve)??
 
@@ -86,25 +97,32 @@ public class Cld.ComediTask : AbstractTask {
     private Thread task_thread;
 
     /**
+     * Counts the total number of connected FIFOs.
+     */
+    private static int n_fifos = 0;
+
+    /**
      * Default construction.
      */
-    public ComediTask () {
+    construct {
+        channels = new Gee.TreeMap<string, Object> ();
+        fifos = new Gee.TreeMap<string, int> ();
         active = false;
+    }
+
+    public ComediTask () {
         id = "tk0";
         devref = "dev0";
         device = new ComediDevice ();
         exec_type = "polling";
         direction = "read";
         interval_ms = 100;
-
-        channels = new Gee.TreeMap<string, Object> ();
     }
 
     /**
      * Construction using an XML node.
      */
     public ComediTask.from_xml_node (Xml.Node *node) {
-        active = false;
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
@@ -132,8 +150,6 @@ public class Cld.ComediTask : AbstractTask {
                 }
             }
         }
-
-        channels = new Gee.TreeMap<string, Object> ();
     }
 
     /**
@@ -183,6 +199,10 @@ public class Cld.ComediTask : AbstractTask {
      * {@inheritDoc}
      */
     public override void stop () {
+        foreach (int fd in fifos.values) {
+            Posix.close (fd);
+        }
+
         if (active) {
             active = false;
             thread.join ();
@@ -194,6 +214,40 @@ public class Cld.ComediTask : AbstractTask {
      */
     public void add_channel (Object channel) {
         channels.set (channel.id, channel);
+    }
+
+    /**
+     * Connect data to a FIFO.
+     * @param id The Cld object id of the client.
+     * @param fd The file descriptor of the FIFO.
+     * @return Returns the filename of the FIFO.
+     */
+    public string connect_fifo (string id, out int fd) {
+       // string fname = "/home/stroy/src/vala/america";
+        string fname = "/tmp/fifo/fifo%d.%s".printf (n_fifos++, id);
+
+        Posix.mkfifo (fname, Posix.S_IWUSR);
+        open_fifo.begin (fname, () => {
+            Cld.debug ("got a reader");
+        });
+
+        return fname;
+    }
+
+    private async void open_fifo (string fname) {
+        SourceFunc callback = open_fifo.callback;
+        ThreadFunc<void*> run = () => {
+            Cld.debug ("%s is is waiting for a reader to FIFO %s",this.id, fname);
+            int fd = Posix.open (fname, Posix.O_WRONLY | Posix.O_CREAT);
+            fifos.set (fname, fd);
+            Cld.debug ("ComediTask FIFO set: fd = %d, fname = %s, fifos.get(fname) = %d", fd, fname, fifos.get (fname));
+            Idle.add ((owned) callback);
+
+            return null;
+        };
+        GLib.Thread.create<void*> (run, false);
+
+        yield;
     }
 
     /**
@@ -319,8 +373,16 @@ public class Cld.ComediTask : AbstractTask {
 
                 meas = meas / (j);
                 (channel as AIChannel).add_raw_value (meas);
+                string mess = "Channel: %s, Raw value: %.3f\n".printf ((channel as AIChannel).id,
+                                                                    (channel as AIChannel).raw_value);
+                foreach (int fd in fifos.values) {
+                    ssize_t w = Posix.write (fd, mess, mess.length);
+                    if (b) {
+                        Cld.debug ("fd: %d write returned %s", fd, w.to_string ());
+                        b = false;
+                    }
+                }
                 //Cld.debug ("Channel: %s, Raw value: %.3f", (channel as AIChannel).id, (channel as AIChannel).raw_value);
-                i++;
             } else if (channel is DIChannel) {
 
                 meas = instruction_list.insns[i].data[0];
@@ -329,7 +391,6 @@ public class Cld.ComediTask : AbstractTask {
                 else
                     (channel as DChannel).state = false;
                 //Cld.debug ("Channel: %s, Raw value: %.3f", (channel as DIChannel).id, meas);
-                i++;
             }
         }
      }

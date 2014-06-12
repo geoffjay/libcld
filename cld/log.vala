@@ -131,6 +131,10 @@ public interface Cld.Log : Cld.Object {
     public abstract string date_format { get; set; }
 
     /**
+     * A list of FIFOs for inter-process data transfer.
+     */
+    public abstract Gee.Map<string, int>? fifos { get; set; }
+    /**
      * Connect the columns to their corresponding channel signals.
      */
     public abstract void connect_signals ();

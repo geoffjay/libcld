@@ -221,12 +221,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         objects = new Gee.TreeMap<string, Object> ();
         Cld.LogEntry entry = new Cld.LogEntry ();
         queue = new Gee.LinkedList<Cld.LogEntry> ();
+        fifos = new Gee.TreeMap<string, int> ();
     }
 
     public SqliteLog () {
         id = "database0";
         name = "Log Database File";
-        path = "/tmp/";
+        path = "/tmp/fifos";
         file = "log.db";
         rate = 10.0;          /* Hz */
         active = false;
@@ -482,6 +483,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * {@inheritDoc}
      */
     public override void start () {
+        /* Open the FIFO data buffers. */
+        foreach (string fname in fifos.keys) {
+            open_fifo.begin (fname, () => {
+                Cld.debug ("got a writer for %s", fname);
+            });
+        }
+
         database_open ();
         create_tables ();
         start_time = new DateTime.now_local ();
@@ -514,6 +522,26 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 Cld.error (@"Thread error: $msg");
             }
         });
+    }
+
+    private async void open_fifo (string fname) {
+        SourceFunc callback = open_fifo.callback;
+        ThreadFunc<void*> run = () => {
+            Cld.debug ("%s is is waiting for a writer to FIFO %s",this.id, fname);
+            int fd = Posix.open (fname, Posix.O_RDONLY | Posix.O_CREAT);
+            fifos.set (fname, fd);
+            if (fd == -1) {
+                Cld.debug ("Posix.open error: %d: %s", Posix.errno, Posix.strerror (Posix.errno));
+            } else {
+                Cld.debug ("Opening FIFO %s fd: %d", fname, fd);
+                Idle.add ((owned) callback);
+            }
+
+            return null;
+        };
+        Thread.create<void*> (run, false);
+
+        yield;
     }
 
     /**
@@ -549,6 +577,23 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             active = true;
 
             while (active) {
+                /* XXX For test only */
+                char[] s = new char[300];
+                ssize_t num;
+                foreach (int fd in fifos.values) {
+
+Cld.debug ("Hello fd: %d!!!!", fd);
+                    if ((num = Posix.read (fd, s, 300)) == -1)
+                        Cld.debug("read error");
+                    else {
+                        s[num] = '\0';
+                        Cld.debug ("SqliteLog: read %d bytes: \"%s\" from fd: %d", (int)num, s, fd);
+                    }
+                }
+
+Cld.debug ("Good Bye");
+                /*>>>>>>>>>>>>>>>>>>>>>.*/
+
                 /* Update the entry and push it onto the queue */
                 entry.update (objects);
                 queue_mutex.lock ();
@@ -594,6 +639,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             active = true;
 
             while (active) {
+
                 while (queue.size < min_queue_size)
                     queue_cond.wait (queue_mutex);
 

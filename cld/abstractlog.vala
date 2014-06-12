@@ -67,6 +67,11 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     /**
      * {@inheritDoc}
      */
+    public virtual Gee.Map<string, int>? fifos { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public virtual void connect_signals () {
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
@@ -83,7 +88,6 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
             }
         }
     }
-
 
     /**
      * {@inheritDoc}

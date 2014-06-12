@@ -42,11 +42,19 @@ public class Cld.Context : Cld.AbstractContainer {
         set { update_objects (value); }
     }
 
+    private LogController log_controller;
+    private AcquisitionController acquisition_controller;
+    private AutomationController automation_controller;
+
     /**
      * Default construction.
      */
     public Context () {
         _objects = new Gee.TreeMap<string, Cld.Object> ();
+        log_controller = new LogController ();
+        acquisition_controller = new AcquisitionController ();
+        automation_controller = new AutomationController ();
+        generate ();
     }
 
     /**
@@ -98,6 +106,28 @@ public class Cld.Context : Cld.AbstractContainer {
         return map;
     }
 
+    /**
+     * Generate refererences to between objects as needed.
+     */
+    public void generate () {
+        Cld.debug ("Generating Context...\n");
+        foreach (var object in objects.values) {
+            if (object is Cld.Log) {
+                Cld.debug ("    Adding Log to LogController: %s", object.id);
+                (log_controller as Cld.Container).add (object as Cld.Object);
+            } else if (object is Cld.Daq) {
+                Cld.debug ("    Adding Daq to AcquisitionController: %s", object.id);
+                (acquisition_controller as Cld.Container).add (object as Cld.Object);
+            } else if (object is Cld.Control) {
+                Cld.debug ("    Adding Control to AutomationController: %s", object.id);
+                (automation_controller as Cld.Container).add (object as Cld.Object);
+            }
+        }
+
+        log_controller.generate ();
+        acquisition_controller.generate ();
+        automation_controller.generate ();
+    }
 
     /**
      * {@inheritDoc}

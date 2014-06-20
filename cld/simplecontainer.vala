@@ -15,16 +15,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
- * Authors:
+ * Author:
  *  Geoff Johnson <geoff.jay@gmail.com>
- *  Stepehen Roy <sroy1966@gmail.com>
  */
 
 /**
- * A class with methods for managing Cld.Log objects from within a Cld.Context.
+ * Internal container to use during context construction.
  */
-
-public class Cld.LogController : Cld.AbstractController {
+internal class Cld.SimpleContainer : Cld.AbstractContainer {
 
     /**
      * {@inheritDoc}
@@ -35,41 +33,9 @@ public class Cld.LogController : Cld.AbstractController {
         set { update_objects (value); }
     }
 
-    /**
-     * Default construction
-     */
-    public LogController () {
+    internal SimpleContainer () {
         _objects = new Gee.TreeMap<string, Cld.Object> ();
-    }
-
-    public LogController.from_xml_node (Xml.Node *node) {
-        string val;
-
-        if (node->type == Xml.ElementType.ELEMENT_NODE &&
-            node->type != Xml.ElementType.COMMENT_NODE) {
-            id = node->get_prop ("id");
-            /* iterate through node children */
-            for (Xml.Node *iter = node->children;
-                 iter != null;
-                 iter = iter->next) {
-//                if (iter->name == "object") {
-//                    switch (iter->get_prop ("name")) {
-//                        case "device":
-//                            this.device = iter->get_content ();
-//                            break;
-//                        default:
-//                            break;
-//                    }
-//                }
-            }
-        }
-    }
-
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void generate () {
+        Cld.debug ("SimpleContainer ()");
     }
 
     /**

@@ -27,11 +27,6 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel, ScalableChanne
     /**
      * {@inheritDoc}
      */
-    public override string id { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
     public override int num { get; set; }
 
     /**

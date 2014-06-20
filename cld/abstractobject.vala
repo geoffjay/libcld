@@ -29,7 +29,20 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
     /**
      * {@inheritDoc}
      */
-    public abstract string id { get; set; }
+    protected string _id;
+    public string id {
+            get { return _id; }
+            set { _id = value; }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected Cld.Object _parent;
+    public weak Cld.Object parent {
+            get { return _parent; }
+            set { _parent = value; }
+    }
 
     /**
      * {@inheritDoc}

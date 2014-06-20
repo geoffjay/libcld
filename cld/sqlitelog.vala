@@ -34,11 +34,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * {@inheritDoc}
      */
-    public override string id { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
     public override string name { get; set; }
 
     /**

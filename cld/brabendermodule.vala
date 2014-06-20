@@ -81,11 +81,6 @@ public class Cld.BrabenderModule : AbstractModule {
     /**
      * {@inheritDoc}
      */
-    public override string id { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
     public override bool loaded { get; set; default = false; }
 
     /**

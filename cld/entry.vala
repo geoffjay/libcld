@@ -3,10 +3,6 @@
  * buffer for log file writes.
  */
 public class Cld.LogEntry : Cld.AbstractObject {
-    /**
-     * {@inheritDoc}
-     */
-    public override string id { get; set; }
 
     /**
      * DateTime data to use for time stamping log entries.

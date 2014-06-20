@@ -31,30 +31,41 @@ public class Cld.Context : Cld.AbstractContainer {
     /**
      * {@inheritDoc}
      */
-    public override string id { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
     private Gee.Map<string, Cld.Object> _objects;
     public override Gee.Map<string, Cld.Object> objects {
         get { return (_objects); }
         set { update_objects (value); }
     }
 
-    private LogController log_controller;
-    private AcquisitionController acquisition_controller;
-    private AutomationController automation_controller;
+    private Cld.LogController log_controller;
+    private Cld.AcquisitionController acquisition_controller;
+    private Cld.AutomationController automation_controller;
+
+    construct {
+        //_objects = new Gee.TreeMap<string, Cld.Object> ();
+    }
 
     /**
      * Default construction.
      */
     public Context () {
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
-        log_controller = new LogController ();
-        acquisition_controller = new AcquisitionController ();
-        automation_controller = new AutomationController ();
         generate ();
+    }
+
+    public Context.from_config (Cld.XmlConfig xml) {
+        var builder = new Cld.Builder.from_xml_config (xml);
+        objects = builder.objects;
+        generate ();
+    }
+
+    /**
+     * Destruction.
+     *
+     * XXX not even sure if this is necessary or if a Gee.Map will clear itself
+     */
+    ~Context () {
+        if (_objects != null)
+            _objects.clear ();
     }
 
     /**
@@ -63,70 +74,35 @@ public class Cld.Context : Cld.AbstractContainer {
      * XXX not sure if this should actually happen here, or in builder
      */
     public void connect_signals () {
-
-        foreach (var object in objects.values) {
-
-            Type type = object.get_type ();
-            Cld.debug ("connecting signals for type: %s", type.name ());
-
-            if (object is Cld.Channel) {
-            }
-
-            if (object is Cld.Control) {
-            }
-
-            if (object is Cld.Log) {
-            }
-
-            if (object is Cld.Module) {
-            }
-
-            if (object is Cld.Daq) {
-            }
-        }
-    }
-
-    /**
-     * Retrieves a map set of objects of a certain type.
-     *
-     * {{{
-     *  var sc_map = ctx.get_object_map (typeof (Cld.ScalableChannel));
-     * }}}
-     *
-     * @param type class type to retrieve
-     * @return flattened map of all objects of a certain class type
-     */
-    public Gee.Map<string, Cld.Object> get_object_map (Type type) {
-        Gee.Map<string, Cld.Object> map = new Gee.TreeMap<string, Cld.Object> ();
-        foreach (Cld.Object object in objects.values) {
-            if ((object.get_type ()).is_a (type)) {
-                map.set (object.id, object);
-            }
-        }
-        return map;
+        /*
+         *log_controller.request.connect ();
+         *acquisition_controller.request.connect ();
+         *automation_controller.request.connect ();
+         */
     }
 
     /**
      * Generate refererences to between objects as needed.
      */
     public void generate () {
-        Cld.debug ("Generating Context...\n");
-        foreach (var object in objects.values) {
-            if (object is Cld.Log) {
-                Cld.debug ("    Adding Log to LogController: %s", object.id);
-                (log_controller as Cld.Container).add (object as Cld.Object);
-            } else if (object is Cld.Daq) {
-                Cld.debug ("    Adding Daq to AcquisitionController: %s", object.id);
-                (acquisition_controller as Cld.Container).add (object as Cld.Object);
-            } else if (object is Cld.Control) {
-                Cld.debug ("    Adding Control to AutomationController: %s", object.id);
-                (automation_controller as Cld.Container).add (object as Cld.Object);
-            }
-        }
-
-        log_controller.generate ();
-        acquisition_controller.generate ();
-        automation_controller.generate ();
+//        Cld.debug ("Generating Context...\n");
+//
+//        foreach (var object in objects.values) {
+//            if (object is Cld.Log) {
+//                Cld.debug ("    Adding Log to LogController: %s", object.id);
+//                (log_controller as Cld.Container).add (object as Cld.Object);
+//            } else if (object is Cld.Daq) {
+//                Cld.debug ("    Adding Daq to AcquisitionController: %s", object.id);
+//                (acquisition_controller as Cld.Container).add (object as Cld.Object);
+//            } else if (object is Cld.Control) {
+//                Cld.debug ("    Adding Control to AutomationController: %s", object.id);
+//                (automation_controller as Cld.Container).add (object as Cld.Object);
+//            }
+//        }
+//
+//        log_controller.generate ();
+//        acquisition_controller.generate ();
+//        automation_controller.generate ();
     }
 
     /**

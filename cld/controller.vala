@@ -21,45 +21,16 @@
  */
 
 /**
- * A class with methods for managing data aquisition Device and Task objects from
- * within a Cld.Context.
+ * A common interface inherited by any object that acts as a controller that
+ * communicates with other controllers and as the conduit for information
+ * between sibling classes.
  */
-
-public class Cld.AcquisitionController : Cld.AbstractController {
-
-    /**
-     * {@inheritDoc}
-     */
-    private Gee.Map<string, Cld.Object> _objects;
-    public override Gee.Map<string, Cld.Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
+[GenericAccessors]
+public interface Cld.Controller : Cld.Object {
 
     /**
-     * Default construction
+     * Generate the internal structure and relationships of objects that are
+     * contained in a controller.
      */
-    public AcquisitionController () {
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void generate () {
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Cld.Object> val) {
-        _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        return base.to_string ();
-    }
+    public abstract void generate ();
 }

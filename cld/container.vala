@@ -71,7 +71,38 @@ public interface Cld.Container : Cld.Object {
     public abstract Cld.Object? get_object (string id);
 
     /**
+     * Retrieves a map of all objects of a certain type.
+     *
+     * {{{
+     *  var sc_map = ctr.get_object_map (typeof (Cld.ScalableChannel));
+     * }}}
+     *
+     * @param type class type to retrieve
+     * @return flattened map of all objects of a certain class type
+     */
+    public abstract Gee.Map<string, Cld.Object> get_object_map (Type type);
+
+    /**
+     * Retrieve a map of the children of a certain type.
+     *
+     * {{{
+     *  var children = ctr.get_children (typeof (Cld.ScalableChannel));
+     * }}}
+     *
+     * @param type class type to retrieve
+     * @return map of all objects of a certain class type
+     */
+    public abstract Gee.Map<string, Cld.Object> get_children (Type type);
+
+    /**
      * Sort the contents of the objects map collection.
      */
     public abstract void sort_objects ();
+
+    /**
+     * Recursively print the contents of the objects map.
+     *
+     * @param depth current level of the object tree
+     */
+    public abstract void print_objects (int depth);
 }

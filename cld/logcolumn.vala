@@ -4,11 +4,6 @@
 public class Cld.Column : Cld.AbstractObject {
 
     /**
-     * {@inheritDoc}
-     */
-    public override string id { get; set; }
-
-    /**
      * ID reference of the channel associated with this column.
      */
     public string chref { get; set; }

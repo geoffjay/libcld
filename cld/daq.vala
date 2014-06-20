@@ -21,28 +21,29 @@
 
 /**
  * Hardware definition class.
+ *
+ * @deprecated cld-0.2.7
  */
-public class Cld.Daq : AbstractContainer {
+public class Cld.Daq : Cld.AbstractContainer {
 
-    /* properties */
-    public override string id   { get; set; }
-    public double rate          { get; set; }
-    public string driver        { get; set; }
+    public double rate { get; set; }
 
-    private Gee.Map<string, Object> _objects;
-    public override Gee.Map<string, Object> objects {
+    public string driver { get; set; }
+
+    private Gee.Map<string, Cld.Object> _objects;
+    public override Gee.Map<string, Cld.Object> objects {
         get { return (_objects); }
         set { update_objects (value); }
     }
 
     public Daq () {
         rate = 10.0;    /* Hz */
-        objects = new Gee.TreeMap<string, Object> ();
+        _objects = new Gee.TreeMap<string, Cld.Object> ();
     }
 
     public Daq.with_rate (double rate) {
         this.rate = rate;
-        objects = new Gee.TreeMap<string, Object> ();
+        _objects = new Gee.TreeMap<string, Cld.Object> ();
     }
 
     /**
@@ -51,7 +52,7 @@ public class Cld.Daq : AbstractContainer {
     public Daq.from_xml_node (Xml.Node *node) {
         string value;
 
-        objects = new Gee.TreeMap<string, Object> ();
+        _objects = new Gee.TreeMap<string, Cld.Object> ();
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -70,10 +71,10 @@ public class Cld.Daq : AbstractContainer {
                     }
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "device") {
-                        if (iter->get_prop ("dtype") == "comedi") {
-                            var dev = new ComediDevice.from_xml_node (iter);
+                        if (iter->get_prop ("driver") == "comedi") {
+                            var dev = new Cld.ComediDevice.from_xml_node (iter);
                             dev.id = iter->get_prop ("id");
-                            objects.set (dev.id, dev);
+                            add (dev);
                         }
                     }
                 }
@@ -82,44 +83,15 @@ public class Cld.Daq : AbstractContainer {
     }
 
     ~Daq () {
-        if (objects != null)
-            objects.clear ();
+        if (_objects != null)
+            _objects.clear ();
     }
 
     /**
      * {@inheritDoc}
      */
-    public override void update_objects (Gee.Map<string, Object> val) {
+    public override void update_objects (Gee.Map<string, Cld.Object> val) {
         _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void add (Object object) {
-        objects.set (object.id, object);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override Object? get_object (string id) {
-        Object? result = null;
-
-        if (objects.has_key (id)) {
-            result = objects.get (id);
-        } else {
-            foreach (var object in objects.values) {
-                if (object is Container) {
-                    result = (object as Container).get_object (id);
-                    if (result != null) {
-                        break;
-                    }
-                }
-            }
-        }
-
-        return result;
     }
 
     /**

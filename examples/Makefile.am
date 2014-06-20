@@ -5,6 +5,7 @@ noinst_PROGRAMS = $(EXAMPLE_PROGS)
 EXAMPLE_PROGS += \
 	builder \
 	async-acquisition \
+	context-validation \
 	$(NULL)
 
 ### Shared build flags and dependencies
@@ -52,3 +53,10 @@ async_acquisition_DEPENDENCIES = $(example_DEPENDENCIES)
 async_acquisition_VALAFLAGS = $(example_VALAFLAGS)
 async_acquisition_CPPFLAGS = $(example_CPPFLAGS)
 async_acquisition_LDADD = $(example_LDADD)
+
+context_validation_SOURCES = context-validation.vala $(example_SOURCES)
+context_validation_DEPENDENCIES = $(example_DEPENDENCIES)
+context_validation_VALAFLAGS = $(example_VALAFLAGS)
+context_validation_CPPFLAGS = $(example_CPPFLAGS)
+context_validation_LDADD = $(example_LDADD)
+

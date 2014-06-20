@@ -183,11 +183,6 @@ public class Cld.SerialPort : AbstractPort {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override string id { get; set; }
-
     /* property backing fields */
     private bool _connected = false;
     private ulong _tx_count = 0;

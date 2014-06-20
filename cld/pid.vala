@@ -31,11 +31,6 @@ public class Cld.Pid : AbstractObject {
      */
 
     /**
-     * {@inheritDoc}
-     */
-    public override string id { get; set; }
-
-    /**
      * Timestep in milliseconds to use with the thread execution.
      */
     public int dt { get; set; }
@@ -540,11 +535,6 @@ public class Cld.Pid2 : AbstractObject {
      *     operating system process id.
      * XXX Could add an AbstractControl type a subclass it instead.
      */
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string id { get; set; }
 
     /**
      * Timestep in milliseconds to use with the thread execution.

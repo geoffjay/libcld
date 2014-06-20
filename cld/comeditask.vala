@@ -40,11 +40,6 @@ bool b = true;
     public override bool active { get; set; }
 
    /**
-    * {@inheritDoc}
-    */
-    public override string id { get; set; }
-
-   /**
     * The sub device reference name.
     */
     public string devref { get; set; }

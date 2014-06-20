@@ -23,8 +23,6 @@
  * Filter class for digital signal processing.
  */
 public class Cld.Filter : AbstractObject {
-    /* properties */
-    public override string id { get; set; }
 
     public Filter () {
         id = "flt0";

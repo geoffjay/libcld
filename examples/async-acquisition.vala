@@ -66,10 +66,19 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
 
         var log = context.get_object ("log0");
         stdout.printf ("Log ID: %s\n", log.id);
+
+        var coefficient = context.get_object ("cft0");
+        stdout.printf ("Coefficient value: %f\n", (coefficient as Cld.Coefficient).value);
     }
 }
 
 int main (string[] args) {
+
+    /*
+     *Cld.Report.increase_log_level ();
+     *Cld.Report.increase_log_level ();
+     *Cld.Report.increase_log_level ();
+     */
 
     var ex = new Cld.AsyncAcquisitionExample ();
     ex.run ();

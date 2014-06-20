@@ -23,8 +23,6 @@
  * A single nth coefficient to be used to make up a calibration/scale.
  */
 public class Cld.Coefficient : AbstractObject {
-    /* properties */
-    public override string id    { get; set; }
     public int             n     { get; set; }
     public double          value { get; set; }
 

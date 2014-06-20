@@ -32,6 +32,11 @@ public interface Cld.Object : GLib.Object {
     public abstract string id { get; set; }
 
     /**
+     * A weak reference to the parent object.
+     */
+    public abstract Cld.Object parent { get; set; }
+
+    /**
      * Converts the contents into an output string.
      *
      * @return the contents of the object formatted as a string.

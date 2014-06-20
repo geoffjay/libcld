@@ -13,8 +13,6 @@ class Cld.Example : GLib.Object {
         set { _xml = value; }
     }
 
-    protected Cld.Builder builder;
-
     protected Cld.Context context;
 
     public Example () { }
@@ -27,10 +25,6 @@ class Cld.Example : GLib.Object {
         Xml.Node *node = obj->nodesetval->item (0);
 
         var config = new Cld.XmlConfig.from_node (node);
-
-        builder = new Cld.Builder.from_xml_config (config);
-        context = new Cld.Context ();
-
-        context.objects = builder.objects;
+        context = new Cld.Context.from_config (config);
     }
 }

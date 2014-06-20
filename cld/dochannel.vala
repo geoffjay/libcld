@@ -27,11 +27,6 @@ public class Cld.DOChannel : AbstractChannel, DChannel, OChannel {
     /**
      * {@inheritDoc}
      */
-    public override string id { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
     public override int num { get; set; }
 
     /**

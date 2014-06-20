@@ -25,10 +25,6 @@ using Gsl;
  * A data series or array of values
  */
 public class Cld.DataSeries : Cld.AbstractContainer {
-    /**
-     * {@inheritDoc}
-     */
-    public override string id { get; set; }
 
     /**
      * {@inheritDoc}
@@ -37,13 +33,6 @@ public class Cld.DataSeries : Cld.AbstractContainer {
     public override Gee.Map<string, Cld.Object> objects {
         get { return (_objects); }
         set { update_objects (value); }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Cld.Object> val) {
-        _objects = val;
     }
 
     /**
@@ -154,21 +143,11 @@ public class Cld.DataSeries : Cld.AbstractContainer {
                 }
             }
         }
-        buffer = new double [length];
+        buffer = new double[length];
         for (int i = 0; i < length; i++) {
             buffer [i] = 0.0;
         }
     }
-
-    /**
-     * Add a object to the array list of objects
-     *
-     * @param object object to add to the list
-     */
-    public void add (Cld.Object object) {
-        objects.set (object.id, object);
-    }
-
 
     /**
      * Push a new value into the buffer of values and relay generate a new value signal.
@@ -185,6 +164,7 @@ public class Cld.DataSeries : Cld.AbstractContainer {
             */
             new_value (this.id, buffer [j]);
             j++;
+
             if (j > (buffer.length - 1)) {
                 j = 0;
             }
@@ -193,22 +173,24 @@ public class Cld.DataSeries : Cld.AbstractContainer {
 
     /**
      * A convenience method used to retrieve a buffered value from its index.
+     *
      * @param n The index of the value to be retrieved
      * @param val The n_th buffered value
      * @return true if succesful
      */
     public bool get_nth_value (int n, out double val) {
-        int i;
-        i = (j - n) % length;
+        int i = (j - n) % length;
+
         if (i < 0) {
             i = length + ((j - n) % length);
         }
+
         if ((i > length) || (i < 0)) {
             Cld.debug ("DataSeries.get_nth_value (n) Failed!");
 
             return false;
         } else {
-            val = buffer [i];
+            val = buffer[i];
             return true;
         }
     }

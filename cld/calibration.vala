@@ -29,26 +29,24 @@
  *
  *   y = a[0]*x^0 + a[1]*x^1
  */
-public class Cld.Calibration : AbstractContainer {
+public class Cld.Calibration : Cld.AbstractContainer {
 
-    /* properties */
-    public string units       { get; set; }
-    public override string id { get; set; }
-
-    /* needs to be a map instead of a list to allow for gaps in the list */
-    private Gee.Map<string, Object> _objects;
-    public override Gee.Map<string, Object> objects {
+    /**
+     * {@inheritDoc}
+     */
+    private Gee.Map<string, Cld.Object> _objects;
+    public override Gee.Map<string, Cld.Object> objects {
         get { return (_objects); }
         set { update_objects (value); }
     }
 
-    private Gee.Map<string, Object>? _coefficients = null;
-    public Gee.Map<string, Object> coefficients {
+    private Gee.Map<string, Cld.Object>? _coefficients = null;
+    public Gee.Map<string, Cld.Object> coefficients {
         get {
             if (_coefficients == null) {
-                _coefficients = new Gee.TreeMap<string, Object> ();
+                _coefficients = new Gee.TreeMap<string, Cld.Object> ();
                 foreach (var object in objects.values) {
-                    if (object is Coefficient)
+                    if (object is Cld.Coefficient)
                         _coefficients.set (object.id, object);
                 }
             }
@@ -56,26 +54,28 @@ public class Cld.Calibration : AbstractContainer {
         }
     }
 
+    public string units { get; set; }
+
     /* constructor */
     public Calibration () {
         /* set defaults */
         units = "Volts";
         id = "cal0";
-        objects = new Gee.TreeMap<string, Object> ();
+        _objects = new Gee.TreeMap<string, Cld.Object> ();
         /* set defaults */
-        add (new Coefficient.with_data ("cft0", 0, 0.0));
-        add (new Coefficient.with_data ("cft1", 1, 1.0));
+        add (new Cld.Coefficient.with_data ("cft0", 0, 0.0));
+        add (new Cld.Coefficient.with_data ("cft1", 1, 1.0));
     }
 
     public Calibration.with_units (string units) {
         /* instantiate object */
         this.units = units;
         id = "cal0";
-        objects = new Gee.TreeMap<string, Object> ();
+        _objects = new Gee.TreeMap<string, Cld.Object> ();
     }
 
     public Calibration.from_xml_node (Xml.Node *node) {
-        objects = new Gee.TreeMap<string, Object> ();
+        _objects = new Gee.TreeMap<string, Cld.Object> ();
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -95,8 +95,8 @@ public class Cld.Calibration : AbstractContainer {
                     }
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "coefficient") {
-                        var coeff = new Coefficient.from_xml_node (iter);
-                        objects.set (coeff.id, coeff);
+                        var coeff = new Cld.Coefficient.from_xml_node (iter);
+                        add (coeff);
                     }
                 }
             }
@@ -104,18 +104,18 @@ public class Cld.Calibration : AbstractContainer {
     }
 
     ~Calibration () {
-        if (objects != null)
-            objects.clear ();
+        if (_objects != null)
+            _objects.clear ();
     }
 
     public int coefficient_count () {
         return objects.size;
     }
 
-    public Coefficient? nth_coefficient (int index) {
+    public Cld.Coefficient? nth_coefficient (int index) {
         foreach (var coefficient in objects.values) {
-            if ((coefficient as Coefficient).n == index)
-                return coefficient as Coefficient;
+            if ((coefficient as Cld.Coefficient).n == index)
+                return coefficient as Cld.Coefficient;
         }
 
         /* if we made it here the index requested doesn't exist */
@@ -128,42 +128,42 @@ public class Cld.Calibration : AbstractContainer {
 
     public void set_nth_coefficient (int index, double val) {
         foreach (var coefficient in objects.values) {
-            if ((coefficient as Coefficient).n == index)
+            if ((coefficient as Cld.Coefficient).n == index)
                 objects.unset (coefficient.id);
         }
 
         /* either it didn't exist or we dropped it */
-        var c = new Coefficient ();
+        var c = new Cld.Coefficient ();
         c.n = index;
         c.value = val;
-        objects.set (c.id, c);
+        add (c);
     }
 
-    public void set_coefficient (string id, Coefficient coefficient) {
+    public void set_coefficient (string id, Cld.Coefficient coefficient) {
         if (objects.has_key (id))
             objects.unset (id);
         objects.set (id, coefficient);
     }
 
-    public Coefficient? get_coefficient (int index) {
+    public Cld.Coefficient? get_coefficient (int index) {
         foreach (var coefficient in objects.values) {
-            if ((coefficient as Coefficient).n == index)
-                return coefficient as Coefficient;
+            if ((coefficient as Cld.Coefficient).n == index)
+                return coefficient as Cld.Coefficient;
         }
         return null;
     }
 
     public void add_coefficient (int index, double val) {
         foreach (var coefficient in objects.values) {
-            if ((coefficient as Coefficient).n == index)
+            if ((coefficient as Cld.Coefficient).n == index)
                 objects.unset (coefficient.id);
         }
 
         /* either it didn't exist or we dropped it */
-        var c = new Coefficient ();
+        var c = new Cld.Coefficient ();
         c.n = index;
         c.value = val;
-        objects.set (c.id, c);
+        add (c);
     }
 
     /**
@@ -191,13 +191,13 @@ public class Cld.Calibration : AbstractContainer {
         double result = 0.0;
 
         foreach (var coefficient in objects.values) {
-            if ((coefficient as Coefficient).n == 0) {
-                result += (coefficient as Coefficient).value;
+            if ((coefficient as Cld.Coefficient).n == 0) {
+                result += (coefficient as Cld.Coefficient).value;
             } else if ((coefficient as Coefficient).n == 1) {
-                result += value * (coefficient as Coefficient).value;
+                result += value * (coefficient as Cld.Coefficient).value;
             } else {
-                result += Math.pow (value, (coefficient as Coefficient).n)
-                            * (coefficient as Coefficient).value;
+                result += Math.pow (value, (coefficient as Cld.Coefficient).n)
+                            * (coefficient as Cld.Coefficient).value;
             }
         }
         return result;
@@ -206,37 +206,8 @@ public class Cld.Calibration : AbstractContainer {
     /**
      * {@inheritDoc}
      */
-    public override void update_objects (Gee.Map<string, Object> val) {
+    public override void update_objects (Gee.Map<string, Cld.Object> val) {
         _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void add (Object object) {
-        objects.set (object.id, object);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override Object? get_object (string id) {
-        Object? result = null;
-
-        if (objects.has_key (id)) {
-            result = objects.get (id);
-        } else {
-            foreach (var object in objects.values) {
-                if (object is Container) {
-                    result = (object as Container).get_object (id);
-                    if (result != null) {
-                        break;
-                    }
-                }
-            }
-        }
-
-        return result;
     }
 
     /**

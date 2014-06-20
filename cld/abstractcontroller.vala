@@ -43,6 +43,13 @@ public abstract class Cld.AbstractController : Cld.AbstractContainer, Cld.Contro
     }
 
     /**
+     * Default construction.
+     */
+    public AbstractController () {
+        _objects = new Gee.TreeMap<string, Cld.Object> ();
+    }
+
+    /**
      * {@inheritDoc}
      */
     public abstract void generate ();

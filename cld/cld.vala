@@ -98,42 +98,31 @@ namespace Cld {
      * Internal variables used for library control... possibly.
      * XXX seems strange to do option parsing in a library, maybe rethink this
      */
-    private static int verbosity = 2;
-
-    /*
-     *private const OptionEntry[] options = {{
-     *    "log-level", 0, 0, OptionArg.INT, ref verbosity,
-     *    "Control the log level verbosity.", null
-     *},{
-     *    null
-     *}};
-     */
+    private static int verbosity = 3;
 
     /**
      * Library initialization.
      */
-    public void init (string[] args) {
-
-        /*
-         *try {
-         *    var opt_context = new OptionContext (PACKAGE_NAME);
-         *    opt_context.set_help_enabled (false);
-         *    opt_context.add_main_entries (options, null);
-         *    opt_context.parse (ref args);
-         *} catch (OptionError e) {
-         *    Cld.error ("OptionsError %s", e.message);
-         *}
-         */
-    }
+    public void init () { }
 
     /**
      * Logging facilities.
      */
 
+    public void increase_log_level () {
+        verbosity = (verbosity == 3) ? verbosity : verbosity++;
+    }
+
+    public void decrease_log_level () {
+        verbosity = (verbosity == 0) ? verbosity : verbosity--;
+    }
+
     public void error (string format, ...) {
-        var list = va_list();
-        string res = "libcld [ERROR] %s\n".printf (format.vprintf (list));
-        stderr.puts (res);
+        if (verbosity >= 0) {
+            var list = va_list();
+            string res = "libcld [ERROR] %s\n".printf (format.vprintf (list));
+            stderr.puts (res);
+        }
     }
 
     public void message (string format, ...) {

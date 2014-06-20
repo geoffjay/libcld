@@ -63,6 +63,7 @@ libcld_0_2_la_SOURCES = \
 	pid.vala \
 	port.vala \
 	serialport.vala \
+	simplecontainer.vala \
 	socketport.vala \
 	sqlitelog.vala \
 	task.vala \

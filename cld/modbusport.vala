@@ -55,11 +55,6 @@ public class Cld.ModbusPort : AbstractPort {
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public override string id { get; set; }
-
-    /**
      * The TCP/IP address of the ModbusPort
      */
     public string ip_address { get; set; }

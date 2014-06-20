@@ -32,11 +32,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
     /**
      * {@inheritDoc}
      */
-    public override string id { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
     public override string name { get; set; }
 
     /**
@@ -104,7 +99,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
     /* constructor */
     construct {
-        objects = new Gee.TreeMap<string, Object> ();
+        _objects = new Gee.TreeMap<string, Object> ();
         queue = new Gee.LinkedList<Cld.LogEntry> ();
     }
 
@@ -161,7 +156,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "column") {
                         var column = new Column.from_xml_node (iter);
-                        objects.set (column.id, column);
+                        add (column);
                     }
                 }
             }
@@ -215,8 +210,9 @@ public class Cld.CsvLog : Cld.AbstractLog {
             filename = "%s/%s".printf (path, temp);
 
         /* open the file */
-        GLib.message (filename);
+        Cld.debug ("Opening file: %s", filename);
         file_stream = FileStream.open (filename, "w+");
+
         if (file_stream == null) {
             is_open = false;
         } else {

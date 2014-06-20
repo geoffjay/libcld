@@ -24,12 +24,7 @@
  * Process value object for use with control objects, typically associated with
  * input and output measurements.
  */
-public class Cld.ProcessValue : AbstractObject {
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string id { get; set; }
+public class Cld.ProcessValue : Cld.AbstractObject {
 
     /**
      * ID reference of the channel associated with this process value.
@@ -44,9 +39,9 @@ public class Cld.ProcessValue : AbstractObject {
     private int _chtype;
     public int chtype {
         get {
-            if (channel is IChannel)
+            if (channel is Cld.IChannel)
                 _chtype = Type.INPUT;
-            else if (channel is OChannel)
+            else if (channel is Cld.OChannel)
                 _chtype = Type.OUTPUT;
             else
                 _chtype = Type.INVALID;
@@ -58,7 +53,7 @@ public class Cld.ProcessValue : AbstractObject {
     /**
      * Referenced channel to use.
      */
-    public weak Channel channel { get; set; }
+    public weak Cld.Channel channel { get; set; }
 
     /**
      * Type options to use for channel direction.
@@ -109,12 +104,7 @@ public class Cld.ProcessValue : AbstractObject {
  * Process value object for use with control objects, typically associated with
  * input and output measurements.
  */
-public class Cld.ProcessValue2 : AbstractObject {
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string id { get; set; }
+public class Cld.ProcessValue2 : Cld.AbstractObject {
 
     /**
      * Read only property for the type (direction) of channel that the process
@@ -134,7 +124,7 @@ public class Cld.ProcessValue2 : AbstractObject {
     /**
      * Referenced dataseries to use.
      */
-    public weak DataSeries dataseries { get; set; }
+    public weak Cld.DataSeries dataseries { get; set; }
 
     /**
      * Type options to use for channel direction.
@@ -192,27 +182,24 @@ public class Cld.ProcessValue2 : AbstractObject {
 /**
  * Control object to calculate an output process value.
  */
-public class Cld.Control : AbstractContainer {
+public class Cld.Control : Cld.AbstractContainer {
 
-    /**
-     * {@inheritDoc}
-     */
-    public override string id { get; set; }
-
-    private Gee.Map<string, Object> _objects;
-    public override Gee.Map<string, Object> objects {
+    private Gee.Map<string, Cld.Object> _objects;
+    public override Gee.Map<string, Cld.Object> objects {
         get { return (_objects); }
         set { update_objects (value); }
     }
 
-    /* constructor */
+    /**
+     * Default construction.
+     */
     public Control () {
         id = "ctl0";
-        objects = new Gee.TreeMap<string, Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
     }
 
     public Control.from_xml_node (Xml.Node *node) {
-        objects = new Gee.TreeMap<string, Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -231,11 +218,11 @@ public class Cld.Control : AbstractContainer {
                     var type = iter->get_prop ("type");
                     switch (type) {
                         case "pid":
-                            var pid = new Pid.from_xml_node (iter);
+                            var pid = new Cld.Pid.from_xml_node (iter);
                             objects.set (pid.id, pid);
                             break;
                         case "pid-2":
-                            var pid = new Pid2.from_xml_node (iter);
+                            var pid = new Cld.Pid2.from_xml_node (iter);
                             objects.set (pid.id, pid);
                             break;
                         default:
@@ -254,37 +241,8 @@ public class Cld.Control : AbstractContainer {
     /**
      * {@inheritDoc}
      */
-    public override void update_objects (Gee.Map<string, Object> val) {
+    public override void update_objects (Gee.Map<string, Cld.Object> val) {
         _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void add (Object object) {
-        objects.set (object.id, object);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override Object? get_object (string id) {
-        Object? result = null;
-
-        if (objects.has_key (id)) {
-            result = objects.get (id);
-        } else {
-            foreach (var object in objects.values) {
-                if (object is Container) {
-                    result = (object as Container).get_object (id);
-                    if (result != null) {
-                        break;
-                    }
-                }
-            }
-        }
-
-        return result;
     }
 
     /**
@@ -298,10 +256,4 @@ public class Cld.Control : AbstractContainer {
         }
         return str_data;
     }
-
-    /**
-     * Perform the control loop calculation.
-     * XXX create an AbstractControl class and move this to it
-     */
-    //public abstract void update ();
 }

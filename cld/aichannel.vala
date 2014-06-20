@@ -27,11 +27,6 @@ public class Cld.AIChannel : AbstractChannel, AChannel, IChannel, ScalableChanne
     /**
      * {@inheritDoc}
      */
-    public override string id { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
     public override int num { get; set; }
 
     /**

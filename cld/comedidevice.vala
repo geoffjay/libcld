@@ -148,11 +148,6 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
     /**
      * {@inheritDoc}
      */
-    public override string id { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
     public override int hw_type { get; set; }
 
     /**
@@ -200,7 +195,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * Default construction
      */
     public ComediDevice () {
-        objects = new Gee.TreeMap<string, Object> ();
+        _objects = new Gee.TreeMap<string, Cld.Object> ();
         id = "dev0";
         hw_type = HardwareType.INPUT;
         driver = DeviceType.COMEDI;
@@ -211,7 +206,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * Construction using an xml node
      */
     public ComediDevice.from_xml_node (Xml.Node *node) {
-        objects = new Gee.TreeMap<string, Object> ();
+        _objects = new Gee.TreeMap<string, Cld.Object> ();
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
@@ -243,7 +238,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
                 else if (iter->name == "object") {
                     switch (iter->get_prop ("type")) {
                         case "task":
-                            var task = new ComediTask.from_xml_node (iter);
+                            var task = new Cld.ComediTask.from_xml_node (iter);
                             add (task as Cld.Object);
                             break;
                         default:
@@ -286,14 +281,15 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * Retrieve information about the Comedi device.
      */
     public Information info () {
-        var i = new Information ();
-        i.id = id;
-        i.version_code = dev.get_version_code ();
-        i.driver_name = dev.get_driver_name ();
-        i.board_name = dev.get_board_name ();
-        i.n_subdevices = dev.get_n_subdevices ();
+        var info = new Information ();
 
-        return i;
+        info.id = id;
+        info.version_code = dev.get_version_code ();
+        info.driver_name = dev.get_driver_name ();
+        info.board_name = dev.get_board_name ();
+        info.n_subdevices = dev.get_n_subdevices ();
+
+        return info;
     }
 
     /**
@@ -306,33 +302,6 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
     /**
      * {@inheritDoc}
      */
-    public override void add (Object object) {
-        objects.set (object.id, object);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override Object? get_object (string id) {
-        Object? result = null;
-
-        if (objects.has_key (id)) {
-            result = objects.get (id);
-        } else {
-            foreach (var object in objects.values) {
-                if (object is Container) {
-                    result = (object as Container).get_object (id);
-                    if (result != null) {
-                        break;
-                    }
-                }
-            }
-        }
-
-        return result;
-    }
-
-
     public override string to_string () {
         string str_data = "[%s] : Comedi device using file %s\n".printf (
                             id, filename);
@@ -349,18 +318,21 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
     /**
      * Comedi device information class.
      */
-    public class Information {
+    public class Information : GLib.Object {
 
-        /**
-         * {@inheritDoc}
-         */
         public string id { get; set; }
 
         public int version_code { get; set; }
+
         public string driver_name { get; set; }
+
         public string board_name { get; set; }
+
         public int n_subdevices { get; set; }
 
+        /**
+         * Default construction.
+         */
         public Information () {
             id = "XXXX";
             version_code = -1;
@@ -369,9 +341,6 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
             n_subdevices = -1;
         }
 
-        /**
-         * {@inheritDoc}
-         */
         public string to_string () {
             string str_data = ("[%s] : Information for this Comedi device:\n" +
                                 "   version code: %d\n" +

@@ -27,21 +27,20 @@
 
 using Posix;
 
-public class Cld.HeidolphModule : AbstractModule {
+public class Cld.HeidolphModule : Cld.AbstractModule {
 
     /**
      * Property backing fields.
      */
     private Gee.Map<string, Cld.Object> _objects;
     private string _speed_sp;
-    private string old_speed_sp = "0";
     private string _speed = "0";
     private string _torque = "0";
     private string _error_status;
 
-    private string received = "c";
-    private uint? source_id;
-
+    /**
+     * Properties
+     */
     public int timeout_ms { get; set; default = 400;}
 
     public string speed_sp {
@@ -60,11 +59,6 @@ public class Cld.HeidolphModule : AbstractModule {
     public string error_status {
         get { return _error_status; }
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string id { get; set; }
 
     /**
      * {@inheritDoc}
@@ -100,6 +94,10 @@ public class Cld.HeidolphModule : AbstractModule {
 
     public bool running { get; set; default = false; }
 
+    private string old_speed_sp = "0";
+    private string received = "c";
+    private uint? source_id;
+
     /**
      * Default construction.
      */
@@ -109,9 +107,9 @@ public class Cld.HeidolphModule : AbstractModule {
      * Full construction using available settings.
      */
     public HeidolphModule.full (string id, Port port) {
-       this.id = id;
-       this.port = port;
-       this.channels = channels;
+        this.id = id;
+        this.port = port;
+        channels = new Gee.TreeMap<string, Cld.Object> ();
     }
 
     /**
@@ -146,9 +144,10 @@ public class Cld.HeidolphModule : AbstractModule {
      * Start the mixer
      */
      public bool run () {
-        //Cld.debug ("Heidolph: run ()");
-        source_id = Timeout.add (timeout_ms, fetch_data_cb);
         string msg1 = "R" + _speed_sp + "\r\n";
+
+        Cld.debug ("Heidolph: run ()");
+        source_id = Timeout.add (timeout_ms, fetch_data_cb);
         port.send_bytes (msg1.to_utf8 (), msg1.length);
         running = true;
 
@@ -159,8 +158,9 @@ public class Cld.HeidolphModule : AbstractModule {
      * Stop the mixer
      */
     public bool stop () {
-        //Cld.debug ("Heidolph: stop ()");
         string msg1 = "R0\r\n";
+
+        Cld.debug ("Heidolph: stop ()");
         port.send_bytes (msg1.to_utf8 (), msg1.length);
         running = false;
 
@@ -171,8 +171,9 @@ public class Cld.HeidolphModule : AbstractModule {
      * Set speed control to run from the rheostat.
      */
     public void rheostat () {
-        //Cld.debug ("Heidolph : rheostat ()");
         string msg1 = "D\r\n";
+
+        Cld.debug ("Heidolph : rheostat ()");
         port.send_bytes (msg1.to_utf8 (), msg1.length);
     }
 
@@ -189,6 +190,7 @@ public class Cld.HeidolphModule : AbstractModule {
             port.send_bytes (msg1.to_utf8 (), msg1.length);
             port.send_bytes (msg2.to_utf8 (), msg2.length);
             port.send_bytes (msg3.to_utf8 (), msg3.length);
+
             if (_speed_sp != old_speed_sp) {
                 port.send_bytes (msg4.to_utf8 (), msg4.length);
                 old_speed_sp = _speed_sp;
@@ -252,7 +254,6 @@ public class Cld.HeidolphModule : AbstractModule {
      */
     public void normalize () {
         string msg1 = "N\r\n";
-
         port.send_bytes (msg1.to_utf8 (), msg1.length);
     }
 
@@ -261,7 +262,7 @@ public class Cld.HeidolphModule : AbstractModule {
      */
     public void add_channel (Cld.Object channel) {
         channels.set (channel.id, channel);
-       //Cld.debug ("HeidolphModule :: add_channel(%s)", channel.id);
+        Cld.debug ("HeidolphModule :: add_channel(%s)", channel.id);
     }
 
     public void set_speed (string speed_set) {
@@ -289,6 +290,7 @@ public class Cld.HeidolphModule : AbstractModule {
      * {@inheritDoc}
      */
     public override void unload () {
+        /* XXX probably a logic error, needs review */
         if (running)
             rheostat ();
             //stop (); // Another possibility for unload.
@@ -301,14 +303,6 @@ public class Cld.HeidolphModule : AbstractModule {
         loaded = false;
 
         Cld.debug ("HeidolphModule unloaded");
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public virtual void add (Cld.Object object) {
-        Cld.debug ("HeidolphModule :: add_object(%s)", object.id);
-        objects.set (object.id, object);
     }
 
     /**

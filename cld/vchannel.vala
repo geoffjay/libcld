@@ -30,11 +30,6 @@ public class Cld.VChannel : AbstractChannel, ScalableChannel {
     /**
      * {@inheritDoc}
      */
-    public override string id { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
     public override int num { get; set; }
 
     /**

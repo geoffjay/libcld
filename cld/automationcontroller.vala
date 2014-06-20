@@ -29,11 +29,6 @@ public class Cld.AutomationController : Cld.AbstractController {
     /**
      * {@inheritDoc}
      */
-    public override string id { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
     private Gee.Map<string, Cld.Object> _objects;
     public override Gee.Map<string, Cld.Object> objects {
         get { return (_objects); }
@@ -41,10 +36,18 @@ public class Cld.AutomationController : Cld.AbstractController {
     }
 
     /**
+     * Default construction
+     */
+    public AutomationController () {
+        _objects = new Gee.TreeMap<string, Cld.Object> ();
+    }
+
+    /**
      * {@inheritDoc}
      */
     public override void generate () {
     }
+
     /**
      * {@inheritDoc}
      */
@@ -57,9 +60,5 @@ public class Cld.AutomationController : Cld.AbstractController {
      */
     public override string to_string () {
         return base.to_string ();
-    }
-
-    public AutomationController () {
-
     }
 }

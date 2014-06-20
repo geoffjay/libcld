@@ -3,16 +3,20 @@ using Posix;
 
 int main (string[] args) {
     XmlConfig xml;
-    Builder builder;
+    /*
+     *Builder builder;
+     */
     Cld.Object pid;
     Cld.Object log;
 
     Xml.Parser.init ();
 
-    xml = new XmlConfig.with_file_name ("cld.xml");
-    builder = new Builder.from_xml_config (xml);
-
-    builder.print (GLib.stdout);
+/*
+ *    xml = new XmlConfig.with_file_name ("cld.xml");
+ *    builder = new Builder.from_xml_config (xml);
+ *
+ *    builder.print (GLib.stdout);
+ */
 
     /* XXX out of date */
 /*

@@ -22,275 +22,217 @@
 /**
  * Class use to build objects from configuration data.
  */
-public class Cld.Builder : Cld.AbstractContainer {
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string id { get; set; }
+internal class Cld.Builder : GLib.Object {
 
     /**
      * The XML configuration to use for building
      */
-    private XmlConfig xml { get; set; }
+    private Cld.XmlConfig xml;
 
-    /**
-     * {@inheritDoc}
-     */
-    private Gee.Map<string, Cld.Object> _objects;
-    public override Gee.Map<string, Cld.Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
+    private Cld.Container container;
+
+    public Gee.Map<string, Cld.Object> objects {
+        get { return container.objects; }
     }
 
-    private Daq _default_daq;
-    public Daq default_daq {
-        /* return the first available daq object */
-        get {
-            foreach (var object in objects.values) {
-                if (object is Daq) {
-                    _default_daq = (object as Daq);
-                    break;
-                }
-            }
-            return _default_daq;
-        }
-    }
-
-    private Control _default_control;
-    public Control default_control {
-        /* return the first available control object */
-        get {
-            foreach (var object in objects.values) {
-                if (object is Control) {
-                    _default_control = (object as Control);
-                    break;
-                }
-            }
-            return _default_control;
-        }
-    }
-
-    /* it might be wrong here to use null here because it might prevent
-     * the user from adding objects manually after the first get and having
-     * their changes be reflected in the list they hold - test and change
-     * if that's the case */
-
-    private Gee.Map<string, Cld.Object>? _calibrations = null;
-    public Gee.Map<string, Cld.Object>? calibrations {
-        get {
-            if (_calibrations == null) {
-                _calibrations = new Gee.TreeMap<string, Cld.Object> ();
-                foreach (var object in objects.values) {
-                    if (object is Calibration)
-                        _calibrations.set (object.id, object);
-                }
-            }
-            return _calibrations;
-        }
-    }
-
-    private Gee.Map<string, Cld.Object>? _channels = null;
-    public Gee.Map<string, Cld.Object>? channels {
-        get {
-            if (_channels == null) {
-                _channels = new Gee.TreeMap<string, Cld.Object> ();
-                foreach (var object in objects.values) {
-                    if (object is Channel)
-                        _channels.set (object.id, object);
-                }
-            }
-            return _channels;
-        }
-    }
-
-    private Gee.Map<string, Cld.Object>? _logs = null;
-    public Gee.Map<string, Cld.Object>? logs {
-        get {
-            if (_logs == null) {
-                _logs = new Gee.TreeMap<string, Cld.Object> ();
-                foreach (var object in objects.values) {
-                    if (object is Log)
-                        _logs.set (object.id, object);
-                }
-            }
-            return _logs;
-        }
-    }
-
-    private Gee.Map<string, Cld.Object>? _modules = null;
-    public Gee.Map<string, Cld.Object>? modules {
-        get {
-            if (_modules == null) {
-                _modules = new Gee.TreeMap<string, Cld.Object> ();
-                foreach (var object in objects.values) {
-                    if (object is Module)
-                        _modules.set (object.id, object);
-                }
-            }
-            return _modules;
-        }
-    }
-
-    private Gee.Map<string, Cld.Object>? _dataseries = null;
-    public Gee.Map<string, Cld.Object>? dataseries {
-        get {
-            if (_dataseries == null) {
-                _dataseries = new Gee.TreeMap<string, Cld.Object> ();
-                foreach (var object in objects.values) {
-                    if (object is DataSeries)
-                        _dataseries.set (object.id, object);
-                }
-            }
-            return _dataseries;
-        }
-        set { _dataseries = value; }
+    construct {
+        container = new Cld.SimpleContainer ();
+        container.id = "ctr0";
     }
 
     public Builder.from_file (string filename) {
-        xml = new XmlConfig.with_file_name (filename);
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
-        build_object_map ();
+        xml = new Cld.XmlConfig.with_file_name (filename);
+
+        build_object_map (container, 0);
         setup_references ();
     }
 
-    public Builder.from_xml_config (XmlConfig xml) {
+    public Builder.from_xml_config (Cld.XmlConfig xml) {
         this.xml = xml;
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
-        build_object_map ();
+
+        build_object_map (container, 0);
         setup_references ();
-    }
-
-    ~Builder () {
-        if (objects != null)
-            objects.clear ();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public Cld.Object? get_object (string id) {
-        Cld.Object? result = null;
-
-        if (objects.has_key (id)) {
-            result = objects.get (id);
-        } else {
-            foreach (var object in objects.values) {
-                if (object is Container) {
-                    result = (object as Container).get_object (id);
-                    if (result != null) {
-                        break;
-                    }
-                }
-            }
-        }
-
-        return result;
     }
 
     /**
      * Constructs the object tree using the top level object types.
      */
-    private void build_object_map () {
-        string type;
-        string direction;
-        string xpath = "/cld/cld:objects/cld:object";
+    private void build_object_map (Cld.Container ctr, int level) {
+
+        Cld.Object object = null;
+        string xpath = "/cld/cld:objects";
+
+        for (int i = 0; i < level + 1; i++) {
+            if (level > 0 && i == level - 1)
+                xpath += "/cld:object[@id = %s]".printf (ctr.id);
+            else
+                xpath += "/cld:object";
+        }
+
+        Cld.debug ("Adding nodeset to %s for: %s", ctr.id, xpath);
 
         /* request the nodeset from the configuration */
         Xml.XPath.NodeSet *nodes = xml.nodes_from_xpath (xpath);
-        Xml.Node *node = nodes->item (0);
 
-        for (Xml.Node *iter = node; iter != null; iter = iter->next) {
-            if (iter->type == Xml.ElementType.ELEMENT_NODE &&
-                iter->type != Xml.ElementType.COMMENT_NODE) {
-                /* load all available objects */
-                if (iter->name == "object") {
-                    Cld.Object object = null;
-                    type = iter->get_prop ("type");
-                    switch (type) {
-                        case "daq":
-                            object = new Daq.from_xml_node (iter);
-                            break;
-                        case "log":
-                            var ltype = iter->get_prop ("ltype");
-                            if (ltype == "csv") {
-                                object = new CsvLog.from_xml_node (iter);
-                            } else if (ltype == "sqlite") {
-                                object = new SqliteLog.from_xml_node (iter);
-                            }
-                            break;
-                        case "control":
-                            object = new Control.from_xml_node (iter);
-                            break;
-                        case "calibration":
-                            object = new Calibration.from_xml_node (iter);
-                            break;
-                        case "channel":
-                            var ctype = iter->get_prop ("ctype");
-                            direction = iter->get_prop ("direction");
-                            if (ctype == "analog" && direction == "input") {
-                                object = new AIChannel.from_xml_node (iter);
-                            } else if (ctype == "analog" && direction == "output") {
-                                object = new AOChannel.from_xml_node (iter);
-                            } else if (ctype == "digital" && direction == "input") {
-                                object = new DIChannel.from_xml_node (iter);
-                            } else if (ctype == "digital" && direction == "output") {
-                                object = new DOChannel.from_xml_node (iter);
-                            } else if (ctype == "virtual") {
-                                object = new VChannel.from_xml_node (iter);
-                            } else if (ctype == "calculation") {
-                                object = new MathChannel.from_xml_node (iter);
-                            } else {
-                                object = null;
-                            }
-                            break;
-                        case "module":
-                            var mtype = iter->get_prop ("mtype");
-                            if (mtype == "velmex") {
-                                object = new VelmexModule.from_xml_node (iter);
-                            } else if (mtype == "licor") {
-                                object = new LicorModule.from_xml_node (iter);
-                            } else if  (mtype == "brabender") {
-                                object = new BrabenderModule.from_xml_node (iter);
-                            } else if (mtype == "parker") {
-                                object = new ParkerModule.from_xml_node (iter);
-                            } else if  (mtype == "heidolph") {
-                                object = new HeidolphModule.from_xml_node (iter);
-                            } else {
-                                object = null;
-                            } break;
-                        case "port":
-                            var ptype = iter->get_prop ("ptype");
-                            if (ptype == "serial") {
-                                object = new SerialPort.from_xml_node (iter);
-                            } else if (ptype == "modbus") {
-                                object = new ModbusPort.from_xml_node (iter);
-                            } else {
-                                object = null;
-                            }
-                            break;
-                        case "dataseries":
-                            object = new DataSeries.from_xml_node (iter);
-                            break;
-                        default:
-                            object = null;
-                            break;
-                    }
+        for (int i = 0; i < nodes->length (); i++) {
+            Xml.Node *node = nodes->item (i);
+            if (node->type == Xml.ElementType.ELEMENT_NODE &&
+                node->type != Xml.ElementType.COMMENT_NODE) {
 
-                    Cld.debug ("Loading object of type %s with id %s", type, object.id);
+                /* Load all available objects */
+                if (node->name == "object") {
+                    Cld.debug ("Level: %d", level);
+                    object = node_to_object (node);
+                    Cld.debug ("Created object: %s", object.id);
+                    Cld.debug ("Content: %s", node->get_content ());
+
+                    /* Recursively add objects */
                     if (object is Cld.Container) {
-                        foreach (Cld.Object obj in (object as Cld.Container).objects.values) {
-                            Cld.debug ("Loading object of type %s with id %s",
-                                ((obj as GLib.Object).get_type ()).name, object.id);
-                            add (obj);
-                        }
+                        build_object_map (object as Cld.Container, level + 1);
                     }
-                    /* no point adding an object type that isn't recognized */
-                    if (object != null)
-                        add (object);
+
+                    /* No point adding an object type that isn't recognized */
+                    if (object != null) {
+                        Cld.debug ("Adding object of type %s with id %s",
+                                   ((object as GLib.Object).get_type ()).name (),
+                                   object.id);
+                        ctr.add (object);
+                    }
                 }
             }
         }
+    }
+
+    private Cld.Object? node_to_object (Xml.Node *node) {
+        Cld.Object object = null;
+        string type = node->get_prop ("type");
+
+        switch (type) {
+            case "daq":
+                object = new Daq.from_xml_node (node);
+                break;
+            case "log":
+                object = node_to_log (node);
+                break;
+            case "control":
+                object = new Control.from_xml_node (node);
+                break;
+            case "calibration":
+                object = new Calibration.from_xml_node (node);
+                break;
+            case "channel":
+                object = node_to_channel (node);
+                break;
+            case "module":
+                object = node_to_module (node);
+                break;
+            case "port":
+                object = node_to_port (node);
+                break;
+            case "dataseries":
+                object = new DataSeries.from_xml_node (node);
+                break;
+            case "controller":
+                object = node_to_controller (node);
+                break;
+            default:
+                object = null;
+                break;
+        }
+
+        Cld.debug ("Loading object of type %s with id %s", type, object.id);
+
+        return object;
+    }
+
+    private Cld.Object? node_to_log (Xml.Node *node) {
+        Cld.Object object = null;
+
+        var ltype = node->get_prop ("ltype");
+        if (ltype == "csv") {
+            object = new CsvLog.from_xml_node (node);
+        } else if (ltype == "sqlite") {
+            object = new SqliteLog.from_xml_node (node);
+        }
+
+        return object;
+    }
+
+    private Cld.Object? node_to_channel (Xml.Node *node) {
+        Cld.Object object = null;
+
+        var ctype = node->get_prop ("ctype");
+        var direction = node->get_prop ("direction");
+        if (ctype == "analog" && direction == "input") {
+            object = new AIChannel.from_xml_node (node);
+        } else if (ctype == "analog" && direction == "output") {
+            object = new AOChannel.from_xml_node (node);
+        } else if (ctype == "digital" && direction == "input") {
+            object = new DIChannel.from_xml_node (node);
+        } else if (ctype == "digital" && direction == "output") {
+            object = new DOChannel.from_xml_node (node);
+        } else if (ctype == "virtual") {
+            object = new VChannel.from_xml_node (node);
+        } else if (ctype == "calculation") {
+            object = new Cld.MathChannel.from_xml_node (node);
+        } else {
+            object = null;
+        }
+
+        return object;
+    }
+
+    private Cld.Object? node_to_module (Xml.Node *node) {
+        Cld.Object object = null;
+
+        var mtype = node->get_prop ("mtype");
+        if (mtype == "velmex") {
+            object = new VelmexModule.from_xml_node (node);
+        } else if (mtype == "licor") {
+            object = new LicorModule.from_xml_node (node);
+        } else if  (mtype == "brabender") {
+            object = new BrabenderModule.from_xml_node (node);
+        } else if (mtype == "parker") {
+            object = new ParkerModule.from_xml_node (node);
+        } else if  (mtype == "heidolph") {
+            object = new HeidolphModule.from_xml_node (node);
+        } else {
+            object = null;
+        }
+
+        return object;
+    }
+
+    private Cld.Object? node_to_port (Xml.Node *node) {
+        Cld.Object object = null;
+
+        var ptype = node->get_prop ("ptype");
+        if (ptype == "serial") {
+            object = new SerialPort.from_xml_node (node);
+        } else if (ptype == "modbus") {
+            object = new ModbusPort.from_xml_node (node);
+        } else {
+            object = null;
+        }
+
+        return object;
+    }
+
+    private Cld.Object? node_to_controller (Xml.Node *node){
+        Cld.Object object = null;
+
+        var ctype = node->get_prop ("ctype");
+        if (ctype == "acquisition") {
+            //object = new AcquisitionController.from_xml_node (node);
+        } else if (ctype == "automation") {
+            //object = new AutomationController.from_xml_node (node);
+        } else if (ctype == "log") {
+            object = new LogController.from_xml_node (node);
+        } else {
+            object = null;
+        }
+
+        return object;
     }
 
     /**
@@ -300,12 +242,14 @@ public class Cld.Builder : Cld.AbstractContainer {
     private void setup_references () {
         string ref_id;
 
-        foreach (var object in objects.values) {
+        var channel_map = container.get_object_map (typeof (Cld.Channel));
+
+        foreach (var object in container.objects.values) {
             /* Setup the device references for all of the channel types */
             if (object is Channel) {
                 ref_id = (object as Channel).devref;
                 Cld.debug ("Assigning Device %s to Channel %s", ref_id, object.id);
-                var device = get_object (ref_id);
+                var device = container.get_object (ref_id);
                 if (device != null && device is Device) {
                     (object as Channel).device = (device as Device);
                     ref_id = (object as Channel).taskref;
@@ -317,40 +261,40 @@ public class Cld.Builder : Cld.AbstractContainer {
             }
 
             /* Channels with a calibration reference */
-            if (object is ScalableChannel) {
-                ref_id = (object as ScalableChannel).calref;
+            if (object is Cld.ScalableChannel) {
+                ref_id = (object as Cld.ScalableChannel).calref;
                 Cld.debug ("Assigning Calibration %s to ScalableChannel %s", ref_id, object.id);
                 if (ref_id != null) {
-                    var calibration = get_object (ref_id);
+                    var calibration = container.get_object (ref_id);
                     if (calibration != null && calibration is Calibration)
-                        (object as ScalableChannel).calibration =
+                        (object as Cld.ScalableChannel).calibration =
                                                 (calibration as Calibration);
                 }
             }
 
-            if (object is MathChannel) {
-                if ((object as MathChannel).expression != null) {
-                    int len = (object as MathChannel).variable_names.length;
+            if (object is Cld.MathChannel) {
+                if ((object as Cld.MathChannel).expression != null) {
+                    int len = (object as Cld.MathChannel).variable_names.length;
                     for (int i = 0; i < len; i++) {
                         Cld.Object obj;
-                        string name  = (object as MathChannel).variable_names [i];
-                        foreach (string id in objects.keys) {
-                            obj = get_object (id);
-                            if (name.contains (id) && (objects.get (id) is DataSeries)) {
-                                (((obj as DataSeries).channel) as ScalableChannel).new_value.connect ((id, val) => {
-                                double num = (object as MathChannel).calculated_value;
+                        string name  = (object as Cld.MathChannel).variable_names [i];
+                        foreach (string id in container.objects.keys) {
+                            obj = container.get_object (id);
+                            if (name.contains (id) && (container.objects.get (id) is DataSeries)) {
+                                (((obj as DataSeries).channel) as Cld.ScalableChannel).new_value.connect ((id, val) => {
+                                double num = (object as Cld.MathChannel).calculated_value;
                             });
 
-                            } else if (name == id && (objects.get (id) is ScalableChannel)) {
-                                obj = get_object (id);
-                                (obj as ScalableChannel).new_value.connect ((id, val) => {
-                                    double num = (object as MathChannel).calculated_value;
+                            } else if (name == id && (container.objects.get (id) is Cld.ScalableChannel)) {
+                                obj = container.get_object (id);
+                                (obj as Cld.ScalableChannel).new_value.connect ((id, val) => {
+                                    double num = (object as Cld.MathChannel).calculated_value;
                                 });
                             } else {
                                 obj = null;
                             }
                             if (obj != null) {
-                                (object as MathChannel).add_object (id, obj);
+                                (object as Cld.MathChannel).add_object (id, obj);
                                 Cld.debug ("Assigning Cld.Object %s to MathChannel %s", name, object.id);
                             }
                         }
@@ -363,7 +307,7 @@ public class Cld.Builder : Cld.AbstractContainer {
                 ref_id = (object as VChannel).calref;
                 if ((object as VChannel).expression != null) {
                     foreach( var name in (object as VChannel).channel_names ) {
-                        (object as VChannel).add_channel( name, (get_object (name) as AIChannel));
+                        (object as VChannel).add_channel (name, (container.get_object (name) as AIChannel));
                     }
                 }
             }
@@ -374,7 +318,7 @@ public class Cld.Builder : Cld.AbstractContainer {
                     if (column is Column) {
                         ref_id = (column as Column).chref;
                         if (ref_id != null) {
-                            var channel = get_object (ref_id);
+                            var channel = container.get_object (ref_id);
                             if (channel != null && channel is Channel) {
                                 Cld.debug ("Assigning channel %s to column %s", channel.id, column.id);
                                 (column as Column).channel = (channel as Channel);
@@ -396,7 +340,7 @@ public class Cld.Builder : Cld.AbstractContainer {
                 ref_id = (object as Module).portref;
                 Cld.debug ("Assigning Port %s to Module %s", ref_id, object.id);
                 if (ref_id != null) {
-                    var port = get_object (ref_id);
+                    var port = container.get_object (ref_id);
                     if (port != null && port is Port)
                         (object as Module).port = (port as Port);
                 }
@@ -405,7 +349,7 @@ public class Cld.Builder : Cld.AbstractContainer {
 
                 if (ref_id != null && object is LicorModule) {
                     /* set the virtual channel that are to be referenced by this module */
-                    foreach (var licor_channel in channels.values) {
+                    foreach (var licor_channel in channel_map.values) {
                         if ((licor_channel as Channel).devref == ref_id) {
                             Cld.debug ("Assigning Channel %s to Device %s", licor_channel.id,
                                         (object as LicorModule).devref);
@@ -416,7 +360,7 @@ public class Cld.Builder : Cld.AbstractContainer {
 
                 if (ref_id != null && object is ParkerModule) {
                     /* set the virtual channels that are to be referenced by this module */
-                    foreach (var parker_channel in channels.values) {
+                    foreach (var parker_channel in channel_map.values) {
                         if ((parker_channel as Channel).devref == ref_id) {
                             Cld.debug ("Assigning Channel %s to Device %s", parker_channel.id,
                                         (object as ParkerModule).devref);
@@ -425,8 +369,8 @@ public class Cld.Builder : Cld.AbstractContainer {
                     }
                 }
                 if (object is HeidolphModule) {
-                    var chan0 = get_object ("heidolph00");
-                    var chan1 = get_object ("heidolph01");
+                    var chan0 = container.get_object ("heidolph00");
+                    var chan1 = container.get_object ("heidolph01");
                     (object as HeidolphModule).add_channel (chan0 as Channel);
                     (object as HeidolphModule).add_channel (chan1 as Channel);
 
@@ -446,7 +390,7 @@ public class Cld.Builder : Cld.AbstractContainer {
             if (object is DataSeries) {
                 ref_id = (object as DataSeries).chanref;
                 Cld.debug ("Assigning Channel %s to DataSeries %s", ref_id, object.id);
-                (object as DataSeries).channel = get_object (ref_id) as ScalableChannel;
+                (object as DataSeries).channel = container.get_object (ref_id) as Cld.ScalableChannel;
                 Cld.debug ("Connecting ScalableChannel as input to DataSeries %s", object.id);
                 (object as DataSeries).connect_input ();
                 Cld.debug ("Activating VChannels in DataSeries %s", object.id);
@@ -465,7 +409,7 @@ public class Cld.Builder : Cld.AbstractContainer {
                                 ref_id = (process_value as ProcessValue).chref;
                                 Cld.debug ("Assigning ProcessValue %s to Control %s", ref_id, object.id);
                                 if (ref_id != null) {
-                                    var channel = get_object (ref_id);
+                                    var channel = container.get_object (ref_id);
                                     if (channel != null && channel is Channel) {
                                         (process_value as ProcessValue).channel
                                             = (channel as Channel);
@@ -482,23 +426,23 @@ public class Cld.Builder : Cld.AbstractContainer {
                                 ref_id = (process_value as ProcessValue2).dsref;
                                 Cld.debug ("Assigning ProcessValue2 %s to Control %s", ref_id, object.id);
                                 if (ref_id != null) {
-                                    var dataseries = get_object (ref_id);
+                                    var dataseries = container.get_object (ref_id);
                                     if (dataseries != null && dataseries is DataSeries) {
                                         (process_value as ProcessValue2).dataseries
                                             = (dataseries as DataSeries);
                                         var chanref = (dataseries as DataSeries).chanref;
-                                        (process_value as ProcessValue2).dataseries.channel = get_object (chanref)
-                                                                                    as ScalableChannel;
+                                        (process_value as ProcessValue2).dataseries.channel = container.get_object (chanref)
+                                                                                    as Cld.ScalableChannel;
                                     }
                                 }
                             }
                         }
                         ref_id = (control_object as Pid2).sp_chanref;
                         if (ref_id != null) {
-                            var channel = get_object (ref_id);
-                            if (channel != null && channel is ScalableChannel) {
+                            var channel = container.get_object (ref_id);
+                            if (channel != null && channel is Cld.ScalableChannel) {
                                 Cld.debug ("Assigning ScalableChannel %s to Pid2 %s", ref_id, control_object.id);
-                                (control_object as Pid2).sp_channel = channel as ScalableChannel;
+                                (control_object as Pid2).sp_channel = channel as Cld.ScalableChannel;
                                 (control_object as Pid2).connect_sp ();
                             }
                         }
@@ -519,70 +463,42 @@ public class Cld.Builder : Cld.AbstractContainer {
             }
         }
     }
+
     /**
      * Set a channel list for a Comedi task.
-     **/
-     public void set_channels (ComediTask task) {
-        /* Get all of the channels */
+     */
+     public void set_channels (Cld.ComediTask task) {
+        var channel_map = container.get_object_map (typeof (Cld.Channel));
+
         /* Build a channel list for this task. */
-        foreach (var task_channel in channels.values) {
-            if (((task_channel as Channel).taskref == (task as ComediTask).id) &&
-                    ((task_channel as Channel).devref == (task as ComediTask).devref)) {
-                (task as ComediTask).add_channel (task_channel);
+        foreach (var channel in channel_map.values) {
+            if (((channel as Cld.Channel).taskref == (task as Cld.ComediTask).id) &&
+                ((channel as Cld.Channel).devref == (task as Cld.ComediTask).devref)) {
+                (task as Cld.ComediTask).add_channel (channel);
             }
         }
      }
 
-     /**
-      * Add FIFOS to a Cld.Log.
-      * XXX This method is quite cumbersome and should be simplified.
-      */
-    public void add_fifos (Log log) {
-        foreach (var daq in objects.values) {
-            if (daq is Daq) {
-                foreach (var device in (daq as Cld.Container).objects.values) {
-                    if (device is Device) {
-                        foreach (var task in (device as Cld.Container).objects.values) {
-                            if (task is ComediTask) {
-                                /* Request a FIFO and add it to fifos */
-                                int fd;
-                                string fname = (task as ComediTask).connect_fifo (log.id, out fd);
-                                log.fifos.set (fname, fd);
-                            }
-                        }
+    /**
+     * Add FIFOS to a Cld.Log.
+     * XXX This method is quite cumbersome and should be simplified.
+     */
+    public void add_fifos (Cld.Log log) {
+        var daq_map = container.get_object_map (typeof (Cld.Daq));
+
+        foreach (var daq in daq_map.values) {
+            var device_map = (daq as Cld.Container).get_object_map (typeof (Cld.Device));
+            foreach (var device in device_map.values) {
+                var task_map = (device as Cld.Container).get_object_map (typeof (Cld.Task));
+                foreach (var task in task_map.values) {
+                    if (task is Cld.ComediTask) {
+                        /* Request a FIFO and add it to fifos */
+                        int fd;
+                        string fname = (task as Cld.ComediTask).connect_fifo (log.id, out fd);
+                        log.fifos.set (fname, fd);
                     }
                 }
             }
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Cld.Object> val) {
-        _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        int i;
-        string str_data;
-
-        str_data = "CldBuilder\n";
-        for (i = 0; i < 80; i++)
-            str_data += "-";
-        str_data += "\n";
-
-        foreach (var object in objects.values) {
-            str_data += "%s\n".printf (object.to_string ());
-        }
-
-        for (i = 0; i < 80; i++)
-            str_data += "-";
-        str_data += "\n";
-
-        return str_data;
     }
 }

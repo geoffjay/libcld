@@ -29,25 +29,9 @@
 public abstract class Cld.AbstractController : Cld.AbstractContainer, Cld.Controller {
 
     /**
-     * {@inheritDoc}
-     */
-    public virtual string id { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    private Gee.Map<string, Cld.Object> _objects;
-    public virtual Gee.Map<string, Cld.Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
-
-    /**
      * Default construction.
      */
-    public AbstractController () {
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
-    }
+    //public AbstractController () { }
 
     /**
      * {@inheritDoc}

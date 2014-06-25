@@ -61,7 +61,7 @@ public class AIChannelTests : ChannelTests {
         /* XXX doesn't seem inline with using set_up and test_object */
         var test_channel = new AIChannel.from_xml_node (node);
         assert (test_channel != null);
-        assert (test_channel.id == "ai0");
+        assert ((test_channel as Cld.Object).id == "ai0");
     }
 
     private void test_avg_value () {

@@ -44,21 +44,20 @@ internal class Cld.Builder : GLib.Object {
         xml = new Cld.XmlConfig.with_file_name (filename);
 
         build_object_map (container, 0);
-        setup_references ();
+        //setup_references ();
     }
 
     public Builder.from_xml_config (Cld.XmlConfig xml) {
         this.xml = xml;
 
         build_object_map (container, 0);
-        setup_references ();
+        //setup_references ();
     }
 
     /**
      * Constructs the object tree using the top level object types.
      */
     private void build_object_map (Cld.Container ctr, int level) {
-
         Cld.Object object = null;
         string xpath = "/cld/cld:objects";
 
@@ -83,6 +82,9 @@ internal class Cld.Builder : GLib.Object {
                 if (node->name == "object") {
                     Cld.debug ("Level: %d", level);
                     object = node_to_object (node);
+                    //if (object != null) {
+                        //set_parent (object, node);
+                    //}
                     Cld.debug ("Created object: %s", object.id);
                     Cld.debug ("Content: %s", node->get_content ());
 
@@ -103,19 +105,25 @@ internal class Cld.Builder : GLib.Object {
         }
     }
 
+//    private void set_parent (Cld.Object object, Xml.Node* node) {
+//        if (node->parent != null) {
+//            Xml.Node* parent_node = node->parent;
+//            string parent_content = parent_node->get_content ();
+//           // var parent = objects.get (parent_id);
+//           // object.parent = parent;
+//        }
+//    }
+
     private Cld.Object? node_to_object (Xml.Node *node) {
         Cld.Object object = null;
         string type = node->get_prop ("type");
 
         switch (type) {
-            case "daq":
-                object = new Daq.from_xml_node (node);
-                break;
-            case "log":
-                object = node_to_log (node);
-                break;
             case "control":
                 object = new Control.from_xml_node (node);
+                break;
+            case "controller":
+                object = node_to_controller (node);
                 break;
             case "calibration":
                 object = new Calibration.from_xml_node (node);
@@ -123,24 +131,41 @@ internal class Cld.Builder : GLib.Object {
             case "channel":
                 object = node_to_channel (node);
                 break;
+            case "dataseries":
+                object = new DataSeries.from_xml_node (node);
+                break;
+            case "daq":
+                object = new Daq.from_xml_node (node);
+                break;
+            case "log":
+                object = node_to_log (node);
+                break;
             case "module":
                 object = node_to_module (node);
                 break;
             case "port":
                 object = node_to_port (node);
                 break;
-            case "dataseries":
-                object = new DataSeries.from_xml_node (node);
-                break;
-            case "controller":
-                object = node_to_controller (node);
-                break;
             default:
-                object = null;
                 break;
         }
 
         Cld.debug ("Loading object of type %s with id %s", type, object.id);
+
+        return object;
+    }
+
+    private Cld.Object? node_to_controller (Xml.Node *node) {
+        Cld.Object object = null;
+
+        var ctype = node->get_prop ("ctype");
+        if (ctype == "acquisition") {
+            object = new AcquisitionController.from_xml_node (node);
+        } else if (ctype == "log") {
+            object = new LogController.from_xml_node (node);
+        } else if (ctype == "automation") {
+            object = new AutomationController.from_xml_node (node);
+        }
 
         return object;
     }
@@ -175,8 +200,6 @@ internal class Cld.Builder : GLib.Object {
             object = new VChannel.from_xml_node (node);
         } else if (ctype == "calculation") {
             object = new Cld.MathChannel.from_xml_node (node);
-        } else {
-            object = null;
         }
 
         return object;
@@ -196,8 +219,6 @@ internal class Cld.Builder : GLib.Object {
             object = new ParkerModule.from_xml_node (node);
         } else if  (mtype == "heidolph") {
             object = new HeidolphModule.from_xml_node (node);
-        } else {
-            object = null;
         }
 
         return object;
@@ -211,25 +232,6 @@ internal class Cld.Builder : GLib.Object {
             object = new SerialPort.from_xml_node (node);
         } else if (ptype == "modbus") {
             object = new ModbusPort.from_xml_node (node);
-        } else {
-            object = null;
-        }
-
-        return object;
-    }
-
-    private Cld.Object? node_to_controller (Xml.Node *node){
-        Cld.Object object = null;
-
-        var ctype = node->get_prop ("ctype");
-        if (ctype == "acquisition") {
-            //object = new AcquisitionController.from_xml_node (node);
-        } else if (ctype == "automation") {
-            //object = new AutomationController.from_xml_node (node);
-        } else if (ctype == "log") {
-            object = new LogController.from_xml_node (node);
-        } else {
-            object = null;
         }
 
         return object;

@@ -23,7 +23,8 @@
  * Hardware device information and settings.
  */
 [GenericAccessors]
-public interface Cld.Device :  GLib.Object {
+public interface Cld.Device :  Cld.Object {
+
     /**
      *
      */

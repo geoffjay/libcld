@@ -36,6 +36,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      */
     public virtual void add (Cld.Object object) {
         assert (object != null);
+        assert (objects != null);
         Cld.debug ("AbstractContainer.add (): %s", object.id);
         objects.set (object.id, object);
         object_added (object.id);
@@ -83,16 +84,19 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      */
     public virtual Gee.Map<string, Cld.Object> get_object_map (Type type) {
         Gee.Map<string, Cld.Object> map = new Gee.TreeMap<string, Cld.Object> ();
-        foreach (var object in objects.values) {
-            if (object.get_type ().is_a (type)) {
-                map.set (object.id, object);
-            } else if (object is Cld.Container) {
-                var sub_map = (object as Cld.Container).get_object_map (type);
-                foreach (var sub_object in sub_map.values) {
-                    map.set (sub_object.id, sub_object);
+        if (objects != null) {
+            foreach (var object in objects.values) {
+                if (object.get_type ().is_a (type)) {
+                    map.set (object.id, object);
+                } else if (object is Cld.Container) {
+                    var sub_map = (object as Cld.Container).get_object_map (type);
+                    foreach (var sub_object in sub_map.values) {
+                        map.set (sub_object.id, sub_object);
+                    }
                 }
             }
         }
+
         return map;
     }
 
@@ -127,6 +131,10 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      * {@inheritDoc}
      */
     public virtual void print_objects (int depth = 0) {
+        if (objects == null) {
+
+            return;
+        }
         foreach (var object in objects.values) {
             string indent = string.nfill (depth * 2, ' ');
             stdout.printf ("%s[%s: %s]\n", indent, object.get_type ().name (), object.id);

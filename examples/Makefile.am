@@ -3,7 +3,7 @@ include $(top_srcdir)/Makefile.decl
 noinst_PROGRAMS = $(EXAMPLE_PROGS)
 
 EXAMPLE_PROGS += \
-	builder \
+	build-from-xml \
 	async-acquisition \
 	context-validation \
 	$(NULL)
@@ -42,11 +42,11 @@ example_LDADD = \
 
 ### individual example applications
 
-builder_SOURCES = builder.vala $(example_SOURCES)
-builder_DEPENDENCIES = $(example_DEPENDENCIES)
-builder_VALAFLAGS = $(example_VALAFLAGS)
-builder_CPPFLAGS = $(example_CPPFLAGS)
-builder_LDADD = $(example_LDADD)
+build_from_xml_SOURCES = build-from-xml.vala $(example_SOURCES)
+build_from_xml_DEPENDENCIES = $(example_DEPENDENCIES)
+build_from_xml_VALAFLAGS = $(example_VALAFLAGS)
+build_from_xml_CPPFLAGS = $(example_CPPFLAGS)
+build_from_xml_LDADD = $(example_LDADD)
 
 async_acquisition_SOURCES = async-acquisition.vala $(example_SOURCES)
 async_acquisition_DEPENDENCIES = $(example_DEPENDENCIES)

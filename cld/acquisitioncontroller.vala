@@ -36,11 +36,41 @@ public class Cld.AcquisitionController : Cld.AbstractController {
         set { update_objects (value); }
     }
 
+
     /**
      * Default construction
      */
-    public AcquisitionController () {
+    construct {
         _objects = new Gee.TreeMap<string, Cld.Object> ();
+    }
+
+    public AcquisitionController () { }
+
+    /**
+     * Construction using an xml node
+     */
+    public AcquisitionController.from_xml_node (Xml.Node *node) {
+        string value;
+
+        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+            node->type != Xml.ElementType.COMMENT_NODE) {
+            _id = node->get_prop ("id");
+            /* iterate through node children */
+            for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
+                if (iter->name == "object") {
+                    switch (iter->get_prop ("type")) {
+                        case "device":
+                            if (iter->get_prop ("driver") == "comedi") {
+                                var dev = new Cld.ComediDevice.from_xml_node (iter);
+                                add (dev);
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
     }
 
     /**

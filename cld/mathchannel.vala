@@ -26,7 +26,7 @@ using matheval;
  * the same as the calculated value of the Virtual channel. As a scaleable channel
  * it can be connected to a PID control object, for example.
  */
-public class Cld.MathChannel : VChannel, ScalableChannel {
+public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
 
     /**
      * {@inheritDoc}
@@ -79,12 +79,6 @@ public class Cld.MathChannel : VChannel, ScalableChannel {
     /* Evaluator fields */
     /* XXX TBD This should work with ScalableChannel asn DataSeries. */
     private Evaluator evaluator = null;
-
-    private Gee.Map<string, Cld.Object>? _objects = null;
-    public Gee.Map<string, Cld.Object> objects {
-        get { return _objects; }
-        set { _objects = value; }
-    }
 
     private double[]? variable_vals;
 

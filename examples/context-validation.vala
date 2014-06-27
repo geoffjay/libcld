@@ -388,7 +388,7 @@ class Cld.ContextValidationExample : Cld.Example {
 
         stdout.printf ("\nContextValidation Example\n\n");
 
-        context.print_ref_table (context as Container);
+        //context.print_ref_list ();
     }
 }
 

@@ -22,7 +22,7 @@
 /**
  * Analog output channel used for control and logging.
  */
-public class Cld.AOChannel : AbstractChannel, AChannel, OChannel, ScalableChannel {
+public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cld.ScalableChannel {
 
     /**
      * {@inheritDoc}
@@ -134,6 +134,7 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel, ScalableChanne
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
             devref = node->get_prop ("ref");
+            add_ref (devref, "devref");
             /* iterate through node children */
             for (Xml.Node *iter = node->children;
                  iter != null;
@@ -158,11 +159,13 @@ public class Cld.AOChannel : AbstractChannel, AChannel, OChannel, ScalableChanne
                             /* this should maybe be an object property,
                              * possibly fix later */
                             calref = iter->get_content ();
+                            add_ref (calref, "calref");
                             break;
                         case "taskref":
                            /* this should maybe be an object property,
                              * possibly fix later */
                             taskref = iter->get_content ();
+                            add_ref (taskref, "taskref");
                             break;
                         case "range":
                             val = iter->get_content ();

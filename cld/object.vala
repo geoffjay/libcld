@@ -32,9 +32,33 @@ public interface Cld.Object : GLib.Object {
     public abstract string id { get; set; }
 
     /**
+     * The tree path to the object.
+     */
+    public abstract string uri { get; set; }
+
+    /**
      * A weak reference to the parent object.
      */
     public abstract Cld.Object parent { get; set; }
+
+//    /**
+//     * A flag indicating whether or not objects need to be added as references
+//     * to other unowned areas of the object tree.
+//     */
+//    public abstract bool has_references { get; private set; }
+
+    /**
+     * A list of all of the uri strings to objects in other unowned areas of the
+     * object tree that will be added from a higher level.
+     */
+    public abstract Gee.List<GLib.GenericArray<string>>? ref_list { get; private set; }
+
+    /**
+     * Retrieve the map of all descendant URIs.
+     *
+     * @return map of all uri values contained by itself and all descendants.
+     */
+    public abstract unowned Gee.List<GLib.GenericArray<string>>? get_descendant_ref_list ();
 
     /**
      * Converts the contents into an output string.

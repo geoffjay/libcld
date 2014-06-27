@@ -38,20 +38,17 @@ internal class Cld.Builder : GLib.Object {
     construct {
         container = new Cld.SimpleContainer ();
         container.id = "ctr0";
+        container.parent = null;
     }
 
     public Builder.from_file (string filename) {
         xml = new Cld.XmlConfig.with_file_name (filename);
-
         build_object_map (container, 0);
-        //setup_references ();
     }
 
     public Builder.from_xml_config (Cld.XmlConfig xml) {
         this.xml = xml;
-
         build_object_map (container, 0);
-        //setup_references ();
     }
 
     /**
@@ -62,10 +59,11 @@ internal class Cld.Builder : GLib.Object {
         string xpath = "/cld/cld:objects";
 
         for (int i = 0; i < level + 1; i++) {
-            if (level > 0 && i == level - 1)
+            if (level > 0 && i == level - 1) {
                 xpath += "/cld:object[@id = %s]".printf (ctr.id);
-            else
+            } else {
                 xpath += "/cld:object";
+            }
         }
 
         Cld.debug ("Adding nodeset to %s for: %s", ctr.id, xpath);
@@ -82,9 +80,6 @@ internal class Cld.Builder : GLib.Object {
                 if (node->name == "object") {
                     Cld.debug ("Level: %d", level);
                     object = node_to_object (node);
-                    //if (object != null) {
-                        //set_parent (object, node);
-                    //}
                     Cld.debug ("Created object: %s", object.id);
                     Cld.debug ("Content: %s", node->get_content ());
 
@@ -92,6 +87,9 @@ internal class Cld.Builder : GLib.Object {
                     if (object is Cld.Container) {
                         build_object_map (object as Cld.Container, level + 1);
                     }
+
+                    /* assign container as parent */
+                    object.parent = ctr;
 
                     /* No point adding an object type that isn't recognized */
                     if (object != null) {
@@ -104,15 +102,6 @@ internal class Cld.Builder : GLib.Object {
             }
         }
     }
-
-//    private void set_parent (Cld.Object object, Xml.Node* node) {
-//        if (node->parent != null) {
-//            Xml.Node* parent_node = node->parent;
-//            string parent_content = parent_node->get_content ();
-//           // var parent = objects.get (parent_id);
-//           // object.parent = parent;
-//        }
-//    }
 
     private Cld.Object? node_to_object (Xml.Node *node) {
         Cld.Object object = null;
@@ -188,16 +177,17 @@ internal class Cld.Builder : GLib.Object {
 
         var ctype = node->get_prop ("ctype");
         var direction = node->get_prop ("direction");
+
         if (ctype == "analog" && direction == "input") {
-            object = new AIChannel.from_xml_node (node);
+            object = new Cld.AIChannel.from_xml_node (node);
         } else if (ctype == "analog" && direction == "output") {
-            object = new AOChannel.from_xml_node (node);
+            object = new Cld.AOChannel.from_xml_node (node);
         } else if (ctype == "digital" && direction == "input") {
-            object = new DIChannel.from_xml_node (node);
+            object = new Cld.DIChannel.from_xml_node (node);
         } else if (ctype == "digital" && direction == "output") {
-            object = new DOChannel.from_xml_node (node);
+            object = new Cld.DOChannel.from_xml_node (node);
         } else if (ctype == "virtual") {
-            object = new VChannel.from_xml_node (node);
+            object = new Cld.VChannel.from_xml_node (node);
         } else if (ctype == "calculation") {
             object = new Cld.MathChannel.from_xml_node (node);
         }

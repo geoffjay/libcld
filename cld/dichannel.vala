@@ -22,7 +22,7 @@
 /**
  * Digital input channel used in control and logging.
  */
-public class Cld.DIChannel : AbstractChannel, DChannel, IChannel {
+public class Cld.DIChannel : Cld.AbstractChannel, Cld.DChannel, Cld.IChannel {
 
     /**
      * {@inheritDoc}

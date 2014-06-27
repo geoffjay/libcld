@@ -31,6 +31,7 @@ public class Cld.Column : Cld.AbstractObject {
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
             chref = node->get_prop ("chref");
+            add_ref (chref, "chref");
         }
     }
 

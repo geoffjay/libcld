@@ -82,7 +82,7 @@ public interface Cld.Channel : Cld.Object {
 /**
  * Analog channel interface class.
  */
-public interface Cld.AChannel : AbstractChannel, Channel {
+public interface Cld.AChannel : Cld.AbstractChannel, Cld.Channel {
 
     /**
      *
@@ -104,7 +104,7 @@ public interface Cld.AChannel : AbstractChannel, Channel {
 /**
  * Digital channel interface class.
  */
-public interface Cld.DChannel : AbstractChannel, Channel {
+public interface Cld.DChannel : Cld.AbstractChannel, Cld.Channel {
 
     /**
      * The binary state of the channel.
@@ -121,19 +121,19 @@ public interface Cld.DChannel : AbstractChannel, Channel {
 /**
  * Input channel interface class, I is for input not interface.
  */
-public interface Cld.IChannel : AbstractChannel, Channel {
+public interface Cld.IChannel : Cld.AbstractChannel, Cld.Channel {
 }
 
 /**
  * Output channel interface class.
  */
-public interface Cld.OChannel : AbstractChannel, Channel {
+public interface Cld.OChannel : Cld.AbstractChannel, Cld.Channel {
 }
 
 /**
  * Interface class for all channels that can be scaled based on a calibration.
  */
-public interface Cld.ScalableChannel : AbstractChannel, Channel {
+public interface Cld.ScalableChannel : Cld.AbstractChannel, Cld.Channel {
 
     /**
      * ID reference to the calibration object.

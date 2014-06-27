@@ -25,11 +25,17 @@
  * Contains common code shared by all container implementations.
  */
 public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container {
-
     /**
      * {@inheritDoc}
      */
-    public abstract Gee.Map<string, Cld.Object> objects { get; set; }
+    public virtual Gee.Map<string, Cld.Object> objects {
+        get { return (_objects); }
+        set { update_objects (value); }
+    }
+
+    construct {
+        _objects = new Gee.TreeMap<string, Cld.Object> ();
+    }
 
     /**
      * {@inheritDoc}
@@ -41,6 +47,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         objects.set (object.id, object);
         object_added (object.id);
     }
+
 
     /**
      * {@inheritDoc}
@@ -55,7 +62,9 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
     /**
      * {@inheritDoc}
      */
-    public abstract void update_objects (Gee.Map<string, Cld.Object> val);
+    public virtual void update_objects (Gee.Map<string, Cld.Object> val) {
+        _objects = val;
+    }
 
     /**
      * {@inheritDoc}

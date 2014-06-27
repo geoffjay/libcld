@@ -58,28 +58,28 @@ class Cld.BuildFromXmlExample : Cld.Example {
                         </cld:object>
                     </cld:object>
 
-                    <cld:object id="ai0" type="channel" ref="dev0" ctype="analog" direction="input">
+                    <cld:object id="ai0" type="channel" ref="/daqctl0/dev0" ctype="analog" direction="input">
                         <cld:property name="tag">IN0</cld:property>
                         <cld:property name="desc">Sample Input</cld:property>
                         <cld:property name="num">0</cld:property>
-                        <cld:property name="calref">cal0</cld:property>
-                        <cld:property name="taskref">tk0</cld:property>
+                        <cld:property name="calref">/cal0</cld:property>
+                        <cld:property name="taskref">/daqctl0/dev0/tk0</cld:property>
                     </cld:object>
 
-                    <cld:object id="ao0" type="channel" ref="dev0" ctype="analog" direction="output">
+                    <cld:object id="ao0" type="channel" ref="/daqctl0/dev0" ctype="analog" direction="output">
                         <cld:property name="tag">OUT0</cld:property>
                         <cld:property name="desc">Output1</cld:property>
                         <cld:property name="num">0</cld:property>
-                        <cld:property name="calref">cal0</cld:property>
-                        <cld:property name="taskref">tk1</cld:property>
+                        <cld:property name="calref">/cal0</cld:property>
+                        <cld:property name="taskref">/daqctl0/dev0/tk1</cld:property>
                     </cld:object>
 
-                    <cld:object id="ao1" type="channel" ref="dev0" ctype="analog" direction="output">
+                    <cld:object id="ao1" type="channel" ref="/daqctl0/dev0" ctype="analog" direction="output">
                         <cld:property name="tag">OUT1</cld:property>
                         <cld:property name="desc">Output2</cld:property>
                         <cld:property name="num">1</cld:property>
-                        <cld:property name="calref">cal0</cld:property>
-                        <cld:property name="taskref">tk1</cld:property>
+                        <cld:property name="calref">/cal0</cld:property>
+                        <cld:property name="taskref">/daqctl0/dev0/tk1</cld:property>
                     </cld:object>
 
                     <!-- Heidolph -->
@@ -152,27 +152,17 @@ class Cld.BuildFromXmlExample : Cld.Example {
         stdout.printf ("\n Finished.\n\n");
 
         stdout.printf ("\nPrinting reference table..\n\n");
-        context.print_ref_table (context);
+        context.print_ref_list ();
         stdout.printf ("\n Finished.\n\n");
 
 
-        stdout.printf ("\nGenerating Context..\n\n");
-        context.generate ();
-        stdout.printf ("\n Finished.\n\n");
+
+
+//        stdout.printf ("\nGenerating Context..\n\n");
+//        context.generate ();
+//        stdout.printf ("\n Finished.\n\n");
 
         stdout.printf ("\nParent - child list\n\n");
-        //print_heritage (context);
-    }
-
-    private void print_heritage (Cld.Object object) {
-        stdout.printf ("id: %s\tparent.id: %s\n", object.id, object.parent.id);
-        if (object is Container) {
-            if ((object as Container).objects != null) {
-                foreach (var obj in (object as Container).objects.values) {
-                    print_heritage (obj);
-                }
-            }
-        }
     }
 }
 

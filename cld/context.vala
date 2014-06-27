@@ -90,6 +90,15 @@ public class Cld.Context : Cld.AbstractContainer {
         }
 
         var channel_map = get_object_map (typeof (Cld.Channel));
+        foreach (var channel in channel_map.values) {
+            // check for inner references, add to table if they exist
+        }
+
+        var ctl_map = get_children (typeof (Cld.Controller));
+        foreach (var ctl in ctl_map.values) {
+            // process inner controllers for references
+            //ctl.generate ();
+        }
 
         foreach (var object in objects.values) {
             /* Setup the device references for all of the channel types */
@@ -350,6 +359,16 @@ public class Cld.Context : Cld.AbstractContainer {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Prints a table of references between objects.
+     */
+    public void print_ref_list () {
+        var list = get_descendant_ref_list ();
+        foreach (var entry in list.read_only_view) {
+            Cld.debug ("%s : %s : %s", entry[0], entry[1], entry[2]);
         }
     }
 

@@ -22,7 +22,7 @@
 /**
  * Digital output channel used for control and logging.
  */
-public class Cld.DOChannel : AbstractChannel, DChannel, OChannel {
+public class Cld.DOChannel : Cld.AbstractChannel, Cld.DChannel, Cld.OChannel {
 
     /**
      * {@inheritDoc}

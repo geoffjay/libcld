@@ -58,7 +58,8 @@ examples/*.stamp
 examples/.deps/
 examples/.libs/
 examples/async-acquisition
-examples/builder
+examples/build-from-xml
+examples/context-validation
 examples/serialport
 examples/serialport-xml
 examples/socketport

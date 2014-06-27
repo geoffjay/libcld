@@ -24,7 +24,7 @@
  *
  * Contains common code shared by all channel implementations.
  */
-public abstract class Cld.AbstractChannel : AbstractObject, Channel {
+public abstract class Cld.AbstractChannel : Cld.AbstractContainer, Cld.Channel {
 
     /**
      * {@inheritDoc}

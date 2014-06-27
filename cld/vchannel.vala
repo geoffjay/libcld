@@ -25,7 +25,7 @@ using matheval;
  * Virtual channel to be used to execute expressions or just as a dummy channel
  * with a settable value.
  */
-public class Cld.VChannel : AbstractChannel, ScalableChannel {
+public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
 
     /**
      * {@inheritDoc}

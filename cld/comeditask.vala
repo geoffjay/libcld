@@ -129,6 +129,7 @@ bool b = true;
                     switch (iter->get_prop ("name")) {
                         case "devref":
                             devref = iter->get_content ();
+                            add_ref (devref, "devref");
                             break;
                         case "exec-type":
                             exec_type = iter->get_content ();

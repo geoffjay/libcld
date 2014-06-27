@@ -62,6 +62,7 @@ public interface Cld.Container : Cld.Object {
      */
     public abstract void update_objects (Gee.Map<string, Cld.Object> val);
 
+
     /**
      * Search the object list for the object with the given ID
      *

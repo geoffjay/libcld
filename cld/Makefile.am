@@ -138,8 +138,8 @@ dist_vapi_DATA = \
 	cld-0.2.vapi \
 	$(NULL)
 
-girdir = $(datadir)/gir-1.0
-
+if HAVE_INTROSPECTION
+girdir = @INTROSPECTION_GIRDIR@
 gir_DATA = \
 	Cld-0.2.gir \
 	$(NULL)
@@ -150,7 +150,9 @@ typelib_DATA = \
 	$(NULL)
 
 Cld-0.2.typelib: Cld-0.2.gir
-	@INTROSPECTION_COMPILER@ --shared-library=libcld -o $@ $^
+	@INTROSPECTION_COMPILER@ --debug --verbose \
+		--includedir=$(srcdir) --includedir=. \
+		--shared-library=libcld-0.2.so $^ -o $@
 endif
 
 Cld-0.2.gir cld-internals-0.2.vapi cld-0.2.vapi: libcld-0.2.la

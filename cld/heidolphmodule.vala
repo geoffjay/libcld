@@ -59,26 +59,6 @@ public class Cld.HeidolphModule : Cld.AbstractModule {
         get { return _error_status; }
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override bool loaded { get; set; default = false; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string devref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string portref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override weak Port port { get; set; }
-
     public Gee.Map<string, Cld.Object> channels { get; set; }
 
     public bool running { get; set; default = false; }

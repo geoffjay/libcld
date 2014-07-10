@@ -143,7 +143,7 @@ public interface Cld.ScalableChannel : Cld.AbstractChannel, Cld.Channel {
     /**
      * Calibration object used to calculate the scaled value.
      */
-    public abstract weak Calibration calibration { get; set; }
+    public abstract Calibration calibration { get; set; }
 
     /**
      * The scaled value that is calculated using the calibration.

@@ -26,26 +26,6 @@
 public class Cld.LicorModule : AbstractModule {
 
     /**
-     * {@inheritDoc}
-     */
-    public override bool loaded { get; set; default = false; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string devref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string portref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override weak Port port { get; set; }
-
-    /**
      * The list of channels to fill with received data.
      */
     public weak Gee.Map<string, Object> channels { get; set; }

@@ -560,34 +560,6 @@ public class Cld.ParkerModule : AbstractModule {
 
     public signal void error (int n, string message);
 
-    /**
-     * {@inheritDoc}
-     */
-    public override bool loaded { get; set; default = false; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string devref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string portref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override weak Port port { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override Gee.Map<string, Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
-
     /* A signal that is emitted when the position value changes.*/
     public signal void new_position (double position);
 

@@ -27,24 +27,45 @@
 public abstract class Cld.AbstractModule : Cld.AbstractContainer, Cld.Module {
 
     /**
-     * {@inheritDoc}
+     * Property backing fields.
      */
-    public abstract bool loaded { get; set; }
+    protected weak Cld.Port _port;
 
     /**
      * {@inheritDoc}
      */
-    public abstract string devref { get; set; }
+    public virtual bool loaded { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public abstract string portref { get; set; }
+    public virtual string devref { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public abstract weak Port port { get; set; }
+    public virtual string portref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual Port port {
+        get {
+            if (_port == null) {
+                var devices = get_children (typeof (Cld.Port));
+                foreach (var dev in devices.values) {
+                    /* this should only happen once */
+                    _port = dev as Cld.Port;
+                    break;
+                }
+            }
+
+            return _port;
+        }
+        set {
+            _port = value;
+        }
+    }
 
     /**
      * {@inheritDoc}

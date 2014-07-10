@@ -145,7 +145,7 @@ class Cld.BuildFromXmlExample : Cld.Example {
                                 <cld:property name="kp">0.000000</cld:property>
                                 <cld:property name="ki">0.000500</cld:property>
                                 <cld:property name="kd">0.000000</cld:property>
-                                <cld:property name="spchanref">/ctr0/ao0</cld:property>
+                                <cld:property name="sp_chanref">/ctr0/ao0</cld:property>
                                 <cld:object id="pv0" type="process_value2" dsref="/ctr0/ds0" direction="input"/>
                                 <cld:object id="pv1" type="process_value2" dsref="/ctr0/ds1" direction="output"/>
                             </cld:object>
@@ -175,16 +175,22 @@ class Cld.BuildFromXmlExample : Cld.Example {
         context.generate_references ();
         stdout.printf ("\n Finished.\n\n");
 
+        stdout.printf ("\nPrinting objects again..\n\n");
+        context.print_objects ();
+        stdout.printf ("\n Finished.\n\n");
+
+        stdout.printf ("\nDemonstrating the to_string () method..\n\n");
         var chan = context.get_object ("ai0") as AIChannel;
         chan.add_raw_value (123);
         chan.add_raw_value (456);
         chan.add_raw_value (789);
+        stdout.printf ("%s", chan.to_string ());
+        stdout.printf ("\n Finished.\n\n");
 
-        //stdout.printf ("\nPrinting objects again..\n\n");
-        //context.print_objects ();
-        //stdout.printf ("\n Finished.\n\n");
-
-        stdout.printf ("%s", context.to_string ());
+        /* This produces a large output */
+//        stdout.printf ("\nDemonstrating the to_string_recusive () method..\n\n");
+//        stdout.printf ("%s", context.to_string_recursive ());
+//        stdout.printf ("\n Finished.\n\n");
     }
 }
 

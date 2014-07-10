@@ -58,6 +58,7 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
         get { return _parent; }
         set { _parent = value; }
     }
+
     /**
      * {@inheritDoc}
      */
@@ -68,7 +69,8 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
 
         result += "\nCld.Object.id: %s (%s)\n".printf (id, type.name ());
         result += "\tProperties:\n\n";
-        result += "\t%-24s%-35s%-20s%-24s\n\n".printf ("name:", "value type:", "value:", "owner type:");
+        result += "\t%-24s%-35s%-20s%-24s\n\n".printf ("name:", "value:", "value type:", "owner type:");
+
         foreach (ParamSpec spec in ocl.list_properties ()) {
             string val_string = "";
             Type ptype = spec.value_type;
@@ -85,16 +87,49 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
         }
         result += "\n";
 
+        return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual string to_string_recursive () {
+        string result = "";
+        Type type = get_type ();
+        ObjectClass ocl = (ObjectClass)type.class_ref ();
+
+        result += "\nCld.Object.id: %s (%s)\n".printf (id, type.name ());
+        result += "\tProperties:\n\n";
+        result += "\t%-24s%-35s%-20s%-24s\n\n".printf ("name:", "value:", "value type:", "owner type:");
+
+        foreach (ParamSpec spec in ocl.list_properties ()) {
+            string val_string = "";
+            Type ptype = spec.value_type;
+            string property_name = spec.get_name ();
+            Value number = Value (ptype);
+            get_property (property_name, ref number);
+            val_string = number.strdup_contents ();
+            result += "\t%-24s%-35s%-20s%-24s\n".printf (
+                spec.get_name (),
+                val_string,
+                spec.value_type.name (),
+                spec.owner_type.name ()
+            );
+        }
+        result += "\n";
+
+        /* XXX The following code can produce a lot of unwanted output */
         if (this is Cld.Container) {
             foreach (var object in (this as Cld.Container).objects.values) {
                 if (object != null) {
-                    result += (object as Cld.Object).to_string ();
+                    result += (object as Cld.Object).to_string_recursive ();
                 }
             }
         }
 
         return result;
     }
+
 
     /**
      * {@inheritDoc}

@@ -27,6 +27,11 @@ using Gsl;
 public class Cld.DataSeries : Cld.AbstractContainer {
 
     /**
+     * Property backing fields.
+     */
+    protected weak Cld.ScalableChannel _channel;
+
+    /**
      * The number of elements in the series
      */
     public int length { get; set; default = 3; }
@@ -41,7 +46,7 @@ public class Cld.DataSeries : Cld.AbstractContainer {
     private double _mean_value;
     public double mean_value {
         get {
-            _mean_value = Gsl.Stats.mean (buffer, stride * sizeof (double), buffer.length * sizeof (double));
+            _mean_value = Gsl.Stats.mean (buffer, stride, buffer.length);
             return _mean_value;
         }
     }
@@ -54,7 +59,20 @@ public class Cld.DataSeries : Cld.AbstractContainer {
     /**
      * The channel that is buffered
      */
-    public weak Cld.ScalableChannel channel { get; set; }
+    public Cld.ScalableChannel channel {
+        get {
+            if (_channel == null) {
+              var channels = get_children (typeof (Cld.Channel));
+              foreach (var chan in channels.values) {
+                _channel = chan as Cld.ScalableChannel;
+                break;
+              }
+            }
+
+            return _channel;
+        }
+        set { _channel = value; }
+    }
 
     /**
      * The reference channel value type that the data series derives from

@@ -4,6 +4,11 @@
 public class Cld.Column : Cld.AbstractContainer {
 
     /**
+     * Property backing fields.
+     */
+    protected weak Cld.Channel _channel;
+
+    /**
      * ID reference of the channel associated with this column.
      */
     public string chref { get; set; }
@@ -11,7 +16,20 @@ public class Cld.Column : Cld.AbstractContainer {
     /**
      * Referenced channel to use.
      */
-    public weak Channel channel { get; set; }
+    public Cld.Channel channel {
+        get {
+            if (_channel == null) {
+                var channels = get_children (typeof (Cld.Channel));
+                foreach (var chan in channels.values) {
+                    _channel = chan as Cld.Channel;
+                    break;
+                }
+            }
+
+            return _channel;
+        }
+        set { _channel = value; }
+    }
 
     /**
      * Channel value for tracking.

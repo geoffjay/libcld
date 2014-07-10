@@ -28,6 +28,11 @@ using matheval;
 public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
 
     /**
+     * Property backing fields.
+     */
+    protected weak Cld.Calibration _calibration;
+
+    /**
      * {@inheritDoc}
      */
     public override string taskref {
@@ -143,7 +148,23 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
     /**
      * {@inheritDoc}
      */
-    public virtual weak Calibration calibration { get; set; }
+    public virtual Calibration calibration {
+        get {
+            if (_calibration == null) {
+                var calibrations = get_children (typeof (Cld.Calibration));
+                foreach (var cal in calibrations.values) {
+                    /* this should only happen once */
+                    _calibration = cal as Cld.Calibration;
+                    break;
+                }
+            }
+
+            return _calibration;
+        }
+        set {
+            _calibration = value;
+        }
+    }
 
     /* default constructor */
     construct {

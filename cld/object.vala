@@ -50,6 +50,14 @@ public interface Cld.Object : GLib.Object {
     public abstract string to_string ();
 
     /**
+     * Converts the contents into an output string.
+     * Contents of type Container are handled recursively
+     *
+     * @return the contents of the object formatted as a string.
+     */
+    public abstract string to_string_recursive ();
+
+    /**
      * Specifies whether the objects provided are equivalent for sorting.
      *
      * @param a one of the objects to use in the comparison.

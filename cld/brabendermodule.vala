@@ -72,26 +72,6 @@ public class Cld.BrabenderModule : AbstractModule {
     const int FREE3 = 14;
     const int FREE4 = 15;
 
-    /**
-     * {@inheritDoc}
-     */
-    public override bool loaded { get; set; default = false; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string devref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string portref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override weak Port port { get; set; }
-
     public bool running { get; set; default = false; }
 
     public weak Gee.Map<string, Object> channels { get; set; }

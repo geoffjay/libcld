@@ -26,26 +26,6 @@
 public class Cld.VelmexModule : AbstractModule {
 
     /**
-     * {@inheritDoc}
-     */
-    public override bool loaded { get; set; default = false; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string devref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string portref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override weak Port port { get; set; }
-
-    /**
      * The program commands to be executed on apply_program.
      */
     public string program { get; set; }

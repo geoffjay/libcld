@@ -101,13 +101,12 @@ public class Cld.Pid : AbstractContainer {
      * This should only ever have two objects, one input one output, so it
      * might be unecessary to store them in a map. Possible future change.
      */
-    private Gee.Map<string, Object> _process_values;
+    private Gee.Map<string, Object>? _process_values = null;
     public Gee.Map<string, Object> process_values {
         get {
-            if (_process_values == null) {
+            if (_process_values.size == 0) {
                 _process_values = get_children (typeof (Cld.ProcessValue));
             }
-
             return (_process_values);
         }
         set { update_process_values (value); }
@@ -120,8 +119,10 @@ public class Cld.Pid : AbstractContainer {
         get {
             if (_pv == null) {
                 foreach (var object in process_values.values) {
-                    if ((object as ProcessValue).chtype == ProcessValue.Type.INPUT)
+                    if ((object as ProcessValue).chtype == ProcessValue.Type.INPUT) {
                         _pv = ((object as ProcessValue).channel as AIChannel);
+                        break;
+                    }
                 }
             }
             return _pv;
@@ -134,8 +135,10 @@ public class Cld.Pid : AbstractContainer {
         get {
             if (_mv == null) {
                 foreach (var object in process_values.values) {
-                    if ((object as ProcessValue).chtype == ProcessValue.Type.OUTPUT)
+                    if ((object as ProcessValue).chtype == ProcessValue.Type.OUTPUT) {
                         _mv = ((object as ProcessValue).channel as AOChannel);
+                        break;
+                    }
                 }
             }
             return _mv;
@@ -316,7 +319,6 @@ public class Cld.Pid : AbstractContainer {
                     if (iter->get_prop ("type") == "process_value") {
                         var pv = new ProcessValue.from_xml_node (iter);
                         pv.parent = this;
-                        //process_values.set (pv.id, pv);
                         add (pv);
                     }
                 }
@@ -656,11 +658,11 @@ public class Cld.Pid2 : AbstractContainer {
      * This should only ever have two objects, one input one output, so it
      * might be unecessary to store them in a map. Possible future change.
      */
-    private Gee.Map<string, Object> _process_values;
+    private Gee.Map<string, Object>? _process_values = null;
     public Gee.Map<string, Object> process_values {
         get {
-            if (_process_values == null) {
-                _process_values = get_children (typeof (Cld.ProcessValue));
+            if (_process_values.size == 0) {
+                _process_values = get_children (typeof (Cld.ProcessValue2));
             }
 
             return (_process_values);
@@ -675,9 +677,12 @@ public class Cld.Pid2 : AbstractContainer {
     public DataSeries pv {
         get {
             if (_pv == null) {
+                var x = process_values;
                 foreach (var object in process_values.values) {
-                    if ((object as ProcessValue2).chtype == ProcessValue2.Type.INPUT)
+                    if ((object as ProcessValue2).chtype == ProcessValue2.Type.INPUT) {
                         _pv = ((object as ProcessValue2).dataseries as DataSeries);
+                        break;
+                    }
                 }
             }
             return _pv;
@@ -690,8 +695,10 @@ public class Cld.Pid2 : AbstractContainer {
         get {
             if (_mv == null) {
                 foreach (var object in process_values.values) {
-                    if ((object as ProcessValue2).chtype == ProcessValue2.Type.OUTPUT)
+                    if ((object as ProcessValue2).chtype == ProcessValue2.Type.OUTPUT) {
                         _mv = ((object as ProcessValue2).dataseries as DataSeries);
+                        break;
+                    }
                 }
             }
             return _mv;
@@ -875,7 +882,6 @@ public class Cld.Pid2 : AbstractContainer {
                     if (iter->get_prop ("type") == "process_value2") {
                         var pv = new ProcessValue2.from_xml_node (iter);
                         pv.parent = this;
-                        //process_values.set (pv.id, pv);
                         add (pv);
                     }
                 }

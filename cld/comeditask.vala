@@ -17,6 +17,7 @@
  *
  * Author:
  *  Geoff Johnson <geoff.jay@gmail.com>
+ *  Stephen Roy <sroy1966@gmail.com>
  */
 
 using Comedi;
@@ -27,22 +28,15 @@ using Comedi;
 
 public class Cld.ComediTask : AbstractTask {
 
-bool b = true;
-   /**
-    * Property backing fields.
-    */
+    /**
+     * Property backing fields.
+     */
     private Gee.Map<string, Object>? _channels = null;
-    private Gee.Map<string, int>? _fifos = null;
     private Cld.Device _device = null;
 
-   /**
-    * {@inheritDoc}
-    */
-    public override bool active { get; set; }
-
-   /**
-    * The sub device reference name.
-    */
+    /**
+     * The sub device reference name.
+     */
     public string devref { get; set; default = null; }
 
     /**
@@ -62,36 +56,47 @@ bool b = true;
         set { _device = value; }
     }
 
-   /**
-    * ...
-    */
+    /**
+     * Execution type.
+     */
     public string exec_type { get; set; }
 
-   /**
-    * ...
-    */
+    /**
+     * Input or output.
+     */
     public string direction { get; set; }
 
-   /**
-    * ...
-    */
+    /**
+     * Sampling interval in milliseconds.
+     */
     public int interval_ms { get; set; }
 
-   /**
-    * ...
-    */
+    /**
+     * A list of channel references.
+     */
+    public Gee.List<string>? chrefs { get; set; }
+
+    /**
+     * The channels that this task uses.
+     */
     public Gee.Map<string, Object>? channels {
-        get { return _channels; }
-        set { _channels = value; }
+        get {
+            _channels = get_children (typeof (Cld.Channel)) as Gee.TreeMap<string, Cld.Object>;
+
+            return _channels;
+        }
+        set {
+            /* remove all first */
+            objects.unset_all (get_children (typeof (Cld.Channel)));
+            objects.set_all (value);
+        }
     }
 
     /**
-     * A list of FIFO file descriptors used for inter process data transfer.
+     * A list of FIFOs for inter-process data transfer.
+     * The data are paired a pipe name and file descriptor.
      */
-    public Gee.Map<string, int>? fifos {
-        get { return _fifos; }
-        set { _fifos = value; }
-    }
+    public Gee.Map<string, int>? fifos { get; set; }
 
 
     private Comedi.InstructionList instruction_list;
@@ -113,6 +118,7 @@ bool b = true;
      * Default construction.
      */
     construct {
+        chrefs = new Gee.ArrayList<string> ();
         channels = new Gee.TreeMap<string, Object> ();
         fifos = new Gee.TreeMap<string, int> ();
         active = false;
@@ -152,6 +158,12 @@ bool b = true;
                         case "interval-ms":
                             interval_ms = int.parse (iter->get_content ());
                             break;
+                        case "chref":
+                            chrefs.add (iter->get_content ());
+                            break;
+                        case "fifo":
+                            fifos.set (iter->get_content (), -1);
+                            break;
                         default:
                             break;
                     }
@@ -160,27 +172,28 @@ bool b = true;
         }
     }
 
-//    /**
-//     * {@inheritDoc}
-//     */
-//    public override string to_string () {
-//
-//        string str_data = "[%s  ] : Comedi task\n".printf (id);
-//               str_data += "      [devref] : %s\n".printf (devref);
-//               str_data += "      [exec_type] : %s\n".printf (exec_type);
-//               str_data += "      [direction] : %s\n".printf (direction);
-//               str_data += "      [interval_ms] : %d\n".printf (interval_ms);
-//               str_data += "      [channels.size] : %d\n".printf (channels.size);
-//        return str_data;
-//    }
-
     /**
      * {@inheritDoc}
      */
     public override void run () {
-        if (device == null)
-            error ("Task %s has no reference to a device.", id);
+        /* Open fifos */
+        foreach (string fname in fifos.keys) {
+            if (Posix.access (fname, Posix.F_OK) == -1) {
+                int res = Posix.mkfifo (fname, 0777);
+                if (res != 0) {
+                    Cld.error ("%s could not create fifo %s\n",id, fname);
+                }
+            }
 
+            open_fifo.begin (fname, () => {
+            });
+        }
+
+        if (device == null) {
+            error ("Task %s has no reference to a device.", id);
+        }
+
+        /* Select execution type */
         switch (exec_type) {
             case "streaming":
                 /* XXX TBD */
@@ -196,6 +209,7 @@ bool b = true;
                     default:
                         break;
                 }
+
                 do_polling ();
                 break;
             default:
@@ -224,31 +238,22 @@ bool b = true;
         channels.set (channel.id, channel);
     }
 
-    /**
-     * Connect data to a FIFO.
-     * @param id The Cld object id of the client.
-     * @param fd The file descriptor of the FIFO.
-     * @return Returns the filename of the FIFO.
-     */
-    public string connect_fifo (string id, out int fd) {
-       // string fname = "/home/stroy/src/vala/america";
-        string fname = "/tmp/fifo/fifo%d.%s".printf (n_fifos++, id);
-
-        Posix.mkfifo (fname, Posix.S_IWUSR);
-        open_fifo.begin (fname, () => {
-            Cld.debug ("got a reader");
-        });
-
-        return fname;
-    }
-
     private async void open_fifo (string fname) {
         SourceFunc callback = open_fifo.callback;
         ThreadFunc<void*> run = () => {
             Cld.debug ("%s is is waiting for a reader to FIFO %s",this.id, fname);
-            int fd = Posix.open (fname, Posix.O_WRONLY | Posix.O_CREAT);
-            fifos.set (fname, fd);
-            Cld.debug ("ComediTask FIFO set: fd = %d, fname = %s, fifos.get(fname) = %d", fd, fname, fifos.get (fname));
+            int fd = Posix.open (fname, Posix.O_WRONLY);
+            if (fd == -1) {
+                Cld.debug ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
+            } else {
+                fifos.set (fname, fd);
+                Cld.debug ("ComediTask FIFO set: fd = %d, fifos.has_key(%s) = %s",
+                                    fd,
+                                    fname,
+                                    (fifos.has_key (fname)).to_string());
+
+                Cld.debug ("%s got a reader for fifo %s", id, fname);
+            }
             Idle.add ((owned) callback);
 
             return null;
@@ -264,7 +269,6 @@ bool b = true;
      * operating in a single task.
      */
     private void do_polling () {
-
         switch (direction) {
             case "read":
                 // setup the device instruction list based on channel list and device
@@ -285,7 +289,6 @@ bool b = true;
 
         if (!active) {
             task_thread = new Thread (this);
-
             try {
                 active = true;
                 thread = GLib.Thread.create<void *> (task_thread.run, true);
@@ -352,15 +355,17 @@ bool b = true;
         uint maxdata;
         int ret, i = 0, j;
         double meas;
+
+        /*XXX Consider getting rid of Channel timestamps. They are nod needed if using FIFOs. */
         GLib.DateTime timestamp = new DateTime.now_local ();
 
-//Cld.debug ("\t\t\t\texecute_instruction_list (), get_seconds (): %.3f", timestamp.get_seconds ());
-
+        //Cld.debug ("\t\t\t\texecute_instruction_list (), get_seconds (): %.3f", timestamp.get_seconds ());
         ret = (device as ComediDevice).dev.do_insnlist (instruction_list);
         if (ret < 0)
             perror ("do_insnlist failed:");
 
         foreach (var channel in channels.values) {
+            /*XXX Consider getting rid of Channel timestamps. They are nod needed if using FIFOs. */
             (channel as Channel).timestamp = timestamp;
             maxdata = (device as ComediDevice).dev.get_maxdata (
                         (channel as Channel).subdevnum, (channel as Channel).num);
@@ -381,36 +386,31 @@ bool b = true;
 
                 meas = meas / (j);
                 (channel as AIChannel).add_raw_value (meas);
-                string mess = "Channel: %s, Raw value: %.3f\n".printf ((channel as AIChannel).id,
-                                                                    (channel as AIChannel).raw_value);
-                foreach (int fd in fifos.values) {
-                    ssize_t w = Posix.write (fd, mess, mess.length);
-                    if (b) {
-                        Cld.debug ("fd: %d write returned %s", fd, w.to_string ());
-                        b = false;
-                    }
-                }
+
                 //Cld.debug ("Channel: %s, Raw value: %.3f", (channel as AIChannel).id, (channel as AIChannel).raw_value);
             } else if (channel is DIChannel) {
-
                 meas = instruction_list.insns[i].data[0];
-                if (meas > 0.0)
+                if (meas > 0.0) {
                     (channel as DChannel).state = true;
-                else
+                } else {
                     (channel as DChannel).state = false;
+                }
+
                 //Cld.debug ("Channel: %s, Raw value: %.3f", (channel as DIChannel).id, meas);
             }
         }
-     }
+    }
 
      public void execute_polled_output () {
         Comedi.Range range;
         uint maxdata,  data;
         double val;
+        /*XXX Consider getting rid of Channel timestamps. They are nod needed if using FIFOs. */
         GLib.DateTime timestamp = new DateTime.now_local ();
 
         foreach (var channel in channels.values) {
 
+            /*XXX Consider getting rid of Channel timestamps. They are nod needed if using FIFOs. */
             (channel as Channel).timestamp = timestamp;
             if (channel is AOChannel) {
                 val = (channel as AOChannel).scaled_value;
@@ -438,6 +438,33 @@ bool b = true;
      }
 
     /**
+     * Write the data to fifos using the LogEntry class as a convenience for timestamping.
+     */
+    protected void write_fifos () {
+        foreach (int fd in fifos.values) {
+            Cld.LogEntry entry = new Cld.LogEntry ();
+            string mess = "%s\t".printf (entry.time_as_string);
+
+            foreach (var channel in channels.values) {
+                var type = channel.get_type ();
+                if (type.is_a (typeof (Cld.ScalableChannel))) {
+                        mess += "%s %.6f\t".printf (channel.uri, (channel as ScalableChannel).scaled_value);
+                } else if (type.is_a (typeof (Cld.DChannel))) {
+                    if ((channel as DChannel).state) {
+                        mess += "%s %.1f\t".printf (channel.uri, 1.0);
+                    } else {
+                        mess += "%s %.1f\t".printf (channel.uri, 0.0);
+                    }
+                }
+            }
+
+            mess += "\n";
+            /* Write message to fifo. */
+            ssize_t w = Posix.write (fd, mess, mess.length);
+        }
+     }
+
+    /**
      * A thread that is used to implement a polling task.
      */
     public class Thread {
@@ -460,6 +487,7 @@ bool b = true;
             while (task.active) {
                 lock (task) {
                     task.trigger_device ();
+                    task.write_fifos ();
                 }
 
                 mutex.lock ();

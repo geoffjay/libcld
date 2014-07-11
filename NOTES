@@ -14,6 +14,8 @@ Proposed Changes:
 
 - for all methods include a header in valadoc format, or {@inheritDoc}
 - group all property backing fields in one location at the top
+    DONE
+
 - all containers should not override objects unless there's a change in functionality
     DONE
 
@@ -24,8 +26,10 @@ Proposed Changes:
     DONE
 
 - make an example that uses a polling task at 10Hz and logs the data for 60s
+    DONE
 - for all existing weak references, add a property backing field and a getter
   that retrieves the object from the objects map. eg,
+    DONE
 
 protected weak Cld.Calibration _calibration = null;
 
@@ -61,11 +65,17 @@ public Cld.Calibration calibration {
 - with the above, may have to figure out the weak location
 - as has been done with the objects and id properties, move some other
   properties that are currently overridden but don't need to be. eg. AIChannel.
+    DONE
+
 - write a generic to_string that iterates properties using ObjectClass and
   ParamSpec and put it in AbstractObject                                        :
-    DONE
+    DONE: I have made both a to_string () and a to_string_recursive () method because
+    the latter can produce a large output.
+
 - test currently library state with dactl, will need to change instances of
   builder.get_object to context.get_object, and otherwise make it work
+    SO FAR SO GOOD: Charting a single analog input channel
+
 - clean up builder
 - move back to async acquisition using fifos, if necessary it was discussed that
   a Cld.Fifo class could be created and referenced using the URI

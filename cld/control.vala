@@ -27,11 +27,6 @@
 public class Cld.ProcessValue : Cld.AbstractContainer {
 
     /**
-     * Property backing fields.
-     */
-    protected weak Cld.Channel _channel;
-
-    /**
      * ID reference of the channel associated with this process value.
      */
     public string chref { get; set; }
@@ -57,21 +52,20 @@ public class Cld.ProcessValue : Cld.AbstractContainer {
     /**
      * Referenced channel to use.
      */
-    public Cld.Channel channel {
+    public weak Cld.Channel channel {
         get {
-            if (_channel == null) {
-                var channels = get_children (typeof (Cld.Channel));
-                foreach (var chan in channels.values) {
-                    /* this should only happen once */
-                    _channel = chan as Cld.Channel;
-                    break;
-                }
+            var channels = get_children (typeof (Cld.Channel));
+            foreach (var chan in channels.values) {
+
+                /* this should only happen once */
+                return chan as Cld.Channel;
             }
 
-            return _channel;
+        return null;
         }
         set {
-            _channel = value;
+            objects.unset_all (get_children (typeof (Cld.Channel))) ;
+            objects.set (value.id, value);
         }
     }
 
@@ -121,11 +115,6 @@ public class Cld.ProcessValue : Cld.AbstractContainer {
 public class Cld.ProcessValue2 : Cld.AbstractContainer {
 
     /**
-     * Property backing fields.
-     */
-    protected weak Cld.DataSeries _dataseries;
-
-    /**
      * Read only property for the type (direction) of channel that the process
      * value represents, input is a process measurement, output is a
      * manipulated variable.
@@ -143,24 +132,22 @@ public class Cld.ProcessValue2 : Cld.AbstractContainer {
     /**
      * Referenced dataseries to use.
      */
-    public Cld.DataSeries dataseries {
+    public weak Cld.DataSeries dataseries {
         get {
-            if (_dataseries == null) {
-                var dschildren = get_children (typeof (Cld.DataSeries));
-                foreach (var ds in dschildren.values) {
-                    /* this should only happen once */
-                    _dataseries = ds as Cld.DataSeries;
-                    break;
-                }
+            var dschildren = get_children (typeof (Cld.DataSeries));
+            foreach (var ds in dschildren.values) {
+
+                /* this should only happen once */
+                return ds as Cld.DataSeries;
             }
 
-            return _dataseries;
+        return null;
         }
         set {
-            _dataseries = value;
+            objects.unset_all (get_children (typeof (Cld.DataSeries))) ;
+            objects.set (value.id, value);
         }
     }
-
 
     /**
      * Type options to use for channel direction.

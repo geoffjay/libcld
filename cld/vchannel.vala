@@ -27,24 +27,6 @@ using matheval;
  */
 public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
 
-    /**
-     * Property backing fields.
-     */
-    protected weak Cld.Calibration _calibration;
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string taskref {
-        get {
-            if (_taskref == null)
-                throw new Cld.Error.NULL_REF ("A taskref has not been set for this virtual channel.");
-            else
-                return _taskref;
-        }
-        set { _taskref = value; }
-    }
-
     /* Evaluator fields */
     private Evaluator evaluator = null;
 
@@ -150,25 +132,24 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
      */
     public virtual Calibration calibration {
         get {
-            if (_calibration == null) {
-                var calibrations = get_children (typeof (Cld.Calibration));
-                foreach (var cal in calibrations.values) {
-                    /* this should only happen once */
-                    _calibration = cal as Cld.Calibration;
-                    break;
-                }
+            var calibrations = get_children (typeof (Cld.Calibration));
+            foreach (var cal in calibrations.values) {
+
+                /* this should only happen once */
+                return cal as Cld.Calibration;
             }
 
-            return _calibration;
+            return null;
         }
         set {
-            _calibration = value;
+            objects.unset_all (get_children (typeof (Cld.Calibration))) ;
+            objects.set (value.id, value);
         }
     }
 
+
     /* default constructor */
     construct {
-        taskref = "no taskref";
         devref = "no devref";
     }
 
@@ -208,11 +189,6 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
                             break;
                         case "calref":
                             calref = iter->get_content ();
-                            break;
-                        case "taskref":
-                           /* this should maybe be an object property,
-                             * possibly fix later */
-                            taskref = iter->get_content ();
                             break;
                         case "devref":
                             devref = iter->get_content ();

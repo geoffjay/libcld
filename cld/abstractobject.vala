@@ -41,10 +41,12 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
     protected string _uri;
     public virtual string uri {
         get {
-            if (parent != null)
+            if (parent != null) {
                 _uri = "%s/%s".printf (parent.uri, id);
-            else
+            } else {
                 _uri = "/%s".printf (id);
+            }
+
             return _uri;
         }
         set { _uri = value; }

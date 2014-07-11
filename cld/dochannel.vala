@@ -32,37 +32,6 @@ public class Cld.DOChannel : Cld.AbstractChannel, Cld.DChannel, Cld.OChannel {
     /**
      * {@inheritDoc}
      */
-    public override int num { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override int subdevnum { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string devref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override weak Device device { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string taskref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override weak Task task { get; set; }
-
-
-    /**
-     * {@inheritDoc}
-     */
     public virtual bool state {
         get { return _state; }
         set {
@@ -107,11 +76,6 @@ public class Cld.DOChannel : Cld.AbstractChannel, Cld.DChannel, Cld.OChannel {
                         case "subdevnum":
                             value = iter->get_content ();
                             subdevnum = int.parse (value);
-                            break;
-                        case "taskref":
-                           /* this should maybe be an object property,
-                             * possibly fix later */
-                            taskref = iter->get_content ();
                             break;
                         default:
                             break;

@@ -29,7 +29,7 @@ public abstract class Cld.AbstractTask : AbstractContainer, Task {
     /**
      * {@inheritDoc}
      **/
-     public abstract bool active { get; set; }
+     public virtual bool active { get; set; }
 
     /**
      * {@inheritDoc}

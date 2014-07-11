@@ -17,6 +17,7 @@
  *
  * Author:
  *  Geoff Johnson <geoff.jay@gmail.com>
+ *  Stephen Roy <sroy1966@gmail.com>
  */
 
 /**
@@ -27,6 +28,11 @@
  * the id and to_string will stay and just be ignored.
  */
 public class Cld.Context : Cld.AbstractContainer {
+
+    /**
+     * The Acquisition Controller for this Context.
+     */
+    public Cld.AcquisitionController acquisition_controller;
 
     construct {
         //_objects = new Gee.TreeMap<string, Cld.Object> ();
@@ -45,6 +51,16 @@ public class Cld.Context : Cld.AbstractContainer {
         Cld.debug ("\nGenerating reference list...\n");
         generate_ref_list ();
         Cld.debug ("\nGenerating reference list finished.\n");
+
+        Cld.debug ("\nGenerating references ..\n");
+        generate_references ();
+        Cld.debug ("\nGenerate references finished.\n");
+
+        Cld.debug ("\nGenerating controllers..\n");
+        generate ();
+        //generate_automation_controller ();
+        //generate_log_controller ();
+        Cld.debug ("\nGenerate controllers finished.\n");
     }
 
     /**
@@ -55,29 +71,6 @@ public class Cld.Context : Cld.AbstractContainer {
     ~Context () {
         if (_objects != null)
             _objects.clear ();
-    }
-
-    /**
-     * Add FIFOS to a Cld.Log.
-     * XXX This method is quite cumbersome and should be simplified.
-     */
-    public void add_fifos (Cld.Log log) {
-        var daq_map = get_object_map (typeof (Cld.Daq));
-
-        foreach (var daq in daq_map.values) {
-            var device_map = (daq as Cld.Container).get_object_map (typeof (Cld.Device));
-            foreach (var device in device_map.values) {
-                var task_map = (device as Cld.Container).get_object_map (typeof (Cld.Task));
-                foreach (var task in task_map.values) {
-                    if (task is Cld.ComediTask) {
-                        /* Request a FIFO and add it to fifos */
-                        int fd;
-                        string fname = (task as Cld.ComediTask).connect_fifo (log.id, out fd);
-                        log.fifos.set (fname, fd);
-                    }
-                }
-            }
-        }
     }
 
     /**
@@ -109,6 +102,18 @@ public class Cld.Context : Cld.AbstractContainer {
             if ((reference != null)) {
                 self.add (reference);
             }
+        }
+    }
+
+    /**
+     * Generate dependencies that are not
+     */
+    public void generate () {
+        /* Fetch the Acquisition Controller. */
+        var controllers = get_children (typeof (Cld.AcquisitionController));
+        foreach (var control in controllers.values) {
+            acquisition_controller = control as Cld.AcquisitionController;
+            break;
         }
     }
 }

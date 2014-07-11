@@ -17,6 +17,7 @@
  *
  * Author:
  *  Geoff Johnson <geoff.jay@gmail.com>
+ *  Stephen Roy <sroy1966@gmail.com>
  */
 
 /**
@@ -24,47 +25,10 @@
  */
 public class Cld.CsvLog : Cld.AbstractLog {
 
+    /**
+     * Property backing fields.
+     */
     private Gee.Map<string, Object> _objects;
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string name { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string path { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string file { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override double rate { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override int dt { get { return (int)(1e3 / rate); } }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override bool active { get; set; default = false; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override bool is_open { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string date_format { get; set; }
 
     /**
      * Determines whether the file is renamed on open using the format string.
@@ -182,8 +146,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
         string tempname;
         string tempext;
 
-        start_time = new DateTime.now_local ();
-
         /* if it was requested rename the file on open */
         if (time_stamp == TimeStampFlag.OPEN || time_stamp == TimeStampFlag.BOTH) {
             disassemble_filename (file, out tempname, out tempext);
@@ -292,7 +254,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
                 if (channel is ScalableChannel) {
                     var calibration = (channel as ScalableChannel).calibration;
-                    cals += "%s:\ty = ".printf (channel.id);
+                    cals += "%s:\ty = ".printf (channel.uri);
 
                     foreach (var coefficient in (calibration as Container).objects.values) {
                         cals += "%.3f * x^%d + ".printf (
@@ -320,21 +282,17 @@ public class Cld.CsvLog : Cld.AbstractLog {
      * Write the next line in the file.
      */
     public void write_next_line (Cld.LogEntry entry) {
-        DateTime curr_time = new DateTime.now_local ();
-        TimeSpan diff = curr_time.difference (start_time);
         string line = "";
         char sep = '\t';
 
-        //int h = (int)diff / 3600000000;
-        //int m = (int)diff / 60000000 - (h * 60);
-        //int s = (int)diff / 1000000 - (h * 3600 + m * 60);
-        //int ms = (int)diff % 1000000;
-
-        //line = "%02d:%02d:%02d.%03d\t".printf (h, m, s, ms);
         line = "%lld\t".printf (entry.time_us);
 
-        foreach (double datum in entry.data) {
-            line += "%f%c".printf (datum, sep);
+        foreach (var object in objects.values) {
+            if (object is Cld.Column) {
+                var uri = (object as Cld.Column).uri;
+                var datum = entry.data.get (uri);
+                line += "%.6f%c".printf (datum, sep);
+            }
         }
 
         line = line.substring (0, line.length - 1);
@@ -346,16 +304,17 @@ public class Cld.CsvLog : Cld.AbstractLog {
      * {@inheritDoc}
      */
     public override void start () {
+        start_time = new DateTime.now_local ();
         file_open ();
-        bg_log_timer.begin ((obj, res) => {
-            try {
-                bg_log_timer.end (res);
-                Cld.debug ("Log queue timer async ended");
-            } catch (ThreadError e) {
-                string msg = e.message;
-                Cld.error (@"Thread error: $msg");
-            }
-        });
+//        bg_log_timer.begin ((obj, res) => {
+//            try {
+//                bg_log_timer.end (res);
+//                Cld.debug ("Log queue timer async ended");
+//            } catch (ThreadError e) {
+//                string msg = e.message;
+//                Cld.error (@"Thread error: $msg");
+//            }
+//        });
 
         bg_log_watch.begin ((obj, res) => {
             try {
@@ -375,52 +334,52 @@ public class Cld.CsvLog : Cld.AbstractLog {
      * Launches a backround thread that pushes a LogEntry to the queue at regular time
      * intervals.
      */
-    private async void bg_log_timer () throws ThreadError {
-        SourceFunc callback = bg_log_timer.callback;
-        LogEntry entry = new LogEntry ();
-
-        ThreadFunc<void *> _run = () => {
-            Mutex mutex = new Mutex ();
-            Cond cond = new Cond ();
-            int64 start = get_monotonic_time ();
-            int64 end_time = start;
-            int64 counter = 1;
-
-            active = true;
-            write_header ();
-
-            while (active) {
-                /* Update the entry and push it onto the queue */
-                entry.update (objects);
-                entry.time_us = end_time - start;
-                queue_mutex.lock ();
-                lock (queue) {
-                    if (!queue.offer_head (entry))
-                        Cld.error ("Element %s was not added to the queue.", entry.id);
-                    else {
-                        queue_cond.signal ();
-                        queue_mutex.unlock ();
-                    }
-                }
-
-                /* Perform timing control */
-                mutex.lock ();
-                try {
-                    end_time = start + counter++ * dt * TimeSpan.MILLISECOND;
-                    while (cond.wait_until (mutex, end_time))
-                        ; /* do nothing */
-                } finally {
-                    mutex.unlock ();
-                }
-            }
-
-            Idle.add ((owned) callback);
-            return null;
-        };
-        Thread.create<void *> (_run, false);
-
-        yield;
-    }
+//    private async void bg_log_timer () throws ThreadError {
+//        SourceFunc callback = bg_log_timer.callback;
+//        LogEntry entry = new LogEntry ();
+//
+//        ThreadFunc<void *> _run = () => {
+//            Mutex mutex = new Mutex ();
+//            Cond cond = new Cond ();
+//            int64 start = get_monotonic_time ();
+//            int64 end_time = start;
+//            int64 counter = 1;
+//
+//            active = true;
+//            write_header ();
+//
+//            while (active) {
+//                /* Update the entry and push it onto the queue */
+//                entry.update (objects);
+//                entry.time_us = end_time - start;
+//                queue_mutex.lock ();
+//                lock (queue) {
+//                    if (!queue.offer_head (entry))
+//                        Cld.error ("Element %s was not added to the queue.", entry.id);
+//                    else {
+//                        queue_cond.signal ();
+//                        queue_mutex.unlock ();
+//                    }
+//                }
+//
+//                /* Perform timing control */
+//                mutex.lock ();
+//                try {
+//                    end_time = start + counter++ * dt * TimeSpan.MILLISECOND;
+//                    while (cond.wait_until (mutex, end_time))
+//                        ; /* do nothing */
+//                } finally {
+//                    mutex.unlock ();
+//                }
+//            }
+//
+//            Idle.add ((owned) callback);
+//            return null;
+//        };
+//        Thread.create<void *> (_run, false);
+//
+//        yield;
+//    }
 
     private int min_queue_size = 1;
 
@@ -443,6 +402,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
                     lock (queue) {
                         entry = queue.poll_tail ();
                     }
+                    entry.time_us = entry.timestamp.difference (start_time);
                     write_next_line (entry);
                 }
             }

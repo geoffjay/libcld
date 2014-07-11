@@ -27,12 +27,6 @@
 public abstract class Cld.AbstractChannel : Cld.AbstractContainer, Cld.Channel {
 
     /**
-     * Property backing fields.
-     */
-    protected weak Cld.Device _device;
-    protected weak Cld.Task _task;
-
-    /**
      * {@inheritDoc}
      */
     public virtual int num { get; set; }
@@ -52,45 +46,19 @@ public abstract class Cld.AbstractChannel : Cld.AbstractContainer, Cld.Channel {
      */
     public virtual Device device {
         get {
-            if (_device == null) {
-                var devices = get_children (typeof (Cld.Device));
-                foreach (var dev in devices.values) {
-                    /* this should only happen once */
-                    _device = dev as Cld.Device;
-                    break;
-                }
+            var devices = get_children (typeof (Cld.Device));
+            foreach (var dev in devices.values) {
+
+                /* this should only happen once */
+                return dev as Cld.Device;
             }
 
-            return _device;
+            return null;
         }
         set {
-            _device = value;
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public virtual string taskref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public virtual Task task {
-        get {
-            if (_task == null) {
-                var tasks = get_children (typeof (Cld.Task));
-                foreach (var tsk in tasks.values) {
-                    /* this should only happen once */
-                    _task = tsk as Cld.Task;
-                    break;
-                }
-            }
-
-            return _task;
-        }
-        set {
-            _task = value;
+            /* remove all first */
+            objects.unset_all (get_children (typeof (Cld.Device)));
+            objects.set (value.id, value);
         }
     }
 

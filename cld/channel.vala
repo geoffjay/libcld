@@ -50,19 +50,6 @@ public interface Cld.Channel : Cld.Container {
     public abstract weak Device device { get; set; }
 
     /**
-     * A reference to the task that this channel belongs to, this may be a
-     * backwards approach and should be replaced with a Task containing a list
-     * of channels.
-     */
-    public abstract string taskref { get; set; }
-
-    /**
-     * A reference to the task that the channel belongs to, same comments
-     * apply here as they did to the devref.
-     */
-    public abstract weak Task task { get; set; }
-
-    /**
      * String name of the channel, could be considered to be the channel's
      * PNID label.
      */
@@ -143,7 +130,7 @@ public interface Cld.ScalableChannel : Cld.AbstractChannel, Cld.Channel {
     /**
      * Calibration object used to calculate the scaled value.
      */
-    public abstract Calibration calibration { get; set; }
+    public abstract weak Calibration calibration { get; set; }
 
     /**
      * The scaled value that is calculated using the calibration.

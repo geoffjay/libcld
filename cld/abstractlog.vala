@@ -27,47 +27,51 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     /**
      * {@inheritDoc}
      */
-    public abstract string name { get; set; }
+    public virtual string name { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public abstract string path { get; set; }
+    public virtual string path { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public abstract string file { get; set; }
+    public virtual string file { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public abstract double rate { get; set; }
+    public virtual double rate { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public abstract int dt { get { return (int)(1e3 / rate); } }
+    public virtual int dt { get { return (int)(1e3 / rate); } }
 
     /**
      * {@inheritDoc}
      */
-    public abstract bool active { get; set; }
+    public virtual bool active { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public abstract bool is_open { get; set; }
+    public virtual bool is_open { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public abstract string date_format { get; set; }
+    public virtual string date_format { get; set; }
 
     /**
      * {@inheritDoc}
      */
     public virtual Gee.Map<string, int>? fifos { get; set; }
+
+    construct {
+        fifos = new Gee.TreeMap<string, int> ();
+    }
 
     /**
      * {@inheritDoc}

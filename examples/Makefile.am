@@ -3,10 +3,11 @@ include $(top_srcdir)/Makefile.decl
 noinst_PROGRAMS = $(EXAMPLE_PROGS)
 
 EXAMPLE_PROGS += \
-	build-from-xml \
 	async-acquisition \
+	build-from-xml \
 	context-validation \
 	soup-server \
+	polling-acquisition \
 	$(NULL)
 
 ### Shared build flags and dependencies
@@ -43,17 +44,17 @@ example_LDADD = \
 
 ### individual example applications
 
-build_from_xml_SOURCES = build-from-xml.vala $(example_SOURCES)
-build_from_xml_DEPENDENCIES = $(example_DEPENDENCIES)
-build_from_xml_VALAFLAGS = $(example_VALAFLAGS)
-build_from_xml_CPPFLAGS = $(example_CPPFLAGS)
-build_from_xml_LDADD = $(example_LDADD)
-
 async_acquisition_SOURCES = async-acquisition.vala $(example_SOURCES)
 async_acquisition_DEPENDENCIES = $(example_DEPENDENCIES)
 async_acquisition_VALAFLAGS = $(example_VALAFLAGS)
 async_acquisition_CPPFLAGS = $(example_CPPFLAGS)
 async_acquisition_LDADD = $(example_LDADD)
+
+build_from_xml_SOURCES = build-from-xml.vala $(example_SOURCES)
+build_from_xml_DEPENDENCIES = $(example_DEPENDENCIES)
+build_from_xml_VALAFLAGS = $(example_VALAFLAGS)
+build_from_xml_CPPFLAGS = $(example_CPPFLAGS)
+build_from_xml_LDADD = $(example_LDADD)
 
 context_validation_SOURCES = context-validation.vala $(example_SOURCES)
 context_validation_DEPENDENCIES = $(example_DEPENDENCIES)
@@ -66,3 +67,9 @@ soup_server_DEPENDENCIES = $(example_DEPENDENCIES)
 soup_server_VALAFLAGS = $(example_VALAFLAGS) --pkg libsoup-2.4 --pkg json-glib-1.0
 soup_server_CPPFLAGS = $(example_CPPFLAGS) -I/usr/include/libsoup-2.4 -I/usr/include/json-glib-1.0
 soup_server_LDADD = $(example_LDADD) -lsoup-2.4 -ljson-glib-1.0
+
+polling_acquisition_SOURCES = polling-acquisition.vala $(example_SOURCES)
+polling_acquisition_DEPENDENCIES = $(example_DEPENDENCIES)
+polling_acquisition_VALAFLAGS = $(example_VALAFLAGS)
+polling_acquisition_CPPFLAGS = $(example_CPPFLAGS)
+polling_acquisition_LDADD = $(example_LDADD)

@@ -131,8 +131,10 @@ public interface Cld.Log : Cld.Object {
 
     /**
      * A list of FIFOs for inter-process data transfer.
+     * The data are paired a pipe name and file descriptor.
      */
     public abstract Gee.Map<string, int>? fifos { get; set; }
+
     /**
      * Connect the columns to their corresponding channel signals.
      */

@@ -31,46 +31,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     private string _experiment_name;
 
     /**
-     * {@inheritDoc}
-     */
-    public override string name { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string path { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string file { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override double rate { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override int dt { get { return (int)(1e3 / rate); } }
-
-    /**
-     * {linheritDoc}
-     */
-    public override bool active { get; set; default = false; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override bool is_open { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string date_format { get; set; }
-
-    /**
      * Determines whether the file is renamed on open using the format string.
      */
     public Log.TimeStampFlag time_stamp { get; set; }
@@ -174,7 +134,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public enum ChannelColumn {
         ID,
         EXPERIMENT_ID,
-        CHAN_ID,
+        CHAN_URI,
         DESC,
         TAG,
         TYPE,
@@ -204,16 +164,14 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
     /* constructor */
     construct {
-        objects = new Gee.TreeMap<string, Object> ();
         Cld.LogEntry entry = new Cld.LogEntry ();
         queue = new Gee.LinkedList<Cld.LogEntry> ();
-        fifos = new Gee.TreeMap<string, int> ();
     }
 
     public SqliteLog () {
         id = "database0";
         name = "Log Database File";
-        path = "/tmp/fifos";
+        path = "./";
         file = "log.db";
         rate = 10.0;          /* Hz */
         active = false;
@@ -268,13 +226,17 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                             backup_interval_ms = (int) (double.parse (value) *
                                                   60 * 60 * 1000);
                             break;
+                        case "fifo":
+                            fifos.set (iter->get_content (), -1);
+                            break;
                         default:
                             break;
                     }
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "column") {
                         var column = new Column.from_xml_node (iter);
-                        objects.set (column.id, column);
+                        column.parent = this;
+                        add (column);
                     }
                 }
             }
@@ -351,7 +313,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             (
                 id              INTEGER PRIMARY KEY AUTOINCREMENT,
                 experiment_id   INTEGER,
-                chan_id         TEXT,
+                chan_uri        TEXT,
                 desc            TEXT,
                 tag             TEXT,
                 type            TEXT,
@@ -439,13 +401,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public void write_header (int id) {
         Gee.ArrayList<Cld.ChannelEntry?> channel_entries = new Gee.ArrayList<Cld.ChannelEntry?> ();
         string tags = "Time";
-        string units = "[YYYY-MM-DD HH:MM:SS.mmm]";
+        string units = "[YYYY-MM-DD HH:MM:SS.SSSSSS]";
         string cals = "Channel Calibrations:\n\n";
         string expressions = "MathChannel Expressions:\n\n";
 
         channel_entries = get_channel_entries (id);
         foreach (var channel_entry in channel_entries) {
-            cals += "%s:\ty = ".printf (channel_entry.chan_id);
+            cals += "%s:\ty = ".printf (channel_entry.chan_uri.replace ("_", "/"));
             cals += "%.3f * x^0 + ".printf (channel_entry.coeff_x0);
             cals += "%.3f * x^1 + ".printf (channel_entry.coeff_x1);
             cals += "%.3f * x^2 + ".printf (channel_entry.coeff_x2);
@@ -454,7 +416,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             cals += "\t(%s)\n".printf (channel_entry.desc);
             tags += "\t%s".printf (channel_entry.tag);
             if (channel_entry.cld_type == "CldMathChannel") {
-                expressions += "%s:\t %s\n".printf (channel_entry.chan_id,
+                expressions += "%s:\t %s\n".printf (channel_entry.chan_uri,
                                                     channel_entry.expression);
             }
             units += "\t[%s]".printf (channel_entry.units);
@@ -471,6 +433,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public override void start () {
         /* Open the FIFO data buffers. */
         foreach (string fname in fifos.keys) {
+            if (Posix.access (fname, Posix.F_OK) == -1) {
+                int res = Posix.mkfifo (fname, 0777);
+                if (res != 0) {
+                    Cld.error ("%s could not create fifo %s\n",id, fname);
+                }
+            }
+
             open_fifo.begin (fname, () => {
                 Cld.debug ("got a writer for %s", fname);
             });
@@ -479,7 +448,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         database_open ();
         create_tables ();
         start_time = new DateTime.now_local ();
-        stdout.printf ("start_time: %s\n", start_time.to_string ());
         _experiment_name = "experiment_%s".printf (
             start_time.to_string ().replace ("-", "_").replace (":", "_")
             );
@@ -489,15 +457,15 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         GLib.Timeout.add_full (GLib.Priority.DEFAULT_IDLE, backup_interval_ms, backup_cb);
 
-        bg_log_timer.begin ((obj, res) => {
-            try {
-                bg_log_timer.end (res);
-                Cld.debug ("Log queue timer async ended");
-            } catch (ThreadError e) {
-                string msg = e.message;
-                Cld.error (@"Thread error: $msg");
-            }
-        });
+//        bg_log_timer.begin ((obj, res) => {
+//            try {
+//                bg_log_timer.end (res);
+//                Cld.debug ("Log queue timer async ended");
+//            } catch (ThreadError e) {
+//                string msg = e.message;
+//                Cld.error (@"Thread error: $msg");
+//            }
+//        });
 
         bg_log_watch.begin ((obj, res) => {
             try {
@@ -514,10 +482,10 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         SourceFunc callback = open_fifo.callback;
         ThreadFunc<void*> run = () => {
             Cld.debug ("%s is is waiting for a writer to FIFO %s",this.id, fname);
-            int fd = Posix.open (fname, Posix.O_RDONLY | Posix.O_CREAT);
+            int fd = Posix.open (fname, Posix.O_RDONLY);
             fifos.set (fname, fd);
             if (fd == -1) {
-                Cld.debug ("Posix.open error: %d: %s", Posix.errno, Posix.strerror (Posix.errno));
+                Cld.debug ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
             } else {
                 Cld.debug ("Opening FIFO %s fd: %d", fname, fd);
                 Idle.add ((owned) callback);
@@ -549,65 +517,62 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * Launches a backround thread that pushes a LogEntry to the queue at regular time
      * intervals.
      */
-    private async void bg_log_timer () throws ThreadError {
-        SourceFunc callback = bg_log_timer.callback;
-        Cld.LogEntry entry = new Cld.LogEntry ();
-
-        ThreadFunc<void *> _run = () => {
-            Mutex mutex = new Mutex ();
-            Cond cond = new Cond ();
-            int64 end_time;
-            int64 start = get_monotonic_time ();
-            int64 counter = 1;
-
-            active = true;
-
-            while (active) {
-                /* XXX For test only */
-                char[] s = new char[300];
-                ssize_t num;
-                foreach (int fd in fifos.values) {
-
-Cld.debug ("Hello fd: %d!!!!", fd);
-                    if ((num = Posix.read (fd, s, 300)) == -1)
-                        Cld.debug("read error");
-                    else {
-                        s[num] = '\0';
-                        Cld.debug ("SqliteLog: read %d bytes: \"%s\" from fd: %d", (int)num, s, fd);
-                    }
-                }
-
-Cld.debug ("Good Bye");
-                /* Update the entry and push it onto the queue */
-                entry.update (objects);
-                queue_mutex.lock ();
-                lock (queue) {
-                    if (!queue.offer_head (entry))
-                        Cld.error ("Element %s was not added to the queue.", entry.id);
-                    else {
-                        queue_cond.signal ();
-                        queue_mutex.unlock ();
-                    }
-                }
-
-                /* Perform timing control */
-                mutex.lock ();
-                try {
-                    end_time = start + counter++ * dt * TimeSpan.MILLISECOND;
-                    while (cond.wait_until (mutex, end_time))
-                        ; /* do nothing */
-                } finally {
-                    mutex.unlock ();
-                }
-            }
-
-            Idle.add ((owned) callback);
-            return null;
-        };
-        Thread.create<void *> (_run, false);
-
-        yield;
-    }
+//    private async void bg_log_timer () throws ThreadError {
+//        SourceFunc callback = bg_log_timer.callback;
+//        Cld.LogEntry entry = new Cld.LogEntry ();
+//
+//        ThreadFunc<void *> _run = () => {
+//            Mutex mutex = new Mutex ();
+//            Cond cond = new Cond ();
+//            int64 end_time;
+//            int64 start = get_monotonic_time ();
+//            int64 counter = 1;
+//
+//            active = true;
+//
+//            while (active) {
+//                /* XXX For test only */
+//                char[] s = new char[128];
+//                ssize_t num;
+//                foreach (int fd in fifos.values) {
+//                    if ((num = Posix.read (fd, s, 128)) == -1)
+//                        Cld.debug("read error");
+//                    else {
+//                        s[num] = '\0';
+//                        Cld.debug ("%s", s);
+//                    }
+//                }
+//                /* Update the entry and push it onto the queue */
+//                entry.update (objects);
+//
+//                queue_mutex.lock ();
+//                lock (queue) {
+//                    if (!queue.offer_head (entry))
+//                        Cld.error ("Element %s was not added to the queue.", entry.id);
+//                    else {
+//                        queue_cond.signal ();
+//                        queue_mutex.unlock ();
+//                    }
+//                }
+//
+//                /* Perform timing control */
+//                mutex.lock ();
+//                try {
+//                    end_time = start + counter++ * dt * TimeSpan.MILLISECOND;
+//                    while (cond.wait_until (mutex, end_time))
+//                        ; /* do nothing */
+//                } finally {
+//                    mutex.unlock ();
+//                }
+//            }
+//
+//            Idle.add ((owned) callback);
+//            return null;
+//        };
+//        Thread.create<void *> (_run, false);
+//
+//        yield;
+//    }
 
     private int min_queue_size = 1;
 
@@ -617,22 +582,40 @@ Cld.debug ("Good Bye");
      */
     private async void bg_log_watch () throws ThreadError {
         SourceFunc callback = bg_log_watch.callback;
-        Cld.LogEntry entry = new Cld.LogEntry ();
 
         ThreadFunc<void *> _run = () => {
             active = true;
 
             while (active) {
+                /* XXX For test only */
+                char[] s = new char[4096];
+                ssize_t num;
 
-                while (queue.size < min_queue_size)
-                    queue_cond.wait (queue_mutex);
-
-                while (queue.size != 0) {
-                    lock (queue) {
-                        entry = queue.poll_tail ();
+                foreach (int fd in fifos.values) {
+                    if ((num = Posix.read (fd, s, 4096)) == -1)
+                        Cld.debug("read error");
+                    else {
+                        var rows = ((string)s).split ("\n");
+                        foreach (var row in rows) {
+                            if (row != "") {
+                                Cld.LogEntry entry = new Cld.LogEntry.from_serial (row);
+                                log_entry_write (entry);
+                            }
+                        }
                     }
-                    log_entry_write (entry);
                 }
+                //GLib.Thread.usleep (2000000); for testing only
+
+//                while (queue.size < min_queue_size)
+//                    queue_cond.wait (queue_mutex);
+//
+//                while (queue.size != 0) {
+//                    lock (queue) {
+//                        entry = queue.poll_tail ();
+//                    }
+//                    entry.time_us = entry.timestamp.difference (start_time);
+//                    log_entry_write (entry);
+//                }
             }
 
             Idle.add ((owned) callback);
@@ -697,7 +680,7 @@ Cld.debug ("Good Bye");
 
     private void update_channel_table () {
         double[] coeff = new double [4];
-        string chan_id = "";
+        string chan_uri = "";
         string desc = "";
         string tag = "";
         string type = "";
@@ -708,7 +691,7 @@ Cld.debug ("Good Bye");
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
                 var channel = (column as Cld.Column).channel;
-                chan_id = "%s".printf (channel.id);
+                chan_uri = "%s".printf (channel.uri.replace ("/", "_"));
                 desc = "%s".printf (channel.desc);
                 tag = "%s".printf (channel.tag);
                 type = "%s".printf (((channel as GLib.Object).get_type ()).name ());
@@ -730,7 +713,7 @@ Cld.debug ("Good Bye");
             query = """
                 INSERT INTO channel (
                     experiment_id,
-                    chan_id,
+                    chan_uri,
                     desc,
                     tag,
                     type,
@@ -744,7 +727,7 @@ Cld.debug ("Good Bye");
                 VALUES
                 (
                     $EXPERIMENT_ID,
-                    $CHAN_ID,
+                    $CHAN_URI,
                     $DESC,
                     $TAG,
                     $TYPE,
@@ -764,8 +747,8 @@ Cld.debug ("Good Bye");
             parameter_index = stmt.bind_parameter_index ("$EXPERIMENT_ID");
             stmt.bind_int (parameter_index, experiment_id);
 
-            parameter_index = stmt.bind_parameter_index ("$CHAN_ID");
-            stmt.bind_text (parameter_index, chan_id, -1, GLib.g_free);
+            parameter_index = stmt.bind_parameter_index ("$CHAN_URI");
+            stmt.bind_text (parameter_index, chan_uri, -1, GLib.g_free);
 
             parameter_index = stmt.bind_parameter_index ("$DESC");
             stmt.bind_text (parameter_index, desc, -1, GLib.g_free);
@@ -817,7 +800,7 @@ Cld.debug ("Good Bye");
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
                 query = "ALTER TABLE %s ADD COLUMN %s REAL;".printf (_experiment_name,
-                                                    (column as Cld.Column).chref);
+                                                    (column as Cld.Column).chref.replace ("/", "_"));
                 ec = db.exec (query, null, out errmsg);
                 if (ec != Sqlite.OK) {
                     stderr.printf ("Error: %s\n", errmsg);
@@ -827,7 +810,7 @@ Cld.debug ("Good Bye");
     }
 
     private void log_entry_write (Cld.LogEntry entry) {
-//Cld.debug ("log_entry_write (), time as string: %s", entry.time_as_string);
+
         string query = """
             INSERT INTO %s
             (
@@ -837,7 +820,8 @@ Cld.debug ("Good Bye");
 
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
-                query = "%s%s,".printf (query, (column as Cld.Column).chref);
+                query = "%s%s,".printf (query,
+                    (column as Cld.Column).chref.replace ("/", "_"));
             }
         }
         query = query.substring (0, query.length - 1);
@@ -867,19 +851,19 @@ Cld.debug ("Good Bye");
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
                 parameter_index = stmt.bind_parameter_index ("$VAL%d".printf (i));
-                var channel = (column as Cld.Column).channel;
-                if (channel is Cld.ScalableChannel) {
-                    val = (channel as Cld.ScalableChannel).scaled_value;
-                } else if (channel is DChannel) {
-                    if ((channel as DChannel).state) {
-                        val = 1;
-                    } else {
-                        val = 0;
-                    }
-                }
-                stmt.bind_double (parameter_index, val);
+                /* Bind values to columns. The order of sequential access is consistent using this method */
+                stmt.bind_double (parameter_index, entry.data.get ((column as Cld.Column).chref));
+//                string key = (column as Column).chref;
+//                foreach (var k in entry.data.keys ) {
+//stdout.printf ("k: %s key: %s\n", k, key);
+//                    if (k == key) {
+//stdout.printf ("k: %s\n", k);
+//                        //stmt.bind_double (parameter_index, entry.data.get (k));
+//                        break;
+//                    }
+//                }
+                i++;
             }
-            i++;
         }
         stmt.step ();
         stmt.reset ();
@@ -924,7 +908,15 @@ Cld.debug ("Good Bye");
             for (int i = 0; i < columns; i++) {
                 data_list.add (stmt.column_double (i + 3));
             }
-            ent.data = data_list;
+
+            /* Transfer data list to log entry */
+            int i = 0;
+            foreach (var column in objects.values) {
+                if (column is Cld.Column) {
+                    var uri = ((column as Cld.Column).channel as Cld.Object).uri;
+                    ent.data.set (uri, data_list.get (i++));
+                }
+            }
         }
         stmt.reset ();
 
@@ -1017,7 +1009,7 @@ Cld.debug ("Good Bye");
             Cld.ChannelEntry ent  = Cld.ChannelEntry ();
             ent.id = stmt.column_int (ChannelColumn.ID);
             ent.experiment_id = stmt.column_int (ChannelColumn.EXPERIMENT_ID);
-            ent.chan_id = stmt.column_text (ChannelColumn.CHAN_ID);
+            ent.chan_uri = stmt.column_text (ChannelColumn.CHAN_URI);
             ent.desc = stmt.column_text (ChannelColumn.DESC);
             ent.tag = stmt.column_text (ChannelColumn.TAG);
             ent.cld_type = stmt.column_text (ChannelColumn.TYPE);
@@ -1044,7 +1036,18 @@ Cld.debug ("Good Bye");
 
         /* TODO: Create method to open database file */
         if (!backup_is_open) {
-            backup_open ();
+            try {
+                 backup_open ();
+            } catch (Cld.FileError e) {
+                if (e is Cld.FileError.ACCESS) {
+                    Cld.error ("File access error: %s%s", path, file);
+                    is_open = false;
+
+                    return;
+                } else {
+                    is_open = true;
+                }
+            }
         }
 
         var backup = new Sqlite.Backup (backup_db, "main", db, "main");
@@ -1075,7 +1078,9 @@ Cld.debug ("Good Bye");
         }
         var now = new DateTime.now_local ();
         string stamp = now.to_string ();
+
         db_filename = "%s%s%s".printf (backup_path, backup_file, stamp);
+
         if (!(Posix.access (db_filename, Posix.F_OK) == 0)) { // if file doesn't exist...
             FileStream.open (db_filename, "a+");
         }
@@ -1175,6 +1180,7 @@ Cld.debug ("Good Bye");
                 }
                 line += "\n";
                 if (count == 0) {
+stdout.printf ("%s", line);
                     file_print (line);
                 }
                 count++;
@@ -1186,17 +1192,4 @@ Cld.debug ("Good Bye");
         }
         file_close ();
     }
-
-//    /**
-//     * {@inheritDoc}
-//     */
-//    public override string to_string () {
-//        string str_data  = "CldLog\n";
-//               str_data += "\tid:   %s\n".printf (id);
-//               str_data += "\tname: %s\n".printf (name);
-//               str_data += "\tpath: %s\n".printf (path);
-//               str_data += "\tfile: %s\n".printf (file);
-//               str_data += "\trate: %.3f\n".printf (rate);
-//        return str_data;
-//    }
 }

@@ -27,11 +27,6 @@ using Gsl;
 public class Cld.DataSeries : Cld.AbstractContainer {
 
     /**
-     * Property backing fields.
-     */
-    protected weak Cld.ScalableChannel _channel;
-
-    /**
      * The number of elements in the series
      */
     public int length { get; set; default = 3; }
@@ -61,17 +56,18 @@ public class Cld.DataSeries : Cld.AbstractContainer {
      */
     public Cld.ScalableChannel channel {
         get {
-            if (_channel == null) {
-              var channels = get_children (typeof (Cld.Channel));
-              foreach (var chan in channels.values) {
-                _channel = chan as Cld.ScalableChannel;
-                break;
-              }
-            }
+          var channels = get_children (typeof (Cld.Channel));
+          foreach (var chan in channels.values) {
 
-            return _channel;
+            return chan as Cld.ScalableChannel;
+          }
+
+            return null;
         }
-        set { _channel = value; }
+        set {
+            objects.unset_all (get_children (typeof (Cld.ScalableChannel)));
+            objects.set (value.id, value);
+        }
     }
 
     /**

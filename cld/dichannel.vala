@@ -77,11 +77,6 @@ public class Cld.DIChannel : Cld.AbstractChannel, Cld.DChannel, Cld.IChannel {
                             value = iter->get_content ();
                             subdevnum = int.parse (value);
                             break;
-                        case "taskref":
-                           /* this should maybe be an object property,
-                             * possibly fix later */
-                            taskref = iter->get_content ();
-                            break;
                         default:
                             break;
                     }

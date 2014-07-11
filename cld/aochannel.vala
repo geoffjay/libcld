@@ -27,7 +27,6 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
     /* Property backing fields. */
     private double _scaled_value = 0.0;
     private double _raw_value = 0.0;
-    protected weak Cld.Calibration _calibration;
 
     /**
      * {@inheritDoc}
@@ -39,19 +38,18 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
      */
     public virtual Calibration calibration {
         get {
-            if (_calibration == null) {
-                var calibrations = get_children (typeof (Cld.Calibration));
-                foreach (var cal in calibrations.values) {
-                    /* this should only happen once */
-                    _calibration = cal as Cld.Calibration;
-                    break;
-                }
+            var calibrations = get_children (typeof (Cld.Calibration));
+            foreach (var cal in calibrations.values) {
+
+                /* this should only happen once */
+                return cal as Cld.Calibration;
             }
 
-            return _calibration;
+            return null;
         }
         set {
-            _calibration = value;
+            objects.unset_all (get_children (typeof (Cld.Calibration))) ;
+            objects.set (value.id, value);
         }
     }
 
@@ -134,11 +132,6 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
                             /* this should maybe be an object property,
                              * possibly fix later */
                             calref = iter->get_content ();
-                            break;
-                        case "taskref":
-                           /* this should maybe be an object property,
-                             * possibly fix later */
-                            taskref = iter->get_content ();
                             break;
                         case "range":
                             val = iter->get_content ();

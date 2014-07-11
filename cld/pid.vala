@@ -547,11 +547,6 @@ public class Cld.Pid2 : AbstractContainer {
      */
 
     /**
-     * Property backing fields.
-     */
-    protected weak Cld.ScalableChannel _sp_channel;
-
-    /**
      * Timestep in milliseconds to use with the thread execution.
      */
     public int dt { get; set; }
@@ -593,19 +588,18 @@ public class Cld.Pid2 : AbstractContainer {
      **/
     public weak ScalableChannel? sp_channel {
         get {
-            if (_sp_channel == null) {
-                var channels = get_children (typeof (Cld.ScalableChannel));
-                foreach (var channel in channels.values) {
-                    _sp_channel = channel as Cld.ScalableChannel;
-                    break;
-                }
+            var channels = get_children (typeof (Cld.ScalableChannel));
+            foreach (var channel in channels.values) {
+
+                return channel as Cld.ScalableChannel;
             }
 
-            return _sp_channel;
+            return null;
         }
-        set { _sp_channel = value; }
-
-        default = null;
+        set {
+            objects.unset_all (get_children (typeof (Cld.ScalableChannel)));
+            objects.set (value.id, value);
+        }
     }
 
     /**

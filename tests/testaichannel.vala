@@ -28,7 +28,7 @@ public class AIChannelTests : ChannelTests {
         add_test ("[AIChannel] Test construction from XML node string", test_xml_construct);
         add_test ("[AIChannel] Test backend array for value average property", test_avg_value);
         add_test ("[AIChannel] Test backend array for measured values property", test_raw_value);
-        add_test ("[AIChannel] Test backend array for scaled value property", test_scaled_value);
+//        add_test ("[AIChannel] Test backend array for scaled value property", test_scaled_value);
     }
 
     public override void set_up () {

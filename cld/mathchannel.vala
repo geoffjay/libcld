@@ -36,19 +36,6 @@ public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
     private string? _expression = null;
     private string[]? _variable_names = null;
 
-    /**
-     * {@inheritDoc}
-     */
-    public override string taskref {
-        get {
-            if (_taskref == null)
-                throw new Cld.Error.NULL_REF ("A taskref has not been set for this virtual channel.");
-            else
-                return _taskref;
-        }
-        set { _taskref = value; }
-    }
-
     /* Evaluator fields */
     /* XXX TBD This should work with ScalableChannel asn DataSeries. */
     private Evaluator evaluator = null;
@@ -163,7 +150,23 @@ public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
     /**
      * {@inheritDoc}
      */
-    public virtual weak Calibration calibration { get; set; }
+    public virtual Calibration calibration {
+        get {
+            var calibrations = get_children (typeof (Cld.Calibration));
+            foreach (var cal in calibrations.values) {
+
+                /* this should only happen once */
+                return cal as Cld.Calibration;
+            }
+
+            return null;
+        }
+        set {
+            objects.unset_all (get_children (typeof (Cld.Calibration))) ;
+            objects.set (value.id, value);
+        }
+    }
+
 
     /* default constructor */
     construct {
@@ -207,11 +210,6 @@ public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
                         case "calref":
                             calref = iter->get_content ();
                             break;
-                        case "taskref":
-                           /* this should maybe be an object property,
-                             * possibly fix later */
-                            taskref = iter->get_content ();
-                            break;
                         case "devref":
                             devref = iter->get_content ();
                             break;
@@ -239,6 +237,39 @@ public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
             }
             n = int.parse (substr);
             return true;
+        }
+    }
+
+    /**
+     * XXX This needs more work to get it to work with channel uri values. Not tested yet.
+     * Connect signals that trigger updates to the calculated value as a result of an input value change.
+     */
+    public void connect_signals () {
+        if (expression != null) {
+            for (int i = 0; i < variable_names.length; i++) {
+                Cld.Object obj;
+                string name  = variable_names [i];
+                foreach (string ref_id in objects.keys) {
+                    obj = get_object (ref_id);
+                    if (name.contains (ref_id) && (objects.get (ref_id) is DataSeries)) {
+                        (((obj as DataSeries).channel) as Cld.ScalableChannel).new_value.connect ((id, val) => {
+                        double num = calculated_value;
+                    });
+
+                    } else if (name == ref_id && (objects.get (ref_id) is Cld.ScalableChannel)) {
+                        obj = get_object (ref_id);
+                        (obj as Cld.ScalableChannel).new_value.connect ((id, val) => {
+                            double num = calculated_value;
+                        });
+                    } else {
+                        obj = null;
+                    }
+                    if (obj != null) {
+                        add_object (ref_id, obj);
+                        Cld.debug ("Assigning Cld.Object %s to MathChannel %s", name, this.id);
+                    }
+                }
+            }
         }
     }
 

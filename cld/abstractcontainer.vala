@@ -74,7 +74,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         assert (objects != null);
         foreach (var key in objects.keys) {
             if (key == object.id) {
-                throw new Cld.Error.KEY_EXISTS ("Key %s already exists in %s objects".printf (key, object.id));
+                throw new Cld.Error.KEY_EXISTS ("Key %s already exists in %s objects".printf (key, id));
 
                 return;
             }
@@ -83,7 +83,6 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         objects.set (object.id, object);
         object_added (object.id);
     }
-
 
     /**
      * {@inheritDoc}
@@ -132,7 +131,9 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
             foreach (var object in objects.values) {
                 if (object.get_type ().is_a (type)) {
                     map.set (object.id, object);
-                } else if (object is Cld.Container) {
+                }
+
+                if (object is Cld.Container) {
                     var sub_map = (object as Cld.Container).get_object_map (type);
                     foreach (var sub_object in sub_map.values) {
                         map.set (sub_object.id, sub_object);
@@ -180,8 +181,8 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
             string line = "%s[%s: %s]".printf (indent, object.get_type ().name (),
                         object.id);
             stdout.printf ("%-40s parent: %-14s uri: %s\n", line, object.parent.id, object.uri);
-            if (object is Cld.Container) {
-                (object as Cld.Container).print_objects (depth + 1);
+            if ((object is Cld.Container)) {// && (!(this.uri.contains (object.uri)))) {
+                    (object as Cld.Container).print_objects (depth + 1);
             }
         }
     }
@@ -262,8 +263,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
                 Type type = object.get_type ();
 
                 if (type.is_a (typeof (Cld.Channel))) {
-                    (object as Cld.Container).add_ref ((object as Cld.Channel).devref);
-                    (object as Cld.Container).add_ref ((object as Cld.Channel).taskref);
+                    //(object as Cld.Container).add_ref ((object as Cld.Channel).devref);
                 }
 
                 if (type.is_a (typeof (Cld.Column))) {
@@ -276,6 +276,11 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
 
                 if (type.is_a (typeof (Cld.DataSeries))) {
                     (object as Cld.Container).add_ref ((object as Cld.DataSeries).chref);
+                }
+
+                if (type.is_a (typeof (Module))) {
+                    (object as Cld.Container).add_ref ((object as Cld.Module).devref);
+                    (object as Cld.Container).add_ref ((object as Cld.Module).portref);
                 }
 
                 if (type.is_a (typeof (Cld.Pid2))) {
@@ -294,9 +299,10 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
                     (object as Cld.Container).add_ref ((object as Cld.ScalableChannel).calref);
                 }
 
-                if (type.is_a (typeof (Module))) {
-                    (object as Cld.Container).add_ref ((object as Cld.Module).devref);
-                    (object as Cld.Container).add_ref ((object as Cld.Module).portref);
+                if (type.is_a (typeof (Cld.ComediTask))) {
+                    foreach (var chref in (object as ComediTask).chrefs) {
+                        (object as Cld.Container).add_ref (chref);
+                    }
                 }
             }
         }

@@ -4,11 +4,6 @@
 public class Cld.Column : Cld.AbstractContainer {
 
     /**
-     * Property backing fields.
-     */
-    protected weak Cld.Channel _channel;
-
-    /**
      * ID reference of the channel associated with this column.
      */
     public string chref { get; set; }
@@ -18,17 +13,18 @@ public class Cld.Column : Cld.AbstractContainer {
      */
     public Cld.Channel channel {
         get {
-            if (_channel == null) {
-                var channels = get_children (typeof (Cld.Channel));
-                foreach (var chan in channels.values) {
-                    _channel = chan as Cld.Channel;
-                    break;
-                }
-            }
+          var channels = get_children (typeof (Cld.Channel));
+          foreach (var chan in channels.values) {
 
-            return _channel;
+            return chan as Cld.Channel;
+          }
+
+            return null;
         }
-        set { _channel = value; }
+        set {
+            objects.unset_all (get_children (typeof (Cld.Channel)));
+            objects.set (value.id, value);
+        }
     }
 
     /**

@@ -27,11 +27,6 @@
 public abstract class Cld.AbstractModule : Cld.AbstractContainer, Cld.Module {
 
     /**
-     * Property backing fields.
-     */
-    protected weak Cld.Port _port;
-
-    /**
      * {@inheritDoc}
      */
     public virtual bool loaded { get; set; }
@@ -49,21 +44,21 @@ public abstract class Cld.AbstractModule : Cld.AbstractContainer, Cld.Module {
     /**
      * {@inheritDoc}
      */
-    public virtual Port port {
+    public virtual weak Port port {
         get {
-            if (_port == null) {
-                var devices = get_children (typeof (Cld.Port));
-                foreach (var dev in devices.values) {
-                    /* this should only happen once */
-                    _port = dev as Cld.Port;
-                    break;
-                }
-            }
+                var ports = get_children (typeof (Cld.Port));
+                foreach (var prt in ports.values) {
 
-            return _port;
+                    /* this should only happen once */
+                    return prt as Cld.Port;
+                }
+
+            return null;
         }
         set {
-            _port = value;
+            /* remove all first */
+            objects.unset_all (get_children (typeof (Cld.Port)));
+            objects.set (value.id, value);
         }
     }
 

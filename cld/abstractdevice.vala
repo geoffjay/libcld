@@ -30,27 +30,27 @@ public abstract class Cld.AbstractDevice : Cld.AbstractContainer, Cld.Device {
     /**
      * {@inheritDoc}
      */
-    public abstract int hw_type { get; set; }
+    public virtual int hw_type { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public abstract int driver { get; set; }
+    public virtual int driver { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public abstract string description { get; set; }
+    public virtual string description { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public abstract string filename { get; set; }
+    public virtual string filename { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public abstract int unix_fd { get; set; }
+    public virtual int unix_fd { get; set; }
 
     /**
      * {@inheritDoc}

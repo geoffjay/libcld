@@ -1,6 +1,6 @@
 /**
- * Sample program to illustrate asynchronous data acquisition using a Comedi
- * device.
+ * Sample program to illustrate building a Cld.Context from XML.
+ *
  */
 
 class Cld.BuildFromXmlExample : Cld.Example {
@@ -25,7 +25,7 @@ class Cld.BuildFromXmlExample : Cld.Example {
                                 <cld:property name="subdevice">0</cld:property>
                                 <cld:property name="direction">read</cld:property>
                                 <cld:property name="interval-ms">100</cld:property>
-                                <cld:object id="tkch0" type="channel" chref="ai0"/>
+                                <cld:property name="chref">/ctr0/ai0</cld:property>
                             </cld:object>
                             <cld:object id="tk1" type="task" ttype="comedi">
                                 <cld:property name="exec-type">polling</cld:property>
@@ -33,7 +33,18 @@ class Cld.BuildFromXmlExample : Cld.Example {
                                 <cld:property name="subdevice">1</cld:property>
                                 <cld:property name="direction">write</cld:property>
                                 <cld:property name="interval-ms">100</cld:property>
+                                <cld:property name="chref">/ctr0/ao0</cld:property>
                             </cld:object>
+
+                            <cld:object id="ai0" type="channel" ref="/ctr0/daqctl0/dev0" ctype="analog" direction="input">
+                                <cld:property name="tag">IN0</cld:property>
+                                <cld:property name="desc">Sample Input</cld:property>
+                                <cld:property name="num">0</cld:property>
+                                <cld:property name="calref">/ctr0/cal0</cld:property>
+                                <cld:property name="taskref">/ctr0/daqctl0/dev0/tk0</cld:property>
+                                <cld:property name="range">5</cld:property>
+                            </cld:object>
+
                         </cld:object>
                     </cld:object>
 
@@ -60,14 +71,6 @@ class Cld.BuildFromXmlExample : Cld.Example {
                         </cld:object>
                     </cld:object>
 
-                    <cld:object id="ai0" type="channel" ref="/ctr0/daqctl0/dev0" ctype="analog" direction="input">
-                        <cld:property name="tag">IN0</cld:property>
-                        <cld:property name="desc">Sample Input</cld:property>
-                        <cld:property name="num">0</cld:property>
-                        <cld:property name="calref">/ctr0/cal0</cld:property>
-                        <cld:property name="taskref">/ctr0/daqctl0/dev0/tk0</cld:property>
-                        <cld:property name="range">5</cld:property>
-                    </cld:object>
 
                     <cld:object id="ao0" type="channel" ref="/ctr0/daqctl0/dev0" ctype="analog" direction="output">
                         <cld:property name="tag">OUT0</cld:property>
@@ -169,14 +172,6 @@ class Cld.BuildFromXmlExample : Cld.Example {
 
         stdout.printf ("\nPrinting reference table..\n\n");
         context.print_ref_list ();
-        stdout.printf ("\n Finished.\n\n");
-
-        stdout.printf ("\nGenerating references ..\n\n");
-        context.generate_references ();
-        stdout.printf ("\n Finished.\n\n");
-
-        stdout.printf ("\nPrinting objects again..\n\n");
-        context.print_objects ();
         stdout.printf ("\n Finished.\n\n");
 
         stdout.printf ("\nDemonstrating the to_string () method..\n\n");

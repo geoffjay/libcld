@@ -6,8 +6,8 @@ EXAMPLE_PROGS += \
 	async-acquisition \
 	build-from-xml \
 	context-validation \
-	soup-server \
 	polling-acquisition \
+	#soup-server \
 	$(NULL)
 
 ### Shared build flags and dependencies
@@ -62,14 +62,16 @@ context_validation_VALAFLAGS = $(example_VALAFLAGS)
 context_validation_CPPFLAGS = $(example_CPPFLAGS)
 context_validation_LDADD = $(example_LDADD)
 
-soup_server_SOURCES = soup-server.vala $(example_SOURCES)
-soup_server_DEPENDENCIES = $(example_DEPENDENCIES)
-soup_server_VALAFLAGS = $(example_VALAFLAGS) --pkg libsoup-2.4 --pkg json-glib-1.0
-soup_server_CPPFLAGS = $(example_CPPFLAGS) -I/usr/include/libsoup-2.4 -I/usr/include/json-glib-1.0
-soup_server_LDADD = $(example_LDADD) -lsoup-2.4 -ljson-glib-1.0
-
 polling_acquisition_SOURCES = polling-acquisition.vala $(example_SOURCES)
 polling_acquisition_DEPENDENCIES = $(example_DEPENDENCIES)
 polling_acquisition_VALAFLAGS = $(example_VALAFLAGS)
 polling_acquisition_CPPFLAGS = $(example_CPPFLAGS)
 polling_acquisition_LDADD = $(example_LDADD)
+
+#soup_server_SOURCES = soup-server.vala $(example_SOURCES)
+#soup_server_DEPENDENCIES = $(example_DEPENDENCIES)
+#soup_server_VALAFLAGS = $(example_VALAFLAGS) --pkg libsoup-2.4 --pkg json-glib-1.0
+#soup_server_CPPFLAGS = $(example_CPPFLAGS) -I/usr/include/libsoup-2.4 -I/usr/include/json-glib-1.0
+#soup_server_LDADD = $(example_LDADD) -lsoup-2.4 -ljson-glib-1.0
+
+

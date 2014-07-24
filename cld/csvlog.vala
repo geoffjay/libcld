@@ -35,14 +35,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
      */
     public Log.TimeStampFlag time_stamp { get; set; }
 
-    /**
-     * A FIFO stack of LogEntry objects
-     */
-    private Gee.Deque<Cld.LogEntry> queue { get; set; }
-
-    /**
-     * File stream to use as output.
-     */
     private FileStream file_stream;
 
     /**
@@ -53,7 +45,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
     /* constructor */
     construct {
         _objects = new Gee.TreeMap<string, Object> ();
-        queue = new Gee.LinkedList<Cld.LogEntry> ();
     }
 
     public CsvLog () {
@@ -102,6 +93,9 @@ public class Cld.CsvLog : Cld.AbstractLog {
                         case "time-stamp":
                             value = iter->get_content ();
                             time_stamp = TimeStampFlag.parse (value);
+                            break;
+                        case "fifo":
+                            fifos.set (iter->get_content (), -1);
                             break;
                         default:
                             break;
@@ -289,8 +283,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
         foreach (var object in objects.values) {
             if (object is Cld.Column) {
-                var uri = (object as Cld.Column).uri;
-                var datum = entry.data.get (uri);
+                var datum = entry.data.get ((object as Cld.Column).chref);
                 line += "%.6f%c".printf (datum, sep);
             }
         }
@@ -306,15 +299,21 @@ public class Cld.CsvLog : Cld.AbstractLog {
     public override void start () {
         start_time = new DateTime.now_local ();
         file_open ();
-//        bg_log_timer.begin ((obj, res) => {
-//            try {
-//                bg_log_timer.end (res);
-//                Cld.debug ("Log queue timer async ended");
-//            } catch (ThreadError e) {
-//                string msg = e.message;
-//                Cld.error (@"Thread error: $msg");
-//            }
-//        });
+        write_header ();
+
+        /* Open the FIFO data buffers. */
+        foreach (string fname in fifos.keys) {
+            if (Posix.access (fname, Posix.F_OK) == -1) {
+                int res = Posix.mkfifo (fname, 0777);
+                if (res != 0) {
+                    Cld.error ("%s could not create fifo %s\n",id, fname);
+                }
+            }
+
+            open_fifo.begin (fname, () => {
+                Cld.debug ("got a writer for %s", fname);
+            });
+        }
 
         bg_log_watch.begin ((obj, res) => {
             try {
@@ -327,83 +326,71 @@ public class Cld.CsvLog : Cld.AbstractLog {
         });
     }
 
-    private Cond queue_cond = new Cond ();
-    private Mutex queue_mutex = new Mutex ();
+    private async void open_fifo (string fname) {
+        SourceFunc callback = open_fifo.callback;
+        ThreadFunc<void*> run = () => {
+            Cld.debug ("%s is is waiting for a writer to FIFO %s",this.id, fname);
+            int fd = Posix.open (fname, Posix.O_RDONLY);
+            fifos.set (fname, fd);
+            if (fd == -1) {
+                Cld.debug ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
+            } else {
+                Cld.debug ("Opening FIFO %s fd: %d", fname, fd);
+                Idle.add ((owned) callback);
+            }
 
-    /**
-     * Launches a backround thread that pushes a LogEntry to the queue at regular time
-     * intervals.
-     */
-//    private async void bg_log_timer () throws ThreadError {
-//        SourceFunc callback = bg_log_timer.callback;
-//        LogEntry entry = new LogEntry ();
-//
-//        ThreadFunc<void *> _run = () => {
-//            Mutex mutex = new Mutex ();
-//            Cond cond = new Cond ();
-//            int64 start = get_monotonic_time ();
-//            int64 end_time = start;
-//            int64 counter = 1;
-//
-//            active = true;
-//            write_header ();
-//
-//            while (active) {
-//                /* Update the entry and push it onto the queue */
-//                entry.update (objects);
-//                entry.time_us = end_time - start;
-//                queue_mutex.lock ();
-//                lock (queue) {
-//                    if (!queue.offer_head (entry))
-//                        Cld.error ("Element %s was not added to the queue.", entry.id);
-//                    else {
-//                        queue_cond.signal ();
-//                        queue_mutex.unlock ();
-//                    }
-//                }
-//
-//                /* Perform timing control */
-//                mutex.lock ();
-//                try {
-//                    end_time = start + counter++ * dt * TimeSpan.MILLISECOND;
-//                    while (cond.wait_until (mutex, end_time))
-//                        ; /* do nothing */
-//                } finally {
-//                    mutex.unlock ();
-//                }
-//            }
-//
-//            Idle.add ((owned) callback);
-//            return null;
-//        };
-//        Thread.create<void *> (_run, false);
-//
-//        yield;
-//    }
+            return null;
+        };
+        Thread.create<void*> (run, false);
 
-    private int min_queue_size = 1;
+        yield;
+    }
 
      /**
      * Launches a thread that pulls a LogEntry from the queue and writes
      * it to the log file.
      */
-    private async void bg_log_watch () throws ThreadError {
+   private async void bg_log_watch () throws ThreadError {
         SourceFunc callback = bg_log_watch.callback;
-        Cld.LogEntry entry = new Cld.LogEntry ();
 
         ThreadFunc<void *> _run = () => {
+            string head = "";
             active = true;
 
             while (active) {
-                while (queue.size < min_queue_size)
-                    queue_cond.wait (queue_mutex);
+                char [] s = new char[4096];
+                string [] rows;
+                string tail;
+                ssize_t num;
 
-                while (queue.size != 0) {
-                    lock (queue) {
-                        entry = queue.poll_tail ();
+                foreach (int fd in fifos.values) {
+                    if ((num = Posix.read (fd, s, 4096)) == -1)
+                        Cld.debug("read error");
+                    else {
+                        rows = ((string)s).split ("\n");
+
+                        /* Re-assemble split rows. */
+                        if (head != "") {
+                            /* Attach the head if it is not empty. */
+                            tail = rows [0];
+                            rows [0] = head + tail;
+                            head = "";
+                        }
+                        if ( s [num - 1] != '\n') {
+                            /* Set a new head if last row is incomplete. */
+                            head = rows [rows.length -1];
+                            rows [rows.length - 1] = "";
+                        }
+
+                        /* Process each row. */
+                        foreach (var row in rows) {
+                            if (row != "") {
+                                Cld.LogEntry entry = new Cld.LogEntry.from_serial (row);
+                                entry.time_us = entry.timestamp.difference (start_time);
+                                write_next_line (entry);
+                            }
+                        }
                     }
-                    entry.time_us = entry.timestamp.difference (start_time);
-                    write_next_line (entry);
                 }
             }
 

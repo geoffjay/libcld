@@ -40,7 +40,7 @@ public class Cld.ComediTask : AbstractTask {
     public string devref { get; set; default = null; }
 
     /**
-     * The referenced subdevice.
+     * The referenced device.
      */
     public Cld.Device device {
         get {
@@ -55,6 +55,11 @@ public class Cld.ComediTask : AbstractTask {
         }
         set { _device = value; }
     }
+
+    /**
+     * Comedi subdevice number.
+     */
+    public int subdevice { get; set; }
 
     /**
      * Execution type.
@@ -115,6 +120,15 @@ public class Cld.ComediTask : AbstractTask {
     private static int n_fifos = 0;
 
     /**
+     * A Comedi command fields used only with streaming acquisition.
+     */
+    private Comedi.Command cmd;
+    private uint[] chanlist;// = new uint[16];
+    private uint scan_period_nanosec;
+    private static int total = 0;
+    private GLib.DateTime async_start_time;
+
+    /**
      * Default construction.
      */
     construct {
@@ -148,6 +162,9 @@ public class Cld.ComediTask : AbstractTask {
                     switch (iter->get_prop ("name")) {
                         case "devref":
                             devref = iter->get_content ();
+                            break;
+                        case "subdevice":
+                            subdevice = int.parse (iter->get_content ());
                             break;
                         case "exec-type":
                             exec_type = iter->get_content ();
@@ -196,7 +213,7 @@ public class Cld.ComediTask : AbstractTask {
         /* Select execution type */
         switch (exec_type) {
             case "streaming":
-                /* XXX TBD */
+                do_async ();
                 break;
             case "polling":
                 switch (direction) {
@@ -227,7 +244,9 @@ public class Cld.ComediTask : AbstractTask {
 
         if (active) {
             active = false;
-            thread.join ();
+            if (exec_type == "polling") {
+                thread.join ();
+            }
         }
     }
 
@@ -297,6 +316,216 @@ public class Cld.ComediTask : AbstractTask {
                 active = false;
                 return;
             }
+        }
+    }
+
+    /**
+     * Asynchronous acquisition
+     */
+    private void do_async () {
+        Comedi.loglevel (4);
+        chanlist = new uint [channels.size];
+        //GLib.stdout.printf ("board name: %s\n", device.get_board_name ());
+        (device as ComediDevice).dev.set_buffer_size (subdevice, 4096);
+        scan_period_nanosec = (uint) (1e9 / interval_ms);
+
+        foreach (var channel in channels.values){
+            int i = (channel as Cld.Channel).num;
+            chanlist[i] = Comedi.pack (i, (channel as Cld.AIChannel).range, Comedi.AnalogReference.GROUND);
+        }
+
+        int ret;
+        /* This comedilib function will get us a generic timed
+        * command for a particular board.  If it returns -1,
+        * that's bad. */
+        ret = (device as ComediDevice).dev.get_cmd_generic_timed (subdevice,
+                    out cmd, channels.size, scan_period_nanosec);
+
+        if (ret < 0) {
+            message ("comedi_get_cmd_generic_timed failed");
+        }
+
+        /* Modify parts of the command */
+        prepare_cmd ();
+
+        /* Launch select thread */
+        ThreadFunc<void*> run = () => {
+            Cld.debug ("Asynchronous acquisition started for ComediTask %s",uri);
+            do_select ();
+
+            return null;
+        };
+
+        GLib.Thread.create<void*> (run, false);
+    }
+
+    private void prepare_cmd () {
+        cmd.subdev = subdevice;
+
+        cmd.flags = 0;//TriggerFlag.WAKE_EOS;
+
+        cmd.start_src = TriggerSource.NOW;
+        cmd.start_arg = 0;
+
+        cmd.scan_begin_src = TriggerSource.FOLLOW;
+        //cmd.scan_begin_arg = scan_period_nanosec; //nanoseconds;
+
+    	cmd.convert_src =  TriggerSource.TIMER;
+	    cmd.convert_arg = 100000;// scan_period_nanosec;
+
+        cmd.scan_end_src = TriggerSource.COUNT;
+        cmd.scan_end_arg = channels.size;
+
+        cmd.stop_src = TriggerSource.NONE;//COUNT;
+        cmd.stop_arg = 0;
+
+        cmd.chanlist = chanlist;
+        cmd.chanlist_len = channels.size;
+    }
+
+
+    public int do_select () {
+        uint raw;
+        bool is_physical = true;
+        int fd = -1;
+        int col = 0;
+        ulong rx_count = 0;
+        Posix.FILE outfile = Posix.FILE.open("log.out", "w");
+        uint maxdata = (device as ComediDevice).dev.get_maxdata (0, 0);
+        const int bufsz = 4096;
+        Comedi.Range crange;
+        int subdev_flags = (device as ComediDevice).dev.get_subdevice_flags (subdevice);
+
+        fd = (device as ComediDevice).dev.fileno ();
+        active = true;
+        do_cmd ();
+
+        while (active) {
+            ushort[] buf = new ushort[bufsz];
+            Posix.fd_set rdset;
+            int ret;
+
+            Posix.timeval timeout = Posix.timeval ();
+            Posix.FD_ZERO (out rdset);
+            Posix.FD_SET (fd, ref rdset);
+            timeout.tv_sec = 0;
+            timeout.tv_usec = 50000;
+            //GLib.stdout.printf ("streaming buffer size: %d\n",
+               // (device as ComediDevice).dev.get_buffer_size(cmd.subdev));
+            ret = Posix.select (fd + 1, &rdset, null, null, timeout);
+            //GLib.stdout.printf ("select returned %d\n", ret);
+
+            if (ret < 0) {
+                if (Posix.errno == Posix.EAGAIN) {
+                    perror("read");
+                }
+            } else if ((Posix.FD_ISSET (fd, rdset)) == 1) {
+                //GLib.stdout.printf("comedi file descriptor ready\n");
+                ret = (int)Posix.read (fd, buf, bufsz);
+                //GLib.stdout.printf ("read returned: %d\n", ret);
+                ulong bytes_per_sample;
+                total += ret;
+                message ("read %d %d", ret, total);
+
+                if ((subdev_flags & SubdeviceFlag.LSAMPL) != 0) {
+                    bytes_per_sample = sizeof (uint);
+                } else {
+                    bytes_per_sample = sizeof (ushort);
+                }
+
+                for (int i = 0; i < ret / bytes_per_sample; i++) {
+                        raw = (ushort) buf[i];
+                    print_datum (raw, col, is_physical);
+                    crange = (device as ComediDevice).dev.get_range (subdevice, col, 4);
+                    outfile.printf ("% 12.6f", to_phys (raw, crange, maxdata));
+                    col++;
+                    if (col == channels.size) {
+                        stdout.printf("\n");
+                        outfile.printf ("\n");
+                        col = 0;
+                    }
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    private void do_cmd () {
+        int ret;
+
+        ret = (device as ComediDevice).dev.command_test (cmd);
+
+        GLib.stdout.printf ("test ret = %d\n", ret);
+        if (ret < 0) {
+		    Comedi.perror("comedi_command_test");
+            return;
+        }
+
+    	dump_cmd ();
+
+        ret = (device as ComediDevice).dev.command_test (cmd);
+
+        GLib.stdout.printf ("test ret = %d\n", ret);
+        if (ret < 0) {
+		    Comedi.perror("comedi_command_test");
+		    return;
+        }
+
+    	dump_cmd ();
+
+        ret = (device as ComediDevice).dev.command (cmd);
+
+        GLib.stdout.printf ("test ret = %d\n", ret);
+	    if (ret < 0) {
+		    Comedi.perror("comedi_command");
+
+		    return;
+        } else {
+            async_start_time = DateTime.now_local ();
+        }
+	}
+
+    private string cmd_src (uint src) {
+        string buf = "";
+
+        if ((src & TriggerSource.NONE) != 0) buf = "none|";
+        if ((src & TriggerSource.NOW) != 0) buf = "now|";
+        if ((src & TriggerSource.FOLLOW) != 0) buf = "follow|";
+        if ((src & TriggerSource.TIME) != 0) buf = "time|";
+        if ((src & TriggerSource.TIMER) != 0) buf = "timer|";
+        if ((src & TriggerSource.COUNT) != 0) buf = "count|";
+        if ((src & TriggerSource.EXT) != 0) buf = "ext|";
+        if ((src & TriggerSource.INT) != 0) buf = "int|";
+        if ((src & TriggerSource.OTHER) != 0) buf = "other|";
+
+        if (Posix.strlen (buf) == 0) {
+            buf = "unknown src";
+        } else {
+            //buf[strlen (buf)-1]=0;
+        }
+
+        return buf;
+    }
+
+    private void dump_cmd () {
+        message ("subdevice:      %u", cmd.subdev);
+        message ("start:      %-8s %u", cmd_src (cmd.start_src), cmd.start_arg);
+        message ("scan_begin: %-8s %u", cmd_src (cmd.scan_begin_src), cmd.scan_begin_arg);
+        message ("convert:    %-8s %u", cmd_src (cmd.convert_src), cmd.convert_arg);
+        message ("scan_end:   %-8s %u", cmd_src (cmd.scan_end_src), cmd.scan_end_arg);
+        message ("stop:       %-8s %u", cmd_src (cmd.stop_src), cmd.stop_arg);
+    }
+
+    private void print_datum (uint raw, int channel_index, bool is_physical) {
+        double physical_value;
+        Comedi.Range crange = (device as ComediDevice).dev.get_range (subdevice, channel_index, 4);
+        uint maxdata = (device as ComediDevice).dev.get_maxdata (0, 0);
+        if (!is_physical) {
+            GLib.stdout.printf ("%u ",raw);
+        } else {
+            physical_value = to_phys (raw, crange, maxdata);
+            GLib.stdout.printf ("%#8.6g ", physical_value);
         }
     }
 
@@ -410,7 +639,7 @@ public class Cld.ComediTask : AbstractTask {
 
         foreach (var channel in channels.values) {
 
-            /*XXX Consider getting rid of Channel timestamps. They are nod needed if using FIFOs. */
+            /*XXX Consider getting rid of Channel timestamps. They are not needed if using FIFOs. */
             (channel as Channel).timestamp = timestamp;
             if (channel is AOChannel) {
                 val = (channel as AOChannel).scaled_value;

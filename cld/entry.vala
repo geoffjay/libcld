@@ -84,10 +84,6 @@ public class Cld.LogEntry : Cld.AbstractObject {
         int64.try_parse (dy, out day);
         int64.try_parse (hr, out hour);
         int64.try_parse (mn, out minute);
-//        int month = int.parse (array[0].slice (5, 7));
-//        int day = int.parse (array[0].slice (8, 10));
-//        int hour = int.parse (array[0].slice (11, 13));
-//        int minute = int.parse (array[0].slice (14, 16));
         double seconds = double.parse (array[0].slice (17, 26));
 
         timestamp = new DateTime.local ((int)year, (int)month, (int)day, (int)hour, (int)minute, seconds);

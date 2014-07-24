@@ -58,11 +58,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     }
 
     /**
-     * A FIFO stack of LogEntry objects.
-     */
-    private Gee.Deque<Cld.LogEntry> queue { get; set; }
-
-    /**
      * A time stamp for log entries.
      */
     private DateTime start_time;
@@ -165,7 +160,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /* constructor */
     construct {
         Cld.LogEntry entry = new Cld.LogEntry ();
-        queue = new Gee.LinkedList<Cld.LogEntry> ();
     }
 
     public SqliteLog () {
@@ -344,11 +338,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         /* open the file */
         Cld.debug ("filename: %s ", filename);
-//        if ((Posix.access (Posix.R_OK) != 0) ||
-//            (Posix.access (Posix.W_OK) != 0)) {
-//            throw new Cld.FileError.ACCESS (
-//                "Requested access to %s is not permitted.", filename);
-//        }
         file_stream = FileStream.open (filename, "w+");
         if (file_stream == null) {
            success = false;
@@ -457,16 +446,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         GLib.Timeout.add_full (GLib.Priority.DEFAULT_IDLE, backup_interval_ms, backup_cb);
 
-//        bg_log_timer.begin ((obj, res) => {
-//            try {
-//                bg_log_timer.end (res);
-//                Cld.debug ("Log queue timer async ended");
-//            } catch (ThreadError e) {
-//                string msg = e.message;
-//                Cld.error (@"Thread error: $msg");
-//            }
-//        });
-
         bg_log_watch.begin ((obj, res) => {
             try {
                 bg_log_watch.end (res);
@@ -510,72 +489,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         }
     }
 
-    private Cond queue_cond = new Cond ();
-    private Mutex queue_mutex = new Mutex ();
-
-    /**
-     * Launches a backround thread that pushes a LogEntry to the queue at regular time
-     * intervals.
-     */
-//    private async void bg_log_timer () throws ThreadError {
-//        SourceFunc callback = bg_log_timer.callback;
-//        Cld.LogEntry entry = new Cld.LogEntry ();
-//
-//        ThreadFunc<void *> _run = () => {
-//            Mutex mutex = new Mutex ();
-//            Cond cond = new Cond ();
-//            int64 end_time;
-//            int64 start = get_monotonic_time ();
-//            int64 counter = 1;
-//
-//            active = true;
-//
-//            while (active) {
-//                /* XXX For test only */
-//                char[] s = new char[128];
-//                ssize_t num;
-//                foreach (int fd in fifos.values) {
-//                    if ((num = Posix.read (fd, s, 128)) == -1)
-//                        Cld.debug("read error");
-//                    else {
-//                        s[num] = '\0';
-//                        Cld.debug ("%s", s);
-//                    }
-//                }
-//                /* Update the entry and push it onto the queue */
-//                entry.update (objects);
-//
-//                queue_mutex.lock ();
-//                lock (queue) {
-//                    if (!queue.offer_head (entry))
-//                        Cld.error ("Element %s was not added to the queue.", entry.id);
-//                    else {
-//                        queue_cond.signal ();
-//                        queue_mutex.unlock ();
-//                    }
-//                }
-//
-//                /* Perform timing control */
-//                mutex.lock ();
-//                try {
-//                    end_time = start + counter++ * dt * TimeSpan.MILLISECOND;
-//                    while (cond.wait_until (mutex, end_time))
-//                        ; /* do nothing */
-//                } finally {
-//                    mutex.unlock ();
-//                }
-//            }
-//
-//            Idle.add ((owned) callback);
-//            return null;
-//        };
-//        Thread.create<void *> (_run, false);
-//
-//        yield;
-//    }
-
-    private int min_queue_size = 1;
-
     /**
      * Launches a thread that pulls a LogEntry from the queue and writes
      * it to the log file.
@@ -585,17 +498,34 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         ThreadFunc<void *> _run = () => {
             active = true;
+            string head = "";
 
             while (active) {
-                /* XXX For test only */
-                char[] s = new char[4096];
+                char [] s = new char[4096];
+                string [] rows;
+                string tail;
                 ssize_t num;
 
                 foreach (int fd in fifos.values) {
                     if ((num = Posix.read (fd, s, 4096)) == -1)
                         Cld.debug("read error");
                     else {
-                        var rows = ((string)s).split ("\n");
+                        rows = ((string)s).split ("\n");
+
+                        /* Re-assemble split rows. */
+                        if (head != "") {
+                            /* Attach the head if it is not empty. */
+                            tail = rows [0];
+                            rows [0] = head + tail;
+                            head = "";
+                        }
+                        if ( s [num - 1] != '\n') {
+                            /* Set a new head if last row is incomplete. */
+                            head = rows [rows.length -1];
+                            rows [rows.length - 1] = "";
+                        }
+
+                        /* Process each row. */
                         foreach (var row in rows) {
                             if (row != "") {
                                 Cld.LogEntry entry = new Cld.LogEntry.from_serial (row);
@@ -604,18 +534,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                         }
                     }
                 }
-                //GLib.Thread.usleep (2000000); for testing only
-
-//                while (queue.size < min_queue_size)
-//                    queue_cond.wait (queue_mutex);
-//
-//                while (queue.size != 0) {
-//                    lock (queue) {
-//                        entry = queue.poll_tail ();
-//                    }
-//                    entry.time_us = entry.timestamp.difference (start_time);
-//                    log_entry_write (entry);
-//                }
             }
 
             Idle.add ((owned) callback);
@@ -810,7 +728,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     }
 
     private void log_entry_write (Cld.LogEntry entry) {
-
         string query = """
             INSERT INTO %s
             (
@@ -853,15 +770,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 parameter_index = stmt.bind_parameter_index ("$VAL%d".printf (i));
                 /* Bind values to columns. The order of sequential access is consistent using this method */
                 stmt.bind_double (parameter_index, entry.data.get ((column as Cld.Column).chref));
-//                string key = (column as Column).chref;
-//                foreach (var k in entry.data.keys ) {
-//stdout.printf ("k: %s key: %s\n", k, key);
-//                    if (k == key) {
-//stdout.printf ("k: %s\n", k);
-//                        //stmt.bind_double (parameter_index, entry.data.get (k));
-//                        break;
-//                    }
-//                }
                 i++;
             }
         }
@@ -1180,7 +1088,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 }
                 line += "\n";
                 if (count == 0) {
-stdout.printf ("%s", line);
                     file_print (line);
                 }
                 count++;

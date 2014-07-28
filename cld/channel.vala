@@ -22,7 +22,7 @@
 /**
  * A common interface for the various channel types.
  */
-public interface Cld.Channel : Cld.Object {
+public interface Cld.Channel : Cld.Container {
 
     /**
      * The channel number, which sometimes refers to its hardware pin number.

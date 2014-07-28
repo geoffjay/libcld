@@ -23,46 +23,15 @@
  * Analog input channel used with measurements and other control functions.
  */
 public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cld.ScalableChannel {
-
     /**
-     * {@inheritDoc}
+     * Property backing fields to allow the channels to have a short history
+     * for use with control loop calculations.
      */
-    public override int num { get; set; }
+    private double[] _raw_value = { 0.0, 0.0, 0.0 };
+    private double[] _avg_value = { 0.0, 0.0, 0.0 };
+    private double[] _scaled_value = { 0.0, 0.0, 0.0 };
 
-    /**
-     * {@inheritDoc}
-     */
-    public override int subdevnum { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string devref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override weak Device device { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string taskref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override weak Task task { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string tag { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string desc { get; set; }
+    protected weak Cld.Calibration _calibration;
 
     /**
      * {@inheritDoc}
@@ -72,20 +41,28 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
     /**
      * {@inheritDoc}
      */
-    public virtual weak Calibration calibration { get; set; }
+    public virtual Calibration calibration {
+        get {
+            if (_calibration == null) {
+                var calibrations = get_children (typeof (Cld.Calibration));
+                foreach (var cal in calibrations.values) {
+                    /* this should only happen once */
+                    _calibration = cal as Cld.Calibration;
+                    break;
+                }
+            }
+
+            return _calibration;
+        }
+        set {
+            _calibration = value;
+        }
+    }
 
     /**
      * {@inheritDoc}
      */
     public virtual int range { get; set; }
-
-    /**
-     * Property backing fields to allow the channels to have a short history
-     * for use with control loop calculations.
-     */
-    private double[] _raw_value = { 0.0, 0.0, 0.0 };
-    private double[] _avg_value = { 0.0, 0.0, 0.0 };
-    private double[] _scaled_value = { 0.0, 0.0, 0.0 };
 
     /**
      * {@inheritDoc}
@@ -196,7 +173,6 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
             devref = node->get_prop ("ref");
-            add_ref (devref, "devref");
             /* iterate through node children */
             for (Xml.Node *iter = node->children;
                  iter != null;
@@ -225,13 +201,11 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
                             /* this should maybe be an object property,
                              * possibly fix later */
                             calref = iter->get_content ();
-                            add_ref (calref, "calref");
                             break;
                         case "taskref":
                            /* this should maybe be an object property,
                              * possibly fix later */
                             taskref = iter->get_content ();
-                            add_ref (taskref, "taskref");
                             break;
                         case "range":
                             val = iter->get_content ();
@@ -291,13 +265,5 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
         } else {
             avg_value = 0.0;
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        return base.to_string () + " [range]: %d\n".printf (range);
-;
     }
 }

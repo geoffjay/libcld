@@ -30,12 +30,6 @@ public class Cld.Daq : Cld.AbstractContainer {
 
     public string driver { get; set; }
 
-    private Gee.Map<string, Cld.Object> _objects;
-    public override Gee.Map<string, Cld.Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
-
     public Daq () {
         rate = 10.0;    /* Hz */
         _objects = new Gee.TreeMap<string, Cld.Object> ();
@@ -87,23 +81,16 @@ public class Cld.Daq : Cld.AbstractContainer {
             _objects.clear ();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Cld.Object> val) {
-        _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string str_data = "[%s] : DAQ with rate %.3f\n".printf (id, rate);
-        /* copy the device print iteration here later in testing */
-        if (!objects.is_empty) {
-            foreach (var dev in objects.values)
-                str_data += "  %s".printf (dev.to_string ());
-        }
-        return str_data;
-    }
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public override string to_string () {
+//        string str_data = "[%s] : DAQ with rate %.3f\n".printf (id, rate);
+//        /* copy the device print iteration here later in testing */
+//        if (!objects.is_empty) {
+//            foreach (var dev in objects.values)
+//                str_data += "  %s".printf (dev.to_string ());
+//        }
+//        return str_data;
+//    }
 }

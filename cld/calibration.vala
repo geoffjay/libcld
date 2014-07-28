@@ -31,15 +31,6 @@
  */
 public class Cld.Calibration : Cld.AbstractContainer {
 
-    /**
-     * {@inheritDoc}
-     */
-    private Gee.Map<string, Cld.Object> _objects;
-    public override Gee.Map<string, Cld.Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
-
     private Gee.Map<string, Cld.Object>? _coefficients = null;
     public Gee.Map<string, Cld.Object> coefficients {
         get {
@@ -96,6 +87,7 @@ public class Cld.Calibration : Cld.AbstractContainer {
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "coefficient") {
                         var coeff = new Cld.Coefficient.from_xml_node (iter);
+                        coeff.parent = this;
                         add (coeff);
                     }
                 }
@@ -203,21 +195,14 @@ public class Cld.Calibration : Cld.AbstractContainer {
         return result;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Cld.Object> val) {
-        _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string str_data = "[%s] : y = ".printf (id);
-        foreach (var coefficient in objects.values) {
-            str_data += "%s".printf (coefficient.to_string ());
-        }
-        return str_data;
-    }
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public override string to_string () {
+//        string str_data = "[%s] : y = ".printf (id);
+//        foreach (var coefficient in objects.values) {
+//            str_data += "%s".printf (coefficient.to_string ());
+//        }
+//        return str_data;
+//    }
 }

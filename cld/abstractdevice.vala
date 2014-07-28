@@ -61,17 +61,17 @@ public abstract class Cld.AbstractDevice : Cld.AbstractContainer, Cld.Device {
      * {@inheritDoc}
      */
     public abstract bool close ();
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string str_data  = "CldDevice\n";
-               str_data += " [hw_type  ] : %d\n".printf (hw_type);
-               str_data += " [driver ] : %d\n".printf (driver);
-               str_data += " [description ] : %s\n".printf (description);
-               str_data += " [filename ] : %s\n".printf (filename);
-               str_data += " [unix_fd] : %d\n".printf (unix_fd);
-        return str_data;
-    }
+//
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public override string to_string () {
+//        string str_data  = "CldDevice\n";
+//               str_data += " [hw_type  ] : %d\n".printf (hw_type);
+//               str_data += " [driver ] : %d\n".printf (driver);
+//               str_data += " [description ] : %s\n".printf (description);
+//               str_data += " [filename ] : %s\n".printf (filename);
+//               str_data += " [unix_fd] : %d\n".printf (unix_fd);
+//        return str_data;
+//    }
 }

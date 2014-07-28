@@ -762,22 +762,6 @@ public class Cld.ParkerModule : AbstractModule {
         loaded = false;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Object> val) {
-        _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string r;
-        r  = "ParkerModule [%s]\n".printf (id);
-        return r;
-    }
-
     /*
      * Deactivate the drive.
      */

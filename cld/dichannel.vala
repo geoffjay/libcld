@@ -25,45 +25,8 @@
 public class Cld.DIChannel : Cld.AbstractChannel, Cld.DChannel, Cld.IChannel {
 
     /**
-     * {@inheritDoc}
+     * Property backing fields.
      */
-    public override int num { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override int subdevnum { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string devref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override weak Device device { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string taskref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override weak Task task { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string tag { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string desc { get; set; }
-
     private bool _state;
 
     /**
@@ -76,7 +39,6 @@ public class Cld.DIChannel : Cld.AbstractChannel, Cld.DChannel, Cld.IChannel {
             new_value (id, value);
         }
     }
-
 
     /* default constructor */
     public DIChannel () {
@@ -126,9 +88,5 @@ public class Cld.DIChannel : Cld.AbstractChannel, Cld.DChannel, Cld.IChannel {
                 }
             }
         }
-    }
-
-    public override string to_string () {
-        return base.to_string ();
     }
 }

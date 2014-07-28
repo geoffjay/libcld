@@ -27,15 +27,6 @@ using Gsl;
 public class Cld.DataSeries : Cld.AbstractContainer {
 
     /**
-     * {@inheritDoc}
-     */
-    private Gee.Map<string, Cld.Object> _objects;
-    public override Gee.Map<string, Cld.Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
-
-    /**
      * The number of elements in the series
      */
     public int length { get; set; default = 3; }
@@ -58,7 +49,7 @@ public class Cld.DataSeries : Cld.AbstractContainer {
     /**
      * The reference id of the scalable channel that is buffered.
      */
-    public string chanref { get; set; }
+    public string chref { get; set; }
 
     /**
      * The channel that is buffered
@@ -113,9 +104,9 @@ public class Cld.DataSeries : Cld.AbstractContainer {
                             length = int.parse (value);
                             Cld.debug ("%s length: %d", id, this.length);
                             break;
-                        case "chanref":
+                        case "chref":
                             value = iter->get_content ();
-                            chanref = value;
+                            chref = value;
                             break;
                         case "vtype":
                             value = iter->get_content ();
@@ -134,7 +125,11 @@ public class Cld.DataSeries : Cld.AbstractContainer {
                                 (object as VChannel).id = "vc-%s-%d".printf (this.id, taps [i]);
                                 (object as VChannel).tag = "%s [%d]".printf (this.id, taps [i]);
                                 (object as VChannel).num = taps [i];
-                                add (object);
+                                try {
+                                    add (object);
+                                } catch (Cld.Error.KEY_EXISTS e) {
+                                    Cld.error (e.message);
+                                }
                             }
                             break;
                         default:
@@ -213,9 +208,5 @@ public class Cld.DataSeries : Cld.AbstractContainer {
                 });
             }
         }
-    }
-
-    public override string to_string () {
-        return base.to_string ();
     }
 }

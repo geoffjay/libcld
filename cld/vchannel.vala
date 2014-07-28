@@ -30,26 +30,6 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
     /**
      * {@inheritDoc}
      */
-    public override int num { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override int subdevnum {get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string devref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override weak Device device { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
     public override string taskref {
         get {
             if (_taskref == null)
@@ -59,21 +39,6 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
         }
         set { _taskref = value; }
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override weak Task task { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string tag { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string desc { get; set; }
 
     /* Evaluator fields */
     private Evaluator evaluator = null;
@@ -181,6 +146,11 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
     public virtual weak Calibration calibration { get; set; }
 
     /* default constructor */
+    construct {
+        taskref = "no taskref";
+        devref = "no devref";
+    }
+
     public VChannel () {
         /* set defaults */
         this.num = 0;
@@ -237,9 +207,5 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
     ~VChannel () {
         if (channels != null)
             channels.remove_all ();
-    }
-
-    public override string to_string () {
-        return base.to_string ();
     }
 }

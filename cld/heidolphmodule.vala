@@ -32,7 +32,6 @@ public class Cld.HeidolphModule : Cld.AbstractModule {
     /**
      * Property backing fields.
      */
-    private Gee.Map<string, Cld.Object> _objects;
     private string _speed_sp;
     private string _speed = "0";
     private string _torque = "0";
@@ -79,16 +78,6 @@ public class Cld.HeidolphModule : Cld.AbstractModule {
      * {@inheritDoc}
      */
     public override weak Port port { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override Gee.Map<string, Cld.Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
-
-//    public weak Gee.Map<string, Cld.Object> channels { get; set; }
 
     public Gee.Map<string, Cld.Object> channels { get; set; }
 
@@ -303,12 +292,5 @@ public class Cld.HeidolphModule : Cld.AbstractModule {
         loaded = false;
 
         Cld.debug ("HeidolphModule unloaded");
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Cld.Object> val) {
-        _objects = val;
     }
 }

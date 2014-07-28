@@ -26,17 +26,6 @@
  */
 
 public class Cld.AcquisitionController : Cld.AbstractController {
-
-    /**
-     * {@inheritDoc}
-     */
-    private Gee.Map<string, Cld.Object> _objects;
-    public override Gee.Map<string, Cld.Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
-
-
     /**
      * Default construction
      */
@@ -62,7 +51,12 @@ public class Cld.AcquisitionController : Cld.AbstractController {
                         case "device":
                             if (iter->get_prop ("driver") == "comedi") {
                                 var dev = new Cld.ComediDevice.from_xml_node (iter);
-                                add (dev);
+                                dev.parent = this;
+                                try {
+                                    add (dev);
+                                } catch (Cld.Error.KEY_EXISTS e) {
+                                    Cld.error (e.message);
+                                }
                             }
                             break;
                         default:
@@ -77,19 +71,5 @@ public class Cld.AcquisitionController : Cld.AbstractController {
      * {@inheritDoc}
      */
     public override void generate () {
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Cld.Object> val) {
-        _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        return base.to_string ();
     }
 }

@@ -24,31 +24,8 @@
  */
 internal class Cld.SimpleContainer : Cld.AbstractContainer {
 
-    /**
-     * {@inheritDoc}
-     */
-    private Gee.Map<string, Cld.Object> _objects;
-    public override Gee.Map<string, Cld.Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
-
     internal SimpleContainer () {
         _objects = new Gee.TreeMap<string, Cld.Object> ();
         Cld.debug ("SimpleContainer ()");
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Cld.Object> val) {
-        _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        return base.to_string ();
     }
 }

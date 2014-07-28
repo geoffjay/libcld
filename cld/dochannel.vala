@@ -25,6 +25,11 @@
 public class Cld.DOChannel : Cld.AbstractChannel, Cld.DChannel, Cld.OChannel {
 
     /**
+     * Property backing fileds.
+     */
+    private bool _state;
+
+    /**
      * {@inheritDoc}
      */
     public override int num { get; set; }
@@ -54,17 +59,6 @@ public class Cld.DOChannel : Cld.AbstractChannel, Cld.DChannel, Cld.OChannel {
      */
     public override weak Task task { get; set; }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override string tag { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string desc { get; set; }
-
-    private bool _state;
 
     /**
      * {@inheritDoc}
@@ -76,7 +70,6 @@ public class Cld.DOChannel : Cld.AbstractChannel, Cld.DChannel, Cld.OChannel {
             new_value (id, value);
         }
     }
-
 
     /* default constructor */
     public DOChannel () {
@@ -126,9 +119,5 @@ public class Cld.DOChannel : Cld.AbstractChannel, Cld.DChannel, Cld.OChannel {
                 }
             }
         }
-    }
-
-    public override string to_string () {
-        return base.to_string ();
     }
 }

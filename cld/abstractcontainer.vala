@@ -26,6 +26,12 @@
  */
 public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container {
     /**
+     * Property backing fields.
+     */
+    protected Gee.Map<string, Cld.Object> _objects;
+    protected Gee.List<Cld.AbstractContainer.Reference>? _ref_list = null;
+
+    /**
      * {@inheritDoc}
      */
     public virtual Gee.Map<string, Cld.Object> objects {
@@ -33,17 +39,47 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         set { update_objects (value); }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public virtual Gee.List<Cld.AbstractContainer.Reference>? ref_list {
+        get {
+            return _ref_list;
+        }
+        private set {
+            if (_ref_list == null) {
+                _ref_list = new Gee.ArrayList<Cld.AbstractContainer.Reference> ();
+            } else {
+                _ref_list.clear ();
+            }
+            _ref_list.add_all (value);
+        }
+    }
+
+    public class Reference {
+        public string self_uri;
+        public string reference_uri;
+    }
+
     construct {
         _objects = new Gee.TreeMap<string, Cld.Object> ();
+        _ref_list = new Gee.ArrayList<Cld.AbstractContainer.Reference> ();
     }
 
     /**
      * {@inheritDoc}
      */
-    public virtual void add (Cld.Object object) {
+    public virtual void add (Cld.Object object) throws Cld.Error {
         assert (object != null);
         assert (objects != null);
-        Cld.debug ("AbstractContainer.add (): %s", object.id);
+        foreach (var key in objects.keys) {
+            if (key == object.id) {
+                throw new Cld.Error.KEY_EXISTS ("Key %s already exists in %s objects".printf (key, object.id));
+
+                return;
+            }
+        }
+
         objects.set (object.id, object);
         object_added (object.id);
     }
@@ -54,7 +90,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      */
     public virtual void remove (Cld.Object object) {
         if (objects.unset (object.id)) {
-            Cld.debug ("Removed the object: %s", object.id);
+            Cld.debug ("Removed the object: %s from %s", object.id, id);
             object_removed (object.id);
         }
     }
@@ -71,7 +107,6 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      */
     public virtual Cld.Object? get_object (string id) {
         Cld.Object? result = null;
-
         if (objects.has_key (id)) {
             result = objects.get (id);
         } else {
@@ -140,15 +175,129 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      * {@inheritDoc}
      */
     public virtual void print_objects (int depth = 0) {
-        if (objects == null) {
-
-            return;
-        }
         foreach (var object in objects.values) {
             string indent = string.nfill (depth * 2, ' ');
-            stdout.printf ("%s[%s: %s]\n", indent, object.get_type ().name (), object.id);
+            string line = "%s[%s: %s]".printf (indent, object.get_type ().name (),
+                        object.id);
+            stdout.printf ("%-40s parent: %-14s uri: %s\n", line, object.parent.id, object.uri);
             if (object is Cld.Container) {
                 (object as Cld.Container).print_objects (depth + 1);
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual void add_ref (string uri) {
+        /* Add the reference if it is not a descendant of this */
+        if (!(this.uri.contains (uri))) {
+            var reference = new Cld.AbstractContainer.Reference ();
+            reference.self_uri =  this.uri;
+            reference.reference_uri = uri;
+            _ref_list.add (reference);
+        }
+    }
+
+    private Gee.List<Cld.AbstractContainer.Reference> _tmp_list;
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual unowned Gee.List<Cld.AbstractContainer.Reference>? get_descendant_ref_list () {
+        _tmp_list = new Gee.ArrayList<Cld.AbstractContainer.Reference> ();
+        /* add own uris if any exist */
+        _tmp_list.add_all (_ref_list);
+
+        if (this is Cld.Container) {
+            if ((this as Cld.Container).objects != null) {
+                /* add all of the uris for objects that are containers */
+                foreach (var object in (this as Cld.Container).objects.values) {
+                    if (object is Cld.Container) {
+                        _tmp_list.add_all ((object as Cld.Container).get_descendant_ref_list ());
+                    }
+                }
+            }
+        }
+        return _tmp_list;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public virtual Cld.Object? get_object_from_uri (string uri) {
+        Cld.Object? result = null;
+        Cld.Container container = this;
+        string [] tokens;
+
+        tokens = uri.split ("/");
+        foreach (string token in tokens) {
+            if ((token != "ctr0") && (token != "")) {
+                foreach (var object in container.objects.values) {
+                    if ((object as Cld.Object).id == token) {
+                        if (object is Container) {
+                            container = object as Container;
+                        }
+                        result = object;
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public virtual void generate_ref_list () {
+        if (objects == null) {
+            return;
+        }
+
+        foreach (var object in objects.values) {
+            if (object is Cld.Container) {
+                (object as Cld.Container).generate_ref_list ();
+
+                Type type = object.get_type ();
+
+                if (type.is_a (typeof (Cld.Channel))) {
+                    (object as Cld.Container).add_ref ((object as Cld.Channel).devref);
+                    (object as Cld.Container).add_ref ((object as Cld.Channel).taskref);
+                }
+
+                if (type.is_a (typeof (Cld.Column))) {
+                    (object as Cld.Container).add_ref ((object as Cld.Column).chref);
+                }
+
+                if (type.is_a (typeof (Cld.ComediTask))) {
+                    (object as Cld.Container).add_ref ((object as Cld.ComediTask).devref);
+                }
+
+                if (type.is_a (typeof (Cld.DataSeries))) {
+                    (object as Cld.Container).add_ref ((object as Cld.DataSeries).chref);
+                }
+
+                if (type.is_a (typeof (Cld.Pid2))) {
+                    (object as Cld.Pid2).add_ref ((object as Cld.Pid2).sp_chref);
+                }
+
+                if (type.is_a (typeof (Cld.ProcessValue))) {
+                    (object as Cld.Container).add_ref ((object as Cld.ProcessValue).chref);
+                }
+
+                if (type.is_a (typeof (Cld.ProcessValue2))) {
+                    (object as Cld.Container).add_ref ((object as Cld.ProcessValue2).dsref);
+                }
+
+                if (type.is_a (typeof (Cld.ScalableChannel))) {
+                    (object as Cld.Container).add_ref ((object as Cld.ScalableChannel).calref);
+                }
+
+                if (type.is_a (typeof (Module))) {
+                    (object as Cld.Container).add_ref ((object as Cld.Module).devref);
+                    (object as Cld.Container).add_ref ((object as Cld.Module).portref);
+                }
             }
         }
     }

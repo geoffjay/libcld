@@ -24,9 +24,6 @@
  */
 public class Cld.CsvLog : Cld.AbstractLog {
 
-    /**
-     * Property backing fields.
-     */
     private Gee.Map<string, Object> _objects;
 
     /**
@@ -73,14 +70,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
      * Determines whether the file is renamed on open using the format string.
      */
     public Log.TimeStampFlag time_stamp { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override Gee.Map<string, Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
 
     /**
      * A FIFO stack of LogEntry objects
@@ -156,6 +145,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "column") {
                         var column = new Column.from_xml_node (iter);
+                        column.parent = this;
                         add (column);
                     }
                 }
@@ -508,23 +498,16 @@ public class Cld.CsvLog : Cld.AbstractLog {
         return data;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Object> val) {
-        _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string str_data  = "CldLog\n";
-               str_data += "\tid:   %s\n".printf (id);
-               str_data += "\tname: %s\n".printf (name);
-               str_data += "\tpath: %s\n".printf (path);
-               str_data += "\tfile: %s\n".printf (file);
-               str_data += "\trate: %.3f\n".printf (rate);
-        return str_data;
-    }
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public override string to_string () {
+//        string str_data  = "CldLog\n";
+//               str_data += "\tid:   %s\n".printf (id);
+//               str_data += "\tname: %s\n".printf (name);
+//               str_data += "\tpath: %s\n".printf (path);
+//               str_data += "\tfile: %s\n".printf (file);
+//               str_data += "\trate: %.3f\n".printf (rate);
+//        return str_data;
+//    }
 }

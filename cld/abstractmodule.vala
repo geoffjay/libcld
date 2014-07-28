@@ -55,11 +55,4 @@ public abstract class Cld.AbstractModule : Cld.AbstractContainer, Cld.Module {
      * {@inheritDoc}
      */
     public abstract void unload ();
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        return "Module";
-    }
 }

@@ -32,6 +32,12 @@ public interface Cld.Container : Cld.Object {
     public abstract Gee.Map<string, Cld.Object> objects { get; set; }
 
     /**
+     * A list of all of the uri strings to objects in other unowned areas of the
+     * object tree that will be added from a higher level.
+     */
+    public abstract Gee.List<Cld.AbstractContainer.Reference>? ref_list { get; private set; }
+
+    /**
      * Signals that an object has been added.
      */
     public abstract signal void object_added (string id);
@@ -46,7 +52,7 @@ public interface Cld.Container : Cld.Object {
      *
      * @param object object object to add to the list
      */
-    public abstract void add (Cld.Object object);
+    public abstract void add (Cld.Object object) throws Cld.Error;
 
     /**
      * Remove an object to the array list of objects
@@ -106,4 +112,27 @@ public interface Cld.Container : Cld.Object {
      * @param depth current level of the object tree
      */
     public abstract void print_objects (int depth);
+
+    /**
+     * Add a reference to a table of references.
+     */
+    public abstract void add_ref (string uri);
+
+    /**
+     * Retrieve the list of all descendant URIs.
+     *
+     * @return list of all uri values contained by itself and all descendants.
+     */
+    public abstract unowned Gee.List<Cld.AbstractContainer.Reference>? get_descendant_ref_list ();
+
+    /**
+     * Retrieve a descendant object with its URI
+     * @return The object with the given URI
+     */
+    public abstract Cld.Object? get_object_from_uri (string uri);
+
+    /**
+     * Self generate the ref_list property.
+     */
+    public abstract void generate_ref_list ();
 }

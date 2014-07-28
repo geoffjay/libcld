@@ -75,11 +75,4 @@ public abstract class Cld.AbstractPort : AbstractObject, Port {
      * {@inheritDoc}
      */
     public abstract bool read_bytes (GLib.IOChannel source, GLib.IOCondition condition);
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        return "Port";
-    }
 }

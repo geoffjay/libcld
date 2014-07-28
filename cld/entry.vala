@@ -59,14 +59,6 @@ public class Cld.LogEntry : Cld.AbstractObject {
         data = new Gee.ArrayList<double?> ();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string str_data = "<none>\n";
-        return str_data;
-    }
-
     public void update (Gee.Map<string, Object> objects) {
         //timestamp = new DateTime.now_local ();
         int i = 0;
@@ -137,5 +129,4 @@ public struct Cld.ChannelEntry {
         string str_data = "id: %d\n".printf (id);
         return str_data;
     }
-
 }

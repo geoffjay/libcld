@@ -254,19 +254,19 @@ public class Cld.SocketPort : AbstractPort {
         return connected;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string r;
-        r  = "SocketPort [%s]\n".printf (id);
-        r += " connected:   %s\n".printf ((connected) ? "Yes" : "No");
-        r += " host:        %s\n".printf (host);
-        r += " port:        %d\n".printf (port);
-        r += " tx count:    %lu\n".printf (tx_count);
-        r += " rx count:    %lu\n".printf (rx_count);
-        return r;
-    }
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public override string to_string () {
+//        string r;
+//        r  = "SocketPort [%s]\n".printf (id);
+//        r += " connected:   %s\n".printf ((connected) ? "Yes" : "No");
+//        r += " host:        %s\n".printf (host);
+//        r += " port:        %d\n".printf (port);
+//        r += " tx count:    %lu\n".printf (tx_count);
+//        r += " rx count:    %lu\n".printf (rx_count);
+//        return r;
+//    }
 
     /**
      * Update the socket settings.

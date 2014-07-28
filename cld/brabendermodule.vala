@@ -25,12 +25,6 @@ using Modbus;
 using Math;
 
 public class Cld.BrabenderModule : AbstractModule {
-
-    /**
-     * Property backing fields.
-     */
-    private Gee.Map<string, Object> _objects;
-
     /**
      * Class constants.
      */
@@ -98,14 +92,6 @@ public class Cld.BrabenderModule : AbstractModule {
      */
     public override weak Port port { get; set; }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override Gee.Map<string, Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
-
     public bool running { get; set; default = false; }
 
     public weak Gee.Map<string, Object> channels { get; set; }
@@ -132,7 +118,6 @@ public class Cld.BrabenderModule : AbstractModule {
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
-            Cld.debug ("Got Brab id:");
             /* iterate through node children */
             for (Xml.Node *iter = node->children;
                  iter != null;
@@ -140,7 +125,6 @@ public class Cld.BrabenderModule : AbstractModule {
                 if (iter->name == "property") {
                     switch (iter->get_prop ("name")) {
                          case "portref":
-                         Cld.debug ("Got portref..");
                             portref = iter->get_content ();
                              break;
                          default:
@@ -404,21 +388,5 @@ public class Cld.BrabenderModule : AbstractModule {
         loaded = false;
         }
         Cld.debug ("BrabenderModule unloaded");
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Object> val) {
-        _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string r;
-        r  = "Brabender Module: [%s]\n".printf (id);
-        return r;
     }
 }

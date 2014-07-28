@@ -27,60 +27,82 @@
 public abstract class Cld.AbstractChannel : Cld.AbstractContainer, Cld.Channel {
 
     /**
-     * {@inheritDoc}
+     * Property backing fields.
      */
-    public abstract int num { get; set; }
+    protected weak Cld.Device _device;
+    protected weak Cld.Task _task;
 
     /**
      * {@inheritDoc}
      */
-    public abstract int subdevnum { get; set; }
+    public virtual int num { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public abstract string devref { get; set; }
+    public virtual int subdevnum { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public abstract weak Device device { get; set; }
+    public virtual string devref { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public abstract string taskref { get; set; }
+    public virtual Device device {
+        get {
+            if (_device == null) {
+                var devices = get_children (typeof (Cld.Device));
+                foreach (var dev in devices.values) {
+                    /* this should only happen once */
+                    _device = dev as Cld.Device;
+                    break;
+                }
+            }
 
-    /**
-     * {@inheritDoc}
-     */
-    public abstract weak Task task { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public abstract string tag { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public abstract string desc { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string str_data  = "CldChannel\n";
-               str_data += " [id  ] : %s\n".printf (id);
-               str_data += " [num ] : %d\n".printf (num);
-               str_data += " [subdev ] : %d\n".printf (subdevnum);
-               str_data += " [dev ] : %s\n".printf (devref);
-               str_data += " [tag ] : %s\n".printf (tag);
-               str_data += " [desc] : %s\n".printf (desc);
-               str_data += " [devref] : %s\n".printf (devref);
-               str_data += " [taskref]: %s\n".printf (taskref);
-        return str_data;
+            return _device;
+        }
+        set {
+            _device = value;
+        }
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual string taskref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual Task task {
+        get {
+            if (_task == null) {
+                var tasks = get_children (typeof (Cld.Task));
+                foreach (var tsk in tasks.values) {
+                    /* this should only happen once */
+                    _task = tsk as Cld.Task;
+                    break;
+                }
+            }
+
+            return _task;
+        }
+        set {
+            _task = value;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual string tag { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual string desc { get; set; }
 
     /**
      * {@inheritDoc}

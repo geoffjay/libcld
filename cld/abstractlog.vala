@@ -99,16 +99,16 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
      */
     public abstract void stop ();
 
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string str_data  = "CldLog\n";
-               str_data += "\tid:   %s\n".printf (id);
-               str_data += "\tname: %s\n".printf (name);
-               str_data += "\tpath: %s\n".printf (path);
-               str_data += "\tfile: %s\n".printf (file);
-               str_data += "\trate: %.3f\n".printf (rate);
-        return str_data;
-    }
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public override string to_string () {
+//        string str_data  = "CldLog\n";
+//               str_data += "\tid:   %s\n".printf (id);
+//               str_data += "\tname: %s\n".printf (name);
+//               str_data += "\tpath: %s\n".printf (path);
+//               str_data += "\tfile: %s\n".printf (file);
+//               str_data += "\trate: %.3f\n".printf (rate);
+//        return str_data;
+//    }
 }

@@ -28,53 +28,26 @@ using matheval;
  */
 public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
 
-    /**
-     * {@inheritDoc}
-     */
-    public override int num { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override int subdevnum {get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string devref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override weak Device device { get; set; }
+    /* Property backing fields. */
+    private double _scaled_value = 0.0;
+    private double _raw_value = 0.0;
+    private string _taskref = null;
+    private double _calculated_value = 0.0;
+    private string? _expression = null;
+    private string[]? _variable_names = null;
 
     /**
      * {@inheritDoc}
      */
     public override string taskref {
         get {
-//            if (_taskref == null)
-//                throw new Cld.Error.NULL_REF ("A taskref has not been set for this math channel.");
-//            else
+            if (_taskref == null)
+                throw new Cld.Error.NULL_REF ("A taskref has not been set for this virtual channel.");
+            else
                 return _taskref;
         }
         set { _taskref = value; }
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override weak Task task { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string tag { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string desc { get; set; }
 
     /* Evaluator fields */
     /* XXX TBD This should work with ScalableChannel asn DataSeries. */
@@ -89,14 +62,6 @@ public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
         get { return _variable_names; }
         private set { _variable_names = value; }
     }
-
-    /* Property backing fields. */
-    private double _scaled_value = 0.0;
-    private double _raw_value = 0.0;
-    private string _taskref = null;
-    private double _calculated_value = 0.0;
-    private string? _expression = null;
-    private string[]? _variable_names = null;
 
     /**
      * Mathematical expression to be used to evaluate the variable value.
@@ -280,9 +245,5 @@ public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
     ~MathChannel () {
         if (objects != null)
             objects.clear ();
-    }
-
-    public override string to_string () {
-        return base.to_string ();
     }
 }

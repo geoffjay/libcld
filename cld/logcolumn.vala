@@ -1,7 +1,7 @@
 /**
  * Column class to reference channels to log.
  */
-public class Cld.Column : Cld.AbstractObject {
+public class Cld.Column : Cld.AbstractContainer {
 
     /**
      * ID reference of the channel associated with this column.
@@ -31,13 +31,6 @@ public class Cld.Column : Cld.AbstractObject {
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
             chref = node->get_prop ("chref");
-            add_ref (chref, "chref");
         }
-    }
-
-    public override string to_string () {
-        string str_data  = "[%s] : Column\n".printf (id);
-               str_data += "\tchref %s\n\n".printf (chref);
-        return str_data;
     }
 }

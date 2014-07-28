@@ -58,80 +58,43 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
         get { return _parent; }
         set { _parent = value; }
     }
-
-    /**
-     * Property backing fields.
-     */
-    protected Gee.List<GLib.GenericArray<string>>? _ref_list = null;
-    protected Gee.Map<string, Cld.Object> _objects;
-
     /**
      * {@inheritDoc}
      */
-    public virtual bool has_references { get; private set; default = false; }
+    public virtual string to_string () {
+        string result = "";
+        Type type = get_type ();
+        ObjectClass ocl = (ObjectClass)type.class_ref ();
 
-
-    /**
-     * {@inheritDoc}
-     */
-    public virtual Gee.List<GenericArray <string>>? ref_list {
-        get {
-            return _ref_list;
+        result += "\nCld.Object.id: %s (%s)\n".printf (id, type.name ());
+        result += "\tProperties:\n\n";
+        result += "\t%-24s%-35s%-20s%-24s\n\n".printf ("name:", "value type:", "value:", "owner type:");
+        foreach (ParamSpec spec in ocl.list_properties ()) {
+            string val_string = "";
+            Type ptype = spec.value_type;
+            string property_name = spec.get_name ();
+            Value number = Value (ptype);
+            get_property (property_name, ref number);
+            val_string = number.strdup_contents ();
+            result += "\t%-24s%-35s%-20s%-24s\n".printf (
+                spec.get_name (),
+                val_string,
+                spec.value_type.name (),
+                spec.owner_type.name ()
+            );
         }
-        private set {
-            if (_ref_list == null)
-                _ref_list = new Gee.ArrayList<GLib.GenericArray<string>> ();
-            else
-                _ref_list.clear ();
-            _ref_list.add_all (value);
-        }
-    }
+        result += "\n";
 
-    construct {
-        _ref_list = new Gee.ArrayList<GLib.GenericArray<string>> ();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public virtual void add_ref (string uri, string ref_type) {
-        var ary = new GLib.GenericArray<string> ();
-        ary.add (this.uri);
-        ary.add (uri);
-        ary.add (ref_type);
-        _ref_list.add (ary);
-        has_references = true;
-    }
-
-    private Gee.List<GLib.GenericArray<string>> _tmp_list;
-
-    /**
-     * {@inheritDoc}
-     */
-    public virtual unowned Gee.List<GLib.GenericArray<string>>? get_descendant_ref_list () {
-        if ((_ref_list != null) || (_objects != null)) {
-            _tmp_list = new Gee.ArrayList<GLib.GenericArray<string>> ();
-            /* add own uris if any exist */
-            _tmp_list.add_all (_ref_list);
-            if (this is Cld.Container) {
-                /* add all of the uris for objects that are containers */
-                var containers = (this as Cld.Container).get_object_map (typeof (Cld.Container));
-                foreach (var container in containers.values) {
-                    _tmp_list.add_all ((container as Cld.Object).get_descendant_ref_list ());
+        if (this is Cld.Container) {
+            foreach (var object in (this as Cld.Container).objects.values) {
+                if (object != null) {
+                    result += (object as Cld.Object).to_string ();
                 }
-            } else {
-                _tmp_list.add_all (get_descendant_ref_list ());
             }
-            return _tmp_list;
-        } else {
-            return null;
         }
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public abstract string to_string ();
+        return result;
+    }
 
     /**
      * {@inheritDoc}

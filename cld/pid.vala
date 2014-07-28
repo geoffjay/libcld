@@ -22,7 +22,7 @@
 /**
  * A control object for doing Proportional Integral Derivitive control loops.
  */
-public class Cld.Pid : AbstractObject {
+public class Cld.Pid : AbstractContainer {
 
     /**
      * XXX Consider renaming Pid to PidControl to avoid any confusion with a
@@ -103,7 +103,13 @@ public class Cld.Pid : AbstractObject {
      */
     private Gee.Map<string, Object> _process_values;
     public Gee.Map<string, Object> process_values {
-        get { return (_process_values); }
+        get {
+            if (_process_values == null) {
+                _process_values = get_children (typeof (Cld.ProcessValue));
+            }
+
+            return (_process_values);
+        }
         set { update_process_values (value); }
     }
 
@@ -309,7 +315,9 @@ public class Cld.Pid : AbstractObject {
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "process_value") {
                         var pv = new ProcessValue.from_xml_node (iter);
-                        process_values.set (pv.id, pv);
+                        pv.parent = this;
+                        //process_values.set (pv.id, pv);
+                        add (pv);
                     }
                 }
             }
@@ -378,18 +386,18 @@ public class Cld.Pid : AbstractObject {
         mutex.unlock ();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string str_data  = "[%s] : PID Object\n".printf (id);
-               str_data += "\tSP %.3f\n".printf (sp);
-               str_data += "\tKp %.3f\n".printf (kp);
-               str_data += "\tKi %.3f\n".printf (ki);
-               str_data += "\tKd %.3f\n".printf (kd);
-        /* add iteration to print process values later during testing */
-        return str_data;
-    }
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public override string to_string () {
+//        string str_data  = "[%s] : PID Object\n".printf (id);
+//               str_data += "\tSP %.3f\n".printf (sp);
+//               str_data += "\tKp %.3f\n".printf (kp);
+//               str_data += "\tKi %.3f\n".printf (ki);
+//               str_data += "\tKd %.3f\n".printf (kd);
+//        /* add iteration to print process values later during testing */
+//        return str_data;
+//    }
 
     /**
      * Returns the JSON representation of the object, a kind of crude first
@@ -528,13 +536,18 @@ public class Cld.Pid : AbstractObject {
 /**
  * An alternate control object for doing Proportional Integral Derivitive control loops.
  */
-public class Cld.Pid2 : AbstractObject {
+public class Cld.Pid2 : AbstractContainer {
 
     /**
      * XXX Consider renaming Pid to PidControl to avoid any confusion with a
      *     operating system process id.
      * XXX Could add an AbstractControl type a subclass it instead.
      */
+
+    /**
+     * Property backing fields.
+     */
+    protected weak Cld.ScalableChannel _sp_channel;
 
     /**
      * Timestep in milliseconds to use with the thread execution.
@@ -570,13 +583,28 @@ public class Cld.Pid2 : AbstractObject {
     /**
      * Set point channel (so_channel) reference string.
      **/
-    public string sp_chanref { get; set; }
+    public string sp_chref { get; set; }
 
     /**
      * A channel that alters the setpoint value (sp) thus a time varying signal
-     * can be the sepoint value.
+     * can be the set point value.
      **/
-    public weak ScalableChannel? sp_channel { get; set; default = null; }
+    public weak ScalableChannel? sp_channel {
+        get {
+            if (_sp_channel == null) {
+                var channels = get_children (typeof (Cld.ScalableChannel));
+                foreach (var channel in channels.values) {
+                    _sp_channel = channel as Cld.ScalableChannel;
+                    break;
+                }
+            }
+
+            return _sp_channel;
+        }
+        set { _sp_channel = value; }
+
+        default = null;
+    }
 
     /**
      * Whether or not the loop is currently running.
@@ -630,7 +658,13 @@ public class Cld.Pid2 : AbstractObject {
      */
     private Gee.Map<string, Object> _process_values;
     public Gee.Map<string, Object> process_values {
-        get { return (_process_values); }
+        get {
+            if (_process_values == null) {
+                _process_values = get_children (typeof (Cld.ProcessValue));
+            }
+
+            return (_process_values);
+        }
         set { update_process_values (value); }
     }
 
@@ -831,8 +865,8 @@ public class Cld.Pid2 : AbstractObject {
                         case "desc":
                             desc = iter->get_content ();
                             break;
-                        case "sp_chanref":
-                            sp_chanref = iter->get_content ();
+                        case "sp_chref":
+                            sp_chref = iter->get_content ();
                             break;
                         default:
                             break;
@@ -840,7 +874,9 @@ public class Cld.Pid2 : AbstractObject {
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "process_value2") {
                         var pv = new ProcessValue2.from_xml_node (iter);
-                        process_values.set (pv.id, pv);
+                        pv.parent = this;
+                        //process_values.set (pv.id, pv);
+                        add (pv);
                     }
                 }
             }
@@ -955,18 +991,18 @@ public class Cld.Pid2 : AbstractObject {
         mutex.unlock ();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string str_data  = "[%s] : PID Object\n".printf (id);
-               str_data += "\tSP %.3f\n".printf (sp);
-               str_data += "\tKp %.3f\n".printf (kp);
-               str_data += "\tKi %.3f\n".printf (ki);
-               str_data += "\tKd %.3f\n".printf (kd);
-        /* add iteration to print process values later during testing */
-        return str_data;
-    }
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public override string to_string () {
+//        string str_data  = "[%s] : PID Object\n".printf (id);
+//               str_data += "\tSP %.3f\n".printf (sp);
+//               str_data += "\tKp %.3f\n".printf (kp);
+//               str_data += "\tKi %.3f\n".printf (ki);
+//               str_data += "\tKd %.3f\n".printf (kd);
+//        /* add iteration to print process values later during testing */
+//        return str_data;
+//    }
 
     /**
      * Returns the JSON representation of the object, a kind of crude first

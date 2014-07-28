@@ -239,6 +239,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
                     switch (iter->get_prop ("type")) {
                         case "task":
                             var task = new Cld.ComediTask.from_xml_node (iter);
+                            task.parent = this;
                             add (task as Cld.Object);
                             break;
                         default:
@@ -292,28 +293,21 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
         return info;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Object> val) {
-        _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string str_data = "[%s] : Comedi device using file %s\n".printf (
-                            id, filename);
-        /* add the hardware and driver types later */
-        if (!objects.is_empty) {
-            foreach (var subdev in objects.values) {
-                str_data += "    %s".printf (subdev.to_string ());
-            }
-        }
-
-        return str_data;
-    }
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public override string to_string () {
+//        string str_data = "[%s] : Comedi device using file %s\n".printf (
+//                            id, filename);
+//        /* add the hardware and driver types later */
+//        if (!objects.is_empty) {
+//            foreach (var subdev in objects.values) {
+//                str_data += "    %s".printf (subdev.to_string ());
+//            }
+//        }
+//
+//        return str_data;
+//    }
 
     /**
      * Comedi device information class.

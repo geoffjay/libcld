@@ -66,10 +66,10 @@ public class Cld.Coefficient : AbstractObject {
             }
         }
     }
-
-    public override string to_string () {
-        string str_data  = "[%s] : Coefficient\n".printf (id);
-               str_data += "\tn: %d\n\tvalue: %f\n".printf (n, value);
-        return str_data;
-    }
+//
+//    public override string to_string () {
+//        string str_data  = "[%s] : Coefficient\n".printf (id);
+//               str_data += "\tn: %d\n\tvalue: %f\n".printf (n, value);
+//        return str_data;
+//    }
 }

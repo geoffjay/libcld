@@ -32,11 +32,6 @@ public class Cld.Filter : AbstractObject {
         id = "";
     }
 
-    public override string to_string () {
-        string str_data = "[%s]\n".printf (id);
-        return str_data;
-    }
-
     /**
      * dt: time gap between samples
      * fc: cutoff frequency, for our case = RC

@@ -34,7 +34,8 @@ namespace Cld {
      * A general error domain.
      */
     public errordomain Error {
-        NULL_REF
+        NULL_REF,
+        KEY_EXISTS
     }
 
     public errordomain FileError {

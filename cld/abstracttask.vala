@@ -24,7 +24,7 @@
  *
  * Contains common code shared by all task implementations.
  */
-public abstract class Cld.AbstractTask : AbstractObject, Task {
+public abstract class Cld.AbstractTask : AbstractContainer, Task {
 
     /**
      * {@inheritDoc}

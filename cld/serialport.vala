@@ -504,24 +504,24 @@ public class Cld.SerialPort : AbstractPort {
         return connected;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string r;
-        r  = "SerialPort [%s]\n".printf (id);
-        r += " connected:      %s\n".printf ((connected) ? "Yes" : "No");
-        r += " bytes received: %lu\n".printf (rx_count);
-        r += " bytes sent:     %lu\n".printf (tx_count);
-        r += " device:         %s\n".printf (device);
-        r += " baud rate:      %u\n".printf (baud_rate);
-        r += " data bits:      %d\n".printf (data_bits);
-        r += " stop bits:      %d\n".printf (stop_bits);
-        r += " parity:         %s\n".printf (parity.to_string ());
-        r += " handshake:      %s\n".printf (handshake.to_string ());
-        r += " access mode:    %s\n".printf (access_mode.to_string ());
-        return r;
-    }
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public override string to_string () {
+//        string r;
+//        r  = "SerialPort [%s]\n".printf (id);
+//        r += " connected:      %s\n".printf ((connected) ? "Yes" : "No");
+//        r += " bytes received: %lu\n".printf (rx_count);
+//        r += " bytes sent:     %lu\n".printf (tx_count);
+//        r += " device:         %s\n".printf (device);
+//        r += " baud rate:      %u\n".printf (baud_rate);
+//        r += " data bits:      %d\n".printf (data_bits);
+//        r += " stop bits:      %d\n".printf (stop_bits);
+//        r += " parity:         %s\n".printf (parity.to_string ());
+//        r += " handshake:      %s\n".printf (handshake.to_string ());
+//        r += " access mode:    %s\n".printf (access_mode.to_string ());
+//        return r;
+//    }
 
     /**
      * Update the TTY settings.

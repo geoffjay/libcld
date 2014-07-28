@@ -33,6 +33,7 @@ bool b = true;
     */
     private Gee.Map<string, Object>? _channels = null;
     private Gee.Map<string, int>? _fifos = null;
+    private Cld.Device _device = null;
 
    /**
     * {@inheritDoc}
@@ -42,12 +43,24 @@ bool b = true;
    /**
     * The sub device reference name.
     */
-    public string devref { get; set; }
+    public string devref { get; set; default = null; }
 
     /**
      * The referenced subdevice.
      */
-    public Device device { get; set; }
+    public Cld.Device device {
+        get {
+            if (_device == null) {
+                /* If the task references a parent device */
+                if ((parent is Cld.ComediDevice) && (uri.contains (devref))) {
+                _device = parent as Cld.ComediDevice;
+                }
+            }
+
+            return _device;
+        }
+        set { _device = value; }
+    }
 
    /**
     * ...
@@ -129,7 +142,6 @@ bool b = true;
                     switch (iter->get_prop ("name")) {
                         case "devref":
                             devref = iter->get_content ();
-                            add_ref (devref, "devref");
                             break;
                         case "exec-type":
                             exec_type = iter->get_content ();
@@ -148,19 +160,19 @@ bool b = true;
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-
-        string str_data = "[%s  ] : Comedi task\n".printf (id);
-               str_data += "      [devref] : %s\n".printf (devref);
-               str_data += "      [exec_type] : %s\n".printf (exec_type);
-               str_data += "      [direction] : %s\n".printf (direction);
-               str_data += "      [interval_ms] : %d\n".printf (interval_ms);
-               str_data += "      [channels.size] : %d\n".printf (channels.size);
-        return str_data;
-    }
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public override string to_string () {
+//
+//        string str_data = "[%s  ] : Comedi task\n".printf (id);
+//               str_data += "      [devref] : %s\n".printf (devref);
+//               str_data += "      [exec_type] : %s\n".printf (exec_type);
+//               str_data += "      [direction] : %s\n".printf (direction);
+//               str_data += "      [interval_ms] : %d\n".printf (interval_ms);
+//               str_data += "      [channels.size] : %d\n".printf (channels.size);
+//        return str_data;
+//    }
 
     /**
      * {@inheritDoc}

@@ -27,15 +27,6 @@
 public class Cld.LogController : Cld.AbstractController {
 
     /**
-     * {@inheritDoc}
-     */
-    private Gee.Map<string, Cld.Object> _objects;
-    public override Gee.Map<string, Cld.Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
-
-    /**
      * Default construction
      */
     public LogController () {
@@ -59,7 +50,12 @@ public class Cld.LogController : Cld.AbstractController {
                     switch (iter->get_prop ("type")) {
                         case "log":
                             var log = node_to_log (iter);
-                            add (log);
+                            log.parent = this;
+                            try {
+                                add (log);
+                            } catch (Cld.Error.KEY_EXISTS e) {
+                                Cld.error (e.message);
+                            }
                             break;
                         default:
                             break;
@@ -86,19 +82,5 @@ public class Cld.LogController : Cld.AbstractController {
      * {@inheritDoc}
      */
     public override void generate () {
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Cld.Object> val) {
-        _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        return base.to_string ();
     }
 }

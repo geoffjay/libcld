@@ -24,7 +24,12 @@
  * Process value object for use with control objects, typically associated with
  * input and output measurements.
  */
-public class Cld.ProcessValue : Cld.AbstractObject {
+public class Cld.ProcessValue : Cld.AbstractContainer {
+
+    /**
+     * Property backing fields.
+     */
+    protected weak Cld.Channel _channel;
 
     /**
      * ID reference of the channel associated with this process value.
@@ -45,7 +50,6 @@ public class Cld.ProcessValue : Cld.AbstractObject {
                 _chtype = Type.OUTPUT;
             else
                 _chtype = Type.INVALID;
-            //stdout.printf ("[%s] Channel (%s) type: %d\n", id, chref, _chtype);
             return _chtype;
         }
     }
@@ -53,7 +57,23 @@ public class Cld.ProcessValue : Cld.AbstractObject {
     /**
      * Referenced channel to use.
      */
-    public weak Cld.Channel channel { get; set; }
+    public Cld.Channel channel {
+        get {
+            if (_channel == null) {
+                var channels = get_children (typeof (Cld.Channel));
+                foreach (var chan in channels.values) {
+                    /* this should only happen once */
+                    _channel = chan as Cld.Channel;
+                    break;
+                }
+            }
+
+            return _channel;
+        }
+        set {
+            _channel = value;
+        }
+    }
 
     /**
      * Type options to use for channel direction.
@@ -92,19 +112,18 @@ public class Cld.ProcessValue : Cld.AbstractObject {
             chref = node->get_prop ("chref");
         }
     }
-
-    public override string to_string () {
-        string str_data  = "[%s] : Process value\n".printf (id);
-               str_data += "\tchref %s\n\n".printf (chref);
-        return str_data;
-    }
 }
 
 /**
  * Process value object for use with control objects, typically associated with
  * input and output measurements.
  */
-public class Cld.ProcessValue2 : Cld.AbstractObject {
+public class Cld.ProcessValue2 : Cld.AbstractContainer {
+
+    /**
+     * Property backing fields.
+     */
+    protected weak Cld.DataSeries _dataseries;
 
     /**
      * Read only property for the type (direction) of channel that the process
@@ -124,7 +143,24 @@ public class Cld.ProcessValue2 : Cld.AbstractObject {
     /**
      * Referenced dataseries to use.
      */
-    public weak Cld.DataSeries dataseries { get; set; }
+    public Cld.DataSeries dataseries {
+        get {
+            if (_dataseries == null) {
+                var dschildren = get_children (typeof (Cld.DataSeries));
+                foreach (var ds in dschildren.values) {
+                    /* this should only happen once */
+                    _dataseries = ds as Cld.DataSeries;
+                    break;
+                }
+            }
+
+            return _dataseries;
+        }
+        set {
+            _dataseries = value;
+        }
+    }
+
 
     /**
      * Type options to use for channel direction.
@@ -171,24 +207,12 @@ public class Cld.ProcessValue2 : Cld.AbstractObject {
             }
         }
     }
-
-    public override string to_string () {
-        string str_data  = "[%s] : Process value\n".printf (id);
-               str_data += "\tdsref %s\n\n".printf (dsref);
-        return str_data;
-    }
 }
 
 /**
  * Control object to calculate an output process value.
  */
 public class Cld.Control : Cld.AbstractContainer {
-
-    private Gee.Map<string, Cld.Object> _objects;
-    public override Gee.Map<string, Cld.Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
 
     /**
      * Default construction.
@@ -219,10 +243,12 @@ public class Cld.Control : Cld.AbstractContainer {
                     switch (type) {
                         case "pid":
                             var pid = new Cld.Pid.from_xml_node (iter);
+                            pid.parent = this;
                             objects.set (pid.id, pid);
                             break;
                         case "pid-2":
                             var pid = new Cld.Pid2.from_xml_node (iter);
+                            pid.parent = this;
                             objects.set (pid.id, pid);
                             break;
                         default:
@@ -238,22 +264,15 @@ public class Cld.Control : Cld.AbstractContainer {
             objects.clear ();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Cld.Object> val) {
-        _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string str_data = "[%s] : Control object\n".printf (id);
-        if (!objects.is_empty) {
-            foreach (var dev in objects.values)
-                str_data += "  %s".printf (dev.to_string ());
-        }
-        return str_data;
-    }
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public override string to_string () {
+//        string str_data = "[%s] : Control object\n".printf (id);
+//        if (!objects.is_empty) {
+//            foreach (var dev in objects.values)
+//                str_data += "  %s".printf (dev.to_string ());
+//        }
+//        return str_data;
+//    }
 }

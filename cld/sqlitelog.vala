@@ -28,7 +28,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * Property backing fields.
      */
-    private Gee.Map<string, Object> _objects;
     private string _experiment_name;
 
     /**
@@ -75,14 +74,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * Determines whether the file is renamed on open using the format string.
      */
     public Log.TimeStampFlag time_stamp { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override Gee.Map<string, Cld.Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
 
     /**
      * File path to backup location.
@@ -587,8 +578,6 @@ Cld.debug ("Hello fd: %d!!!!", fd);
                 }
 
 Cld.debug ("Good Bye");
-                /*>>>>>>>>>>>>>>>>>>>>>.*/
-
                 /* Update the entry and push it onto the queue */
                 entry.update (objects);
                 queue_mutex.lock ();
@@ -1198,23 +1187,16 @@ Cld.debug ("Good Bye");
         file_close ();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Object> val) {
-        _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        string str_data  = "CldLog\n";
-               str_data += "\tid:   %s\n".printf (id);
-               str_data += "\tname: %s\n".printf (name);
-               str_data += "\tpath: %s\n".printf (path);
-               str_data += "\tfile: %s\n".printf (file);
-               str_data += "\trate: %.3f\n".printf (rate);
-        return str_data;
-    }
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public override string to_string () {
+//        string str_data  = "CldLog\n";
+//               str_data += "\tid:   %s\n".printf (id);
+//               str_data += "\tname: %s\n".printf (name);
+//               str_data += "\tpath: %s\n".printf (path);
+//               str_data += "\tfile: %s\n".printf (file);
+//               str_data += "\trate: %.3f\n".printf (rate);
+//        return str_data;
+//    }
 }

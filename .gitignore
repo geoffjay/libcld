@@ -60,11 +60,7 @@ examples/.libs/
 examples/async-acquisition
 examples/build-from-xml
 examples/context-validation
-examples/serialport
-examples/serialport-xml
-examples/socketport
-examples/licor
-examples/velmex
+examples/soup-server
 
 # Test programs
 tests/.deps/

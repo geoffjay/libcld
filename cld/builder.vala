@@ -69,37 +69,43 @@ internal class Cld.Builder : GLib.Object {
         Cld.debug ("Adding nodeset to %s for: %s", ctr.id, xpath);
 
         /* request the nodeset from the configuration */
-        Xml.XPath.NodeSet *nodes = xml.nodes_from_xpath (xpath);
+        try {
+            Xml.XPath.NodeSet *nodes = xml.nodes_from_xpath (xpath);
 
-        for (int i = 0; i < nodes->length (); i++) {
-            Xml.Node *node = nodes->item (i);
-            if (node->type == Xml.ElementType.ELEMENT_NODE &&
-                node->type != Xml.ElementType.COMMENT_NODE) {
+            for (int i = 0; i < nodes->length (); i++) {
+                Xml.Node *node = nodes->item (i);
+                if (node->type == Xml.ElementType.ELEMENT_NODE &&
+                    node->type != Xml.ElementType.COMMENT_NODE) {
 
-                /* Load all available objects */
-                if (node->name == "object") {
-                    Cld.debug ("Level: %d", level);
-                    object = node_to_object (node);
-                    Cld.debug ("Created object: %s", object.id);
-                    Cld.debug ("Content: %s", node->get_content ());
+                    /* Load all available objects */
+                    if (node->name == "object") {
+                        Cld.debug ("Level: %d", level);
+                        object = node_to_object (node);
 
-                    /* Recursively add objects */
-                    if (object is Cld.Container) {
-                        build_object_map (object as Cld.Container, level + 1);
-                    }
+                        /* Recursively add objects */
+                        if (object is Cld.Container) {
+                            build_object_map (object as Cld.Container, level + 1);
+                        }
 
-                    /* assign container as parent */
-                    object.parent = ctr;
+                        /* assign container as parent */
+                        object.parent = ctr;
 
-                    /* No point adding an object type that isn't recognized */
-                    if (object != null) {
-                        Cld.debug ("Adding object of type %s with id %s",
-                                   ((object as GLib.Object).get_type ()).name (),
-                                   object.id);
-                        ctr.add (object);
+                        /* No point adding an object type that isn't recognized */
+                        if (object != null) {
+                            try {
+                                Cld.debug ("Adding object of type %s with id %s to %s",
+                                           ((object as GLib.Object).get_type ()).name (),
+                                           object.id, ctr.id);
+                                ctr.add (object);
+                            } catch (Cld.Error.KEY_EXISTS e) {
+                                Cld.error (e.message);
+                            }
+                        }
                     }
                 }
             }
+        } catch (Cld.XmlError e) {
+            Cld.error (e.message);
         }
     }
 
@@ -380,7 +386,7 @@ internal class Cld.Builder : GLib.Object {
 
             /* A  data series references a scalable channel. */
             if (object is DataSeries) {
-                ref_id = (object as DataSeries).chanref;
+                ref_id = (object as DataSeries).chref;
                 Cld.debug ("Assigning Channel %s to DataSeries %s", ref_id, object.id);
                 (object as DataSeries).channel = container.get_object (ref_id) as Cld.ScalableChannel;
                 Cld.debug ("Connecting ScalableChannel as input to DataSeries %s", object.id);
@@ -422,14 +428,14 @@ internal class Cld.Builder : GLib.Object {
                                     if (dataseries != null && dataseries is DataSeries) {
                                         (process_value as ProcessValue2).dataseries
                                             = (dataseries as DataSeries);
-                                        var chanref = (dataseries as DataSeries).chanref;
-                                        (process_value as ProcessValue2).dataseries.channel = container.get_object (chanref)
+                                        var chref = (dataseries as DataSeries).chref;
+                                        (process_value as ProcessValue2).dataseries.channel = container.get_object (chref)
                                                                                     as Cld.ScalableChannel;
                                     }
                                 }
                             }
                         }
-                        ref_id = (control_object as Pid2).sp_chanref;
+                        ref_id = (control_object as Pid2).sp_chref;
                         if (ref_id != null) {
                             var channel = container.get_object (ref_id);
                             if (channel != null && channel is Cld.ScalableChannel) {

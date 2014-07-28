@@ -25,16 +25,6 @@
  */
 
 public class Cld.AutomationController : Cld.AbstractController {
-
-    /**
-     * {@inheritDoc}
-     */
-    private Gee.Map<string, Cld.Object> _objects;
-    public override Gee.Map<string, Cld.Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
-
     /**
      * Default construction
      */
@@ -59,7 +49,12 @@ public class Cld.AutomationController : Cld.AbstractController {
                     switch (iter->get_prop ("type")) {
                         case "control":
                             var control = new Cld.Control.from_xml_node (iter);
-                            add (control);
+                            control.parent = this;
+                            try {
+                                add (control);
+                            } catch (Cld.Error.KEY_EXISTS e) {
+                                Cld.error (e.message);
+                            }
                             break;
                         default:
                             break;
@@ -73,19 +68,5 @@ public class Cld.AutomationController : Cld.AbstractController {
      * {@inheritDoc}
      */
     public override void generate () {
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void update_objects (Gee.Map<string, Cld.Object> val) {
-        _objects = val;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override string to_string () {
-        return base.to_string ();
     }
 }

@@ -20,7 +20,6 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
         xml = """
             <cld xmlns:cld="urn:libcld">
                 <cld:objects>
-
                     <cld:object id="daqctl0" type="controller" ctype="acquisition">
                         <cld:object id="dev0" type="device" driver="comedi">
                             <cld:property name="hardware">PCI-1713</cld:property>
@@ -31,11 +30,12 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                                 <cld:property name="devref">/ctr0/daqctl0/dev0</cld:property>
                                 <cld:property name="subdevice">0</cld:property>
                                 <cld:property name="direction">read</cld:property>
-                                <cld:property name="interval-ms">100</cld:property>
+                                <cld:property name="interval-ms">1</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai0</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai1</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai2</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai3</cld:property>
+                                <!--
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai4</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai5</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai6</cld:property>
@@ -48,6 +48,7 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai13</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai14</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai15</cld:property>
+                                -->
                                 <cld:property name="fifo">/tmp/fifo0</cld:property>
                             </cld:object>
                             <cld:object id="ai0" type="channel" ref="/ctr0/daqctl0/dev0" ctype="analog" direction="input">
@@ -78,6 +79,7 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                                 <cld:property name="calref">/ctr0/cal0</cld:property>
                                 <cld:property name="range">4</cld:property>
                             </cld:object>
+                            <!--
                             <cld:object id="ai4" type="channel" ref="/ctr0/daqctl0/dev0" ctype="analog" direction="input">
                                 <cld:property name="tag">IN4</cld:property>
                                 <cld:property name="desc">Sample Input</cld:property>
@@ -162,6 +164,7 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                                 <cld:property name="calref">/ctr0/cal0</cld:property>
                                 <cld:property name="range">4</cld:property>
                             </cld:object>
+                            -->
                         </cld:object>
                     </cld:object>
 
@@ -180,7 +183,20 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                             <cld:object id="col1" type="column" chref="/ctr0/daqctl0/dev0/ai1"/>
                             <cld:object id="col2" type="column" chref="/ctr0/daqctl0/dev0/ai2"/>
                             <cld:object id="col3" type="column" chref="/ctr0/daqctl0/dev0/ai3"/>
+                            <!--
                             <cld:object id="col4" type="column" chref="/ctr0/daqctl0/dev0/ai4"/>
+                            <cld:object id="col5" type="column" chref="/ctr0/daqctl0/dev0/ai5"/>
+                            <cld:object id="col6" type="column" chref="/ctr0/daqctl0/dev0/ai6"/>
+                            <cld:object id="col7" type="column" chref="/ctr0/daqctl0/dev0/ai7"/>
+                            <cld:object id="col8" type="column" chref="/ctr0/daqctl0/dev0/ai8"/>
+                            <cld:object id="col9" type="column" chref="/ctr0/daqctl0/dev0/ai9"/>
+                            <cld:object id="col10" type="column" chref="/ctr0/daqctl0/dev0/ai10"/>
+                            <cld:object id="col11" type="column" chref="/ctr0/daqctl0/dev0/ai11"/>
+                            <cld:object id="col12" type="column" chref="/ctr0/daqctl0/dev0/ai12"/>
+                            <cld:object id="col13" type="column" chref="/ctr0/daqctl0/dev0/ai13"/>
+                            <cld:object id="col14" type="column" chref="/ctr0/daqctl0/dev0/ai14"/>
+                            <cld:object id="col15" type="column" chref="/ctr0/daqctl0/dev0/ai15"/>
+                            -->
                         </cld:object>
                     </cld:object>
 
@@ -246,14 +262,14 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
 
         /* Here the Log is accessed from its uri. */
         log = context.get_object_from_uri ("/ctr0/logctl0/log0") as Cld.SqliteLog;
-        //log.start ();
+        log.start ();
 
         GLib.Timeout.add_seconds (30, quit_cb);
         loop.run ();
     }
 
     public bool quit_cb () {
-        //log.stop ();
+        log.stop ();
         task.stop ();
         loop.quit ();
 

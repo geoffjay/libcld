@@ -65,6 +65,7 @@ public class Cld.LogEntry : Cld.AbstractObject {
      * form YYYY-MM-DDTHH:MM:SS.SSSSSS.
      */
     public LogEntry.from_serial (string msg) {
+stdout.printf ("msg: %s\n\n", msg);
         int64 year, month, day, hour, minute;
         string yr, mo, dy, hr, mn;
         string message =  (string)msg;

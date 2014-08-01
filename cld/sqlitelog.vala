@@ -446,15 +446,26 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         GLib.Timeout.add_full (GLib.Priority.DEFAULT_IDLE, backup_interval_ms, backup_cb);
 
-        bg_log_watch.begin ((obj, res) => {
+        bg_fifo_watch.begin ((obj, res) => {
             try {
-                bg_log_watch.end (res);
-                Cld.debug ("Log file watch async ended");
+                bg_fifo_watch.end (res);
+                Cld.debug ("Log fifo watch async ended");
             } catch (ThreadError e) {
                 string msg = e.message;
                 Cld.error (@"Thread error: $msg");
             }
         });
+
+        bg_process_data.begin ((obj, res) => {
+            try {
+                bg_process_data.end (res);
+                Cld.debug ("Log queue data processing async ended");
+            } catch (ThreadError e) {
+                string msg = e.message;
+                Cld.error (@"Thread error: $msg");
+            }
+        });
+
     }
 
     private async void open_fifo (string fname) {
@@ -490,11 +501,11 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     }
 
     /**
-     * Launches a thread that pulls a LogEntry from the queue and writes
-     * it to the log file.
+     * Launches a thread that pulls a rows of data from the data FIFO and writes
+     * it a queue.
      */
-    private async void bg_log_watch () throws ThreadError {
-        SourceFunc callback = bg_log_watch.callback;
+    private async void bg_fifo_watch () throws ThreadError {
+        SourceFunc callback = bg_fifo_watch.callback;
 
         ThreadFunc<void *> _run = () => {
             active = true;
@@ -528,8 +539,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                         /* Process each row. */
                         foreach (var row in rows) {
                             if (row != "") {
-                                Cld.LogEntry entry = new Cld.LogEntry.from_serial (row);
-                                log_entry_write (entry);
+                                queue.offer_head (row);
                             }
                         }
                     }
@@ -543,6 +553,31 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         yield;
     }
+
+    /**
+     * Write the queued data to the log.
+     */
+    private async void bg_process_data () throws ThreadError {
+        SourceFunc callback = bg_process_data.callback;
+        string row = "";
+
+        ThreadFunc<void*> _run = () => {
+            while (active) {
+stdout.printf (".");
+                row = queue.poll_tail ();
+                Cld.LogEntry entry = new Cld.LogEntry.from_serial (row);
+                log_entry_write (entry);
+            }
+
+            Idle.add ((owned) callback);
+            return null;
+        };
+       unowned GLib.Thread thread = Thread.create<void*> (_run, false);
+        thread.set_priority (ThreadPriority.LOW);
+
+        yield;
+    }
+
 
     private void update_experiment_table () {
         string query = """

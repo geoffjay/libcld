@@ -195,6 +195,7 @@ public class Cld.ComediTask : AbstractTask {
      * {@inheritDoc}
      */
     public override void run () {
+        entry = new Cld.LogEntry ();
         /* Open fifos */
         foreach (string fname in fifos.keys) {
             if (Posix.access (fname, Posix.F_OK) == -1) {
@@ -278,7 +279,6 @@ public class Cld.ComediTask : AbstractTask {
                 if (exec_type == "streaming") {
                     /* Write first timestamp to fifo */
                     string mess = "%s\t".printf (entry.time_as_string);
- stdout.printf (">>>>>>>>>>>>>>>>>%s", mess);
                     Posix.write (fd, mess, mess.length);
                 }
             }
@@ -337,7 +337,7 @@ public class Cld.ComediTask : AbstractTask {
         channel_array = new Cld.AIChannel [channels.size];
 
         //GLib.stdout.printf ("board name: %s\n", device.get_board_name ());
-        (device as ComediDevice).dev.set_buffer_size (subdevice, 4096);
+        (device as ComediDevice).dev.set_buffer_size (subdevice, 65536);
         scan_period_nanosec = (uint) (1e6 * (double)interval_ms);
 
         /* Make chanlist sequential and without gaps. XXX Need this for Advantech 1710. */
@@ -354,10 +354,10 @@ public class Cld.ComediTask : AbstractTask {
             channel_array [(channel as AIChannel).num] = channel as Cld.AIChannel;
         }
 
-        for (int i = 0; i < channels.size; i++) {
-            var channel = channel_array [i];
-            stdout.printf ("i: %d, num: %d\n", i, (channel as Channel).num);
-        }
+//        for (int i = 0; i < channels.size; i++) {
+//            var channel = channel_array [i];
+//            stdout.printf ("i: %d, num: %d\n", i, (channel as Channel).num);
+//        }
 
         int ret;
         /* This comedilib function will get us a generic timed
@@ -426,9 +426,6 @@ public class Cld.ComediTask : AbstractTask {
         active = true;
         do_cmd ();
 
-        /* Generate a start timestamp */
-        entry = new Cld.LogEntry ();
-
         outfile.printf ("%s\t", entry.time_as_string);
 
         while (active) {
@@ -441,22 +438,19 @@ public class Cld.ComediTask : AbstractTask {
             Posix.FD_SET (device_fd, ref rdset);
             timeout.tv_sec = 0;
             timeout.tv_usec = 50000;
-            //GLib.stdout.printf ("streaming buffer size: %d\n",
-               // (device as ComediDevice).dev.get_buffer_size(cmd.subdev));
             ret = Posix.select (device_fd + 1, &rdset, null, null, timeout);
-            //GLib.stdout.printf ("select returned %d\n", ret);
 
             if (ret < 0) {
                 if (Posix.errno == Posix.EAGAIN) {
                     perror("read");
                 }
+            } else if (ret == 0) {
+                stdout.printf ("hit timeout\n");
             } else if ((Posix.FD_ISSET (device_fd, rdset)) == 1) {
-                //GLib.stdout.printf("comedi file descriptor ready\n");
                 ret = (int)Posix.read (device_fd, buf, bufsz);
-                //GLib.stdout.printf ("read returned: %d\n", ret);
                 ulong bytes_per_sample;
                 total += ret;
-                message ("read %d %d", ret, total);
+stdout.printf ("\nread %d %d\n", ret, total);
 
                 if ((subdev_flags & SubdeviceFlag.LSAMPL) != 0) {
                     bytes_per_sample = sizeof (uint);

@@ -44,7 +44,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
     /* constructor */
     construct {
-        _objects = new Gee.TreeMap<string, Object> ();
     }
 
     public CsvLog () {
@@ -387,7 +386,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
                             if (row != "") {
                                 Cld.LogEntry entry = new Cld.LogEntry.from_serial (row);
                                 entry.time_us = entry.timestamp.difference (start_time);
-                                write_next_line (entry);
+                                //write_next_line (entry);
                             }
                         }
                     }

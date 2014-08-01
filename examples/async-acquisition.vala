@@ -35,7 +35,6 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai1</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai2</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai3</cld:property>
-                                <!--
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai4</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai5</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai6</cld:property>
@@ -48,7 +47,6 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai13</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai14</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai15</cld:property>
-                                -->
                                 <cld:property name="fifo">/tmp/fifo0</cld:property>
                             </cld:object>
                             <cld:object id="ai0" type="channel" ref="/ctr0/daqctl0/dev0" ctype="analog" direction="input">
@@ -79,7 +77,6 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                                 <cld:property name="calref">/ctr0/cal0</cld:property>
                                 <cld:property name="range">4</cld:property>
                             </cld:object>
-                            <!--
                             <cld:object id="ai4" type="channel" ref="/ctr0/daqctl0/dev0" ctype="analog" direction="input">
                                 <cld:property name="tag">IN4</cld:property>
                                 <cld:property name="desc">Sample Input</cld:property>
@@ -164,7 +161,6 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                                 <cld:property name="calref">/ctr0/cal0</cld:property>
                                 <cld:property name="range">4</cld:property>
                             </cld:object>
-                            -->
                         </cld:object>
                     </cld:object>
 
@@ -183,7 +179,6 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                             <cld:object id="col1" type="column" chref="/ctr0/daqctl0/dev0/ai1"/>
                             <cld:object id="col2" type="column" chref="/ctr0/daqctl0/dev0/ai2"/>
                             <cld:object id="col3" type="column" chref="/ctr0/daqctl0/dev0/ai3"/>
-                            <!--
                             <cld:object id="col4" type="column" chref="/ctr0/daqctl0/dev0/ai4"/>
                             <cld:object id="col5" type="column" chref="/ctr0/daqctl0/dev0/ai5"/>
                             <cld:object id="col6" type="column" chref="/ctr0/daqctl0/dev0/ai6"/>
@@ -196,7 +191,6 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                             <cld:object id="col13" type="column" chref="/ctr0/daqctl0/dev0/ai13"/>
                             <cld:object id="col14" type="column" chref="/ctr0/daqctl0/dev0/ai14"/>
                             <cld:object id="col15" type="column" chref="/ctr0/daqctl0/dev0/ai15"/>
-                            -->
                         </cld:object>
                     </cld:object>
 
@@ -227,13 +221,13 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
 
         base.run ();
 
-        stdout.printf ("\nPrinting objects..\n\n");
-        context.print_objects ();
-        stdout.printf ("\n Finished.\n\n");
-
-        stdout.printf ("\nPrinting reference table..\n\n");
-        context.print_ref_list ();
-        stdout.printf ("\n Finished.\n\n");
+//        stdout.printf ("\nPrinting objects..\n\n");
+//        context.print_objects ();
+//        stdout.printf ("\n Finished.\n\n");
+//
+//        stdout.printf ("\nPrinting reference table..\n\n");
+//        context.print_ref_list ();
+//        stdout.printf ("\n Finished.\n\n");
 
         /* Here the device can be accessed without referring to it directly from either its id or uri*/
         var acquisiton_controllers = context.get_children (typeof (AcquisitionController));
@@ -248,7 +242,7 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
             break;
         }
 
-        stdout.printf ("Object properties:\n%s", context.to_string_recursive ());
+        //stdout.printf ("Object properties:\n%s", context.to_string_recursive ());
         device.open ();
         var info = device.info ();
         stdout.printf ("Comedi.Device information:\n%s\n", info.to_string ());
@@ -261,10 +255,12 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
         task.run ();
 
         /* Here the Log is accessed from its uri. */
-        log = context.get_object_from_uri ("/ctr0/logctl0/log0") as Cld.SqliteLog;
+        //var log = context.get_object_from_uri ("/ctr0/logctl0/log0") as Cld.SqliteLog;
+        log = context.get_object ("log0") as Cld.Log;
+        stdout.printf ("Log:\n%s\n", log.to_string ());
         log.start ();
 
-        GLib.Timeout.add_seconds (30, quit_cb);
+        GLib.Timeout.add_seconds (60, quit_cb);
         loop.run ();
     }
 

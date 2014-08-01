@@ -98,7 +98,7 @@ public class Cld.Context : Cld.AbstractContainer {
                 as Cld.Container;
             reference = get_object_from_uri ((entry
                 as Cld.AbstractContainer.Reference).reference_uri);
-            Cld.debug ("%-30s %s", (self as Cld.Object).uri, (reference as Cld.Object).uri);
+            //Cld.debug ("%-30s %s", (self as Cld.Object).uri, (reference as Cld.Object).uri);
             if ((reference != null)) {
                 self.add (reference);
             }

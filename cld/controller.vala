@@ -27,6 +27,11 @@
  */
 [GenericAccessors]
 public interface Cld.Controller : Cld.Object {
+    /**
+     * A list of FIFOs for inter-process data transfer.
+     * The data are paired a pipe name and file descriptor.
+     */
+    public abstract Gee.Map<string, int>? fifos { get; set; }
 
     /**
      * Generate the internal structure and relationships of objects that are

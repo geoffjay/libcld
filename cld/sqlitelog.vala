@@ -111,6 +111,11 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     private bool backup_is_open;
 
     /**
+     * A FIFO for holding data to be processed.
+     */
+     private Gee.Deque<string> queue { get; set; }
+
+    /**
      * Enumerated Experiment table column names.
      */
     public enum ExperimentColumn {
@@ -160,6 +165,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /* constructor */
     construct {
         Cld.LogEntry entry = new Cld.LogEntry ();
+        queue = new Gee.LinkedList<string> ();
     }
 
     public SqliteLog () {
@@ -500,6 +506,9 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         }
     }
 
+    private Cond queue_cond = new Cond ();
+    private Mutex queue_mutex = new Mutex ();
+
     /**
      * Launches a thread that pulls a rows of data from the data FIFO and writes
      * it a queue.
@@ -512,6 +521,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             string head = "";
 
             while (active) {
+stdout.printf ("-");
                 char [] s = new char[4096];
                 string [] rows;
                 string tail;
@@ -539,7 +549,15 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                         /* Process each row. */
                         foreach (var row in rows) {
                             if (row != "") {
-                                queue.offer_head (row);
+                                //queue_mutex.lock ();
+                                //lock (queue) {
+                                    if (!queue.offer_head (row))
+                                        Cld.error ("Row was not added to the queue.");
+                                    else {
+                                       // queue_cond.signal ();
+                                        //queue_mutex.unlock ();
+                                    }
+                               // }
                             }
                         }
                     }
@@ -563,16 +581,20 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         ThreadFunc<void*> _run = () => {
             while (active) {
-stdout.printf (".");
-                row = queue.poll_tail ();
-                Cld.LogEntry entry = new Cld.LogEntry.from_serial (row);
-                log_entry_write (entry);
+               // queue_mutex.lock ();
+                //lock (queue) {
+                    while (queue.size > 0) {
+stdout.printf ("\n%d", queue.size);
+                        row = queue.poll_tail ();
+                        Cld.LogEntry entry = new Cld.LogEntry.from_serial (row);
+                        log_entry_write (entry);
+                    }
             }
 
             Idle.add ((owned) callback);
             return null;
         };
-       unowned GLib.Thread thread = Thread.create<void*> (_run, false);
+        unowned GLib.Thread thread = Thread.create<void*> (_run, false);
         thread.set_priority (ThreadPriority.LOW);
 
         yield;
@@ -887,7 +909,19 @@ stdout.printf (".");
         stmt.reset ();
 
         if (active) {
+            /* Wait for the queue to be empty */
+            GLib.Timeout.add (100, deactivate_cb);
+        }
+    }
+
+    private bool deactivate_cb () {
+        if (queue.size == 0) {
             active = false;
+
+            return false;
+        } else {
+
+            return false;
         }
     }
 

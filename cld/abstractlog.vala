@@ -69,14 +69,9 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
      */
     public virtual Gee.Map<string, int>? fifos { get; set; }
 
-    /**
-     * A FIFO for holding data to be processed.
-     */
-    public virtual Gee.Deque<string> queue { get; set; }
 
     construct {
         fifos = new Gee.TreeMap<string, int> ();
-        queue = new Gee.LinkedList<string> ();
     }
 
     /**

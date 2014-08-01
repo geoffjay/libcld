@@ -36,6 +36,7 @@ libcld_0_2_la_SOURCES = \
 	builder.vala \
 	calibration.vala \
 	channel.vala \
+	circularbuffer.vala \
 	cld.vala \
 	coefficient.vala \
 	comedidevice.vala \
@@ -86,7 +87,7 @@ AM_VALAFLAGS = \
 	--internal-vapi cld-internals-0.1.vapi \
 	--library cld-0.1 --gir Cld-0.1.gir \
 	--vapidir=$(srcdir)/../vapi --pkg config \
-	@VALA_PACKAGES@ --pkg linux --pkg posix --pkg libmatheval --pkg gsl \
+	@VALA_PACKAGES@ --pkg linux --pkg posix --pkg libmatheval --pkg gsl --target-glib 2.32 \
 	$(NULL)
 
 libcld_0_2_la_CPPFLAGS = \

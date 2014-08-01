@@ -21,6 +21,7 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
             <cld xmlns:cld="urn:libcld">
                 <cld:objects>
                     <cld:object id="daqctl0" type="controller" ctype="acquisition">
+                        <cld:property name="fifo">/tmp/fifo0</cld:property>
                         <cld:object id="dev0" type="device" driver="comedi">
                             <cld:property name="hardware">PCI-1713</cld:property>
                             <cld:property name="type">input</cld:property>
@@ -30,7 +31,8 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                                 <cld:property name="devref">/ctr0/daqctl0/dev0</cld:property>
                                 <cld:property name="subdevice">0</cld:property>
                                 <cld:property name="direction">read</cld:property>
-                                <cld:property name="interval-ms">1</cld:property>
+                                <cld:property name="interval-ns">160000</cld:property>
+                                <cld:property name="resolution-ns">200</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai0</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai1</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai2</cld:property>
@@ -163,8 +165,8 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                             </cld:object>
                         </cld:object>
                     </cld:object>
-
                     <cld:object id="logctl0" type="controller" ctype="log">
+                    <!--
                         <cld:object id="log0" type="log" ltype="sqlite">
                             <cld:property name="title">Data Log</cld:property>
                             <cld:property name="path">/srv/data</cld:property>
@@ -192,8 +194,9 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                             <cld:object id="col14" type="column" chref="/ctr0/daqctl0/dev0/ai14"/>
                             <cld:object id="col15" type="column" chref="/ctr0/daqctl0/dev0/ai15"/>
                         </cld:object>
-                    </cld:object>
+                    -->
 
+                    </cld:object>
                     <cld:object id="cal0" type="calibration">
                         <cld:property name="units">Volts</cld:property>
                         <cld:object id="cft0" type="coefficient">
@@ -252,25 +255,34 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
             task = tsk as ComediTask;
             break;
         }
-        task.run ();
 
         /* Here the Log is accessed from its uri. */
         //var log = context.get_object_from_uri ("/ctr0/logctl0/log0") as Cld.SqliteLog;
-        log = context.get_object ("log0") as Cld.Log;
+        //log = context.get_object ("log0") as Cld.Log;
         stdout.printf ("Log:\n%s\n", log.to_string ());
-        log.start ();
+        //log.start ();
 
-        GLib.Timeout.add_seconds (60, quit_cb);
+        GLib.Timeout.add_seconds (10, quit_task_cb);
+        GLib.Timeout.add_seconds (10, quit_cb);
+        acq.run ();
+        task.run ();
         loop.run ();
     }
 
-    public bool quit_cb () {
-        log.stop ();
+    public bool quit_task_cb () {
+        //log.stop ();
+stdout.printf (">>>>>> quit_task_cb\n");
         task.stop ();
+        return false;
+    }
+
+    public bool quit_cb () {
+stdout.printf (">>>>>> quit_cb\n");
         loop.quit ();
 
         return false;
     }
+
 }
 
 int main (string[] args) {

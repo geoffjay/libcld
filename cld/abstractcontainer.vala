@@ -224,7 +224,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public virtual Cld.Object? get_object_from_uri (string uri) {
         Cld.Object? result = null;
@@ -249,7 +249,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public virtual void generate_ref_list () {
         if (objects == null) {

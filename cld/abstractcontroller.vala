@@ -29,6 +29,15 @@
 public abstract class Cld.AbstractController : Cld.AbstractContainer, Cld.Controller {
 
     /**
+     * {@inheritDoc}
+     */
+    public virtual Gee.Map<string, int>? fifos { get; set; }
+
+    construct {
+        fifos = new Gee.TreeMap<string, int> ();
+    }
+
+    /**
      * Default construction.
      */
     //public AbstractController () { }

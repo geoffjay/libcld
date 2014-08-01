@@ -795,8 +795,7 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     /**
-     * @deprecated
-     * This method is application specific. Use move_relative instead.
+     * @deprecated This method is application specific. Use move_relative instead.
      */
     public async void step (double step_size, int direction) {
         if (active_command == null) {

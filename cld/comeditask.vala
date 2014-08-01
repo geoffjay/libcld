@@ -72,9 +72,16 @@ public class Cld.ComediTask : AbstractTask {
     public string direction { get; set; }
 
     /**
-     * Sampling interval in milliseconds.
+     * Sampling interval in nanoseconds for a single channel. This is the inverse
+     * of the scan rate.
      */
-    public int interval_ms { get; set; }
+    public int interval_ns { get; set; }
+
+    /**
+     * The resolution (in nanoseconds) of the time between samples of adjacent channels. This
+     * is the inverse of the sampling frequency.
+     */
+    public int resolution_ns { get; set; default = 100; }
 
     /**
      * A list of channel references.
@@ -118,7 +125,9 @@ public class Cld.ComediTask : AbstractTask {
      * Counts the total number of connected FIFOs.
      */
     private static int n_fifos = 0;
+    private bool fifos_ready;
     private Cld.LogEntry entry;
+    private int device_fd = -1;
 
     /**
      * A Comedi command fields used only with streaming acquisition.
@@ -128,7 +137,6 @@ public class Cld.ComediTask : AbstractTask {
     /* An array to map the chanlist [] index to a channel */
     private Cld.AIChannel [] channel_array;
     private uint scan_period_nanosec;
-    private static int total = 0;
 
     /**
      * Default construction.
@@ -138,6 +146,7 @@ public class Cld.ComediTask : AbstractTask {
         channels = new Gee.TreeMap<string, Object> ();
         fifos = new Gee.TreeMap<string, int> ();
         active = false;
+        fifos_ready = false;
     }
 
     public ComediTask () {
@@ -146,7 +155,7 @@ public class Cld.ComediTask : AbstractTask {
         device = new ComediDevice ();
         exec_type = "polling";
         direction = "read";
-        interval_ms = 100;
+        interval_ns = (int)1e8;
     }
 
     /**
@@ -174,8 +183,11 @@ public class Cld.ComediTask : AbstractTask {
                         case "direction":
                             direction = iter->get_content ();
                             break;
-                        case "interval-ms":
-                            interval_ms = int.parse (iter->get_content ());
+                        case "interval-ns":
+                            interval_ns = int.parse (iter->get_content ());
+                            break;
+                        case "resolution-ns":
+                            resolution_ns = int.parse (iter->get_content ());
                             break;
                         case "chref":
                             chrefs.add (iter->get_content ());
@@ -241,16 +253,19 @@ public class Cld.ComediTask : AbstractTask {
      * {@inheritDoc}
      */
     public override void stop () {
-        foreach (int fd in fifos.values) {
-            Posix.close (fd);
-        }
-
         if (active) {
             active = false;
             if (exec_type == "polling") {
                 thread.join ();
+            } else if (exec_type == "streaming" && (device is Cld.ComediDevice)) {
+                (device as ComediDevice).dev.cancel (subdevice);
             }
         }
+
+        foreach (int fd in fifos.values) {
+            Posix.close (fd);
+        }
+
     }
 
     /**
@@ -262,10 +277,10 @@ public class Cld.ComediTask : AbstractTask {
 
     private async void open_fifo (string fname) {
         SourceFunc callback = open_fifo.callback;
-        bool ready = false;
         ThreadFunc<void*> run = () => {
             Cld.debug ("%s is is waiting for a reader to FIFO %s",this.id, fname);
             int fd = Posix.open (fname, Posix.O_WRONLY);
+
             if (fd == -1) {
                 Cld.debug ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
             } else {
@@ -276,11 +291,6 @@ public class Cld.ComediTask : AbstractTask {
                                     (fifos.has_key (fname)).to_string());
 
                 Cld.debug ("%s got a reader for fifo %s", id, fname);
-                if (exec_type == "streaming") {
-                    /* Write first timestamp to fifo */
-                    string mess = "%s\t".printf (entry.time_as_string);
-                    Posix.write (fd, mess, mess.length);
-                }
             }
             Idle.add ((owned) callback);
 
@@ -338,7 +348,7 @@ public class Cld.ComediTask : AbstractTask {
 
         //GLib.stdout.printf ("board name: %s\n", device.get_board_name ());
         (device as ComediDevice).dev.set_buffer_size (subdevice, 65536);
-        scan_period_nanosec = (uint) (1e6 * (double)interval_ms);
+        scan_period_nanosec = (uint)interval_ns;
 
         /* Make chanlist sequential and without gaps. XXX Need this for Advantech 1710. */
         foreach (var channel in channels.values) {
@@ -354,10 +364,10 @@ public class Cld.ComediTask : AbstractTask {
             channel_array [(channel as AIChannel).num] = channel as Cld.AIChannel;
         }
 
-//        for (int i = 0; i < channels.size; i++) {
-//            var channel = channel_array [i];
-//            stdout.printf ("i: %d, num: %d\n", i, (channel as Channel).num);
-//        }
+        for (int i = 0; i < channels.size; i++) {
+            var channel = channel_array [i];
+            stdout.printf ("i: %d, num: %d\n", i, (channel as Channel).num);
+        }
 
         int ret;
         /* This comedilib function will get us a generic timed
@@ -382,9 +392,12 @@ public class Cld.ComediTask : AbstractTask {
         };
 
         GLib.Thread.create<void*> (run, false);
+        yield;
     }
 
     private void prepare_cmd () {
+        uint convert_nanosec = (uint)(resolution_ns * (GLib.Math.round ((double)scan_period_nanosec /
+                               ((double)(channels.size * resolution_ns)))));
         cmd.subdev = subdevice;
 
         cmd.flags = 0;//TriggerFlag.WAKE_EOS;
@@ -396,7 +409,7 @@ public class Cld.ComediTask : AbstractTask {
         //cmd.scan_begin_arg = scan_period_nanosec; //nanoseconds;
 
     	cmd.convert_src = TriggerSource.TIMER;
-	    cmd.convert_arg = (uint)((double)scan_period_nanosec / (double)channels.size);// 100000;
+	    cmd.convert_arg = convert_nanosec;
 
         cmd.scan_end_src = TriggerSource.COUNT;
         cmd.scan_end_arg = channels.size;
@@ -410,80 +423,64 @@ public class Cld.ComediTask : AbstractTask {
 
 
     public int do_select () {
+        int total = 0;
+        int ret;
+        int bufsz = 65536;
         uint raw;
-        bool is_physical = true;
-        int device_fd = -1;
-        int col = 0;
-        ulong rx_count = 0;
-        string mess;
-        Posix.FILE outfile = Posix.FILE.open("log.out", "w");
-        uint maxdata = (device as ComediDevice).dev.get_maxdata (0, 0);
-        const int bufsz = 4096;
+        ulong bytes_per_sample;
         Comedi.Range crange;
         int subdev_flags = (device as ComediDevice).dev.get_subdevice_flags (subdevice);
 
+        if ((subdev_flags & SubdeviceFlag.LSAMPL) != 0) {
+            bytes_per_sample = sizeof (uint);
+        } else {
+            bytes_per_sample = sizeof (ushort);
+        }
+
         device_fd = (device as ComediDevice).dev.fileno ();
+	    Posix.fcntl (device_fd, Posix.F_SETFL, Posix.O_NONBLOCK);
         active = true;
+
+        while (!fifos_ready) {
+            foreach (var fname in fifos.keys) {
+                if (fifos.get (fname) > 0) {
+                    fifos_ready = true;
+                } else {
+                    fifos_ready = false;
+                }
+            }
+            GLib.Thread.usleep (50000);
+        }
         do_cmd ();
 
-        outfile.printf ("%s\t", entry.time_as_string);
-
         while (active) {
+            int count = 0;
             ushort[] buf = new ushort[bufsz];
             Posix.fd_set rdset;
-            int ret;
 
-            Posix.timeval timeout = Posix.timeval ();
+            //Posix.timeval timeout = Posix.timeval ();
+            Posix.timespec timeout = Posix.timespec ();
             Posix.FD_ZERO (out rdset);
             Posix.FD_SET (device_fd, ref rdset);
             timeout.tv_sec = 0;
-            timeout.tv_usec = 50000;
-            ret = Posix.select (device_fd + 1, &rdset, null, null, timeout);
+            //timeout.tv_usec = 50000;
+            timeout.tv_nsec = 50000000;
+            Posix.sigset_t sigset = new Posix.sigset_t ();
+            Posix.sigemptyset (sigset);
+            //ret = Posix.select (device_fd + 1, &rdset, null, null, timeout);
+            ret = Posix.pselect (device_fd + 1, &rdset, null, null, timeout, sigset);
 
             if (ret < 0) {
                 if (Posix.errno == Posix.EAGAIN) {
                     perror("read");
                 }
             } else if (ret == 0) {
-                stdout.printf ("hit timeout\n");
+                stdout.printf ("%s hit timeout\n", id);
             } else if ((Posix.FD_ISSET (device_fd, rdset)) == 1) {
                 ret = (int)Posix.read (device_fd, buf, bufsz);
-                ulong bytes_per_sample;
                 total += ret;
-stdout.printf ("\nread %d %d\n", ret, total);
-
-                if ((subdev_flags & SubdeviceFlag.LSAMPL) != 0) {
-                    bytes_per_sample = sizeof (uint);
-                } else {
-                    bytes_per_sample = sizeof (ushort);
-                }
-
-                for (int i = 0; i < ret / bytes_per_sample; i++) {
-                        raw = (ushort) buf[i];
-                    //print_datum (raw, col, is_physical);
-                    crange = (device as ComediDevice).dev.get_range (subdevice, col, 4);
-                    foreach (var fd in fifos.values) {
-                        var channel = channel_array [col];
-                        (channel as AIChannel).add_raw_value (Comedi.to_phys (raw, crange, maxdata));
-                        mess = "%s %.6f\t".printf (channel.uri, (channel as ScalableChannel).scaled_value);
-//stdout.printf ("%s", mess);
-                        Posix.write (fd, mess, mess.length);
-                    }
-                    outfile.printf ("%.6f\t", Comedi.to_phys (raw, crange, maxdata));
-                    col++;
-                    if (col == channels.size) {
-                        foreach (var fd in fifos.values) {
-                            mess = "\n%s\t".printf (entry.time_as_string);
-//stdout.printf ("%s", mess);
-                            Posix.write (fd, mess, mess.length);
-                        }
-
-                        //stdout.printf("\n%s\t", entry.time_as_string);
-                        outfile.printf ("\n%s\t ", entry.time_as_string);
-                        /* Increment the timestamp */
-                        entry.timestamp = entry.timestamp.add_seconds ((double)interval_ms / 1000);
-                        col = 0;
-                    }
+                 foreach (var fd in fifos.values) {
+                    Posix.write (fd, buf, ret);
                 }
             }
         }
@@ -765,7 +762,7 @@ stdout.printf ("\nread %d %d\n", ret, total);
 
                 mutex.lock ();
                 try {
-                    end_time = start_time + count++ * task.interval_ms * TimeSpan.MILLISECOND;
+                    end_time = start_time + count++ * task.interval_ns * TimeSpan.MILLISECOND * (int64)1e-6;
                     while (cond.wait_until (mutex, end_time))
                         ; /* do nothing */
                 } finally {

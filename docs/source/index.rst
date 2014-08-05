@@ -3,20 +3,21 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to libcld's documentation!
-==================================
+libcld
+======
 
-Contents:
+Documentation Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
-
+   installation
+   using_libcld
+   configuration
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
 

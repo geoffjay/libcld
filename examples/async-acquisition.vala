@@ -11,7 +11,6 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
     }
 
     public GLib.MainLoop loop;
-    public AcquisitionController acq;
     public ComediDevice device = new ComediDevice ();
     public Cld.Log log;
     public Cld.ComediTask task;
@@ -21,7 +20,6 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
             <cld xmlns:cld="urn:libcld">
                 <cld:objects>
                     <cld:object id="daqctl0" type="controller" ctype="acquisition">
-                        <cld:property name="fifo">/tmp/fifo0</cld:property>
                         <cld:object id="dev0" type="device" driver="comedi">
                             <cld:property name="hardware">PCI-1713</cld:property>
                             <cld:property name="type">input</cld:property>
@@ -49,7 +47,6 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai13</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai14</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai15</cld:property>
-                                <cld:property name="fifo">/tmp/fifo0</cld:property>
                             </cld:object>
                             <cld:object id="ai0" type="channel" ref="/ctr0/daqctl0/dev0" ctype="analog" direction="input">
                                 <cld:property name="tag">IN0</cld:property>
@@ -166,7 +163,6 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                         </cld:object>
                     </cld:object>
                     <cld:object id="logctl0" type="controller" ctype="log">
-                    <!--
                         <cld:object id="log0" type="log" ltype="sqlite">
                             <cld:property name="title">Data Log</cld:property>
                             <cld:property name="path">/srv/data</cld:property>
@@ -176,7 +172,6 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                             <cld:property name="backup-path">./</cld:property>
                             <cld:property name="backup-file">backup.db</cld:property>
                             <cld:property name="backup-interval-hrs">1</cld:property>
-                            <cld:property name="fifo">/tmp/fifo0</cld:property>
                             <cld:object id="col0" type="column" chref="/ctr0/daqctl0/dev0/ai0"/>
                             <cld:object id="col1" type="column" chref="/ctr0/daqctl0/dev0/ai1"/>
                             <cld:object id="col2" type="column" chref="/ctr0/daqctl0/dev0/ai2"/>
@@ -194,8 +189,6 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                             <cld:object id="col14" type="column" chref="/ctr0/daqctl0/dev0/ai14"/>
                             <cld:object id="col15" type="column" chref="/ctr0/daqctl0/dev0/ai15"/>
                         </cld:object>
-                    -->
-
                     </cld:object>
                     <cld:object id="cal0" type="calibration">
                         <cld:property name="units">Volts</cld:property>
@@ -224,6 +217,7 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
 
         base.run ();
 
+
 //        stdout.printf ("\nPrinting objects..\n\n");
 //        context.print_objects ();
 //        stdout.printf ("\n Finished.\n\n");
@@ -232,23 +226,12 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
 //        context.print_ref_list ();
 //        stdout.printf ("\n Finished.\n\n");
 
-        /* Here the device can be accessed without referring to it directly from either its id or uri*/
-        var acquisiton_controllers = context.get_children (typeof (AcquisitionController));
-        foreach (var ctrl in acquisiton_controllers.values) {
-            acq = ctrl as AcquisitionController;
-            break; // take the first one.
-        }
-
-        var devices = context.get_object_map (typeof (Device));
-        foreach (var dev in devices.values) {
-            device = dev as ComediDevice;
-            break;
-        }
+        device = context.get_object ("dev0") as ComediDevice;
 
         //stdout.printf ("Object properties:\n%s", context.to_string_recursive ());
         device.open ();
         var info = device.info ();
-        stdout.printf ("Comedi.Device information:\n%s\n", info.to_string ());
+//        stdout.printf ("Comedi.Device information:\n%s\n", info.to_string ());
 
         var tasks = device.get_children (typeof (ComediTask));
         foreach (var tsk in tasks.values) {
@@ -257,14 +240,13 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
         }
 
         /* Here the Log is accessed from its uri. */
-        //var log = context.get_object_from_uri ("/ctr0/logctl0/log0") as Cld.SqliteLog;
-        //log = context.get_object ("log0") as Cld.Log;
-        stdout.printf ("Log:\n%s\n", log.to_string ());
+        var log = context.get_object_from_uri ("/ctr0/logctl0/log0") as Cld.SqliteLog;
+//        stdout.printf ("Log:\n%s\n", log.to_string ());
         //log.start ();
 
         GLib.Timeout.add_seconds (10, quit_task_cb);
-        GLib.Timeout.add_seconds (10, quit_cb);
-        acq.run ();
+        GLib.Timeout.add_seconds (11, quit_cb);
+        context.acquisition_controller.run ();
         task.run ();
         loop.run ();
     }

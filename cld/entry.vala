@@ -107,7 +107,7 @@ public class Cld.LogEntry : Cld.AbstractObject {
 //                    timestamp = (channel as Channel).timestamp;
 //
 //                if (channel is ScalableChannel) {
-//                    data.add ((channel as ScalableChannel).scaled_value);
+//                    data.add ((channel as ScalableChannel).avg_value);
 //                } else if (channel is DChannel) {
 //                    if ((channel as DChannel).state)
 //                        data.add (1);

@@ -26,6 +26,8 @@
 
 public class Cld.LogController : Cld.AbstractController {
 
+    public signal void request (Cld.Log log);
+
     /**
      * Default construction
      */
@@ -82,5 +84,6 @@ public class Cld.LogController : Cld.AbstractController {
      * {@inheritDoc}
      */
     public override void generate () {
+
     }
 }

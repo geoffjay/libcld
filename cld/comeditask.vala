@@ -110,6 +110,10 @@ public class Cld.ComediTask : AbstractTask {
      */
     public Gee.Map<string, int>? fifos { get; set; }
 
+    /**
+     * The size of the internal data buffer
+     */
+    public uint qsize { get; set; default = 262144; }
 
     private Comedi.InstructionList instruction_list;
     private const int NSAMPLES = 10; //XXX Why is this set to 10 (Steve)??
@@ -125,7 +129,6 @@ public class Cld.ComediTask : AbstractTask {
      * Counts the total number of connected FIFOs.
      */
     private static int n_fifos = 0;
-    private bool fifos_ready;
     private Cld.LogEntry entry;
     private int device_fd = -1;
 
@@ -139,6 +142,12 @@ public class Cld.ComediTask : AbstractTask {
     private uint scan_period_nanosec;
 
     /**
+     * A queue for holding data to be processed.
+     */
+    //private Cld.CircularBuffer<ushort> queue;
+    private Gee.Deque<ushort> queue;
+
+    /**
      * Default construction.
      */
     construct {
@@ -146,7 +155,7 @@ public class Cld.ComediTask : AbstractTask {
         channels = new Gee.TreeMap<string, Object> ();
         fifos = new Gee.TreeMap<string, int> ();
         active = false;
-        fifos_ready = false;
+        queue = new Gee.LinkedList<ushort> ();
     }
 
     public ComediTask () {
@@ -209,17 +218,17 @@ public class Cld.ComediTask : AbstractTask {
     public override void run () {
         entry = new Cld.LogEntry ();
         /* Open fifos */
-        foreach (string fname in fifos.keys) {
-            if (Posix.access (fname, Posix.F_OK) == -1) {
-                int res = Posix.mkfifo (fname, 0777);
-                if (res != 0) {
-                    Cld.error ("%s could not create fifo %s\n",id, fname);
-                }
-            }
-
-            open_fifo.begin (fname, () => {
-            });
-        }
+//        foreach (string fname in fifos.keys) {
+//            if (Posix.access (fname, Posix.F_OK) == -1) {
+//                int res = Posix.mkfifo (fname, 0777);
+//                if (res != 0) {
+//                    Cld.error ("%s could not create fifo %s\n",id, fname);
+//                }
+//            }
+//
+//            open_fifo.begin (fname, () => {
+//            });
+//        }
 
         if (device == null) {
             error ("Task %s has no reference to a device.", id);
@@ -291,6 +300,11 @@ public class Cld.ComediTask : AbstractTask {
                                     (fifos.has_key (fname)).to_string());
 
                 Cld.debug ("%s got a reader for fifo %s", id, fname);
+                if (exec_type == "streaming") {
+                    uint64 t = (uint64) GLib.get_monotonic_time ();
+                    stdout.printf ("%llX\n", t);
+                    Posix.write ( fd, &t, sizeof (uint64));
+                }
             }
             Idle.add ((owned) callback);
 
@@ -366,7 +380,7 @@ public class Cld.ComediTask : AbstractTask {
 
         for (int i = 0; i < channels.size; i++) {
             var channel = channel_array [i];
-            stdout.printf ("i: %d, num: %d\n", i, (channel as Channel).num);
+            //stdout.printf ("i: %d, num: %d\n", i, (channel as Channel).num);
         }
 
         int ret;
@@ -421,7 +435,6 @@ public class Cld.ComediTask : AbstractTask {
         cmd.chanlist_len = channels.size;
     }
 
-
     public int do_select () {
         int total = 0;
         int ret;
@@ -441,20 +454,11 @@ public class Cld.ComediTask : AbstractTask {
 	    Posix.fcntl (device_fd, Posix.F_SETFL, Posix.O_NONBLOCK);
         active = true;
 
-        while (!fifos_ready) {
-            foreach (var fname in fifos.keys) {
-                if (fifos.get (fname) > 0) {
-                    fifos_ready = true;
-                } else {
-                    fifos_ready = false;
-                }
-            }
-            GLib.Thread.usleep (50000);
-        }
         do_cmd ();
 
+        int count = 0;
         while (active) {
-            int count = 0;
+stdout.printf (">>>>>>>>>\n");
             ushort[] buf = new ushort[bufsz];
             Posix.fd_set rdset;
 
@@ -479,8 +483,17 @@ public class Cld.ComediTask : AbstractTask {
             } else if ((Posix.FD_ISSET (device_fd, rdset)) == 1) {
                 ret = (int)Posix.read (device_fd, buf, bufsz);
                 total += ret;
-                 foreach (var fd in fifos.values) {
-                    Posix.write (fd, buf, ret);
+stdout.printf ("total from device %d\n", total);
+                for (int i = 0; i < ret / 2; i++) {
+                    queue.offer_head (buf [i]);
+                }
+                for (int i = 0; i < queue.size; i++) {
+                    count++;
+                    stdout.printf ("%u ", queue.poll_tail ());
+                    if (((count) % 16) == 0 ) {
+                        //count = 0;
+                        stdout.printf ("\n");
+                    }
                 }
             }
         }
@@ -762,7 +775,7 @@ public class Cld.ComediTask : AbstractTask {
 
                 mutex.lock ();
                 try {
-                    end_time = start_time + count++ * task.interval_ns * TimeSpan.MILLISECOND * (int64)1e-6;
+                    end_time = start_time + count++ * (task.interval_ns / 1000000) * TimeSpan.MILLISECOND;
                     while (cond.wait_until (mutex, end_time))
                         ; /* do nothing */
                 } finally {

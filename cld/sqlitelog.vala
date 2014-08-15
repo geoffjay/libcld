@@ -428,13 +428,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public override void start () {
         /* Open the FIFO data buffers. */
         foreach (string fname in fifos.keys) {
-            if (Posix.access (fname, Posix.F_OK) == -1) {
-                int res = Posix.mkfifo (fname, 0777);
-                if (res != 0) {
-                    Cld.error ("%s could not create fifo %s\n",id, fname);
-                }
-            }
-
             open_fifo.begin (fname, () => {
                 Cld.debug ("got a writer for %s", fname);
             });
@@ -452,25 +445,25 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         GLib.Timeout.add_full (GLib.Priority.DEFAULT_IDLE, backup_interval_ms, backup_cb);
 
-        bg_fifo_watch.begin ((obj, res) => {
-            try {
-                bg_fifo_watch.end (res);
-                Cld.debug ("Log fifo watch async ended");
-            } catch (ThreadError e) {
-                string msg = e.message;
-                Cld.error (@"Thread error: $msg");
-            }
-        });
-
-        bg_process_data.begin ((obj, res) => {
-            try {
-                bg_process_data.end (res);
-                Cld.debug ("Log queue data processing async ended");
-            } catch (ThreadError e) {
-                string msg = e.message;
-                Cld.error (@"Thread error: $msg");
-            }
-        });
+//        bg_fifo_watch.begin ((obj, res) => {
+//            try {
+//                bg_fifo_watch.end (res);
+//                Cld.debug ("Log fifo watch async ended");
+//            } catch (ThreadError e) {
+//                string msg = e.message;
+//                Cld.error (@"Thread error: $msg");
+//            }
+//        });
+//
+//        bg_process_data.begin ((obj, res) => {
+//            try {
+//                bg_process_data.end (res);
+//                Cld.debug ("Log queue data processing async ended");
+//            } catch (ThreadError e) {
+//                string msg = e.message;
+//                Cld.error (@"Thread error: $msg");
+//            }
+//        });
 
     }
 
@@ -530,37 +523,37 @@ stdout.printf ("-");
                 foreach (int fd in fifos.values) {
                     if ((num = Posix.read (fd, s, 4096)) == -1)
                         Cld.debug("read error");
-                    else {
-                        rows = ((string)s).split ("\n");
-
-                        /* Re-assemble split rows. */
-                        if (head != "") {
-                            /* Attach the head if it is not empty. */
-                            tail = rows [0];
-                            rows [0] = head + tail;
-                            head = "";
-                        }
-                        if ( s [num - 1] != '\n') {
-                            /* Set a new head if last row is incomplete. */
-                            head = rows [rows.length -1];
-                            rows [rows.length - 1] = "";
-                        }
-
-                        /* Process each row. */
-                        foreach (var row in rows) {
-                            if (row != "") {
-                                //queue_mutex.lock ();
-                                //lock (queue) {
-                                    if (!queue.offer_head (row))
-                                        Cld.error ("Row was not added to the queue.");
-                                    else {
-                                       // queue_cond.signal ();
-                                        //queue_mutex.unlock ();
-                                    }
-                               // }
-                            }
-                        }
-                    }
+//                    else {
+//                        rows = ((string)s).split ("\n");
+//
+//                        /* Re-assemble split rows. */
+//                        if (head != "") {
+//                            /* Attach the head if it is not empty. */
+//                            tail = rows [0];
+//                            rows [0] = head + tail;
+//                            head = "";
+//                        }
+//                        if ( s [num - 1] != '\n') {
+//                            /* Set a new head if last row is incomplete. */
+//                            head = rows [rows.length -1];
+//                            rows [rows.length - 1] = "";
+//                        }
+//
+//                        /* Process each row. */
+//                        foreach (var row in rows) {
+//                            if (row != "") {
+//                                //queue_mutex.lock ();
+//                                //lock (queue) {
+//                                    if (!queue.offer_head (row))
+//                                        Cld.error ("Row was not added to the queue.");
+//                                    else {
+//                                       // queue_cond.signal ();
+//                                        //queue_mutex.unlock ();
+//                                    }
+//                               // }
+//                            }
+//                        }
+//                    }
                 }
             }
 

@@ -15,8 +15,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
- * Author:
+ * Authors:
  *  Geoff Johnson <geoff.jay@gmail.com>
+ *  Stephen Roy <sroy1966@gmail.com>
  */
 
 /**
@@ -134,6 +135,12 @@ public interface Cld.Log : Cld.Object {
      * The data are paired a pipe name and file descriptor.
      */
     public abstract Gee.Map<string, int>? fifos { get; set; }
+
+    /**
+     * Request the uri of an IPC (eg. named pipe, 0MQ socket)
+     *
+     **/
+    public abstract signal void request ();
 
     /**
      * Connect the columns to their corresponding channel signals.

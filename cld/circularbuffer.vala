@@ -23,7 +23,7 @@
  * A fixed size circular buffer (FIFO). XXX Should be made to handle generic data types.
  */
 
-public class Cld.CircularBuffer : GLib.Object {
+public class Cld.CircularBuffer<G> : GLib.Object {
     /**
      * The maximum number of elements that can be stored in the buffer.
      */
@@ -33,13 +33,23 @@ public class Cld.CircularBuffer : GLib.Object {
      * Upper limit alarm level.
      * When number of element in use, a signal will be emitted.
      */
-    private uint _upper;
-    public uint upper {
-        get { return _upper; }
-        set { _upper = value; }
-    }
+//    private uint _upper;
+//    public uint upper {
+//        get { return _upper; }
+//        set { _upper = value; }
+//    }
+//
+//    public signal void high_level ();
 
-    public signal void high_level ();
+    /**
+     * True if buffer is full. Data will be overwritten
+     */
+    private bool _full;
+    public bool full {
+        get { return _full; }
+        private set { _full = value; }
+        default = false;
+    }
 
     /**
      * The index of the first element.
@@ -50,11 +60,11 @@ public class Cld.CircularBuffer : GLib.Object {
      * The index of the last element
      */
     public uint end { get; private set; default = 0; }
-    private ushort [] buffer;
+    internal G [] buffer;
 
-    public Cld.CircularBuffer.from_size (int size) {
-        this.size = size;
-        buffer = new ushort [size + 1];
+    public Cld.CircularBuffer.from_size (uint qsize) {
+        buffer = new  G [qsize + 1];
+        this.size = qsize;
         end = 0;
         start = 0;
     }
@@ -63,15 +73,15 @@ public class Cld.CircularBuffer : GLib.Object {
      * Add an element to the end of the buffer.
      * @param val The last element buffer.
      */
-    public void write (ushort val) {
+    public void write (G val) {
         buffer [end] = val;
         end = (end + 1) % size;
-        if (in_use () == _upper) {
-            high_level ();
-        }
-
+//        if (in_use () == _upper) {
+//            high_level ();
+//        }
         if (end == start) {
-            Cld.message ("Circular buffer is full. Overwriting data");
+            _full = true;
+            //Cld.message ("Circular buffer is full. Overwriting data");
             start = (start + 1) % size; /* full, overwrite */
         }
     }
@@ -93,12 +103,13 @@ public class Cld.CircularBuffer : GLib.Object {
      * Retrieves an element from the start of the buffer.
      * @return The first element in the buffer.
      */
-    public ushort read () {
-        ushort val = buffer [start];
+    public G read () {
+        G val = buffer [start];
         start = (start + 1) % size;
+        _full = false;
 
         return val;
-   }
+    }
 
     /**
      * Retrieves the total number of elements that are in the buffer.
@@ -114,6 +125,17 @@ public class Cld.CircularBuffer : GLib.Object {
         }
 
         return total;
+    }
+
+    /**
+     * Retrieves a copy of an internal data array element.
+     *
+     * @param index The index of the value to be retrieved.
+     * @return The n_th element of the internal data array
+     */
+    public G peek (uint index) {
+
+        return buffer [index];
     }
 
 }

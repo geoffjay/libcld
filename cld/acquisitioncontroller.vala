@@ -31,7 +31,8 @@ public class Cld.AcquisitionController : Cld.AbstractController {
     /**
      * A FIFO for holding data to be processed.
      */
-    private Cld.CircularBuffer queue;
+    private Cld.CircularBuffer<ushort> queue;
+    ////private Gee.Deque<ushort> queue;
     private int qsize = 262144;
 
     /* Buffer size for reading from the named pipe FIFO */
@@ -42,9 +43,11 @@ public class Cld.AcquisitionController : Cld.AbstractController {
      */
     construct {
         _objects = new Gee.TreeMap<string, Cld.Object> ();
-        queue = new Cld.CircularBuffer.from_size (qsize);
-        queue.upper = qsize / 2;
-        queue.high_level.connect (high_queue_cb);
+        queue = new Cld.CircularBuffer<ushort>.from_size (qsize);
+        ////queue = new Gee.LinkedList<ushort> (); // XXX This queue seems to work as well or better than the other
+
+//        queue.upper = qsize / 2;
+//        queue.high_level.connect (high_queue_cb);
     }
 
     /**
@@ -90,12 +93,6 @@ public class Cld.AcquisitionController : Cld.AbstractController {
     public void run () {
         /* Open the FIFO data buffers. */
         foreach (string fname in fifos.keys) {
-//            if (Posix.access (fname, Posix.F_OK) == -1) {
-//                int res = Posix.mkfifo (fname, 0777);
-//                if (res != 0) {
-//                    Cld.error ("%s could not create fifo %s\n",id, fname);
-//                }
-//            }
             open_fifo.begin (fname, () => {
                 Cld.debug ("got a writer for %s", fname);
             });
@@ -111,15 +108,15 @@ public class Cld.AcquisitionController : Cld.AbstractController {
             }
         });
 
-//        bg_process_data.begin ((obj, res) => {
-//            try {
-//                bg_process_data.end (res);
-//                Cld.debug ("Queue data processing async ended");
-//            } catch (ThreadError e) {
-//                string msg = e.message;
-//                Cld.error (@"Thread error: $msg");
-//            }
-//        });
+        bg_process_data.begin ((obj, res) => {
+            try {
+                bg_process_data.end (res);
+                Cld.debug ("Queue data processing async ended");
+            } catch (ThreadError e) {
+                string msg = e.message;
+                Cld.error (@"Thread error: $msg");
+            }
+        });
     }
 
     private async void open_fifo (string fname) {
@@ -178,9 +175,10 @@ public class Cld.AcquisitionController : Cld.AbstractController {
                                 lock (queue) {
                                     for (int i = 0; i < num / 2; i++) {
                                         queue.write (buf [i]);
+                                        ////queue.offer_head (buf [i]);
                                     }
                                     total += num;
-//stdout.printf ("\nread %d total %d start: %d end: %d in_use: %d\n", num, total, queue.start, queue.end, queue.in_use ());
+stdout.printf ("\nread %d total %u start: %u end: %u in_use: %u\n", num, total, queue.start, queue.end, queue.in_use ());
                                 }
                             }
                         }
@@ -199,64 +197,82 @@ public class Cld.AcquisitionController : Cld.AbstractController {
     /**
      * Pull a block of data from the queue and processes it.
      */
-//    private async void bg_process_data () throws ThreadError {
-//        SourceFunc callback = bg_process_data.callback;
-//        ushort val = 0;
-//
-//        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_process_data", () => {
-//            int count = 0;
-//            while (true) {
-//                lock (queue) {
-//                    while (!queue.is_empty ()) {
-////stdout.printf ("before processed: %d start: %d end %d in use %d\n", count, queue.start, queue.end, queue.in_use ());
-//                        for (int i = 0; i < queue.in_use (); i++) {
-//                            val = queue.read ();
-//                            count++;
-//                            stdout.printf ("%u ", val);
-//                            if ((count % 16) == 0 ) {
-//                                count = 0;
-//                                stdout.printf ("\n");
-//                            }
-//                        }
-////stdout.printf ("\nafter processed: %d start: %d end %d\n", count, queue.start, queue.end);
-//                    }
-//                }
-//                Thread.usleep (10000);
-//            }
-//
-//            Idle.add ((owned) callback);
-//            return 0;
-//        });
-//        //thread.set_priority (ThreadPriority.LOW);
-//
-//        yield;
-//    }
-    private void high_queue_cb () {
+    private async void bg_process_data () throws ThreadError {
+        SourceFunc callback = bg_process_data.callback;
         ushort val = 0;
-        int count = 0;
 
-        lock (queue) {
-            while (!queue.is_empty ()) {
-//stdout.printf ("before processed: %d start: %d end %d in use %d\n", count, queue.start, queue.end, queue.in_use ());
-                for (int i = 0; i < queue.in_use () - 1; i++) {
-                    val = queue.read ();
-                    count++;
-                    stdout.printf ("%u ", val);
-                    if ((count % 16) == 0 ) {
-                        count = 0;
-                        stdout.printf ("\n");
+        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_process_data", () => {
+            uint count = 0;
+
+            while (true) {
+                lock (queue) {
+                    while (queue.size != 0) {
+                        if (count < 4) {
+                        stdout.printf ("monotonic: %llX\n", GLib.get_monotonic_time ());
+                            for (int i = 0; i < 4; i++) {
+                                val = queue.read ();
+                                ////val = queue.poll_tail ();
+                                count++;
+                                stdout.printf ("%4X ", val);
+                            }
+                            stdout.printf ("\n");
+                        }
+
+//stdout.printf ("before processed: %u start: %u end %u in use %u\n", count, queue.start, queue.end, queue.in_use ());
+                        for (int i = 0; i < queue.in_use (); i++) {
+                        ////for (int i = 0; i < queue.size; i++) {
+                            val = queue.read ();
+                            ////val = queue.poll_tail ();
+                            count++;
+                            //stdout.printf ("%u ", val);
+                            if (((count - 4) % 16) == 0 ) {
+                                //count = 0;
+                                //stdout.printf ("\n");
+                            }
+                        }
+//stdout.printf ("\nafter processed: %u in use %u\n", count, queue.size);
                     }
                 }
-//stdout.printf ("\nafter processed: %d start: %d end %d\n", count, queue.start, queue.end);
+                Thread.usleep (10000);
             }
-        }
+
+            Idle.add ((owned) callback);
+            return 0;
+        });
+        thread.set_priority (ThreadPriority.LOW);
+
+        yield;
     }
-
-
 
     /**
      * {@inheritDoc}
      */
     public override void generate () {
+    }
+
+    /**
+     * Update task fifo lists in preparation for logging.
+     * @param log A log that requires data to be logged.
+     * @param fname The uri of a named pipe for inter-process communication.
+     */
+    public void new_fifo (Cld.Log log, string fname) {
+        /* Check if logged channels are from a streaming acquisition */
+        foreach (var column in (log as Cld.Container).get_children (typeof (Cld.Column)).values) {
+            var uri = (column as Cld.Column).channel.uri;
+            var tasks = get_object_map (typeof (Cld.ComediTask));
+            foreach (var task in tasks.values) {
+                if (((task as Cld.ComediTask).exec_type == "streaming") &&
+                            ((task as Cld.ComediTask).chrefs.contains (uri))) {
+                    (task as Cld.ComediTask).fifos.set (fname, -1);
+                }
+            }
+        }
+    }
+
+    /**
+     * Combine individual task buffers to form a data multiplexer.
+     */
+    public void generate_multiplexers () {
+
     }
 }

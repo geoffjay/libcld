@@ -69,7 +69,6 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
      */
     public virtual Gee.Map<string, int>? fifos { get; set; }
 
-
     construct {
         fifos = new Gee.TreeMap<string, int> ();
     }

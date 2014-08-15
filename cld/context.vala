@@ -26,40 +26,42 @@
  * XXX some of this may not make sense functioning as a buildable object but
  * until more separation is made between those and other library objects
  * the id and to_string will stay and just be ignored.
+ *
+ * This contains the map of Cld.Objects and handles high level executive
+ * tasks or delegates them to the various functional controllers that it contains.
  */
 public class Cld.Context : Cld.AbstractContainer {
 
     /**
-     * The Acquisition Controller for this Context.
+     * The Controllers for this Context.
      */
     public Cld.AcquisitionController acquisition_controller;
-
-    construct {
-        //_objects = new Gee.TreeMap<string, Cld.Object> ();
-    }
+    public Cld.LogController log_controller;
+    public Cld.AutomationController automation_controller;
 
     /**
      * Default construction.
      */
     public Context () {
+        acquisition_controller = new Cld.AcquisitionController ();
+        log_controller = new Cld.LogController ();
+        automation_controller = new Cld.AutomationController ();
     }
 
     public Context.from_config (Cld.XmlConfig xml) {
         var builder = new Cld.Builder.from_xml_config (xml);
         objects = builder.objects;
 
-        Cld.debug ("\nGenerating reference list...\n");
+        Cld.debug ("\nCld.Context is generating reference list...\n");
         generate_ref_list ();
-        Cld.debug ("\nGenerating reference list finished.\n");
+        Cld.debug ("\nGenerate reference list finished.\n");
 
-        Cld.debug ("\nGenerating references ..\n");
+        Cld.debug ("\nCld.Context is generating references ..\n");
         generate_references ();
         Cld.debug ("\nGenerate references finished.\n");
 
-        Cld.debug ("\nGenerating controllers..\n");
+        Cld.debug ("\nCld.Context is generating controllers..\n");
         generate ();
-        //generate_automation_controller ();
-        //generate_log_controller ();
         Cld.debug ("\nGenerate controllers finished.\n");
     }
 
@@ -106,14 +108,39 @@ public class Cld.Context : Cld.AbstractContainer {
     }
 
     /**
-     * Generate dependencies that are not
+     * Generate internal objects and connections.
      */
     public void generate () {
-        /* Fetch the Acquisition Controller. */
-        var controllers = get_children (typeof (Cld.AcquisitionController));
+        /* Get the controllers */
+        var controllers = get_children (typeof (Cld.Controller));
         foreach (var control in controllers.values) {
-            acquisition_controller = control as Cld.AcquisitionController;
-            break;
+            if (control is Cld.AcquisitionController) {
+                acquisition_controller = control as Cld.AcquisitionController;
+            } else if (control is Cld.LogController) {
+                log_controller = control as Cld.LogController;
+            } else if (control is Cld.AutomationController) {
+                automation_controller = control as Cld.AutomationController;
+            }
         }
+
+        /* Generate FIFOs for log to read from and aquisitions to write to */
+        var logs = log_controller.get_children (typeof (Cld.Log));
+        foreach (var log in logs.values) {
+            /* Generate the filename */
+            string fname = "/tmp/libcld_%s".printf (log.uri.hash ().to_string ());
+            /* add it to the logs fifo list */
+            (log as Cld.Log).fifos.set (fname, -1);
+            /* Create the FIFO */
+            if (Posix.access (fname, Posix.F_OK) == -1) {
+                int res = Posix.mkfifo (fname, 0777);
+                if (res != 0) {
+                    Cld.error ("Context could not create fifo %s\n", fname);
+                }
+            }
+
+            acquisition_controller.new_fifo (log as Cld.Log, fname);
+        }
+
+        acquisition_controller.generate_multiplexers ();
     }
 }

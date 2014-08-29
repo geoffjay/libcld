@@ -247,7 +247,6 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
         GLib.Timeout.add_seconds (10, quit_task_cb);
         GLib.Timeout.add_seconds (11, quit_cb);
         context.acquisition_controller.run ();
-        task.run ();
         loop.run ();
     }
 

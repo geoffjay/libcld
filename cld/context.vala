@@ -141,6 +141,6 @@ public class Cld.Context : Cld.AbstractContainer {
             acquisition_controller.new_fifo (log as Cld.Log, fname);
         }
 
-        acquisition_controller.generate_multiplexers ();
+        acquisition_controller.generate ();
     }
 }

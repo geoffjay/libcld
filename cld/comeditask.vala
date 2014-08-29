@@ -142,10 +142,11 @@ public class Cld.ComediTask : AbstractTask {
     private uint scan_period_nanosec;
 
     /**
-     * A queue for holding data to be processed.
+     * A queue for holding data to be processed. XXX Deque seems to be faster.
      */
     //private Cld.CircularBuffer<ushort> queue;
     private Gee.Deque<ushort> queue;
+    private signal void do_cmd ();
 
     /**
      * Default construction.
@@ -396,17 +397,9 @@ public class Cld.ComediTask : AbstractTask {
 
         /* Modify parts of the command */
         prepare_cmd ();
+        test_cmd ();
 
-        /* Launch select thread */
-        ThreadFunc<void*> run = () => {
-            Cld.debug ("Asynchronous acquisition started for ComediTask %s", uri);
-            do_select ();
-
-            return null;
-        };
-
-        GLib.Thread.create<void*> (run, false);
-        yield;
+        do_select ();
     }
 
     private void prepare_cmd () {
@@ -435,73 +428,7 @@ public class Cld.ComediTask : AbstractTask {
         cmd.chanlist_len = channels.size;
     }
 
-    public int do_select () {
-        int total = 0;
-        int ret;
-        int bufsz = 65536;
-        uint raw;
-        ulong bytes_per_sample;
-        Comedi.Range crange;
-        int subdev_flags = (device as ComediDevice).dev.get_subdevice_flags (subdevice);
-
-        if ((subdev_flags & SubdeviceFlag.LSAMPL) != 0) {
-            bytes_per_sample = sizeof (uint);
-        } else {
-            bytes_per_sample = sizeof (ushort);
-        }
-
-        device_fd = (device as ComediDevice).dev.fileno ();
-	    Posix.fcntl (device_fd, Posix.F_SETFL, Posix.O_NONBLOCK);
-        active = true;
-
-        do_cmd ();
-
-        int count = 0;
-        while (active) {
-stdout.printf (">>>>>>>>>\n");
-            ushort[] buf = new ushort[bufsz];
-            Posix.fd_set rdset;
-
-            //Posix.timeval timeout = Posix.timeval ();
-            Posix.timespec timeout = Posix.timespec ();
-            Posix.FD_ZERO (out rdset);
-            Posix.FD_SET (device_fd, ref rdset);
-            timeout.tv_sec = 0;
-            //timeout.tv_usec = 50000;
-            timeout.tv_nsec = 50000000;
-            Posix.sigset_t sigset = new Posix.sigset_t ();
-            Posix.sigemptyset (sigset);
-            //ret = Posix.select (device_fd + 1, &rdset, null, null, timeout);
-            ret = Posix.pselect (device_fd + 1, &rdset, null, null, timeout, sigset);
-
-            if (ret < 0) {
-                if (Posix.errno == Posix.EAGAIN) {
-                    perror("read");
-                }
-            } else if (ret == 0) {
-                stdout.printf ("%s hit timeout\n", id);
-            } else if ((Posix.FD_ISSET (device_fd, rdset)) == 1) {
-                ret = (int)Posix.read (device_fd, buf, bufsz);
-                total += ret;
-stdout.printf ("total from device %d\n", total);
-                for (int i = 0; i < ret / 2; i++) {
-                    queue.offer_head (buf [i]);
-                }
-                for (int i = 0; i < queue.size; i++) {
-                    count++;
-                    stdout.printf ("%u ", queue.poll_tail ());
-                    if (((count) % 16) == 0 ) {
-                        //count = 0;
-                        stdout.printf ("\n");
-                    }
-                }
-            }
-        }
-
-        return 0;
-    }
-
-    private void do_cmd () {
+    private void test_cmd () {
         int ret;
 
         ret = (device as ComediDevice).dev.command_test (cmd);
@@ -524,15 +451,105 @@ stdout.printf ("total from device %d\n", total);
 
     	dump_cmd ();
 
-        ret = (device as ComediDevice).dev.command (cmd);
-
-        GLib.stdout.printf ("test ret = %d\n", ret);
-	    if (ret < 0) {
-		    Comedi.perror("comedi_command");
-
 		    return;
-        }
 	}
+
+    /**
+     * Used by streaming acquisition. Data is read from a device and pushed to a fifo buffer.
+     */
+    public int do_select () {
+        int total = 0;
+        int ret = -1;
+        int bufsz = 65536;
+        uint raw;
+        ulong bytes_per_sample;
+        Comedi.Range crange;
+        int subdev_flags = (device as ComediDevice).dev.get_subdevice_flags (subdevice);
+
+        if ((subdev_flags & SubdeviceFlag.LSAMPL) != 0) {
+            bytes_per_sample = sizeof (uint);
+        } else {
+            bytes_per_sample = sizeof (ushort);
+        }
+
+        device_fd = (device as ComediDevice).dev.fileno ();
+	    Posix.fcntl (device_fd, Posix.F_SETFL, Posix.O_NONBLOCK);
+
+        active = true;
+
+        /* Prepare to launch the thread when the do_cmd signal gets emitted */
+        do_cmd.connect (() => {
+
+            /* Launch select thread */
+            ThreadFunc<void*> run = () => {
+                /**
+                 * This inline method will execute when the signal do_cmd is emitted and thereby
+                 * enables a concurent start of multiple tasks.
+                 *
+                 */
+                Cld.debug ("Asynchronous acquisition started for ComediTask %s", uri);
+                ret = (device as ComediDevice).dev.command (cmd);
+
+                GLib.stdout.printf ("test ret = %d\n", ret);
+                if (ret < 0) {
+                    Comedi.perror("comedi_command");
+                }
+
+                int count = 0;
+                while (active) {
+                    /* Device can be read using select or pselect */
+                    ushort[] buf = new ushort[bufsz];
+                    Posix.fd_set rdset;
+
+                    //Posix.timeval timeout = Posix.timeval ();
+                    Posix.timespec timeout = Posix.timespec ();
+                    Posix.FD_ZERO (out rdset);
+                    Posix.FD_SET (device_fd, ref rdset);
+                    timeout.tv_sec = 0;
+                    //timeout.tv_usec = 50000;
+                    timeout.tv_nsec = 50000000;
+                    Posix.sigset_t sigset = new Posix.sigset_t ();
+                    Posix.sigemptyset (sigset);
+                    //ret = Posix.select (device_fd + 1, &rdset, null, null, timeout);
+                    ret = Posix.pselect (device_fd + 1, &rdset, null, null, timeout, sigset);
+
+                    if (ret < 0) {
+                        if (Posix.errno == Posix.EAGAIN) {
+                            perror("read");
+                        }
+                    } else if (ret == 0) {
+                        stdout.printf ("%s hit timeout\n", id);
+                    } else if ((Posix.FD_ISSET (device_fd, rdset)) == 1) {
+                        ret = (int)Posix.read (device_fd, buf, bufsz);
+                        total += ret;
+if ((total % 32768) == 0)
+stdout.printf ("total from device %d\n", total);
+                        for (int i = 0; i < ret / 2; i++) {
+                            queue.offer_head (buf [i]);
+                        }
+                    }
+                }
+
+                return null;
+            };
+
+            GLib.Thread.create<void*> (run, false);
+            yield;
+
+        });
+
+        return 0;
+    }
+
+    /**
+     * This purpose of this is to allow an external signal to be relayed internally
+     * which inturn starts a streaming acquisition thread. It should allow multiple
+     * asynchronous acquisitions to start concurrently.
+     */
+    public void async_start () {
+        do_cmd ();
+    }
+
 
     private string cmd_src (uint src) {
         string buf = "";

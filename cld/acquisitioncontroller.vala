@@ -42,6 +42,11 @@ public class Cld.AcquisitionController : Cld.AbstractController {
     private Gee.Map<string, Cld.Object> tasks;
 
     /**
+     * A signal that starts streaming tasks concurrently.
+     */
+    public signal void async_start ();
+
+    /**
      * Default construction
      */
     construct {
@@ -89,77 +94,91 @@ public class Cld.AcquisitionController : Cld.AbstractController {
     }
 
     public void run () {
-        /* Open the FIFO data buffers. */
         foreach (var task in tasks.values) {
-            if (task is Cld.ComediTask) {
-                foreach (string fname in (task as ComediTask).fifos.keys) {
-                    open_fifo.begin (fname, () => {
-                        Cld.debug ("got a writer for %s", fname);
-                    });
-                }
-                (task as Cld.ComediTask).run ();
-                (task as Cld.ComediTask).async_start ();
-            }
+            (task as Cld.ComediTask).run ();
         }
-
-//        bg_fifo_write.begin ((obj, res) => {
-//            try {
-//                bg_fifo_write.end (res);
-//                Cld.debug ("Acquisition controller %s fifo write async ended", id);
-//            } catch (ThreadError e) {
-//                string msg = e.message;
-//                Cld.error (@"Thread error" $msg");
-//            }
-//        }
-
-//        bg_fifo_watch.begin ((obj, res) => {
-//            try {
-//                bg_fifo_watch.end (res);
-//                Cld.debug ("Acquisiton controller %s fifo watch async ended", id);
-//            } catch (ThreadError e) {
-//                string msg = e.message;
-//                Cld.error (@"Thread error: $msg");
-//            }
-//        });
-//
-//        bg_process_data.begin ((obj, res) => {
-//            try {
-//                bg_process_data.end (res);
-//                Cld.debug ("Queue data processing async ended");
-//            } catch (ThreadError e) {
-//                string msg = e.message;
-//                Cld.error (@"Thread error: $msg");
-//            }
-//        });
     }
 
-    private async void open_fifo (string fname) {
+    public async void stream_data (string fname) {
+        open_fifo.begin (fname, (obj, res) => {
+            /* get a file descriptor */
+            try {
+                int fd = open_fifo.end (res);
+                Cld.debug ("Acquisition controller %s with fifo %s and fd %d has a reader", id, fname, fd);
+
+                /* Start writing to the file descriptor */
+                bg_fifo_write.begin (fname, fd, (obj, res) => {
+                    try {
+                        bg_fifo_write.end (res);
+                        Cld.debug ("Acquisition controller %s fifo write async ended", id);
+                    } catch (ThreadError e) {
+                        string msg = e.message;
+                        Cld.error (@"Thread error: $msg");
+                    }
+                });
+
+            } catch (ThreadError e) {
+                string msg = e.message;
+                Cld.error (@"Thread error: $msg");
+            }
+        });
+    }
+
+    private async int open_fifo (string fname) {
         SourceFunc callback = open_fifo.callback;
-        GLib.Thread<int> thread = new GLib.Thread<int> ("open_fifo_%s".printf (fname), () => {
-            Cld.debug ("%s is is waiting for a writer to FIFO %s",this.id, fname);
-            int fd = Posix.open (fname, Posix.O_RDONLY);
-            fifos.set (fname, fd);
+        int fd = -1;
+        GLib.Thread<int> thread = new GLib.Thread<int> ("open_fifo", () => {
+            Cld.debug ("Acquisition controller is waiting for a reader to FIFO %s", fname);
+            fd = Posix.open (fname, Posix.O_WRONLY);
             if (fd == -1) {
                 Cld.debug ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
             } else {
-                Cld.debug ("Opening FIFO %s fd: %d", fname, fd);
-                Idle.add ((owned) callback);
+                Cld.debug ("Acquisition controller opening FIFO %s fd: %d", fname, fd);
             }
 
-            return 0;
+            Idle.add ((owned) callback);
+            return  0;
         });
 
         yield;
+
+        return fd;
     }
 
-//    private async void bg_fifo_write () throws ThreadError {
-//        SourceFunc callback = bg_fifo_write.callback;
-//
-//        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_fifo_watch",  () => {
-//            foreach (var fifo in multiplexers.keys) {
-//                foreach
-//
 
+    private async void bg_fifo_write (string fname, int fd) throws ThreadError {
+        SourceFunc callback = bg_fifo_write.callback;
+        ushort[] b = new ushort[1];
+        ushort word = 0;
+        int total = 0;
+
+        var tasks = multiplexers.get (fname);
+        foreach (var task in tasks) {
+
+            GLib.Thread<int> thread = new GLib.Thread<int> ("bg_fifo_write",  () => {
+
+            while (true) {
+                if ((task as ComediTask).queue.size > 0) {
+                    for (int i = 0; i < (task as ComediTask).queue.size; i++) {
+                        word = (task as Cld.ComediTask).poll_queue ();
+                        total ++;
+//if ((total % 32768) == 0)
+//stdout.printf ("%d: total written to fifo %d\n",(int) Linux.gettid (), total * (int)sizeof (ushort));
+                        b[0] = word;
+                        Posix.write (fd, b, 2);
+                    }
+                    Thread.usleep (10000);
+                }
+            }
+
+            Idle.add ((owned) callback);
+            return 0;
+            });
+
+        }
+
+        yield;
+    }
 
 //    /**
 //     * Launches a thread that pulls data from the data FIFO and pushes
@@ -273,6 +292,10 @@ public class Cld.AcquisitionController : Cld.AbstractController {
     public override void generate () {
         tasks = get_object_map (typeof (Cld.ComediTask));
         generate_multiplexers ();
+        foreach (var task in tasks.values) {
+            /* Connect this signal to enable concurrent starting of streaming tasks */
+            async_start.connect ((task as Cld.ComediTask).async_start);
+        }
     }
 
     /**
@@ -303,6 +326,7 @@ public class Cld.AcquisitionController : Cld.AbstractController {
             foreach (var fifo in ((task as Cld.ComediTask).fifos.keys)) {
                 if (!(multiplexers.has_key (fifo))) {
                     var task_list = new Gee.LinkedList<Cld.ComediTask> ();
+                    task_list.add (task as Cld.ComediTask);
                     multiplexers.set (fifo, task_list);
                 } else {
                     var task_list = multiplexers.get (fifo);

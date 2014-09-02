@@ -113,7 +113,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * A FIFO for holding data to be processed.
      */
-     private Gee.Deque<string> queue { get; set; }
+     private Gee.Deque<ushort> queue { get; set; }
 
     /**
      * Enumerated Experiment table column names.
@@ -165,7 +165,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /* constructor */
     construct {
         Cld.LogEntry entry = new Cld.LogEntry ();
-        queue = new Gee.LinkedList<string> ();
+        queue = new Gee.LinkedList<ushort> ();
     }
 
     public SqliteLog () {
@@ -426,10 +426,29 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * {@inheritDoc}
      */
     public override void start () {
+        active = true;
         /* Open the FIFO data buffers. */
         foreach (string fname in fifos.keys) {
-            open_fifo.begin (fname, () => {
-                Cld.debug ("got a writer for %s", fname);
+            open_fifo.begin (fname, (obj, res) => {
+                try {
+                    int fd = open_fifo.end (res);
+                    Cld.debug ("got a writer for %s", fname);
+
+                    /* Background fifo watch */
+                    bg_fifo_watch.begin (fd, (obj, res) => {
+                        try {
+                            bg_fifo_watch.end (res);
+                            Cld.debug ("Log fifo watch async ended");
+                        } catch (ThreadError e) {
+                            string msg = e.message;
+                            Cld.error (@"Thread error: $msg");
+                        }
+                    });
+
+                } catch (ThreadError e) {
+                    string msg = e.message;
+                    Cld.error (@"Thread error: $msg");
+                }
             });
         }
 
@@ -445,47 +464,40 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         GLib.Timeout.add_full (GLib.Priority.DEFAULT_IDLE, backup_interval_ms, backup_cb);
 
-//        bg_fifo_watch.begin ((obj, res) => {
-//            try {
-//                bg_fifo_watch.end (res);
-//                Cld.debug ("Log fifo watch async ended");
-//            } catch (ThreadError e) {
-//                string msg = e.message;
-//                Cld.error (@"Thread error: $msg");
-//            }
-//        });
-//
-//        bg_process_data.begin ((obj, res) => {
-//            try {
-//                bg_process_data.end (res);
-//                Cld.debug ("Log queue data processing async ended");
-//            } catch (ThreadError e) {
-//                string msg = e.message;
-//                Cld.error (@"Thread error: $msg");
-//            }
-//        });
-
+        bg_process_data.begin ((obj, res) => {
+            try {
+                bg_process_data.end (res);
+                Cld.debug ("Log queue data processing async ended");
+            } catch (ThreadError e) {
+                string msg = e.message;
+                Cld.error (@"Thread error: $msg");
+            }
+        });
     }
 
-    private async void open_fifo (string fname) {
+    private async int open_fifo (string fname) {
         SourceFunc callback = open_fifo.callback;
-        ThreadFunc<void*> run = () => {
+        int fd = -1;
+
+        GLib.Thread<int> thread = new GLib.Thread<int> ("open_fifo_%s".printf (fname), () => {
             Cld.debug ("%s is is waiting for a writer to FIFO %s",this.id, fname);
-            int fd = Posix.open (fname, Posix.O_RDONLY);
+            fd = Posix.open (fname, Posix.O_RDONLY);
             fifos.set (fname, fd);
             if (fd == -1) {
                 Cld.debug ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
             } else {
-                Cld.debug ("Opening FIFO %s fd: %d", fname, fd);
-                Idle.add ((owned) callback);
+                Cld.debug ("Sqlite log is opening FIFO %s fd: %d", fname, fd);
             }
 
-            return null;
-        };
-        Thread.create<void*> (run, false);
+            Idle.add ((owned) callback);
 
+            return 0;
+        });
         yield;
+
+        return fd;
     }
+
 
     /**
      * A callback function that automatically backs up the database.
@@ -499,68 +511,62 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         }
     }
 
-    private Cond queue_cond = new Cond ();
-    private Mutex queue_mutex = new Mutex ();
-
     /**
      * Launches a thread that pulls a rows of data from the data FIFO and writes
      * it a queue.
      */
-    private async void bg_fifo_watch () throws ThreadError {
+    private async void bg_fifo_watch (int fd) throws ThreadError {
         SourceFunc callback = bg_fifo_watch.callback;
+        int ret = -1;
+        int bufsz = 65536;
+        int total = 0;
 
-        ThreadFunc<void *> _run = () => {
-            active = true;
-            string head = "";
+	    Posix.fcntl (fd, Posix.F_SETFL, Posix.O_NONBLOCK);
+
+        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_fifo_watch",  () => {
 
             while (active) {
-stdout.printf ("-");
-                char [] s = new char[4096];
-                string [] rows;
-                string tail;
-                ssize_t num;
+                ushort[] buf = new ushort[bufsz];
+                Posix.fd_set rdset;
+                //Posix.timeval timeout = Posix.timeval ();
+                Posix.timespec timeout = Posix.timespec ();
+                Posix.FD_ZERO (out rdset);
+                Posix.FD_SET (fd, ref rdset);
+                timeout.tv_sec = 0;
+                //timeout.tv_usec = 50000;
+                timeout.tv_nsec = 50000000;
+                Posix.sigset_t sigset = new Posix.sigset_t ();
+                Posix.sigemptyset (sigset);
+                //ret = Posix.select (fd + 1, &rdset, null, null, timeout);
+                ret = Posix.pselect (fd + 1, &rdset, null, null, timeout, sigset);
 
-                foreach (int fd in fifos.values) {
-                    if ((num = Posix.read (fd, s, 4096)) == -1)
-                        Cld.debug("read error");
-//                    else {
-//                        rows = ((string)s).split ("\n");
-//
-//                        /* Re-assemble split rows. */
-//                        if (head != "") {
-//                            /* Attach the head if it is not empty. */
-//                            tail = rows [0];
-//                            rows [0] = head + tail;
-//                            head = "";
+                if (ret < 0) {
+                    if (Posix.errno == Posix.EAGAIN) {
+                        Cld.error ("Posix read error");
+                    }
+                } else if (ret == 0) {
+                    stdout.printf ("%s hit timeout\n", id);
+                } else if ((Posix.FD_ISSET (fd, rdset)) == 1) {
+                    ret = (int)Posix.read (fd, buf, bufsz);
+                    for (int i = 0; i < ret / 2; i++) {
+                        total++;
+                        lock (queue) {
+                            queue.offer_head (buf [i]);
+                        }
+//                        stdout.printf ("%4X ", buf [i]);
+//                        if ((total % 16) == 0) {
+//                            stdout.printf ("\n");
 //                        }
-//                        if ( s [num - 1] != '\n') {
-//                            /* Set a new head if last row is incomplete. */
-//                            head = rows [rows.length -1];
-//                            rows [rows.length - 1] = "";
-//                        }
-//
-//                        /* Process each row. */
-//                        foreach (var row in rows) {
-//                            if (row != "") {
-//                                //queue_mutex.lock ();
-//                                //lock (queue) {
-//                                    if (!queue.offer_head (row))
-//                                        Cld.error ("Row was not added to the queue.");
-//                                    else {
-//                                       // queue_cond.signal ();
-//                                        //queue_mutex.unlock ();
-//                                    }
-//                               // }
-//                            }
-//                        }
-//                    }
+                    }
+//if ((total % 32768) == 0) {
+//    stdout.printf ("%d: total read by log: %d\n",Linux.gettid (), 2 * total);
+//}
                 }
             }
 
             Idle.add ((owned) callback);
-            return null;
-        };
-        Thread.create<void *> (_run, false);
+            return 0;
+        });
 
         yield;
     }
@@ -570,29 +576,39 @@ stdout.printf ("-");
      */
     private async void bg_process_data () throws ThreadError {
         SourceFunc callback = bg_process_data.callback;
-        string row = "";
+        ushort datum = 0;
+        int total = 0;
 
-        ThreadFunc<void*> _run = () => {
+        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_process_data", () => {
             while (active) {
-               // queue_mutex.lock ();
-                //lock (queue) {
-                    while (queue.size > 0) {
-stdout.printf ("\n%d", queue.size);
-                        row = queue.poll_tail ();
-                        Cld.LogEntry entry = new Cld.LogEntry.from_serial (row);
-                        log_entry_write (entry);
+                if (queue.size > 16) {
+                    lock (queue) {
+                        for (int i = 0; i < (queue.size - (queue.size % 16)); i++) {
+                            for (int j = 0; j < 16; j++) {
+                                datum = queue.poll_tail ();
+                                stdout.printf ("%4X ", datum);
+                                total++;
+                            }
+                            stdout.printf ("\n");
+
+if ((total % 32768) == 0) {
+    stdout.printf ("%d: total dequed by log: %d\n",Linux.gettid (), 2 * total);
+}
+
+                        }
+                    //Cld.LogEntry entry = new Cld.LogEntry.from_serial (row);
+                    //log_entry_write (entry);
                     }
+                }
+                Thread.usleep (10000);
             }
 
             Idle.add ((owned) callback);
-            return null;
-        };
-        unowned GLib.Thread thread = Thread.create<void*> (_run, false);
-        thread.set_priority (ThreadPriority.LOW);
+            return 0;
+        });
 
         yield;
     }
-
 
     private void update_experiment_table () {
         string query = """

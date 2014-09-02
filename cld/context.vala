@@ -142,5 +142,17 @@ public class Cld.Context : Cld.AbstractContainer {
         }
 
         acquisition_controller.generate ();
+        log_controller.generate ();
+        automation_controller.generate ();
+    }
+
+    /**
+     * Start a log.
+     */
+    public void start_log (Cld.Log log) {
+        foreach (var fifo in log.fifos.keys) {
+            log.start ();
+            acquisition_controller.stream_data (fifo);
+        }
     }
 }

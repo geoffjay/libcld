@@ -145,7 +145,7 @@ public class Cld.ComediTask : AbstractTask {
      * A queue for holding data to be processed. XXX Deque seems to be faster.
      */
     //private Cld.CircularBuffer<ushort> queue;
-    private Gee.Deque<ushort> queue;
+    public Gee.Deque<ushort> queue;
     private signal void do_cmd ();
 
     /**
@@ -218,19 +218,6 @@ public class Cld.ComediTask : AbstractTask {
      */
     public override void run () {
         entry = new Cld.LogEntry ();
-        /* Open fifos */
-//        foreach (string fname in fifos.keys) {
-//            if (Posix.access (fname, Posix.F_OK) == -1) {
-//                int res = Posix.mkfifo (fname, 0777);
-//                if (res != 0) {
-//                    Cld.error ("%s could not create fifo %s\n",id, fname);
-//                }
-//            }
-//
-//            open_fifo.begin (fname, () => {
-//            });
-//        }
-
         if (device == null) {
             error ("Task %s has no reference to a device.", id);
         }
@@ -285,37 +272,6 @@ public class Cld.ComediTask : AbstractTask {
         channels.set (channel.id, channel);
     }
 
-    private async void open_fifo (string fname) {
-        SourceFunc callback = open_fifo.callback;
-        ThreadFunc<void*> run = () => {
-            Cld.debug ("%s is is waiting for a reader to FIFO %s",this.id, fname);
-            int fd = Posix.open (fname, Posix.O_WRONLY);
-
-            if (fd == -1) {
-                Cld.debug ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
-            } else {
-                fifos.set (fname, fd);
-                Cld.debug ("ComediTask FIFO set: fd = %d, fifos.has_key(%s) = %s",
-                                    fd,
-                                    fname,
-                                    (fifos.has_key (fname)).to_string());
-
-                Cld.debug ("%s got a reader for fifo %s", id, fname);
-                if (exec_type == "streaming") {
-                    uint64 t = (uint64) GLib.get_monotonic_time ();
-                    stdout.printf ("%llX\n", t);
-                    Posix.write ( fd, &t, sizeof (uint64));
-                }
-            }
-            Idle.add ((owned) callback);
-
-            return null;
-        };
-        GLib.Thread.create<void*> (run, false);
-
-        yield;
-    }
-
     /**
      * Polling tasks spawn a thread of execution. Currently, a task is either input (read)
      * or output (write) though it could be possible to have a combination of the two
@@ -351,6 +307,19 @@ public class Cld.ComediTask : AbstractTask {
                 return;
             }
         }
+    }
+
+    /**
+     * A thread safe method to poll the queue.
+     * @return a data value from the queue.
+     */
+    public ushort poll_queue () {
+        ushort val;
+        lock (queue) {
+            val = queue.poll_tail ();
+        }
+
+        return val;
     }
 
     /**
@@ -457,7 +426,7 @@ public class Cld.ComediTask : AbstractTask {
     /**
      * Used by streaming acquisition. Data is read from a device and pushed to a fifo buffer.
      */
-    public int do_select () {
+    public async int do_select () {
         int total = 0;
         int ret = -1;
         int bufsz = 65536;
@@ -465,6 +434,7 @@ public class Cld.ComediTask : AbstractTask {
         ulong bytes_per_sample;
         Comedi.Range crange;
         int subdev_flags = (device as ComediDevice).dev.get_subdevice_flags (subdevice);
+        SourceFunc callback = do_select.callback;
 
         if ((subdev_flags & SubdeviceFlag.LSAMPL) != 0) {
             bytes_per_sample = sizeof (uint);
@@ -481,7 +451,7 @@ public class Cld.ComediTask : AbstractTask {
         do_cmd.connect (() => {
 
             /* Launch select thread */
-            ThreadFunc<void*> run = () => {
+            GLib.Thread<int> thread = new GLib.Thread<int> ("bg_device_watch",  () => {
                 /**
                  * This inline method will execute when the signal do_cmd is emitted and thereby
                  * enables a concurent start of multiple tasks.
@@ -522,21 +492,24 @@ public class Cld.ComediTask : AbstractTask {
                     } else if ((Posix.FD_ISSET (device_fd, rdset)) == 1) {
                         ret = (int)Posix.read (device_fd, buf, bufsz);
                         total += ret;
-if ((total % 32768) == 0)
-stdout.printf ("total from device %d\n", total);
-                        for (int i = 0; i < ret / 2; i++) {
-                            queue.offer_head (buf [i]);
+//if ((total % 32768) == 0)
+//stdout.printf ("%d: total from device %d\n",Linux.gettid (), total);
+                        lock (queue) {
+                            for (int i = 0; i < ret / bytes_per_sample; i++) {
+                                queue.offer_head (buf [i]);
+                            }
                         }
                     }
                 }
 
-                return null;
-            };
+                Idle.add ((owned) callback);
+                return 0;
+            });
 
-            GLib.Thread.create<void*> (run, false);
             yield;
-
         });
+
+        yield;
 
         return 0;
     }

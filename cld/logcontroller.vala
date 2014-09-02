@@ -26,7 +26,11 @@
 
 public class Cld.LogController : Cld.AbstractController {
 
-    public signal void request (Cld.Log log);
+    /**
+     * The logs that are contained in this.
+     */
+    private Gee.Map<string, Cld.Object> logs;
+
 
     /**
      * Default construction
@@ -84,6 +88,6 @@ public class Cld.LogController : Cld.AbstractController {
      * {@inheritDoc}
      */
     public override void generate () {
-
+        logs = get_object_map (typeof (Cld.Log));
     }
 }

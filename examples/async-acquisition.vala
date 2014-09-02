@@ -233,32 +233,29 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
         var info = device.info ();
 //        stdout.printf ("Comedi.Device information:\n%s\n", info.to_string ());
 
-        var tasks = device.get_children (typeof (ComediTask));
-        foreach (var tsk in tasks.values) {
-            task = tsk as ComediTask;
-            break;
-        }
+        GLib.Timeout.add_seconds (1, start_acq_cb);
+        GLib.Timeout.add_seconds (2, start_log_cb);
+        GLib.Timeout.add_seconds (32, quit_cb);
 
-        /* Here the Log is accessed from its uri. */
-        var log = context.get_object_from_uri ("/ctr0/logctl0/log0") as Cld.SqliteLog;
-//        stdout.printf ("Log:\n%s\n", log.to_string ());
-        //log.start ();
-
-        GLib.Timeout.add_seconds (10, quit_task_cb);
-        GLib.Timeout.add_seconds (11, quit_cb);
-        context.acquisition_controller.run ();
         loop.run ();
     }
 
-    public bool quit_task_cb () {
-        //log.stop ();
-stdout.printf (">>>>>> quit_task_cb\n");
-        task.stop ();
+    public bool start_acq_cb () {
+        context.acquisition_controller.run ();
+        context.acquisition_controller.async_start ();
+
+        return false;
+    }
+
+    public bool start_log_cb () {
+        var log = context.get_object_from_uri ("/ctr0/logctl0/log0") as Cld.SqliteLog;
+        //stdout.printf ("Log:\n%s\n", log.to_string ());
+        context.start_log (log);
+
         return false;
     }
 
     public bool quit_cb () {
-stdout.printf (">>>>>> quit_cb\n");
         loop.quit ();
 
         return false;

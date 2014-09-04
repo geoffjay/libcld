@@ -136,7 +136,7 @@ public class Cld.ComediTask : AbstractTask {
      * A Comedi command fields used only with streaming acquisition.
      */
     private Comedi.Command cmd;
-    private uint[] chanlist;// = new uint[16];
+    private uint[] chanlist;
     /* An array to map the chanlist [] index to a channel */
     private Cld.AIChannel [] channel_array;
     private uint scan_period_nanosec;
@@ -492,8 +492,7 @@ public class Cld.ComediTask : AbstractTask {
                     } else if ((Posix.FD_ISSET (device_fd, rdset)) == 1) {
                         ret = (int)Posix.read (device_fd, buf, bufsz);
                         total += ret;
-//if ((total % 32768) == 0)
-//stdout.printf ("%d: total from device %d\n",Linux.gettid (), total);
+if ((total % 32768) == 0) { stdout.printf ("%d: total from device %d\n",Linux.gettid (), total); }
                         lock (queue) {
                             for (int i = 0; i < ret / bytes_per_sample; i++) {
                                 queue.offer_head (buf [i]);

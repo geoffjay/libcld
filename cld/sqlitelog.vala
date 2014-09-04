@@ -78,6 +78,11 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     private Sqlite.Statement stmt;
 
     /**
+     * An SQLite prepared statement for writing log data.
+     */
+    private Sqlite.Statement log_stmt;
+
+    /**
      * An SQLite error message;
      */
     private string errmsg;
@@ -113,7 +118,12 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * A FIFO for holding data to be processed.
      */
-     private Gee.Deque<ushort> queue { get; set; }
+    private Gee.Deque<ushort> queue;
+
+    /**
+     * The total number of channels in this log.
+     */
+    private int num_chans;
 
     /**
      * Enumerated Experiment table column names.
@@ -426,6 +436,10 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * {@inheritDoc}
      */
     public override void start () {
+        /* Count the number of channels */
+        var columns = get_children (typeof (Cld.Column));
+        num_chans = columns.size;
+
         active = true;
         /* Open the FIFO data buffers. */
         foreach (string fname in fifos.keys) {
@@ -550,17 +564,15 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                     ret = (int)Posix.read (fd, buf, bufsz);
                     for (int i = 0; i < ret / 2; i++) {
                         total++;
+if ((total % 32768) == 0) { stdout.printf ("%d: total read by log: %d\n",Linux.gettid (), 2 * total); }
                         lock (queue) {
                             queue.offer_head (buf [i]);
                         }
 //                        stdout.printf ("%4X ", buf [i]);
-//                        if ((total % 16) == 0) {
+//                        if ((total % num_chans) == 0) {
 //                            stdout.printf ("\n");
 //                        }
                     }
-//if ((total % 32768) == 0) {
-//    stdout.printf ("%d: total read by log: %d\n",Linux.gettid (), 2 * total);
-//}
                 }
             }
 
@@ -578,29 +590,31 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         SourceFunc callback = bg_process_data.callback;
         ushort datum = 0;
         int total = 0;
+        Cld.LogEntry entry = new Cld.LogEntry ();
 
         GLib.Thread<int> thread = new GLib.Thread<int> ("bg_process_data", () => {
             while (active) {
-                if (queue.size > 16) {
+                if (queue.size > num_chans) {
                     lock (queue) {
-                        for (int i = 0; i < (queue.size - (queue.size % 16)); i++) {
-                            for (int j = 0; j < 16; j++) {
-                                datum = queue.poll_tail ();
-                                stdout.printf ("%4X ", datum);
-                                total++;
+                        ec = db.exec ("BEGIN TRANSACTION", null, out errmsg);
+                        for (int i = 0; i < (queue.size - (queue.size % num_chans)); i++) {
+                            foreach (var column in objects.values) {
+                                if (column is Cld.Column) {
+                                    datum = queue.poll_tail ();
+                                    entry.data.set ((column as Cld.Column).chref, (double)datum);
+                                    total++;
+if ((total % 32768) == 0) { stdout.printf ("%d: total dequed by log: %d\n",Linux.gettid (), 2 * total); }
+                                    //stdout.printf ("%4X ", datum);
+                                }
                             }
-                            stdout.printf ("\n");
-
-if ((total % 32768) == 0) {
-    stdout.printf ("%d: total dequed by log: %d\n",Linux.gettid (), 2 * total);
-}
-
+                            //stdout.printf ("\n");
+                            entry.timestamp = entry.timestamp.add_seconds (0.00016);
+                            log_entry_write (entry);
                         }
-                    //Cld.LogEntry entry = new Cld.LogEntry.from_serial (row);
-                    //log_entry_write (entry);
+                        ec = db.exec ("END TRANSACTION", null, out errmsg);
                     }
                 }
-                Thread.usleep (10000);
+                Thread.usleep (100000);
             }
 
             Idle.add ((owned) callback);
@@ -766,6 +780,9 @@ if ((total % 32768) == 0) {
         }
     }
 
+    /**
+     * Create the data log table and prepare a statement for inserting data.
+     */
     private void add_log_table () {
         string query = """
             CREATE TABLE IF NOT EXISTS %s
@@ -791,10 +808,8 @@ if ((total % 32768) == 0) {
                 }
             }
         }
-    }
 
-    private void log_entry_write (Cld.LogEntry entry) {
-        string query = """
+        query = """
             INSERT INTO %s
             (
             experiment_id,
@@ -819,28 +834,32 @@ if ((total % 32768) == 0) {
         query = query.substring (0, query.length - 1);
         query = "%s%s".printf (query, ");");
 
-        ec = db.prepare_v2 (query, query.length, out stmt);
+        ec = db.prepare_v2 (query, query.length, out log_stmt);
         if (ec != Sqlite.OK) {
             stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
         }
-        parameter_index = stmt.bind_parameter_index ("$EXPERIMENT_ID");
-        stmt.bind_int (parameter_index, experiment_id);
+        parameter_index = log_stmt.bind_parameter_index ("$EXPERIMENT_ID");
+        log_stmt.bind_int (parameter_index, experiment_id);
+    }
 
-        parameter_index = stmt.bind_parameter_index ("$TIME");
-        stmt.bind_text (parameter_index, entry.time_as_string);
+    private void log_entry_write (Cld.LogEntry entry) {
+        parameter_index = log_stmt.bind_parameter_index ("$TIME");
+        log_stmt.bind_text (parameter_index, entry.time_as_string);
 
-        i = 0;
+        int i = 0;
         double val = 0;
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
-                parameter_index = stmt.bind_parameter_index ("$VAL%d".printf (i));
+                //parameter_index = log_stmt.bind_parameter_index ("$VAL%d".printf (i));
                 /* Bind values to columns. The order of sequential access is consistent using this method */
-                stmt.bind_double (parameter_index, entry.data.get ((column as Cld.Column).chref));
+                //log_stmt.bind_double (parameter_index, entry.data.get ((column as Cld.Column).chref));
+                log_stmt.bind_double (i + 3, entry.data.get ((column as Cld.Column).chref));
                 i++;
             }
         }
-        stmt.step ();
-        stmt.reset ();
+        log_stmt.step ();
+       // log_stmt.clear_bindings ();
+        log_stmt.reset ();
     }
 
     /**

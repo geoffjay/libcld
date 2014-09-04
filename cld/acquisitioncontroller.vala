@@ -99,6 +99,10 @@ public class Cld.AcquisitionController : Cld.AbstractController {
         }
     }
 
+    /**
+     * Opens a named pipe FIFO and starts the data writing thread.
+     * @param fname The path name of the named pipe.
+     */
     public async void stream_data (string fname) {
         open_fifo.begin (fname, (obj, res) => {
             /* get a file descriptor */
@@ -124,6 +128,11 @@ public class Cld.AcquisitionController : Cld.AbstractController {
         });
     }
 
+    /**
+     * Opens a FIFO for inter-process communication.
+     * @param fname The path name of the named pipe.
+     * @return A file descriptor for the named pipe.
+     */
     private async int open_fifo (string fname) {
         SourceFunc callback = open_fifo.callback;
         int fd = -1;
@@ -145,7 +154,11 @@ public class Cld.AcquisitionController : Cld.AbstractController {
         return fd;
     }
 
-
+    /**
+     * Writes data to a FIFO for inter-process communication.
+     * @param fname The path name of the named pipe.
+     * @param fd A file descriptor for the named pipe.
+     */
     private async void bg_fifo_write (string fname, int fd) throws ThreadError {
         SourceFunc callback = bg_fifo_write.callback;
         ushort[] b = new ushort[1];
@@ -162,8 +175,7 @@ public class Cld.AcquisitionController : Cld.AbstractController {
                     for (int i = 0; i < (task as ComediTask).queue.size; i++) {
                         word = (task as Cld.ComediTask).poll_queue ();
                         total ++;
-//if ((total % 32768) == 0)
-//stdout.printf ("%d: total written to fifo %d\n",(int) Linux.gettid (), total * (int)sizeof (ushort));
+if ((total % 32768) == 0) { stdout.printf ("%d: total written to fifo %d\n",(int) Linux.gettid (), total * (int)sizeof (ushort)); }
                         b[0] = word;
                         Posix.write (fd, b, 2);
                     }
@@ -179,112 +191,6 @@ public class Cld.AcquisitionController : Cld.AbstractController {
 
         yield;
     }
-
-//    /**
-//     * Launches a thread that pulls data from the data FIFO and pushes
-//     * it to a queue.
-//     */
-//    private async void bg_fifo_watch () throws ThreadError {
-//        SourceFunc callback = bg_fifo_watch.callback;
-//
-//        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_fifo_watch",  () => {
-//            ushort [] buf = new ushort [bufsz];
-//            int num = 0;
-//            int total = 0;
-//
-//            while (true) {
-//                foreach (int fd in fifos.values) {
-//                    if (fd > 0) {
-//                        Posix.fd_set rdset;
-//
-//                        Posix.timeval timeout = Posix.timeval ();
-//                        Posix.FD_ZERO (out rdset);
-//                        Posix.FD_SET (fd, ref rdset);
-//                        timeout.tv_sec = 0;
-//                        timeout.tv_usec = 50000;
-//                        num = Posix.select (fd + 1, &rdset, null, null, timeout);
-//
-//                        if (num < 0) {
-//                            if (Posix.errno == Posix.EAGAIN) {
-//                                perror("read");
-//                            }
-//                        } else if (num == 0) {
-//                            stdout.printf ("hit timeout\n");
-//                        } else if ((Posix.FD_ISSET (fd, rdset)) == 1) {
-//                            if ((num = (int)Posix.read (fd, buf, bufsz)) == -1) {
-//                                Cld.debug("read error");
-//                            } else {
-//                                lock (queue) {
-//                                    for (int i = 0; i < num / 2; i++) {
-//                                        queue.write (buf [i]);
-//                                        ////queue.offer_head (buf [i]);
-//                                    }
-//                                    total += num;
-//stdout.printf ("\nread %d total %u start: %u end: %u in_use: %u\n", num, total, queue.start, queue.end, queue.in_use ());
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//                Thread.usleep (10000);
-//            }
-//
-//            Idle.add ((owned) callback);
-//            return 0;
-//        });
-//
-//        yield;
-//    }
-//
-//    /**
-//     * Pull a block of data from the queue and processes it.
-//     */
-//    private async void bg_process_data () throws ThreadError {
-//        SourceFunc callback = bg_process_data.callback;
-//        ushort val = 0;
-//
-//        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_process_data", () => {
-//            uint count = 0;
-//
-//            while (true) {
-//                lock (queue) {
-//                    while (queue.size != 0) {
-//                        if (count < 4) {
-//                        stdout.printf ("monotonic: %llX\n", GLib.get_monotonic_time ());
-//                            for (int i = 0; i < 4; i++) {
-//                                val = queue.read ();
-//                                ////val = queue.poll_tail ();
-//                                count++;
-//                                stdout.printf ("%4X ", val);
-//                            }
-//                            stdout.printf ("\n");
-//                        }
-//
-////stdout.printf ("before processed: %u start: %u end %u in use %u\n", count, queue.start, queue.end, queue.in_use ());
-//                        for (int i = 0; i < queue.in_use (); i++) {
-//                        ////for (int i = 0; i < queue.size; i++) {
-//                            val = queue.read ();
-//                            ////val = queue.poll_tail ();
-//                            count++;
-//                            //stdout.printf ("%u ", val);
-//                            if (((count - 4) % 16) == 0 ) {
-//                                //count = 0;
-//                                //stdout.printf ("\n");
-//                            }
-//                        }
-////stdout.printf ("\nafter processed: %u in use %u\n", count, queue.size);
-//                    }
-//                }
-//                Thread.usleep (10000);
-//            }
-//
-//            Idle.add ((owned) callback);
-//            return 0;
-//        });
-//        thread.set_priority (ThreadPriority.LOW);
-//
-//        yield;
-//    }
 
     /**
      * {@inheritDoc}

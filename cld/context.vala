@@ -137,7 +137,6 @@ public class Cld.Context : Cld.AbstractContainer {
                     Cld.error ("Context could not create fifo %s\n", fname);
                 }
             }
-
             acquisition_controller.new_fifo (log as Cld.Log, fname);
         }
 

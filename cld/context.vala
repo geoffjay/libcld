@@ -100,7 +100,7 @@ public class Cld.Context : Cld.AbstractContainer {
                 as Cld.Container;
             reference = get_object_from_uri ((entry
                 as Cld.AbstractContainer.Reference).reference_uri);
-            //Cld.debug ("%-30s %s", (self as Cld.Object).uri, (reference as Cld.Object).uri);
+            Cld.debug ("%-30s %s", (self as Cld.Object).uri, (reference as Cld.Object).uri);
             if ((reference != null)) {
                 self.add (reference);
             }
@@ -153,5 +153,14 @@ public class Cld.Context : Cld.AbstractContainer {
             log.start ();
             acquisition_controller.stream_data (fifo);
         }
+    }
+
+    /**
+     * Start all of the acquisitions concurrently.
+     */
+    public void start_acquisition () {
+        acquisition_controller.run ();
+        var start = new GLib.DateTime.now_local ();
+        acquisition_controller.async_start (start);
     }
 }

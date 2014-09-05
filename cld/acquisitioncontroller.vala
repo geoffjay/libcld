@@ -44,7 +44,7 @@ public class Cld.AcquisitionController : Cld.AbstractController {
     /**
      * A signal that starts streaming tasks concurrently.
      */
-    public signal void async_start ();
+    public signal void async_start (GLib.DateTime start);
 
     /**
      * Default construction
@@ -166,18 +166,22 @@ public class Cld.AcquisitionController : Cld.AbstractController {
         int total = 0;
 
         var tasks = multiplexers.get (fname);
-        foreach (var task in tasks) {
 
-            GLib.Thread<int> thread = new GLib.Thread<int> ("bg_fifo_write",  () => {
+            GLib.Thread<int> thread = new GLib.Thread<int> ("%s_fifo_write".printf (uri),  () => {
 
             while (true) {
-                if ((task as ComediTask).queue.size > 0) {
-                    for (int i = 0; i < (task as ComediTask).queue.size; i++) {
-                        word = (task as Cld.ComediTask).poll_queue ();
-                        total ++;
-if ((total % 32768) == 0) { stdout.printf ("%d: total written to fifo %d\n",(int) Linux.gettid (), total * (int)sizeof (ushort)); }
-                        b[0] = word;
-                        Posix.write (fd, b, 2);
+                foreach (Cld.ComediTask task in tasks) {
+                    if (task.queue.size > 0) {
+                        for (int i = 0; i < (task as ComediTask).queue.size; i++) {
+                            word = (task as Cld.ComediTask).poll_queue ();
+                            total ++;
+if ((total % 32768) == 0) {
+    stdout.printf ("%d: total written to %s %d    QUEUE: %d\n",
+    (int) Linux.gettid (), fname, total * (int)sizeof (ushort), (task as ComediTask).queue.size);
+}
+                            b[0] = word;
+                            Posix.write (fd, b, 2);
+                        }
                     }
                     Thread.usleep (10000);
                 }
@@ -186,8 +190,6 @@ if ((total % 32768) == 0) { stdout.printf ("%d: total written to fifo %d\n",(int
             Idle.add ((owned) callback);
             return 0;
             });
-
-        }
 
         yield;
     }

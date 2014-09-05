@@ -294,6 +294,14 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 is_open = true;
             }
         }
+
+        /* XXX Memory mapped I/O doesn't seem to improve performance. */
+//        string query = "PRAGMA mmap_size=536870912;";
+//        ec = db.exec (query, null, out errmsg);
+//        if (ec != Sqlite.OK) {
+//            stderr.printf ("Error: %s\n", errmsg);
+//        }
+
     }
 
     /**
@@ -564,7 +572,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                     ret = (int)Posix.read (fd, buf, bufsz);
                     for (int i = 0; i < ret / 2; i++) {
                         total++;
-if ((total % 32768) == 0) { stdout.printf ("%d: total read by log: %d\n",Linux.gettid (), 2 * total); }
+if ((total % 32768) == 0) { stdout.printf ("%d: total read by %s: %d\n",Linux.gettid (), uri, 2 * total); }
                         lock (queue) {
                             queue.offer_head (buf [i]);
                         }
@@ -595,6 +603,7 @@ if ((total % 32768) == 0) { stdout.printf ("%d: total read by log: %d\n",Linux.g
         GLib.Thread<int> thread = new GLib.Thread<int> ("bg_process_data", () => {
             while (active) {
                 if (queue.size > num_chans) {
+
                     lock (queue) {
                         ec = db.exec ("BEGIN TRANSACTION", null, out errmsg);
                         for (int i = 0; i < (queue.size - (queue.size % num_chans)); i++) {
@@ -603,7 +612,7 @@ if ((total % 32768) == 0) { stdout.printf ("%d: total read by log: %d\n",Linux.g
                                     datum = queue.poll_tail ();
                                     entry.data.set ((column as Cld.Column).chref, (double)datum);
                                     total++;
-if ((total % 32768) == 0) { stdout.printf ("%d: total dequed by log: %d\n",Linux.gettid (), 2 * total); }
+if ((total % 32768) == 0) { stdout.printf ("%d: total dequed by %s: %d\n",Linux.gettid (), uri, 2 * total); }
                                     //stdout.printf ("%4X ", datum);
                                 }
                             }
@@ -613,6 +622,7 @@ if ((total % 32768) == 0) { stdout.printf ("%d: total dequed by log: %d\n",Linux
                         }
                         ec = db.exec ("END TRANSACTION", null, out errmsg);
                     }
+
                 }
                 Thread.usleep (100000);
             }

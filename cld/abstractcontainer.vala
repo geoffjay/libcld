@@ -130,13 +130,13 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         if (objects != null) {
             foreach (var object in objects.values) {
                 if (object.get_type ().is_a (type)) {
-                    map.set (object.id, object);
+                    map.set (object.uri, object);
                 }
 
                 if (object is Cld.Container) {
                     var sub_map = (object as Cld.Container).get_object_map (type);
                     foreach (var sub_object in sub_map.values) {
-                        map.set (sub_object.id, sub_object);
+                        map.set (sub_object.uri, sub_object);
                     }
                 }
             }
@@ -210,16 +210,17 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         /* add own uris if any exist */
         _tmp_list.add_all (_ref_list);
 
-        if (this is Cld.Container) {
-            if ((this as Cld.Container).objects != null) {
+        //if (this is Cld.Container) {
+            //if ((this as Cld.Container).objects != null) {
+            if (objects != null) {
                 /* add all of the uris for objects that are containers */
-                foreach (var object in (this as Cld.Container).objects.values) {
+                foreach (var object in objects.values) {
                     if (object is Cld.Container) {
                         _tmp_list.add_all ((object as Cld.Container).get_descendant_ref_list ());
                     }
                 }
             }
-        }
+        //}
         return _tmp_list;
     }
 

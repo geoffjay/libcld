@@ -113,7 +113,7 @@ public class Cld.ComediTask : AbstractTask {
     /**
      * The size of the internal data buffer
      */
-    public uint qsize { get; set; default = 262144; }
+    public uint qsize { get; set; default = 65536; }
 
     private Comedi.InstructionList instruction_list;
     private const int NSAMPLES = 10; //XXX Why is this set to 10 (Steve)??
@@ -330,7 +330,7 @@ public class Cld.ComediTask : AbstractTask {
         chanlist = new uint [channels.size];
         channel_array = new Cld.AIChannel [channels.size];
 
-        //GLib.stdout.printf ("board name: %s\n", device.get_board_name ());
+        GLib.stdout.printf ("device: %s\n", device.id);
         (device as ComediDevice).dev.set_buffer_size (subdevice, 65536);
         scan_period_nanosec = (uint)interval_ns;
 
@@ -488,14 +488,18 @@ public class Cld.ComediTask : AbstractTask {
                             perror("read");
                         }
                     } else if (ret == 0) {
-                        stdout.printf ("%s hit timeout\n", id);
+                        stdout.printf ("%s hit timeout\n", uri);
                     } else if ((Posix.FD_ISSET (device_fd, rdset)) == 1) {
                         ret = (int)Posix.read (device_fd, buf, bufsz);
                         total += ret;
-if ((total % 32768) == 0) { stdout.printf ("%d: total from device %d\n",Linux.gettid (), total); }
                         lock (queue) {
+if ((total % 32768) == 0) { stdout.printf ("%d: total from %s %d  QSIZE: %d\n",Linux.gettid (), uri, total, queue.size); }
                             for (int i = 0; i < ret / bytes_per_sample; i++) {
                                 queue.offer_head (buf [i]);
+                                if (queue.size > qsize) {
+                                    /* Dump the oldes value */
+                                    queue.poll_tail ();
+                                }
                             }
                         }
                     }
@@ -519,6 +523,7 @@ if ((total % 32768) == 0) { stdout.printf ("%d: total from device %d\n",Linux.ge
      * asynchronous acquisitions to start concurrently.
      */
     public void async_start () {
+stdout.printf ("async_start: %s\n", uri);
         do_cmd ();
     }
 

@@ -146,6 +146,10 @@ public class Cld.ComediTask : AbstractTask {
      */
     //private Cld.CircularBuffer<ushort> queue;
     public Gee.Deque<ushort> queue;
+
+    /**
+     * Enables simultaneous starting of multiple asynchronous acquisitions.
+     */
     private signal void do_cmd ();
 
     /**
@@ -488,7 +492,7 @@ public class Cld.ComediTask : AbstractTask {
                             perror("read");
                         }
                     } else if (ret == 0) {
-                        stdout.printf ("%s hit timeout\n", uri);
+                        //stdout.printf ("%s hit timeout\n", uri);
                     } else if ((Posix.FD_ISSET (device_fd, rdset)) == 1) {
                         ret = (int)Posix.read (device_fd, buf, bufsz);
                         total += ret;
@@ -497,7 +501,7 @@ if ((total % 32768) == 0) { stdout.printf ("%d: total from %s %d  QSIZE: %d\n",L
                             for (int i = 0; i < ret / bytes_per_sample; i++) {
                                 queue.offer_head (buf [i]);
                                 if (queue.size > qsize) {
-                                    /* Dump the oldes value */
+                                    /* Dump the oldest value */
                                     queue.poll_tail ();
                                 }
                             }
@@ -523,7 +527,6 @@ if ((total % 32768) == 0) { stdout.printf ("%d: total from %s %d  QSIZE: %d\n",L
      * asynchronous acquisitions to start concurrently.
      */
     public void async_start () {
-stdout.printf ("async_start: %s\n", uri);
         do_cmd ();
     }
 

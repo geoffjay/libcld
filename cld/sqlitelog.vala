@@ -567,12 +567,12 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                         Cld.error ("Posix read error");
                     }
                 } else if (ret == 0) {
-                    stdout.printf ("%s hit timeout\n", id);
+                    //stdout.printf ("%s hit timeout\n", id);
                 } else if ((Posix.FD_ISSET (fd, rdset)) == 1) {
                     ret = (int)Posix.read (fd, buf, bufsz);
                     for (int i = 0; i < ret / 2; i++) {
                         total++;
-if ((total % 32768) == 0) { stdout.printf ("%d: total read by %s: %d\n",Linux.gettid (), uri, 2 * total); }
+//if ((total % 32768) == 0) { stdout.printf ("%d: total read by %s: %d\n",Linux.gettid (), uri, 2 * total); }
                         lock (queue) {
                             queue.offer_head (buf [i]);
                         }

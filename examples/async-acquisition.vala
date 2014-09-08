@@ -550,9 +550,9 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
             stdout.printf ("Comedi.Device information:\n%s\n", info.to_string ());
         }
 
-        GLib.Timeout.add_seconds (1, start_acq_cb);
-        GLib.Timeout.add_seconds (2, start_log_cb);
-        GLib.Timeout.add_seconds (32, quit_cb);
+        GLib.Timeout.add_seconds (2, start_acq_cb);
+        GLib.Timeout.add_seconds (1, start_log_cb);
+        GLib.Timeout.add_seconds (31, quit_cb);
 
         loop.run ();
     }

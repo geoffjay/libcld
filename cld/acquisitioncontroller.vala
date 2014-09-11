@@ -42,6 +42,11 @@ public class Cld.AcquisitionController : Cld.AbstractController {
     private Gee.Map<string, Cld.Object> tasks;
 
     /**
+     * The devices that are contained in this.
+     */
+    private Gee.Map<string, Cld.Object> devices;
+
+    /**
      * A signal that starts streaming tasks concurrently.
      */
     public signal void async_start (GLib.DateTime start);
@@ -96,6 +101,7 @@ public class Cld.AcquisitionController : Cld.AbstractController {
 
     public void run () {
         foreach (var task in tasks.values) {
+
             (task as Cld.ComediTask).run ();
         }
     }
@@ -111,7 +117,7 @@ public class Cld.AcquisitionController : Cld.AbstractController {
                 int fd = open_fifo.end (res);
                 Cld.debug ("Acquisition controller %s with fifo %s and fd %d has a reader", id, fname, fd);
 
-                bg_multiplex_data.begin (fname, (obj, res) => {
+                bg_multiplex_data.begin (fname, fd, (obj, res) => {
                     try {
                         bg_multiplex_data.end (res);
                         Cld.debug ("Acquisition controller %s multiplexer async ended", id);
@@ -122,15 +128,15 @@ public class Cld.AcquisitionController : Cld.AbstractController {
                 });
 
                 /* Start writing to the file descriptor */
-                bg_fifo_write.begin (fname, fd, (obj, res) => {
-                    try {
-                        bg_multiplex_data.end (res);
-                        Cld.debug (" Acquisition controller %s fifo write async ended", id);
-                    } catch (ThreadError e) {
-                        string msg = e.message;
-                        Cld.error (@"Thread error: $msg");
-                    }
-                });
+//                bg_fifo_write.begin (fname, fd, (obj, res) => {
+//                    try {
+//                        bg_multiplex_data.end (res);
+//                        Cld.debug (" Acquisition controller %s fifo write async ended", id);
+//                    } catch (ThreadError e) {
+//                        string msg = e.message;
+//                        Cld.error (@"Thread error: $msg");
+//                    }
+//                });
 
             } catch (ThreadError e) {
                 string msg = e.message;
@@ -169,30 +175,108 @@ public class Cld.AcquisitionController : Cld.AbstractController {
      * Multiplexes data from multiple task and writes it to a queue.
      * @param fname The path name of the named pipe.
      */
-    private async void bg_multiplex_data (string fname) throws ThreadError {
+    private async void bg_multiplex_data (string fname, int fd) throws ThreadError {
         SourceFunc callback = bg_multiplex_data.callback;
         ushort word = 0;
+        ushort [] b = new ushort [1];
         int total = 0;
+        int i;
+        bool ready = true;
+        int size;                       // the number of tasks in the multiplexer
+        Cld.ComediDevice [] devices;    // the Comedi devices used by these tasks
+        int [] nchans;                  // the number of channels in each task
+        int [] subdevices;              // the subdevice numbers for these devices
+        int [] buffersizes;             // the data buffer sizes of each subdevice
+        int [] nscans;                // the integral number of scans that are available in a data buffer
+        int nscan = int.MAX;                        // the integral number of scans that will be multiplexed
+        ushort* [] maps;                  // an array of pointers to memory mapped data for these subdevices
+
 
         var multiplexer = multiplexers.get (fname);
+        size = multiplexer.tasks.size;
+        devices = new Cld.ComediDevice [size];
+        nchans = new int [size];
+        subdevices = new int [size];
+        buffersizes = new int [size];
+        nscans = new int [size];
+        maps = new void* [size];
+
+        i = 0;
+        foreach (var task in multiplexer.tasks.keys) {
+            var device = (task as Cld.ComediTask).device;
+            var subdevice = (task as Cld.ComediTask).subdevice;
+            //Comedi.Device dev = (device as Cld.ComediDevice).dev;
+
+            devices [i] = (task as ComediTask).device as Cld.ComediDevice;
+            nchans [i] = (task as ComediTask).channels.size;
+            subdevices [i] = (task as ComediTask).subdevice;
+            buffersizes [i] = (devices [i] as Cld.ComediDevice).dev.get_buffer_size (subdevices [i]);
+            maps [i] = multiplexer.tasks.get (task);
+            i++;
+        }
 
         GLib.Thread<int> thread = new GLib.Thread<int> ("%s_multiplex_data".printf (uri),  () => {
 
         while (true) {
-            for (int i = 0; i < 16; i++) {
-                foreach (Cld.ComediTask task in multiplexer.tasks) {
-                    if (task.queue.size > 0) {
-                            word = (task as Cld.ComediTask).poll_queue ();
-                            total ++;
+//            for (int i = 0; i < 16; i++) {
+//                foreach (Cld.ComediTask task in multiplexer.tasks.keys) {
+//                    ready = true;
+//                    if (!(task.queue.size > 0)) {
+//                        ready &= false;
+//                    }
+//                }
+//                if (ready) {
+//                    foreach (Cld.ComediTask task in multiplexer.tasks.keys) {
+//                            word = (task as Cld.ComediTask).poll_queue ();
+//                            total ++;
+////if ((total % 32768) == 0) {
+////    stdout.printf ("%d: total written to multiplexer: %d\n",
+////    (int) Linux.gettid (), total * (int)sizeof (ushort));
+////}
+//                            multiplexer.offer_queue (word);
+//                    }
+//                }
+//            }
+//            Thread.usleep (50);
+            /* Determine the minimum integral size data required for multiplexing */
+            nscan = int.MAX;
+            for (i = 0; i < size; i++) {
+                int buffer_contents = (devices [i] as Cld.ComediDevice).dev.get_buffer_contents (subdevices [i]);
+                nscans [i] = buffer_contents / nchans [i];
+                nscan = nscan < nscans [i] ? nscan : nscans [i];
+            }
+
+            /* scans */
+            for (i = 0; i < nscan / 2; i++) {
+                /* tasks */
+                for (int j = 0; j < size; j++) {
+                    /* channels */
+                    for (int k = 0; k < nchans [j]; k++) {
+                        word = *(maps [j] + ((k + i * nchans [j]) % buffersizes [j]));
+                        //if (true) {
+                        //    stdout.printf (" %4X ", word);
+                        //}
+                        total++;
+                        //multiplexer.offer_queue (word);
+                        b [0] = word;
+                        Posix.write (fd, b, 2);
+
 if ((total % 32768) == 0) {
     stdout.printf ("%d: total written to multiplexer: %d\n",
     (int) Linux.gettid (), total * (int)sizeof (ushort));
 }
-                            multiplexer.offer_queue (word);
                     }
                 }
+                //stdout.printf ("\n");
             }
-            Thread.usleep (50);
+
+            /* mark buffers as read */
+            if (nscan > 0) {
+                for (i = 0; i < size; i++) {
+                    (devices [i] as Cld.ComediDevice).dev.mark_buffer_read (subdevices [i], (nscan / 2) * nchans [i]);
+                }
+            }
+            Thread.usleep (5000);
         }
 
         Idle.add ((owned) callback);
@@ -239,18 +323,23 @@ if ((total % 32768) == 0) {
         yield;
     }
 
-
-
     /**
      * {@inheritDoc}
      */
     public override void generate () {
         tasks = get_object_map (typeof (Cld.ComediTask));
-        generate_multiplexers ();
+        devices = get_object_map (typeof (Cld.ComediDevice));
+
+        foreach (var device in devices.values) {
+            (device as Device).open ();
+        }
+
         foreach (var task in tasks.values) {
             /* Connect this signal to enable concurrent starting of streaming tasks */
             async_start.connect ((task as Cld.ComediTask).async_start);
         }
+
+        generate_multiplexers ();
     }
 
     /**
@@ -259,13 +348,15 @@ if ((total % 32768) == 0) {
      * @param fname The uri of a named pipe for inter-process communication.
      */
     public void new_fifo (Cld.Log log, string fname) {
+
         /* Check if logged channels are from a streaming acquisition */
         foreach (var column in (log as Cld.Container).get_children (typeof (Cld.Column)).values) {
             var uri = (column as Cld.Column).channel.uri;
             var tasks = get_object_map (typeof (Cld.ComediTask));
+
             foreach (var task in tasks.values) {
                 if (((task as Cld.ComediTask).exec_type == "streaming") &&
-                            ((task as Cld.ComediTask).chrefs.contains (uri))) {
+                        ((task as Cld.ComediTask).chrefs.contains (uri))) {
                     (task as Cld.ComediTask).fifos.set (fname, -1);
                 }
             }
@@ -273,34 +364,46 @@ if ((total % 32768) == 0) {
     }
 
     /**
-     * Combine individual task buffers to form a data multiplexer.
+     * Combines tasks with a common named pipe to form a data multiplexer.
      */
     private void generate_multiplexers () {
-        multiplexers = new Gee.HashMap<string, Multiplexer?> ();
+        multiplexers = new Gee.TreeMap<string, Multiplexer?> ();
+        Cld.AcquisitionController.Multiplexer multiplexer;
+
         foreach (var task in tasks.values) {
+
             foreach (var fname in ((task as Cld.ComediTask).fifos.keys)) {
+
                 if (!(multiplexers.has_key (fname))) {
-                    var multiplexer = new Multiplexer ();
-                    multiplexer.tasks = new Gee.LinkedList<Cld.ComediTask> ();
-                    multiplexer.tasks.add (task as Cld.ComediTask);
-                    multiplexer.queue = new Gee.LinkedList<ushort> ();
+                    multiplexer = new Cld.AcquisitionController.Multiplexer ();
                     multiplexers.set (fname, multiplexer);
                 } else {
-                    var multiplexer = multiplexers.get (fname);
-                    if (!(multiplexer.tasks.contains (task as Cld.ComediTask))) {
-                        multiplexer.tasks.add (task as Cld.ComediTask);
-                    }
-                    multiplexers.set (fname, multiplexer);
+                    multiplexer = multiplexers.get (fname);
                 }
+
+                var device = (task as Cld.ComediTask).device;
+                var subdevice = (task as Cld.ComediTask).subdevice;
+                //Comedi.Device dev = (device as Cld.ComediDevice).dev;
+                var size = (device as Cld.ComediDevice).dev.get_buffer_size ((uint)subdevice);
+                var fd = (device as Cld.ComediDevice).dev.fileno ();
+                void *map;
+                map = Posix.mmap (null, size, Posix.PROT_READ, Posix.MAP_SHARED, fd, 0);
+                multiplexer.tasks.set (task as Cld.ComediTask, map);
+                multiplexers.set (fname, multiplexer);
             }
         }
     }
     /**
      * Mutiplexes data from multiple tasks.
      */
-    private class Multiplexer {
-        public Gee.List<Cld.ComediTask> tasks;   // A list of tasks.
-        public Gee.Deque <ushort> queue;          // A FIFO queue of mutiplexed data
+    private class Multiplexer : GLib.Object {
+        public Gee.Map<Cld.ComediTask, void*> tasks;  // A list of task, memory map pairs
+        public Gee.Deque <ushort> queue;                  // A FIFO queue of mutiplexed data
+
+        construct {
+            tasks = new Gee.TreeMap<Cld.ComediTask, ushort*> ();
+            queue = new Gee.LinkedList<ushort> ();
+        }
 
         /**
          * A thread safe method to poll the queue.

@@ -32,6 +32,7 @@ example_CPPFLAGS = \
 	$(GEE_CFLAGS) \
 	$(XML_CFLAGS) \
 	$(JSON_CFLAGS) \
+	$(COMEDI_CFLAGS) \
 	$(NULL)
 
 example_LDADD = \
@@ -40,6 +41,7 @@ example_LDADD = \
 	$(GEE_LIBS) \
 	$(XML_LIBS) \
 	$(JSON_LIBS) \
+	$(COMEDI_LIBS) \
 	$(NULL)
 
 ### individual example applications

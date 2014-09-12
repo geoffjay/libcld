@@ -30,7 +30,11 @@ public class Cld.Column : Cld.AbstractContainer {
     /**
      * Channel value for tracking.
      */
-    public double channel_value { get; set; }
+    private double _channel_value;
+    public double channel_value {
+        get { return _channel_value; }
+        set { _channel_value = value; }
+    }
 
     /**
      * Default constructor.

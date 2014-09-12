@@ -93,9 +93,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
                             value = iter->get_content ();
                             time_stamp = TimeStampFlag.parse (value);
                             break;
-                        case "fifo":
-                            fifos.set (iter->get_content (), -1);
-                            break;
                         default:
                             break;
                     }
@@ -274,16 +271,19 @@ public class Cld.CsvLog : Cld.AbstractLog {
     /**
      * Write the next line in the file.
      */
-    public void write_next_line (Cld.LogEntry entry) {
+    public override void log_entry_write (Cld.LogEntry entry) {
         string line = "";
         char sep = '\t';
 
         line = "%lld\t".printf (entry.time_us);
 
+        int i = 0;
         foreach (var object in objects.values) {
             if (object is Cld.Column) {
-                var datum = entry.data.get ((object as Cld.Column).chref);
+                //var datum = entry.data.get ((object as Cld.Column).chref);
+                var datum = entry.data [i];
                 line += "%.6f%c".printf (datum, sep);
+                i++;
             }
         }
 
@@ -300,24 +300,60 @@ public class Cld.CsvLog : Cld.AbstractLog {
         file_open ();
         write_header ();
 
-        /* Open the FIFO data buffers. */
-        foreach (string fname in fifos.keys) {
-            if (Posix.access (fname, Posix.F_OK) == -1) {
-                int res = Posix.mkfifo (fname, 0777);
-                if (res != 0) {
-                    Cld.error ("%s could not create fifo %s\n",id, fname);
-                }
-            }
+        /* Count the number of channels */
+        var columns = get_children (typeof (Cld.Column));
+        nchans = columns.size;
 
-            open_fifo.begin (fname, () => {
-                Cld.debug ("got a writer for %s", fname);
+        active = true;
+        if (fifos.size != 0) {
+            /* Open the FIFO data buffers. */
+            foreach (string fname in fifos.keys) {
+                open_fifo.begin (fname, (obj, res) => {
+                    try {
+                        int fd = open_fifo.end (res);
+                        Cld.debug ("got a writer for %s", fname);
+
+                        /* Background fifo watch queues fills the entry queue */
+                        bg_fifo_watch.begin (fd, (obj, res) => {
+                            try {
+                                bg_fifo_watch.end (res);
+                                Cld.debug ("Log fifo watch async ended");
+                            } catch (ThreadError e) {
+                                string msg = e.message;
+                                Cld.error (@"Thread error: $msg");
+                            }
+                        });
+
+                        bg_raw_process.begin ((obj, res) => {
+                            try {
+                                bg_raw_process.end (res);
+                                Cld.debug ("Raw data queue processing async ended");
+                            } catch (ThreadError e) {
+                                string msg = e.message;
+                                Cld.error (@"Thread error: $msg");
+                            }
+                        });
+                    } catch (ThreadError e) {
+                        string msg = e.message;
+                        Cld.error (@"Thread error: $msg");
+                    }
+                });
+            }
+        } else {
+            /* Background channel watch fills the entry queue */
+            bg_channel_watch.begin (() => {
+                try {
+                    Cld.debug ("Channel watch async ended");
+                } catch (ThreadError e) {
+                    string msg = e.message;
+                    Cld.error (@"Thread error: $msg");
+                }
             });
         }
 
-        bg_log_watch.begin ((obj, res) => {
+        bg_entry_write.begin (() => {
             try {
-                bg_log_watch.end (res);
-                Cld.debug ("Log file watch async ended");
+                Cld.debug ("Log entry queue write async ended");
             } catch (ThreadError e) {
                 string msg = e.message;
                 Cld.error (@"Thread error: $msg");
@@ -325,80 +361,36 @@ public class Cld.CsvLog : Cld.AbstractLog {
         });
     }
 
-    private async void open_fifo (string fname) {
+    private async int open_fifo (string fname) {
         SourceFunc callback = open_fifo.callback;
-        ThreadFunc<void*> run = () => {
+        int fd = -1;
+
+        GLib.Thread<int> thread = new GLib.Thread<int> ("open_fifo_%s".printf (fname), () => {
             Cld.debug ("%s is is waiting for a writer to FIFO %s",this.id, fname);
-            int fd = Posix.open (fname, Posix.O_RDONLY);
+            fd = Posix.open (fname, Posix.O_RDONLY);
             fifos.set (fname, fd);
             if (fd == -1) {
                 Cld.debug ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
             } else {
-                Cld.debug ("Opening FIFO %s fd: %d", fname, fd);
-                Idle.add ((owned) callback);
-            }
-
-            return null;
-        };
-        Thread.create<void*> (run, false);
-
-        yield;
-    }
-
-     /**
-     * Launches a thread that pulls a LogEntry from the queue and writes
-     * it to the log file.
-     */
-   private async void bg_log_watch () throws ThreadError {
-        SourceFunc callback = bg_log_watch.callback;
-
-        ThreadFunc<void *> _run = () => {
-            string head = "";
-            active = true;
-
-            while (active) {
-                char [] s = new char[4096];
-                string [] rows;
-                string tail;
-                ssize_t num;
-
-                foreach (int fd in fifos.values) {
-                    if ((num = Posix.read (fd, s, 4096)) == -1)
-                        Cld.debug("read error");
-                    else {
-                        rows = ((string)s).split ("\n");
-
-                        /* Re-assemble split rows. */
-                        if (head != "") {
-                            /* Attach the head if it is not empty. */
-                            tail = rows [0];
-                            rows [0] = head + tail;
-                            head = "";
-                        }
-                        if ( s [num - 1] != '\n') {
-                            /* Set a new head if last row is incomplete. */
-                            head = rows [rows.length -1];
-                            rows [rows.length - 1] = "";
-                        }
-
-                        /* Process each row. */
-                        foreach (var row in rows) {
-                            if (row != "") {
-                                Cld.LogEntry entry = new Cld.LogEntry.from_serial (row);
-                                entry.time_us = entry.timestamp.difference (start_time);
-                                //write_next_line (entry);
-                            }
-                        }
-                    }
-                }
+                Cld.debug ("Sqlite log is opening FIFO %s fd: %d", fname, fd);
             }
 
             Idle.add ((owned) callback);
-            return null;
-        };
-        Thread.create<void *> (_run, false);
 
+            return 0;
+        });
         yield;
+
+        return fd;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override void process_entry_queue () {
+        while (entry_queue.size > 0) {
+            log_entry_write (entry_queue.poll_tail ());
+        }
     }
 
     /**
@@ -443,17 +435,4 @@ public class Cld.CsvLog : Cld.AbstractLog {
             data += (uchar) str[ctr];
         return data;
     }
-
-//    /**
-//     * {@inheritDoc}
-//     */
-//    public override string to_string () {
-//        string str_data  = "CldLog\n";
-//               str_data += "\tid:   %s\n".printf (id);
-//               str_data += "\tname: %s\n".printf (name);
-//               str_data += "\tpath: %s\n".printf (path);
-//               str_data += "\tfile: %s\n".printf (file);
-//               str_data += "\trate: %.3f\n".printf (rate);
-//        return str_data;
-//    }
 }

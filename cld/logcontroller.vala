@@ -89,5 +89,8 @@ public class Cld.LogController : Cld.AbstractController {
      */
     public override void generate () {
         logs = get_object_map (typeof (Cld.Log));
+//        foreach (var log in logs.values) {
+//            (log as Cld.Log).connect_signals ();
+//        }
     }
 }

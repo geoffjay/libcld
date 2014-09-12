@@ -142,25 +142,13 @@ public class Cld.Context : Cld.AbstractContainer {
 
         acquisition_controller.generate ();
         log_controller.generate ();
-        automation_controller.generate ();
+        //automation_controller.generate ();
     }
 
     /**
      * Start a log.
      */
     public void start_log (Cld.Log log) {
-        foreach (var fifo in log.fifos.keys) {
-            log.start ();
-            acquisition_controller.stream_data (fifo);
-        }
-    }
-
-    /**
-     * Start all of the acquisitions concurrently.
-     */
-    public void start_acquisition () {
-        acquisition_controller.run ();
-        var start = new GLib.DateTime.now_local ();
-        acquisition_controller.async_start (start);
+        log.start ();
     }
 }

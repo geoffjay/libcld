@@ -1,6 +1,5 @@
 /**
- * A log file entry class which will be pushed onto the tail of the
- * buffer for log file writes.
+ * A log file entry class consists of a row of data and timestamp information.
  */
 public class Cld.LogEntry : Cld.AbstractObject {
 
@@ -30,12 +29,18 @@ public class Cld.LogEntry : Cld.AbstractObject {
         set { _time_as_string = value; }
     }
 
-    /**
-     * A map of values representing a single row of channel data in a table or file.
-     * The keys are channel uri's and the values are scaled value or digital state.
-     */
-    private Gee.Map<string, double?> _data;
-    public Gee.Map<string, double?> data {
+//    /**
+//     * A map of values representing a single row of channel data in a table or file.
+//     * The keys are channel uri's and the values are scaled value or digital state.
+//     */
+//    private Gee.Map<string, double?> _data;
+//    public Gee.Map<string, double?> data {
+//        get { return _data; }
+//        set { _data = value; }
+//    }
+
+    private double [] _data;
+    public double [] data {
         get { return _data; }
         set { _data = value; }
     }
@@ -52,9 +57,9 @@ public class Cld.LogEntry : Cld.AbstractObject {
         set { _as_string = value; }
     }
 
-    construct {
-        _data = new Gee.TreeMap<string, double?> ();
-    }
+//    construct {
+//       _data = new Gee.TreeMap<string, double?> ();
+//    }
 
     public LogEntry () {
         timestamp = new DateTime.now_local ();
@@ -91,7 +96,8 @@ public class Cld.LogEntry : Cld.AbstractObject {
 
         for (int i = 1; i < array.length - 1; i+=2) {
             double num = double.parse (array[i + 1]);
-           _data.set (array[i], (double)num);//XXX ..again, not sure why the cast is needed (?).
+           //_data.set (array[i], (double)num);//XXX ..again, not sure why the cast is needed (?).
+            _data [i] = (double) num;
         }
     }
 

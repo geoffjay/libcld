@@ -78,8 +78,9 @@ public class Cld.ComediTask : AbstractTask {
     public int interval_ns { get; set; }
 
     /**
-     * The resolution (in nanoseconds) of the time between samples of adjacent channels. This
-     * is the inverse of the sampling frequency.
+     * The resolution (in nanoseconds) of the time between samples of adjacent channels (ie. the
+     * inverse of the sampling frequency.)
+     * This parameter may need to be adjusted to get streaming acquisition to work properly.
      */
     public int resolution_ns { get; set; default = 100; }
 
@@ -116,7 +117,7 @@ public class Cld.ComediTask : AbstractTask {
     public uint qsize { get; set; default = 65536; }
 
     private Comedi.InstructionList instruction_list;
-    private const int NSAMPLES = 10; //XXX Why is this set to 10 (Steve)??
+    private const int NSAMPLES = 10;
 
     /**
      * Internal thread data for log file output handling.
@@ -128,7 +129,6 @@ public class Cld.ComediTask : AbstractTask {
     /**
      * Counts the total number of connected FIFOs.
      */
-    private static int n_fifos = 0;
     private Cld.LogEntry entry;
     private int device_fd = -1;
 

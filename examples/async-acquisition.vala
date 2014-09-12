@@ -452,55 +452,115 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                             <cld:property name="format">%F-%T</cld:property>
                             <cld:property name="rate">1.000</cld:property>
                             <cld:property name="backup-path">./</cld:property>
-                            <cld:property name="backup-file">backup.db</cld:property>
+                            <cld:property name="backup-file">backup0.db</cld:property>
                             <cld:property name="backup-interval-hrs">1</cld:property>
+                            <cld:property name="data-source">fifo</cld:property>
                             <cld:object id="col000" type="column" chref="/ctr0/daqctl0/dev0/ai00"/>
-                            <cld:object id="col001" type="column" chref="/ctr0/daqctl0/dev1/ai00"/>
-                            <cld:object id="col002" type="column" chref="/ctr0/daqctl0/dev2/ai00"/>
-                            <cld:object id="col003" type="column" chref="/ctr0/daqctl0/dev0/ai01"/>
-                            <cld:object id="col004" type="column" chref="/ctr0/daqctl0/dev1/ai01"/>
-                            <cld:object id="col005" type="column" chref="/ctr0/daqctl0/dev2/ai01"/>
-                            <cld:object id="col006" type="column" chref="/ctr0/daqctl0/dev0/ai02"/>
-                            <cld:object id="col007" type="column" chref="/ctr0/daqctl0/dev1/ai02"/>
-                            <cld:object id="col008" type="column" chref="/ctr0/daqctl0/dev2/ai02"/>
-                            <cld:object id="col009" type="column" chref="/ctr0/daqctl0/dev0/ai03"/>
-                            <cld:object id="col010" type="column" chref="/ctr0/daqctl0/dev1/ai03"/>
-                            <cld:object id="col011" type="column" chref="/ctr0/daqctl0/dev2/ai03"/>
-                            <cld:object id="col012" type="column" chref="/ctr0/daqctl0/dev0/ai04"/>
-                            <cld:object id="col013" type="column" chref="/ctr0/daqctl0/dev1/ai04"/>
-                            <cld:object id="col014" type="column" chref="/ctr0/daqctl0/dev2/ai04"/>
-                            <cld:object id="col015" type="column" chref="/ctr0/daqctl0/dev0/ai05"/>
-                            <cld:object id="col100" type="column" chref="/ctr0/daqctl0/dev1/ai05"/>
-                            <cld:object id="col101" type="column" chref="/ctr0/daqctl0/dev2/ai05"/>
-                            <cld:object id="col102" type="column" chref="/ctr0/daqctl0/dev0/ai06"/>
-                            <cld:object id="col103" type="column" chref="/ctr0/daqctl0/dev1/ai06"/>
-                            <cld:object id="col104" type="column" chref="/ctr0/daqctl0/dev2/ai06"/>
-                            <cld:object id="col105" type="column" chref="/ctr0/daqctl0/dev0/ai07"/>
-                            <cld:object id="col106" type="column" chref="/ctr0/daqctl0/dev1/ai07"/>
-                            <cld:object id="col107" type="column" chref="/ctr0/daqctl0/dev2/ai07"/>
-                            <cld:object id="col108" type="column" chref="/ctr0/daqctl0/dev0/ai08"/>
-                            <cld:object id="col109" type="column" chref="/ctr0/daqctl0/dev1/ai08"/>
-                            <cld:object id="col110" type="column" chref="/ctr0/daqctl0/dev2/ai08"/>
-                            <cld:object id="col111" type="column" chref="/ctr0/daqctl0/dev0/ai09"/>
-                            <cld:object id="col112" type="column" chref="/ctr0/daqctl0/dev1/ai09"/>
-                            <cld:object id="col113" type="column" chref="/ctr0/daqctl0/dev2/ai09"/>
-                            <cld:object id="col114" type="column" chref="/ctr0/daqctl0/dev0/ai10"/>
-                            <cld:object id="col115" type="column" chref="/ctr0/daqctl0/dev1/ai10"/>
-                            <cld:object id="col200" type="column" chref="/ctr0/daqctl0/dev2/ai10"/>
-                            <cld:object id="col201" type="column" chref="/ctr0/daqctl0/dev0/ai11"/>
-                            <cld:object id="col202" type="column" chref="/ctr0/daqctl0/dev1/ai11"/>
-                            <cld:object id="col203" type="column" chref="/ctr0/daqctl0/dev2/ai11"/>
-                            <cld:object id="col204" type="column" chref="/ctr0/daqctl0/dev0/ai12"/>
-                            <cld:object id="col205" type="column" chref="/ctr0/daqctl0/dev1/ai12"/>
-                            <cld:object id="col206" type="column" chref="/ctr0/daqctl0/dev2/ai12"/>
-                            <cld:object id="col207" type="column" chref="/ctr0/daqctl0/dev0/ai13"/>
-                            <cld:object id="col208" type="column" chref="/ctr0/daqctl0/dev1/ai13"/>
-                            <cld:object id="col209" type="column" chref="/ctr0/daqctl0/dev2/ai13"/>
-                            <cld:object id="col210" type="column" chref="/ctr0/daqctl0/dev0/ai14"/>
-                            <cld:object id="col211" type="column" chref="/ctr0/daqctl0/dev1/ai14"/>
-                            <cld:object id="col212" type="column" chref="/ctr0/daqctl0/dev2/ai14"/>
-                            <cld:object id="col213" type="column" chref="/ctr0/daqctl0/dev0/ai15"/>
-                            <cld:object id="col214" type="column" chref="/ctr0/daqctl0/dev1/ai15"/>
+                            <cld:object id="col001" type="column" chref="/ctr0/daqctl0/dev0/ai01"/>
+                            <cld:object id="col002" type="column" chref="/ctr0/daqctl0/dev0/ai02"/>
+                            <cld:object id="col003" type="column" chref="/ctr0/daqctl0/dev0/ai03"/>
+                            <cld:object id="col004" type="column" chref="/ctr0/daqctl0/dev0/ai04"/>
+                            <cld:object id="col005" type="column" chref="/ctr0/daqctl0/dev0/ai05"/>
+                            <cld:object id="col006" type="column" chref="/ctr0/daqctl0/dev0/ai06"/>
+                            <cld:object id="col007" type="column" chref="/ctr0/daqctl0/dev0/ai07"/>
+                            <cld:object id="col008" type="column" chref="/ctr0/daqctl0/dev0/ai08"/>
+                            <cld:object id="col009" type="column" chref="/ctr0/daqctl0/dev0/ai09"/>
+                            <cld:object id="col010" type="column" chref="/ctr0/daqctl0/dev0/ai10"/>
+                            <cld:object id="col011" type="column" chref="/ctr0/daqctl0/dev0/ai11"/>
+                            <cld:object id="col012" type="column" chref="/ctr0/daqctl0/dev0/ai12"/>
+                            <cld:object id="col013" type="column" chref="/ctr0/daqctl0/dev0/ai13"/>
+                            <cld:object id="col014" type="column" chref="/ctr0/daqctl0/dev0/ai14"/>
+                            <cld:object id="col015" type="column" chref="/ctr0/daqctl0/dev0/ai15"/>
+                            <cld:object id="col100" type="column" chref="/ctr0/daqctl0/dev1/ai00"/>
+                            <cld:object id="col101" type="column" chref="/ctr0/daqctl0/dev1/ai01"/>
+                            <cld:object id="col102" type="column" chref="/ctr0/daqctl0/dev1/ai02"/>
+                            <cld:object id="col103" type="column" chref="/ctr0/daqctl0/dev1/ai03"/>
+                            <cld:object id="col104" type="column" chref="/ctr0/daqctl0/dev1/ai04"/>
+                            <cld:object id="col105" type="column" chref="/ctr0/daqctl0/dev1/ai05"/>
+                            <cld:object id="col106" type="column" chref="/ctr0/daqctl0/dev1/ai06"/>
+                            <cld:object id="col107" type="column" chref="/ctr0/daqctl0/dev1/ai07"/>
+                            <cld:object id="col108" type="column" chref="/ctr0/daqctl0/dev1/ai08"/>
+                            <cld:object id="col109" type="column" chref="/ctr0/daqctl0/dev1/ai09"/>
+                            <cld:object id="col110" type="column" chref="/ctr0/daqctl0/dev1/ai10"/>
+                            <cld:object id="col111" type="column" chref="/ctr0/daqctl0/dev1/ai11"/>
+                            <cld:object id="col112" type="column" chref="/ctr0/daqctl0/dev1/ai12"/>
+                            <cld:object id="col113" type="column" chref="/ctr0/daqctl0/dev1/ai13"/>
+                            <cld:object id="col114" type="column" chref="/ctr0/daqctl0/dev1/ai14"/>
+                            <cld:object id="col115" type="column" chref="/ctr0/daqctl0/dev1/ai15"/>
+                            <cld:object id="col200" type="column" chref="/ctr0/daqctl0/dev2/ai00"/>
+                            <cld:object id="col201" type="column" chref="/ctr0/daqctl0/dev2/ai01"/>
+                            <cld:object id="col202" type="column" chref="/ctr0/daqctl0/dev2/ai02"/>
+                            <cld:object id="col203" type="column" chref="/ctr0/daqctl0/dev2/ai03"/>
+                            <cld:object id="col204" type="column" chref="/ctr0/daqctl0/dev2/ai04"/>
+                            <cld:object id="col205" type="column" chref="/ctr0/daqctl0/dev2/ai05"/>
+                            <cld:object id="col206" type="column" chref="/ctr0/daqctl0/dev2/ai06"/>
+                            <cld:object id="col207" type="column" chref="/ctr0/daqctl0/dev2/ai07"/>
+                            <cld:object id="col208" type="column" chref="/ctr0/daqctl0/dev2/ai08"/>
+                            <cld:object id="col209" type="column" chref="/ctr0/daqctl0/dev2/ai09"/>
+                            <cld:object id="col210" type="column" chref="/ctr0/daqctl0/dev2/ai10"/>
+                            <cld:object id="col211" type="column" chref="/ctr0/daqctl0/dev2/ai11"/>
+                            <cld:object id="col212" type="column" chref="/ctr0/daqctl0/dev2/ai12"/>
+                            <cld:object id="col213" type="column" chref="/ctr0/daqctl0/dev2/ai13"/>
+                            <cld:object id="col214" type="column" chref="/ctr0/daqctl0/dev2/ai14"/>
+                            <cld:object id="col215" type="column" chref="/ctr0/daqctl0/dev2/ai15"/>
+                        </cld:object>
+                        <cld:object id="log1" type="log" ltype="sqlite">
+                            <cld:property name="title">Data Log</cld:property>
+                            <cld:property name="path">/srv/data</cld:property>
+                            <cld:property name="file">log1.db</cld:property>
+                            <cld:property name="format">%F-%T</cld:property>
+                            <cld:property name="rate">1.000</cld:property>
+                            <cld:property name="backup-path">./</cld:property>
+                            <cld:property name="backup-file">backup1.db</cld:property>
+                            <cld:property name="backup-interval-hrs">1</cld:property>
+                            <cld:property name="data-source">channel</cld:property>
+                            <cld:object id="col000" type="column" chref="/ctr0/daqctl0/dev0/ai00"/>
+                            <cld:object id="col001" type="column" chref="/ctr0/daqctl0/dev0/ai01"/>
+                            <cld:object id="col002" type="column" chref="/ctr0/daqctl0/dev0/ai02"/>
+                            <cld:object id="col003" type="column" chref="/ctr0/daqctl0/dev0/ai03"/>
+                            <cld:object id="col004" type="column" chref="/ctr0/daqctl0/dev0/ai04"/>
+                            <cld:object id="col005" type="column" chref="/ctr0/daqctl0/dev0/ai05"/>
+                            <cld:object id="col006" type="column" chref="/ctr0/daqctl0/dev0/ai06"/>
+                            <cld:object id="col007" type="column" chref="/ctr0/daqctl0/dev0/ai07"/>
+                            <cld:object id="col008" type="column" chref="/ctr0/daqctl0/dev0/ai08"/>
+                            <cld:object id="col009" type="column" chref="/ctr0/daqctl0/dev0/ai09"/>
+                            <cld:object id="col010" type="column" chref="/ctr0/daqctl0/dev0/ai10"/>
+                            <cld:object id="col011" type="column" chref="/ctr0/daqctl0/dev0/ai11"/>
+                            <cld:object id="col012" type="column" chref="/ctr0/daqctl0/dev0/ai12"/>
+                            <cld:object id="col013" type="column" chref="/ctr0/daqctl0/dev0/ai13"/>
+                            <cld:object id="col014" type="column" chref="/ctr0/daqctl0/dev0/ai14"/>
+                            <cld:object id="col015" type="column" chref="/ctr0/daqctl0/dev0/ai15"/>
+                            <cld:object id="col100" type="column" chref="/ctr0/daqctl0/dev1/ai00"/>
+                            <cld:object id="col101" type="column" chref="/ctr0/daqctl0/dev1/ai01"/>
+                            <cld:object id="col102" type="column" chref="/ctr0/daqctl0/dev1/ai02"/>
+                            <cld:object id="col103" type="column" chref="/ctr0/daqctl0/dev1/ai03"/>
+                            <cld:object id="col104" type="column" chref="/ctr0/daqctl0/dev1/ai04"/>
+                            <cld:object id="col105" type="column" chref="/ctr0/daqctl0/dev1/ai05"/>
+                            <cld:object id="col106" type="column" chref="/ctr0/daqctl0/dev1/ai06"/>
+                            <cld:object id="col107" type="column" chref="/ctr0/daqctl0/dev1/ai07"/>
+                            <cld:object id="col108" type="column" chref="/ctr0/daqctl0/dev1/ai08"/>
+                            <cld:object id="col109" type="column" chref="/ctr0/daqctl0/dev1/ai09"/>
+                            <cld:object id="col110" type="column" chref="/ctr0/daqctl0/dev1/ai10"/>
+                            <cld:object id="col111" type="column" chref="/ctr0/daqctl0/dev1/ai11"/>
+                            <cld:object id="col112" type="column" chref="/ctr0/daqctl0/dev1/ai12"/>
+                            <cld:object id="col113" type="column" chref="/ctr0/daqctl0/dev1/ai13"/>
+                            <cld:object id="col114" type="column" chref="/ctr0/daqctl0/dev1/ai14"/>
+                            <cld:object id="col115" type="column" chref="/ctr0/daqctl0/dev1/ai15"/>
+                            <cld:object id="col200" type="column" chref="/ctr0/daqctl0/dev2/ai00"/>
+                            <cld:object id="col201" type="column" chref="/ctr0/daqctl0/dev2/ai01"/>
+                            <cld:object id="col202" type="column" chref="/ctr0/daqctl0/dev2/ai02"/>
+                            <cld:object id="col203" type="column" chref="/ctr0/daqctl0/dev2/ai03"/>
+                            <cld:object id="col204" type="column" chref="/ctr0/daqctl0/dev2/ai04"/>
+                            <cld:object id="col205" type="column" chref="/ctr0/daqctl0/dev2/ai05"/>
+                            <cld:object id="col206" type="column" chref="/ctr0/daqctl0/dev2/ai06"/>
+                            <cld:object id="col207" type="column" chref="/ctr0/daqctl0/dev2/ai07"/>
+                            <cld:object id="col208" type="column" chref="/ctr0/daqctl0/dev2/ai08"/>
+                            <cld:object id="col209" type="column" chref="/ctr0/daqctl0/dev2/ai09"/>
+                            <cld:object id="col210" type="column" chref="/ctr0/daqctl0/dev2/ai10"/>
+                            <cld:object id="col211" type="column" chref="/ctr0/daqctl0/dev2/ai11"/>
+                            <cld:object id="col212" type="column" chref="/ctr0/daqctl0/dev2/ai12"/>
+                            <cld:object id="col213" type="column" chref="/ctr0/daqctl0/dev2/ai13"/>
+                            <cld:object id="col214" type="column" chref="/ctr0/daqctl0/dev2/ai14"/>
                             <cld:object id="col215" type="column" chref="/ctr0/daqctl0/dev2/ai15"/>
                         </cld:object>
                     </cld:object>
@@ -558,22 +618,27 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
     }
 
     public bool start_acq_cb () {
-        context.start_acquisition ();
+        context.acquisition_controller.run ();
 
         return false;
     }
 
     public bool start_log_cb () {
         var log0 = context.get_object_from_uri ("/ctr0/logctl0/log0") as Cld.SqliteLog;
-        stdout.printf ("Log:\n%s\n", log.to_string ());
+//        var log1 = context.get_object_from_uri ("/ctr0/logctl0/log1") as Cld.SqliteLog;
+        stdout.printf ("Log:\n%s\n", log0.to_string ());
+//        stdout.printf ("Log:\n%s\n", log1.to_string ());
         context.start_log (log0);
+//        context.start_log (log1);
 
         return false;
     }
 
     public bool stop_log_cb () {
         var log0 = context.get_object_from_uri ("/ctr0/logctl0/log0") as Cld.SqliteLog;
+//        var log1 = context.get_object_from_uri ("/ctr0/logctl0/log1") as Cld.SqliteLog;
         (log0 as Cld.Log).stop ();
+//        (log1 as Cld.Log).stop ();
 
         return false;
     }

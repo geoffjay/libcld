@@ -51,6 +51,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public int backup_interval_ms;
 
     /**
+     * The source of the channel value information.
+     * fifo: The data comes from a named pipe.
+     * channel: The data comes from reading the value directly from the Cld.Channel
+     */
+    public string data_source;
+
+    /**
      * The name of the current Log table.
      */
     public string experiment_name {
@@ -116,16 +123,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     private bool backup_is_open;
 
     /**
-     * A FIFO for holding data to be processed.
-     */
-    private Gee.Deque<ushort> queue;
-
-    /**
-     * The total number of channels in this log.
-     */
-    private int num_chans;
-
-    /**
      * Enumerated Experiment table column names.
      */
     public enum ExperimentColumn {
@@ -175,7 +172,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /* constructor */
     construct {
         Cld.LogEntry entry = new Cld.LogEntry ();
-        queue = new Gee.LinkedList<ushort> ();
     }
 
     public SqliteLog () {
@@ -236,8 +232,8 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                             backup_interval_ms = (int) (double.parse (value) *
                                                   60 * 60 * 1000);
                             break;
-                        case "fifo":
-                            fifos.set (iter->get_content (), -1);
+                        case "data-source":
+                            data_source = iter->get_content ();
                             break;
                         default:
                             break;
@@ -446,33 +442,63 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public override void start () {
         /* Count the number of channels */
         var columns = get_children (typeof (Cld.Column));
-        num_chans = columns.size;
+        nchans = columns.size;
 
         active = true;
-        /* Open the FIFO data buffers. */
-        foreach (string fname in fifos.keys) {
-            open_fifo.begin (fname, (obj, res) => {
+        if (data_source == "fifo") {
+            /* Open the FIFO data buffers. */
+            foreach (string fname in fifos.keys) {
+                open_fifo.begin (fname, (obj, res) => {
+                    try {
+                        int fd = open_fifo.end (res);
+                        Cld.debug ("got a writer for %s", fname);
+
+                        /* Background fifo watch queues fills the entry queue */
+                        bg_fifo_watch.begin (fd, (obj, res) => {
+                            try {
+                                bg_fifo_watch.end (res);
+                                Cld.debug ("Log fifo watch async ended");
+                            } catch (ThreadError e) {
+                                string msg = e.message;
+                                Cld.error (@"Thread error: $msg");
+                            }
+                        });
+
+                        bg_raw_process.begin ((obj, res) => {
+                            try {
+                                bg_raw_process.end (res);
+                                Cld.debug ("Raw data queue processing async ended");
+                            } catch (ThreadError e) {
+                                string msg = e.message;
+                                Cld.error (@"Thread error: $msg");
+                            }
+                        });
+                    } catch (ThreadError e) {
+                        string msg = e.message;
+                        Cld.error (@"Thread error: $msg");
+                    }
+                });
+            }
+        } else if (data_source == "channel") {
+            /* Background channel watch fills the entry queue */
+            bg_channel_watch.begin (() => {
                 try {
-                    int fd = open_fifo.end (res);
-                    Cld.debug ("got a writer for %s", fname);
-
-                    /* Background fifo watch */
-                    bg_fifo_watch.begin (fd, (obj, res) => {
-                        try {
-                            bg_fifo_watch.end (res);
-                            Cld.debug ("Log fifo watch async ended");
-                        } catch (ThreadError e) {
-                            string msg = e.message;
-                            Cld.error (@"Thread error: $msg");
-                        }
-                    });
-
+                    Cld.debug ("Channel watch async ended");
                 } catch (ThreadError e) {
                     string msg = e.message;
                     Cld.error (@"Thread error: $msg");
                 }
             });
         }
+
+        bg_entry_write.begin (() => {
+            try {
+                Cld.debug ("Log entry queue write async ended");
+            } catch (ThreadError e) {
+                string msg = e.message;
+                Cld.error (@"Thread error: $msg");
+            }
+        });
 
         database_open ();
         create_tables ();
@@ -486,15 +512,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         GLib.Timeout.add_full (GLib.Priority.DEFAULT_IDLE, backup_interval_ms, backup_cb);
 
-        bg_process_data.begin ((obj, res) => {
-            try {
-                bg_process_data.end (res);
-                Cld.debug ("Log queue data processing async ended");
-            } catch (ThreadError e) {
-                string msg = e.message;
-                Cld.error (@"Thread error: $msg");
-            }
-        });
     }
 
     private async int open_fifo (string fname) {
@@ -520,6 +537,19 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         return fd;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public override void process_entry_queue () {
+        ec = db.exec ("BEGIN TRANSACTION", null, out errmsg);
+
+        for (int i = 0; i < 3 * entry_queue.size; i++) {
+//entry_queue.poll_tail ();
+            log_entry_write (entry_queue.poll_tail ());
+        }
+
+        ec = db.exec ("END TRANSACTION", null, out errmsg);
+    }
 
     /**
      * A callback function that automatically backs up the database.
@@ -531,107 +561,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         } else {
             return false;
         }
-    }
-
-    /**
-     * Launches a thread that pulls a rows of data from the data FIFO and writes
-     * it a queue.
-     */
-    private async void bg_fifo_watch (int fd) throws ThreadError {
-        SourceFunc callback = bg_fifo_watch.callback;
-        int ret = -1;
-        int bufsz = 65536;
-        int total = 0;
-
-	    Posix.fcntl (fd, Posix.F_SETFL, Posix.O_NONBLOCK);
-
-        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_fifo_watch",  () => {
-
-            while (active) {
-                ushort[] buf = new ushort[bufsz];
-                Posix.fd_set rdset;
-                //Posix.timeval timeout = Posix.timeval ();
-                Posix.timespec timeout = Posix.timespec ();
-                Posix.FD_ZERO (out rdset);
-                Posix.FD_SET (fd, ref rdset);
-                timeout.tv_sec = 0;
-                //timeout.tv_usec = 50000;
-                timeout.tv_nsec = 50000000;
-                Posix.sigset_t sigset = new Posix.sigset_t ();
-                Posix.sigemptyset (sigset);
-                //ret = Posix.select (fd + 1, &rdset, null, null, timeout);
-                ret = Posix.pselect (fd + 1, &rdset, null, null, timeout, sigset);
-
-                if (ret < 0) {
-                    if (Posix.errno == Posix.EAGAIN) {
-                        Cld.error ("Posix read error");
-                    }
-                } else if (ret == 0) {
-                    //stdout.printf ("%s hit timeout\n", id);
-                } else if ((Posix.FD_ISSET (fd, rdset)) == 1) {
-                    ret = (int)Posix.read (fd, buf, bufsz);
-                    for (int i = 0; i < ret / 2; i++) {
-                        total++;
-if ((total % 32768) == 0) { stdout.printf ("%d: total read by %s: %d\n",Linux.gettid (), uri, 2 * total); }
-                        lock (queue) {
-                            queue.offer_head (buf [i]);
-                        }
-//                        stdout.printf ("%4X ", buf [i]);
-//                        if ((total % num_chans) == 0) {
-//                            stdout.printf ("\n");
-//                        }
-                    }
-                }
-            }
-
-            Idle.add ((owned) callback);
-            return 0;
-        });
-
-        yield;
-    }
-
-    /**
-     * Write the queued data to the log.
-     */
-    private async void bg_process_data () throws ThreadError {
-        SourceFunc callback = bg_process_data.callback;
-        ushort datum = 0;
-        int total = 0;
-        Cld.LogEntry entry = new Cld.LogEntry ();
-
-        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_process_data", () => {
-            while (active) {
-                if (queue.size > num_chans) {
-
-                    lock (queue) {
-                        ec = db.exec ("BEGIN TRANSACTION", null, out errmsg);
-                        for (int i = 0; i < (queue.size - (queue.size % num_chans)); i++) {
-                            foreach (var column in objects.values) {
-                                if (column is Cld.Column) {
-                                    datum = queue.poll_tail ();
-                                    entry.data.set ((column as Cld.Column).chref, (double)datum);
-                                    total++;
-if ((total % 32768) == 0) { stdout.printf ("%d: total dequed by %s: %d\n",Linux.gettid (), uri, 2 * total); }
-                                    //stdout.printf ("%4X ", datum);
-                                }
-                            }
-                            //stdout.printf ("\n");
-                            entry.timestamp = entry.timestamp.add_seconds (0.00016);
-                            log_entry_write (entry);
-                        }
-                        ec = db.exec ("END TRANSACTION", null, out errmsg);
-                    }
-
-                }
-                Thread.usleep (100000);
-            }
-
-            Idle.add ((owned) callback);
-            return 0;
-        });
-
-        yield;
     }
 
     private void update_experiment_table () {
@@ -852,23 +781,16 @@ if ((total % 32768) == 0) { stdout.printf ("%d: total dequed by %s: %d\n",Linux.
         log_stmt.bind_int (parameter_index, experiment_id);
     }
 
-    private void log_entry_write (Cld.LogEntry entry) {
+    public override void log_entry_write (Cld.LogEntry entry) {
         parameter_index = log_stmt.bind_parameter_index ("$TIME");
         log_stmt.bind_text (parameter_index, entry.time_as_string);
 
-        int i = 0;
-        double val = 0;
-        foreach (var column in objects.values) {
-            if (column is Cld.Column) {
-                //parameter_index = log_stmt.bind_parameter_index ("$VAL%d".printf (i));
-                /* Bind values to columns. The order of sequential access is consistent using this method */
-                //log_stmt.bind_double (parameter_index, entry.data.get ((column as Cld.Column).chref));
-                log_stmt.bind_double (i + 3, entry.data.get ((column as Cld.Column).chref));
-                i++;
-            }
+        for (int i = 0; i < nchans; i++) {
+            parameter_index = log_stmt.bind_parameter_index ("$VAL%d".printf (i));
+            log_stmt.bind_double (parameter_index, entry.data [i]);
         }
+
         log_stmt.step ();
-       // log_stmt.clear_bindings ();
         log_stmt.reset ();
     }
 
@@ -883,8 +805,9 @@ if ((total % 32768) == 0) { stdout.printf ("%d: total dequed by %s: %d\n",Linux.
     private Cld.LogEntry get_log_entry (string table_name, int exp_id, int entry_id) {
         string query;
         Cld.LogEntry ent = new Cld.LogEntry ();
-        Gee.ArrayList<double?> data_list = new Gee.ArrayList<double?> ();
+        int size = get_children (typeof (Cld.Column)).size;
 
+        ent.data = new double [size];
 
         /* Count the number of columns in the table */
         query = "SELECT Count (*) FROM channel WHERE experiment_id=$EXPERIMENT_ID;";
@@ -898,6 +821,10 @@ if ((total % 32768) == 0) { stdout.printf ("%d: total dequed by %s: %d\n",Linux.
         int columns = int.parse (stmt.column_text (0));
         stmt.reset ();
 
+        if (size != columns) {
+            Cld.debug ("Sqlite.Log.get_log_entry (..) :The number log table columns does not match the data size.");
+        }
+
         query = "SELECT * FROM %s WHERE id=$ID;".printf (table_name);
         ec = db.prepare_v2 (query, query.length, out stmt);
         if (ec != Sqlite.OK) {
@@ -909,23 +836,13 @@ if ((total % 32768) == 0) { stdout.printf ("%d: total dequed by %s: %d\n",Linux.
         while (stmt.step () == Sqlite.ROW) {
             ent.time_as_string = stmt.column_text (ExperimentDataColumns.TIME);
             for (int i = 0; i < columns; i++) {
-                data_list.add (stmt.column_double (i + 3));
-            }
-
-            /* Transfer data list to log entry */
-            int i = 0;
-            foreach (var column in objects.values) {
-                if (column is Cld.Column) {
-                    var uri = ((column as Cld.Column).channel as Cld.Object).uri;
-                    ent.data.set (uri, data_list.get (i++));
-                }
+                ent.data [i] = stmt.column_double (i + 3);
             }
         }
         stmt.reset ();
 
         return ent;
     }
-
 
     /**
      * {@inheritDoc}
@@ -953,13 +870,13 @@ if ((total % 32768) == 0) { stdout.printf ("%d: total dequed by %s: %d\n",Linux.
     }
 
     private bool deactivate_cb () {
-        if (queue.size == 0) {
+        if (entry_queue.size == 0) {
             active = false;
 
             return false;
         } else {
 
-            return false;
+            return true;
         }
     }
 

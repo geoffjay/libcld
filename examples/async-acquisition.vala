@@ -20,6 +20,13 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
             <cld xmlns:cld="urn:libcld">
                 <cld:objects>
                     <cld:object id="daqctl0" type="controller" ctype="acquisition">
+                        <cld:object id="mux0" type="multiplexer">
+                            <cld:property name="taskref">/ctr0/daqctl0/dev0/tk0</cld:property>
+                            <cld:property name="taskref">/ctr0/daqctl0/dev1/tk0</cld:property>
+                            <cld:property name="taskref">/ctr0/daqctl0/dev2/tk0</cld:property>
+                            <cld:property name="interval-ms">100</cld:property>
+                            <cld:property name="fname">/tmp/fifo0</cld:property>
+                        </cld:object>
                         <cld:object id="dev0" type="device" driver="comedi">
                             <cld:property name="hardware">PCI-1710</cld:property>
                             <cld:property name="type">input</cld:property>
@@ -604,15 +611,16 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
 //        stdout.printf ("Object properties:\n%s", context.to_string_recursive ());
 
         for (int i = 0; i < 3; i++) {
-            device = context.get_object ("dev%d".printf (i)) as ComediDevice;
+            var device = context.get_object ("dev%d".printf (i)) as ComediDevice;
+            (device as ComediDevice).open ();
             var info = device.info ();
             stdout.printf ("Comedi.Device information:\n%s\n", info.to_string ());
         }
 
         GLib.Timeout.add_seconds (2, start_acq_cb);
         GLib.Timeout.add_seconds (1, start_log_cb);
-        GLib.Timeout.add_seconds (32, stop_log_cb);
-        GLib.Timeout.add_seconds (35, quit_cb);
+        GLib.Timeout.add_seconds (62, stop_log_cb);
+        GLib.Timeout.add_seconds (63, quit_cb);
 
         loop.run ();
     }
@@ -625,11 +633,12 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
 
     public bool start_log_cb () {
         var log0 = context.get_object_from_uri ("/ctr0/logctl0/log0") as Cld.SqliteLog;
+        (log0 as Cld.SqliteLog).fifos.set ("/tmp/fifo0", -1);
 //        var log1 = context.get_object_from_uri ("/ctr0/logctl0/log1") as Cld.SqliteLog;
         stdout.printf ("Log:\n%s\n", log0.to_string ());
 //        stdout.printf ("Log:\n%s\n", log1.to_string ());
-        context.start_log (log0);
-//        context.start_log (log1);
+        log0.start ();
+//        log1.start;
 
         return false;
     }

@@ -100,7 +100,7 @@ public class Cld.Context : Cld.AbstractContainer {
                 as Cld.Container;
             reference = get_object_from_uri ((entry
                 as Cld.AbstractContainer.Reference).reference_uri);
-            Cld.debug ("%-30s %s", (self as Cld.Object).uri, (reference as Cld.Object).uri);
+//            Cld.debug ("%-30s %s", (self as Cld.Object).uri, (reference as Cld.Object).uri);
             if ((reference != null)) {
                 self.add (reference);
             }
@@ -125,30 +125,23 @@ public class Cld.Context : Cld.AbstractContainer {
 
         /* Generate FIFOs for log to read from and aquisitions to write to */
         var logs = log_controller.get_children (typeof (Cld.Log));
-        foreach (var log in logs.values) {
-            /* Generate the filename */
-            string fname = "/tmp/libcld_%s".printf (log.uri.hash ().to_string ());
-            /* add it to the logs fifo list */
-            (log as Cld.Log).fifos.set (fname, -1);
-            /* Create the FIFO */
-            if (Posix.access (fname, Posix.F_OK) == -1) {
-                int res = Posix.mkfifo (fname, 0777);
-                if (res != 0) {
-                    Cld.error ("Context could not create fifo %s\n", fname);
-                }
-            }
-            acquisition_controller.new_fifo (log as Cld.Log, fname);
-        }
+//        foreach (var log in logs.values) {
+//            /* Generate the filename */
+//            string fname = "/tmp/libcld_%s".printf (log.uri.hash ().to_string ());
+//            /* add it to the logs fifo list */
+//            (log as Cld.Log).fifos.set (fname, -1);
+//            /* Create the FIFO */
+//            if (Posix.access (fname, Posix.F_OK) == -1) {
+//                int res = Posix.mkfifo (fname, 0777);
+//                if (res != 0) {
+//                    Cld.error ("Context could not create fifo %s\n", fname);
+//                }
+//            }
+//            acquisition_controller.new_fifo (log as Cld.Log, fname);
+//        }
 
         acquisition_controller.generate ();
         log_controller.generate ();
         //automation_controller.generate ();
-    }
-
-    /**
-     * Start a log.
-     */
-    public void start_log (Cld.Log log) {
-        log.start ();
     }
 }

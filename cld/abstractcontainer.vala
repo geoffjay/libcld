@@ -305,6 +305,12 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
                         (object as Cld.Container).add_ref (chref);
                     }
                 }
+
+                if (type.is_a (typeof (Cld.Multiplexer))) {
+                    foreach (var taskref in (object as Cld.Multiplexer).taskrefs) {
+                        (object as Cld.Container).add_ref (taskref);
+                    }
+                }
             }
         }
     }

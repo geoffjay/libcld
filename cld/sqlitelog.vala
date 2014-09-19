@@ -448,6 +448,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         if (data_source == "fifo") {
             /* Open the FIFO data buffers. */
             foreach (string fname in fifos.keys) {
+                if (Posix.access (fname, Posix.F_OK) == -1) {
+                    int res = Posix.mkfifo (fname, 0777);
+                    if (res != 0) {
+                        Cld.error ("Context could not create fifo %s\n", fname);
+                    }
+                }
+
                 open_fifo.begin (fname, (obj, res) => {
                     try {
                         int fd = open_fifo.end (res);
@@ -543,7 +550,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public override void process_entry_queue () {
         ec = db.exec ("BEGIN TRANSACTION", null, out errmsg);
 
-        for (int i = 0; i < 3 * entry_queue.size; i++) {
+        for (int i = 0; i < entry_queue.size; i++) {
 //entry_queue.poll_tail ();
             log_entry_write (entry_queue.poll_tail ());
         }

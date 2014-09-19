@@ -144,6 +144,9 @@ internal class Cld.Builder : GLib.Object {
             case "port":
                 object = node_to_port (node);
                 break;
+            case "multiplexer":
+                object = node_to_multiplexer (node);
+                break;
             default:
                 break;
         }
@@ -236,193 +239,11 @@ internal class Cld.Builder : GLib.Object {
         return object;
     }
 
-    /**
-     * Sets up all of the weak references between the objects in the tree that
-     * require it.
-     */
-//    private void setup_references () {
-//        string ref_id;
-//
-//        var channel_map = container.get_object_map (typeof (Cld.Channel));
-//
-//            if (object is Cld.MathChannel) {
-//                if ((object as Cld.MathChannel).expression != null) {
-//                    int len = (object as Cld.MathChannel).variable_names.length;
-//                    for (int i = 0; i < len; i++) {
-//                        Cld.Object obj;
-//                        string name  = (object as Cld.MathChannel).variable_names [i];
-//                        foreach (string id in container.objects.keys) {
-//                            obj = container.get_object (id);
-//                            if (name.contains (id) && (container.objects.get (id) is DataSeries)) {
-//                                (((obj as DataSeries).channel) as Cld.ScalableChannel).new_value.connect ((id, val) => {
-//                                double num = (object as Cld.MathChannel).calculated_value;
-//                            });
-//
-//                            } else if (name == id && (container.objects.get (id) is Cld.ScalableChannel)) {
-//                                obj = container.get_object (id);
-//                                (obj as Cld.ScalableChannel).new_value.connect ((id, val) => {
-//                                    double num = (object as Cld.MathChannel).calculated_value;
-//                                });
-//                            } else {
-//                                obj = null;
-//                            }
-//                            if (obj != null) {
-//                                (object as Cld.MathChannel).add_object (id, obj);
-//                                Cld.debug ("Assigning Cld.Object %s to MathChannel %s", name, object.id);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//
-//            if (object is VChannel) {
-//                /* For now virtual channels do too */
-//                ref_id = (object as VChannel).calref;
-//                if ((object as VChannel).expression != null) {
-//                    foreach( var name in (object as VChannel).channel_names ) {
-//                        (object as VChannel).add_channel (name, (container.get_object (name) as AIChannel));
-//                    }
-//                }
-//            }
-//
-//            /* Setup port references for all of the modules */
-//            if (object is Module) {
-//
-//                ref_id = (object as Module).portref;
-//                Cld.debug ("Assigning Port %s to Module %s", ref_id, object.id);
-//                if (ref_id != null) {
-//                    var port = container.get_object (ref_id);
-//                    if (port != null && port is Port)
-//                        (object as Module).port = (port as Port);
-//                }
-//
-//                ref_id = (object as Module).devref;
-//
-//                if (ref_id != null && object is LicorModule) {
-//                    /* set the virtual channel that are to be referenced by this module */
-//                    foreach (var licor_channel in channel_map.values) {
-//                        if ((licor_channel as Channel).devref == ref_id) {
-//                            Cld.debug ("Assigning Channel %s to Device %s", licor_channel.id,
-//                                        (object as LicorModule).devref);
-//                            (object as LicorModule).add_channel (licor_channel);
-//                        }
-//                    }
-//                }
-//
-//                if (ref_id != null && object is ParkerModule) {
-//                    /* set the virtual channels that are to be referenced by this module */
-//                    foreach (var parker_channel in channel_map.values) {
-//                        if ((parker_channel as Channel).devref == ref_id) {
-//                            Cld.debug ("Assigning Channel %s to Device %s", parker_channel.id,
-//                                        (object as ParkerModule).devref);
-//                            (object as ParkerModule).add_channel (parker_channel);
-//                        }
-//                    }
-//                }
-//                if (object is HeidolphModule) {
-//                    var chan0 = container.get_object ("heidolph00");
-//                    var chan1 = container.get_object ("heidolph01");
-//                    (object as HeidolphModule).add_channel (chan0 as Channel);
-//                    (object as HeidolphModule).add_channel (chan1 as Channel);
-//
-//                    /* set the virtual channel that are to be referenced by this module */
-////                    foreach (var heidolph_channel in channels.values) {
-////                        Cld.debug ("ref_id: %s heidolph_channel.id: %s", ref_id, heidolph_channel.id);
-////                        if ((heidolph_channel as Channel).devref == ref_id) {
-////                            Cld.debug ("Assigning Channel %s to Module %s", heidolph_channel.id,
-////                                        (object as HeidolphModule).id);
-////                            (object as HeidolphModule).add_channel (heidolph_channel);
-////                        }
-////                    }
-//                }
-//            }
-//
-//            /* A  data series references a scalable channel. */
-//            if (object is DataSeries) {
-//                ref_id = (object as DataSeries).chref;
-//                Cld.debug ("Assigning Channel %s to DataSeries %s", ref_id, object.id);
-//                (object as DataSeries).channel = container.get_object (ref_id) as Cld.ScalableChannel;
-//                Cld.debug ("Connecting ScalableChannel as input to DataSeries %s", object.id);
-//                (object as DataSeries).connect_input ();
-//                Cld.debug ("Activating VChannels in DataSeries %s", object.id);
-//                (object as DataSeries).activate_vchannels ();
-//            }
-//
-//            /* XXX Too much nesting, should break into individual methods. */
-//            if (object is Control) {
-//                foreach (var control_object in
-//                            (object as Container).objects.values) {
-//                    if (control_object is Pid) {
-//                        foreach (var process_value in
-//                                    (control_object as Pid).process_values.values) {
-//                            /* Process values reference a channel */
-//                            if (process_value is ProcessValue) {
-//                                ref_id = (process_value as ProcessValue).chref;
-//                                Cld.debug ("Assigning ProcessValue %s to Control %s", ref_id, object.id);
-//                                if (ref_id != null) {
-//                                    var channel = container.get_object (ref_id);
-//                                    if (channel != null && channel is Channel) {
-//                                        (process_value as ProcessValue).channel
-//                                            = (channel as Channel);
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                    if (control_object is Pid2) {
-//                        foreach (var process_value in
-//                                    (control_object as Pid2).process_values.values) {
-//                            /* Process values reference a channel */
-//                            if (process_value is ProcessValue2) {
-//                                ref_id = (process_value as ProcessValue2).dsref;
-//                                Cld.debug ("Assigning ProcessValue2 %s to Control %s", ref_id, object.id);
-//                                if (ref_id != null) {
-//                                    var dataseries = container.get_object (ref_id);
-//                                    if (dataseries != null && dataseries is DataSeries) {
-//                                        (process_value as ProcessValue2).dataseries
-//                                            = (dataseries as DataSeries);
-//                                        var chref = (dataseries as DataSeries).chref;
-//                                        (process_value as ProcessValue2).dataseries.channel = container.get_object (chref)
-//                                                                                    as Cld.ScalableChannel;
-//                                    }
-//                                }
-//                            }
-//                        }
-//                        ref_id = (control_object as Pid2).sp_chref;
-//                        if (ref_id != null) {
-//                            var channel = container.get_object (ref_id);
-//                            if (channel != null && channel is Cld.ScalableChannel) {
-//                                Cld.debug ("Assigning ScalableChannel %s to Pid2 %s", ref_id, control_object.id);
-//                                (control_object as Pid2).sp_channel = channel as Cld.ScalableChannel;
-//                                (control_object as Pid2).connect_sp ();
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    /**
-//     * Add FIFOS to a Cld.Log.
-//     * XXX This method is quite cumbersome and should be simplified.
-//     */
-//    public void add_fifos (Cld.Log log) {
-//        var daq_map = container.get_object_map (typeof (Cld.Daq));
-//
-//        foreach (var daq in daq_map.values) {
-//            var device_map = (daq as Cld.Container).get_object_map (typeof (Cld.Device));
-//            foreach (var device in device_map.values) {
-//                var task_map = (device as Cld.Container).get_object_map (typeof (Cld.Task));
-//                foreach (var task in task_map.values) {
-//                    if (task is Cld.ComediTask) {
-//                        /* Request a FIFO and add it to fifos */
-//                        int fd;
-//                        string fname = (task as Cld.ComediTask).connect_fifo (log.id, out fd);
-//                        log.fifos.set (fname, fd);
-//                    }
-//                }
-//            }
-//        }
-//    }
+    private Cld.Object? node_to_multiplexer (Xml.Node *node) {
+        Cld.Object object = null;
+
+        object = new Cld.Multiplexer.from_xml_node (node);
+
+        return object;
+    }
 }

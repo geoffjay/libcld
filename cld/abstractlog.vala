@@ -137,7 +137,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     protected async void bg_fifo_watch (int fd) throws ThreadError {
         SourceFunc callback = bg_fifo_watch.callback;
         int ret = -1;
-        int bufsz = 65536;
+        int bufsz = 1048576;
         int total = 0;
 
 	    Posix.fcntl (fd, Posix.F_SETFL, Posix.O_NONBLOCK);
@@ -153,7 +153,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                 Posix.FD_SET (fd, ref rdset);
                 timeout.tv_sec = 0;
                 //timeout.tv_usec = 50000;
-                timeout.tv_nsec = 50000000;
+                timeout.tv_nsec = 100000000;
                 Posix.sigset_t sigset = new Posix.sigset_t ();
                 Posix.sigemptyset (sigset);
                 //ret = Posix.select (fd + 1, &rdset, null, null, timeout);
@@ -161,12 +161,15 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
 
                 if (ret < 0) {
                     if (Posix.errno == Posix.EAGAIN) {
-                        Cld.error ("Posix read error");
+                        Cld.error ("Posix pselect error EAGAIN");
                     }
                 } else if (ret == 0) {
-                    //stdout.printf ("%s hit timeout\n", id);
+                    stdout.printf ("%s hit timeout\n", id);
                 } else if ((Posix.FD_ISSET (fd, rdset)) == 1) {
                     ret = (int)Posix.read (fd, buf, bufsz);
+                    if (ret == -1) {
+                        Cld.error ("Posix.errno = %d", Posix.errno);
+                    }
                     lock (raw_queue) {
                         for (int i = 0; i < ret / 2; i++) {
                             total++;
@@ -267,7 +270,7 @@ stdout.printf ("channel value %.3f\n", (column as Cld.Column).channel_value);
                                         datum = raw_queue.poll_tail ();
                                         entry.data [j] = (double) datum;
                                         total++;
-if ((total % 32768) == 0) { stdout.printf ("%d: total raw dequed by %s: %d\n",Linux.gettid (), uri, total); }
+if ((total % 32768) == 0) { stdout.printf ("%d: total raw dequed: %d  qsize: %d\n",Linux.gettid (), total, raw_queue.size); }
                                 }
 
                                 entry_queue.offer_head (entry);
@@ -291,17 +294,26 @@ if ((total % 32768) == 0) { stdout.printf ("%d: total raw dequed by %s: %d\n",Li
     protected async void bg_entry_write () {
         SourceFunc callback = bg_entry_write.callback;
         int total = 0;
+        int qmin = 800;
+        int maxqmin = 1600;
+        int minqmin = 400;
+        int diff = 0;
         GLib.Thread<int> thread = new GLib.Thread<int> ("bg_entry_write", () => {
             while (active) {
-                if (entry_queue.size > 2000) {
+                if (entry_queue.size > qmin) {
                     lock (entry_queue) {
                         process_entry_queue ();
                         total += entry_queue.size * nchans;
-stdout.printf ("%d: entry queue size: %d\n", Linux.gettid (), entry_queue.size);
+stdout.printf ("%d: entry queue size after: %d qmin: %d\n", Linux.gettid (), entry_queue.size, qmin);
+                        /* Use this to optimize queue_size */
+                        diff = entry_queue.size - qmin;
+                        diff > 0 ? qmin+= 10 : qmin-= 10;
+                        qmin > maxqmin ? qmin = maxqmin : qmin = qmin;
+                        qmin > minqmin ? qmin = qmin : qmin = minqmin;
                     }
                 }
 
-                Thread.usleep (5000);
+               Thread.usleep (10000);
             }
 
             Idle.add ((owned) callback);

@@ -173,7 +173,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                     lock (raw_queue) {
                         for (int i = 0; i < ret / 2; i++) {
                             total++;
-if ((total % 32768) == 0) { stdout.printf ("%d: total read by %s: %d\n",Linux.gettid (), uri, total); }
+//if ((total % 32768) == 0) { stdout.printf ("%d: total read by %s: %d\n",Linux.gettid (), uri, total); }
                             (raw_queue as Gee.Deque<ushort>).offer_head (buf [i]);
 //                        stdout.printf ("%4X ", buf [i]);
 //                        if ((total % nchans) == 0) {
@@ -216,7 +216,7 @@ if ((total % 32768) == 0) { stdout.printf ("%d: total read by %s: %d\n",Linux.ge
                 foreach (var column in objects.values) {
                     if (column is Cld.Column) {
                         entry.data [i++] = (column as Cld.Column).channel_value;
-stdout.printf ("channel value %.3f\n", (column as Cld.Column).channel_value);
+//stdout.printf ("channel value %.3f\n", (column as Cld.Column).channel_value);
 
                     }
                 }
@@ -270,7 +270,7 @@ stdout.printf ("channel value %.3f\n", (column as Cld.Column).channel_value);
                                         datum = raw_queue.poll_tail ();
                                         entry.data [j] = (double) datum;
                                         total++;
-if ((total % 32768) == 0) { stdout.printf ("%d: total raw dequed: %d  qsize: %d\n",Linux.gettid (), total, raw_queue.size); }
+//if ((total % 32768) == 0) { stdout.printf ("%d: total raw dequed: %d  qsize: %d\n",Linux.gettid (), total, raw_queue.size); }
                                 }
 
                                 entry_queue.offer_head (entry);
@@ -304,7 +304,7 @@ if ((total % 32768) == 0) { stdout.printf ("%d: total raw dequed: %d  qsize: %d\
                     lock (entry_queue) {
                         process_entry_queue ();
                         total += entry_queue.size * nchans;
-stdout.printf ("%d: entry queue size after: %d qmin: %d\n", Linux.gettid (), entry_queue.size, qmin);
+//stdout.printf ("%d: entry queue size after: %d qmin: %d\n", Linux.gettid (), entry_queue.size, qmin);
                         /* Use this to optimize queue_size */
                         diff = entry_queue.size - qmin;
                         diff > 0 ? qmin+= 10 : qmin-= 10;

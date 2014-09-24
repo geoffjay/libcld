@@ -71,6 +71,7 @@ public class Cld.AcquisitionController : Cld.AbstractController {
                             if (iter->get_prop ("driver") == "comedi") {
                                 var dev = new Cld.ComediDevice.from_xml_node (iter);
                                 dev.parent = this;
+                                (dev as Cld.ComediDevice).open ();
                                 try {
                                     add (dev);
                                 } catch (Cld.Error.KEY_EXISTS e) {
@@ -138,7 +139,6 @@ public class Cld.AcquisitionController : Cld.AbstractController {
     private void generate_multiplexers () {
         foreach (var multiplexer in multiplexers.values) {
             (multiplexer as Cld.Multiplexer).generate ();
-            (multiplexer as Cld.Multiplexer).start_channelizer ();
         }
     }
 }
@@ -187,6 +187,7 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
 
 
     construct {
+        taskrefs = new Gee.ArrayList<string> ();
         task_mmaps = new Gee.TreeMap<Cld.ComediTask, ushort*> ();
     }
 
@@ -223,7 +224,6 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
     public void generate () {
         int nchans = 0;
         var tasks = get_object_map (typeof (Cld.ComediTask));
-
         foreach (var task in tasks.values) {
             nchans+= (task as Cld.ComediTask).channels.size;
             var device = (task as Cld.ComediTask).device;
@@ -333,28 +333,34 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
         ushort [] b = new ushort [1];
         int total = 0;
         int i;
-        bool ready = true;
+        bool channelize = false;
         int size;                    // the number of tasks in the multiplexer
         Cld.ComediDevice [] devices; // the Comedi devices used by these tasks
         int [] nchans;               // the number of channels in each task
         int [] subdevices;           // the subdevice numbers for these devices
         int [] buffersizes;          // the data buffer sizes of each subdevice
+        int [] buffer_contents;
         int [] nscans;               // the integral number of scans that are available in a data buffer
         int nscan = int.MAX;         // the integral number of scans that will be multiplexed
         ushort* [] maps;             // an array of pointers to memory mapped data for these subdevices
-
+        int [] front;
+        int [] back;
+        Gee.Deque [] queues;
 
         size = task_mmaps.size;
         devices = new Cld.ComediDevice [size];
         nchans = new int [size];
         subdevices = new int [size];
         buffersizes = new int [size];
+        buffer_contents = new int [size];
         nscans = new int [size];
         maps = new void* [size];
+        front = new int [size];
+        back = new int [size];
+        queues = new Gee.Deque [size];
 
         i = 0;
         foreach (var task in task_mmaps.keys) {
-
             var device = (task as Cld.ComediTask).device;
             var subdevice = (task as Cld.ComediTask).subdevice;
             devices [i] = (task as ComediTask).device as Cld.ComediDevice;
@@ -362,61 +368,124 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
             subdevices [i] = (task as ComediTask).subdevice;
             buffersizes [i] = (devices [i] as Cld.ComediDevice).dev.get_buffer_size (subdevices [i]);
             maps [i] = task_mmaps.get (task);
+            front [i] = 0;
+            back [i] = 0;
+            queues [i] = new Gee.LinkedList<ushort> ();
             i++;
         }
 
-        GLib.Thread<int> thread = new GLib.Thread<int> ("%s_multiplex_data".printf (fname),  () => {
+        GLib.Thread<int> thread = new GLib.Thread<int> ("%s_queue_data",  () => {
             while (true) {
+/*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
+//                for (i = 0; i < size; i++) {
+//                    buffer_contents [i] = (devices [i] as Cld.ComediDevice).dev.get_buffer_contents (subdevices [i]);
+//
+//                    if (buffer_contents [i] >= (buffersizes [i] / 2)) {
+//                        stdout.printf (">>>>>>>>>>>>>>>>>>> Buffer [%d] overflow: %d\n", i, buffer_contents [i]);
+//                    }
+//
+//                    front [i] += buffer_contents [i];
+//
+//                    int col = 0;
+//                    for (int j = back [i]; i < front [i]; i++) {
+//                        col++;
+//                        word = *(maps [i] + (j % (buffersizes [i] / 2)));
+//                        //int x = queues [i].offer_head (word);
+//                        stdout.printf ("%4X ", word);
+//                        if (col == 48) {
+//                            stdout.printf ("\n");
+//                            col = 0;
+//                        }
+//                    }
+//                    if (buffer_contents [i] > 0) {
+//stdout.printf ("%d front - back: %d\n", i, front [i] - back [i]);
+//                        int ret = (devices [i] as Cld.ComediDevice).dev.mark_buffer_read (
+//                                                                subdevices [i], front [i] - back [i]);
+//                        back [i] = front [i];
+//                    }
+//                }
+/*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 
-stdout.printf (">>>>>>>>>>>>>>>>>>>>>> WHERE ARE THE TASKS????  >>>>>>>>>>>>>>>>");
+/******************************************************************************************************/
                 /* Determine the minimum integral size data required for multiplexing */
                 nscan = int.MAX;
                 for (i = 0; i < size; i++) {
 
-                    int buffer_contents = (devices [i] as Cld.ComediDevice).dev.get_buffer_contents (subdevices [i]);
-                    if (buffer_contents >= buffersizes [i] / 2) {
-                        stdout.printf (">>>>>>>>>>>>>>>>>>> Buffer [%d] overflow: %d\n", i, buffer_contents);
+                    buffer_contents [i] = (devices [i] as Cld.ComediDevice).dev.get_buffer_contents (subdevices [i]);
+                    if (buffer_contents [i] >= (buffersizes [i] / 2)) {
+                        stdout.printf (">>>>>>>>>>>>>>>>>>> Buffer [%d] overflow: %d\n", i, buffer_contents [i]);
                     }
-                    nscans [i] = buffer_contents / nchans [i];
+                    nscans [i] = buffer_contents [i] / nchans [i] ;
                     nscan = nscan < nscans [i] ? nscan : nscans [i];
                 }
 
                 /* scans */
+                int counter = 0;
                 for (i = 0; i < nscan; i++) {
-
-                    int raw_index = 0; // index of the raw channel number of the multiplexer
+                    channelize = ((total % 48000)== 0);
+                    int raw_index = 0; // data register index for channels digital raw value.
 
                     /* tasks */
                     for (int j = 0; j < size; j++) {
                         /* channels */
                         for (int k = 0; k < nchans [j]; k++) {
-                            //word = *(maps [j] + ((k + i * nchans [j]) % buffersizes [j]));
-                            word = *(maps [j] + (k + i * nchans [j]));
-                            //stdout.printf (" %4X ", word);
-                            /* Write the raw value to a register */
-                            set_raw (raw_index,  word);
+                            if (j == 0) {
+                                counter ++;
+                            }
+                            word = *(maps [j] + ((k + back [j] + i * nchans [j]) % (buffersizes [j] / 2)));
+//if ((j == 0) && ((total % 48000) == 0)) {
+//stdout.printf ("%12d %12d\n",back [j] % (buffersizes [j] / 2), (k + back [j] + i * nchans [j]) % (buffersizes [j] / 2));
+//}
 
                             /* Write the data to the fifo */
                             b [0] = word;
                             Posix.write (fd, b, 2);
 
+                            /* Write the raw value to a register */
+                            //if (channelize) {
+                            data_register [raw_index] = b [0];
+                                if  ((j == 0) && (k == 0)) {
+                                    stdout.printf ("%4X\n", word);
+//stdout.printf ("%4X %12llu %12llu\n", word, (k + back [j] + i * nchans [j]) % (buffersizes [j] / 2), back [j]);
+                                }
+                            //}
+
                             raw_index++;
                             total++;
-if ((total % 32768) == 0) {
-stdout.printf ("%d: total written to multiplexer: %d            nscan: %d\n",
-(int) Linux.gettid (), total, nscan);
-}
+//if ((total % 32768) == 0) {
+//stdout.printf ("%d: total written to multiplexer: %d            nscan: %d\n",
+//(int) Linux.gettid (), total, nscan);
+//}
                         }
                     }
-                    //stdout.printf ("\n");
+                    if (channelize) {
+                        do_channelizer ();
+                    }
+                    channelize = false;
                 }
 
                 /* mark buffers as read */
                 if ((nscan) > 0) {
                     for (i = 0; i < size; i++) {
-                        (devices [i] as Cld.ComediDevice).dev.mark_buffer_read (subdevices [i], nscan * nchans [i]);
+
+                        int ret = (devices [i] as Cld.ComediDevice).dev.mark_buffer_read (
+                                                                    subdevices [i], nscan * nchans [i]);
+//                        if  (ret != (nscan * nchans [i])) {
+//
+//                            Cld.error ("Comedi mark_buffer_read failed %12d %12d %12d %12d",
+//                                    ret,
+//                                    buffer_contents [i],
+//                                    nscan * nchans [i],
+//                                    (buffer_contents [i] / nchans [i]) * nchans [i]);
+//                        }
+                        back [i] += (nscan * nchans [i]) % (buffersizes [i] / 2);
+//if (i == 0) {
+//stdout.printf ("counter: %12d %12d\n", counter, nscan * nchans [i]);
+//}
                     }
                 }
+/******************************************************************************************************/
+
                 Thread.usleep (5000);
             }
 
@@ -430,44 +499,36 @@ stdout.printf ("%d: total written to multiplexer: %d            nscan: %d\n",
     /**
      * Update the Cld.Channel values
      */
-    public void start_channelizer () {
+    public void do_channelizer () {
 
-        GLib.Timeout.add_full (GLib.Priority.DEFAULT_IDLE, interval_ms, () => {
-            while (true) {
-                uint maxdata;
-                Comedi.Range range;
-              int i = 0;
-                GLib.DateTime timestamp = new DateTime.now_local ();
+        uint maxdata;
+        Comedi.Range range;
+        int i = 0;
+        GLib.DateTime timestamp = new DateTime.now_local ();
 
-                foreach (var task in task_mmaps.keys) {
-                    var device = task.device;
-                    foreach (var channel in task.channels.values) {
-                        (channel as Channel).timestamp = timestamp;
-                        maxdata = (device as ComediDevice).dev.get_maxdata (
-                                    (channel as Channel).subdevnum, (channel as Channel).num);
+        foreach (var task in task_mmaps.keys) {
+            var device = task.device;
+            foreach (var channel in task.channels.values) {
+                (channel as Channel).timestamp = timestamp;
+                maxdata = (device as ComediDevice).dev.get_maxdata (
+                            (channel as Channel).subdevnum, (channel as Channel).num);
 
-                        /* Analog Input */
-                        if (channel is AIChannel) {
+                /* Analog Input */
+                if (channel is AIChannel) {
 
-                            double meas = 0.0;
-                            range = (device as ComediDevice).dev.get_range (
+                    double meas = 0.0;
+                    range = (device as ComediDevice).dev.get_range (
                                 (channel as Channel).subdevnum, (channel as Channel).num,
                                 (channel as AIChannel).range);
 
-                            lock (data_register) {
-                                meas = Comedi.to_phys (data_register [i], range, maxdata);
-                            }
+                    meas = Comedi.to_phys (data_register [i], range, maxdata);
 
-                            (channel as AIChannel).add_raw_value (meas);
-                            //stdout.printf ("%.1f ", meas);
-                          i++;
-                        }
-                    }
+                    (channel as AIChannel).add_raw_value (meas);
+                    //stdout.printf ("%.1f ", meas);
+                    i++;
                 }
-                //stdout.printf ("\n");
-
-                return true;
             }
-        });
+        }
+        //stdout.printf ("\n");
     }
 }

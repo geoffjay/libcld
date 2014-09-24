@@ -144,9 +144,6 @@ internal class Cld.Builder : GLib.Object {
             case "port":
                 object = node_to_port (node);
                 break;
-            case "multiplexer":
-                object = node_to_multiplexer (node);
-                break;
             default:
                 break;
         }
@@ -235,14 +232,6 @@ internal class Cld.Builder : GLib.Object {
         } else if (ptype == "modbus") {
             object = new ModbusPort.from_xml_node (node);
         }
-
-        return object;
-    }
-
-    private Cld.Object? node_to_multiplexer (Xml.Node *node) {
-        Cld.Object object = null;
-
-        object = new Cld.Multiplexer.from_xml_node (node);
 
         return object;
     }

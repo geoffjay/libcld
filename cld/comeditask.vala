@@ -335,6 +335,7 @@ public class Cld.ComediTask : AbstractTask {
         channel_array = new Cld.AIChannel [channels.size];
 
         GLib.stdout.printf ("device: %s\n", device.id);
+        (device as ComediDevice).dev.set_max_buffer_size (subdevice, 1048576);
         (device as ComediDevice).dev.set_buffer_size (subdevice, 1048576);
         Cld.debug (" buffer size: %d", (device as ComediDevice).dev.get_buffer_size (subdevice));
         scan_period_nanosec = (uint)interval_ns;
@@ -464,7 +465,6 @@ public class Cld.ComediTask : AbstractTask {
                  */
                 Cld.debug ("Asynchronous acquisition started for ComediTask %s @ %lld", uri, GLib.get_monotonic_time ());
                 ret = (device as ComediDevice).dev.command (cmd);
-stdout.printf ("ComediTask %s Comedi command returned @ %lld\n", uri, GLib.get_monotonic_time ());
 
                 GLib.stdout.printf ("test ret = %d\n", ret);
                 if (ret < 0) {

@@ -22,8 +22,8 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                     <cld:object id="daqctl0" type="controller" ctype="acquisition">
                         <cld:object id="mux0" type="multiplexer">
                             <cld:property name="taskref">/ctr0/daqctl0/dev0/tk0</cld:property>
-                            <cld:property name="taskref">/ctr0/daqctl0/dev1/tk0</cld:property>
-                            <cld:property name="taskref">/ctr0/daqctl0/dev2/tk0</cld:property>
+                            <cld:property name="taskref">/ctr0/daqctl0/dev1/tk1</cld:property>
+                            <cld:property name="taskref">/ctr0/daqctl0/dev2/tk2</cld:property>
                             <cld:property name="interval-ms">100</cld:property>
                             <cld:property name="fname">/tmp/fifo0</cld:property>
                         </cld:object>
@@ -172,7 +172,7 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                             <cld:property name="hardware">PCI-1710</cld:property>
                             <cld:property name="type">input</cld:property>
                             <cld:property name="filename">/dev/comedi1</cld:property>
-                            <cld:object id="tk0" type="task" ttype="comedi">
+                            <cld:object id="tk1" type="task" ttype="comedi">
                                 <cld:property name="exec-type">streaming</cld:property>
                                 <cld:property name="devref">/ctr0/daqctl0/dev1</cld:property>
                                 <cld:property name="subdevice">0</cld:property>
@@ -313,7 +313,7 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                             <cld:property name="hardware">PCI-1710</cld:property>
                             <cld:property name="type">input</cld:property>
                             <cld:property name="filename">/dev/comedi2</cld:property>
-                            <cld:object id="tk0" type="task" ttype="comedi">
+                            <cld:object id="tk2" type="task" ttype="comedi">
                                 <cld:property name="exec-type">streaming</cld:property>
                                 <cld:property name="devref">/ctr0/daqctl0/dev2</cld:property>
                                 <cld:property name="subdevice">0</cld:property>
@@ -516,7 +516,7 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                             <cld:property name="path">/srv/data</cld:property>
                             <cld:property name="file">log1.db</cld:property>
                             <cld:property name="format">%F-%T</cld:property>
-                            <cld:property name="rate">1.000</cld:property>
+                            <cld:property name="rate">10.000</cld:property>
                             <cld:property name="backup-path">./</cld:property>
                             <cld:property name="backup-file">backup1.db</cld:property>
                             <cld:property name="backup-interval-hrs">1</cld:property>
@@ -603,9 +603,9 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
 //        context.print_objects ();
 //        stdout.printf ("\n Finished.\n\n");
 //
-//        stdout.printf ("\nPrinting reference table..\n\n");
-//        context.print_ref_list ();
-//        stdout.printf ("\n Finished.\n\n");
+        stdout.printf ("\nPrinting reference table..\n\n");
+        context.print_ref_list ();
+        stdout.printf ("\n Finished.\n\n");
 //
 //
 //        stdout.printf ("Object properties:\n%s", context.to_string_recursive ());
@@ -619,8 +619,8 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
 
         GLib.Timeout.add_seconds (2, start_acq_cb);
         GLib.Timeout.add_seconds (1, start_log_cb);
-        GLib.Timeout.add_seconds (62, stop_log_cb);
-        GLib.Timeout.add_seconds (63, quit_cb);
+        GLib.Timeout.add_seconds (122, stop_log_cb);
+        GLib.Timeout.add_seconds (123, quit_cb);
 
         loop.run ();
     }

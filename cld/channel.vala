@@ -64,6 +64,11 @@ public interface Cld.Channel : Cld.Container {
      * A Timestamp to that should be updated when the value or state changes.
      */
     public abstract DateTime timestamp { get; set; }
+
+    /**
+     * A name that identifies this. It is used by MathChannel.
+     */
+    public abstract string alias { get; set; }
 }
 
 /**

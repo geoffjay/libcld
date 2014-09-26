@@ -75,6 +75,11 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     protected virtual Gee.Deque<ushort> raw_queue { get; set; }
 
     /**
+     * DateTime data to use for time stamping log file.
+     */
+    protected DateTime start_time;
+
+    /**
      * A double ended queue for LogEntries.
      */
     protected virtual Gee.Deque<Cld.LogEntry> entry_queue { get; set; }
@@ -197,7 +202,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
      */
     protected async void bg_channel_watch () throws ThreadError {
         SourceFunc callback = bg_channel_watch.callback;
-        int64 start_time = GLib.get_monotonic_time ();
+        int64 start_time_mono = GLib.get_monotonic_time ();
         int64 count = 1;
 
         int total = 0;
@@ -211,13 +216,12 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                 Cld.LogEntry entry = new Cld.LogEntry ();
                 entry.data = new double [nchans];
                 entry.timestamp = new GLib.DateTime.now_local ();
+                entry.time_us = entry.timestamp.difference (start_time);
 
                 int i = 0;
                 foreach (var column in objects.values) {
                     if (column is Cld.Column) {
                         entry.data [i++] = (column as Cld.Column).channel_value;
-//stdout.printf ("channel value %.3f\n", (column as Cld.Column).channel_value);
-
                     }
                 }
 
@@ -227,7 +231,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
 
                 mutex.lock ();
                 try {
-                    end_time = start_time + count++ * (1000 /  (int)rate) * TimeSpan.MILLISECOND;
+                    end_time = start_time_mono + count++ * (1000 /  (int)rate) * TimeSpan.MILLISECOND;
                     while (cond.wait_until (mutex, end_time))
                         ; /* do nothing */
                 } finally {
@@ -294,10 +298,10 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     protected async void bg_entry_write () {
         SourceFunc callback = bg_entry_write.callback;
         int total = 0;
-        int qmin = 800;
-        int maxqmin = 1600;
-        int minqmin = 400;
-        int diff = 0;
+        int qmin = 0;
+        //int maxqmin = 1600;
+        //int minqmin = 400;
+        //int diff = 0;
         GLib.Thread<int> thread = new GLib.Thread<int> ("bg_entry_write", () => {
             while (active) {
                 if (entry_queue.size > qmin) {
@@ -306,10 +310,10 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                         total += entry_queue.size * nchans;
 //stdout.printf ("%d: entry queue size after: %d qmin: %d\n", Linux.gettid (), entry_queue.size, qmin);
                         /* Use this to optimize queue_size */
-                        diff = entry_queue.size - qmin;
-                        diff > 0 ? qmin+= 10 : qmin-= 10;
-                        qmin > maxqmin ? qmin = maxqmin : qmin = qmin;
-                        qmin > minqmin ? qmin = qmin : qmin = minqmin;
+                        //diff = entry_queue.size - qmin;
+                        //diff > 0 ? qmin+= 10 : qmin-= 10;
+                        //qmin > maxqmin ? qmin = maxqmin : qmin = qmin;
+                        //qmin > minqmin ? qmin = qmin : qmin = minqmin;
                     }
                 }
 

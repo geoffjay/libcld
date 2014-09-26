@@ -6,6 +6,7 @@ EXAMPLE_PROGS += \
 	async-acquisition \
 	build-from-xml \
 	context-validation \
+	pid2-mathchannel \
 	polling-acquisition \
 	soup-server \
 	$(NULL)
@@ -63,6 +64,12 @@ context_validation_DEPENDENCIES = $(example_DEPENDENCIES)
 context_validation_VALAFLAGS = $(example_VALAFLAGS)
 context_validation_CPPFLAGS = $(example_CPPFLAGS)
 context_validation_LDADD = $(example_LDADD)
+
+pid2_mathchannel_SOURCES = pid2-mathchannel.vala $(example_SOURCES)
+pid2_mathchannel_DEPENDENCIES = $(example_DEPENDENCIES)
+pid2_mathchannel_VALAFLAGS = $(example_VALAFLAGS)
+pid2_mathchannel_CPPFLAGS = $(example_CPPFLAGS)
+pid2_mathchannel_LDADD = $(example_LDADD)
 
 polling_acquisition_SOURCES = polling-acquisition.vala $(example_SOURCES)
 polling_acquisition_DEPENDENCIES = $(example_DEPENDENCIES)

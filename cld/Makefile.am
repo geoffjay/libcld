@@ -39,7 +39,7 @@ libcld_0_2_la_SOURCES = \
 	circularbuffer.vala \
 	cld.vala \
 	coefficient.vala \
-	comedidevice.vala \
+	connector.vala \
 	container.vala \
 	context.vala \
 	control.vala \

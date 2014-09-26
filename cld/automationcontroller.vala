@@ -47,11 +47,20 @@ public class Cld.AutomationController : Cld.AbstractController {
             for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
                 if (iter->name == "object") {
                     switch (iter->get_prop ("type")) {
-                        case "control":
-                            var control = new Cld.Control.from_xml_node (iter);
-                            control.parent = this;
+                        case "pid":
+                            var pid = new Cld.Pid.from_xml_node (iter);
+                            pid.parent = this;
                             try {
-                                add (control);
+                                add (pid);
+                            } catch (Cld.Error.KEY_EXISTS e) {
+                                Cld.error (e.message);
+                            }
+                            break;
+                        case "pid-2":
+                            var pid = new Cld.Pid2.from_xml_node (iter);
+                            pid.parent = this;
+                            try {
+                                add (pid);
                             } catch (Cld.Error.KEY_EXISTS e) {
                                 Cld.error (e.message);
                             }

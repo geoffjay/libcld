@@ -123,6 +123,12 @@ public class Cld.Context : Cld.AbstractContainer {
             }
         }
 
+        /* Connect signals */
+        var connectors = get_object_map (typeof (Cld.Connector));
+        foreach (var connector in connectors.values) {
+            (connector as Cld.Connector).connect_signals ();
+        }
+
         /* Generate FIFOs for log to read from and aquisitions to write to */
         var logs = log_controller.get_children (typeof (Cld.Log));
 //        foreach (var log in logs.values) {
@@ -142,6 +148,6 @@ public class Cld.Context : Cld.AbstractContainer {
 
         acquisition_controller.generate ();
         log_controller.generate ();
-        //automation_controller.generate ();
+        automation_controller.generate ();
     }
 }

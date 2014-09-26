@@ -64,6 +64,15 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
     /**
      * {@inheritDoc}
      */
+    protected string _alias;
+    public virtual string alias {
+        get { return _alias; }
+        set { _alias = value; }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public virtual string to_string () {
         string result = "";
         Type type = get_type ();

@@ -117,8 +117,11 @@ internal class Cld.Builder : GLib.Object {
         string type = node->get_prop ("type");
 
         switch (type) {
-            case "control":
-                object = new Control.from_xml_node (node);
+            case "pid":
+                object = new Cld.Pid.from_xml_node (node);
+                break;
+            case "pid-2":
+                object = new Cld.Pid2.from_xml_node (node);
                 break;
             case "controller":
                 object = node_to_controller (node);

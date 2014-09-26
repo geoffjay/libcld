@@ -37,7 +37,7 @@ class Cld.PollingExample : Cld.Example {
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai2</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai3</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai4</cld:property>
-                                <cld:property name="fifo">/tmp/fifo0</cld:property>
+                                <cld:property name="data-cource">channel</cld:property>
                             </cld:object>
                             <cld:object id="ai0" type="channel" ref="/ctr0/daqctl0/dev0" ctype="analog" direction="input">
                                 <cld:property name="tag">IN0</cld:property>
@@ -78,16 +78,16 @@ class Cld.PollingExample : Cld.Example {
                     </cld:object>
 
                     <cld:object id="logctl0" type="controller" ctype="log">
-                        <cld:object id="log0" type="log" ltype="sqlite">
+                        <cld:object id="log0" type="log" ltype="csv">
                             <cld:property name="title">Data Log</cld:property>
                             <cld:property name="path">/srv/data</cld:property>
-                            <cld:property name="file">log.db</cld:property>
+                            <cld:property name="file">log.csv</cld:property>
                             <cld:property name="format">%F-%T</cld:property>
-                            <cld:property name="rate">1.000</cld:property>
+                            <cld:property name="rate">10.000</cld:property>
                             <cld:property name="backup-path">./</cld:property>
                             <cld:property name="backup-file">backup.db</cld:property>
                             <cld:property name="backup-interval-hrs">1</cld:property>
-                            <cld:property name="fifo">/tmp/fifo0</cld:property>
+                            <cld:property name="data-source">channel</cld:property>
                             <cld:object id="col0" type="column" chref="/ctr0/daqctl0/dev0/ai0"/>
                             <cld:object id="col1" type="column" chref="/ctr0/daqctl0/dev0/ai1"/>
                             <cld:object id="col2" type="column" chref="/ctr0/daqctl0/dev0/ai2"/>
@@ -123,9 +123,9 @@ class Cld.PollingExample : Cld.Example {
 
         base.run ();
 
-        stdout.printf ("\nPrinting objects..\n\n");
-        context.print_objects ();
-        stdout.printf ("\n Finished.\n\n");
+        //stdout.printf ("\nPrinting objects..\n\n");
+        //context.print_objects ();
+        //stdout.printf ("\n Finished.\n\n");
 
         stdout.printf ("\nPrinting reference table..\n\n");
         context.print_ref_list ();
@@ -144,7 +144,7 @@ class Cld.PollingExample : Cld.Example {
             break;
         }
 
-        stdout.printf ("Object properties:\n%s", context.to_string_recursive ());
+        //stdout.printf ("Object properties:\n%s", context.to_string_recursive ());
         device.open ();
         var info = device.info ();
         stdout.printf ("Comedi.Device information:\n%s\n", info.to_string ());
@@ -157,7 +157,8 @@ class Cld.PollingExample : Cld.Example {
         task.run ();
 
         /* Here the Log is accessed from its uri. */
-        log = context.get_object_from_uri ("/ctr0/logctl0/log0") as Cld.SqliteLog;
+        //log = context.get_object_from_uri ("/ctr0/logctl0/log0") as Cld.SqliteLog;
+        log = context.get_object_from_uri ("/ctr0/logctl0/log0") as Cld.CsvLog;
         log.start ();
 
         GLib.Timeout.add_seconds (6, quit_cb);

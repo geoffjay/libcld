@@ -37,10 +37,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
     private FileStream file_stream;
 
-    /**
-     * DateTime data to use for time stamping log file.
-     */
-    private DateTime start_time;
 
     /* constructor */
     construct {

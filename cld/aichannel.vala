@@ -204,6 +204,9 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
                             val = iter->get_content ();
                             range = int.parse (val);
                             break;
+                        case "alias":
+                            alias = iter->get_content ();
+                            break;
                         default:
                             break;
                     }

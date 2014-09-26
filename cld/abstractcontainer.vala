@@ -125,6 +125,29 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
     /**
      * {@inheritDoc}
      */
+    public virtual Cld.Object? get_object_from_alias (string alias) {
+        Cld.Object? result = null;
+        foreach (var object in objects.values) {
+            if (object.alias == alias) {
+                result = object;
+                break;
+            } else if ((object is Cld.DataSeries) && (alias.contains (object.alias + "_"))) {
+                result = object;
+                break;
+            } else if (object is Cld.Container) {
+                result = (object as Cld.Container).get_object_from_alias (alias);
+                if (result != null) {
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public virtual Gee.Map<string, Cld.Object> get_object_map (Type type) {
         Gee.Map<string, Cld.Object> map = new Gee.TreeMap<string, Cld.Object> ();
         if (objects != null) {
@@ -263,8 +286,10 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
 
                 Type type = object.get_type ();
 
-                if (type.is_a (typeof (Cld.Channel))) {
-                    //(object as Cld.Container).add_ref ((object as Cld.Channel).devref);
+                if (type.is_a (typeof (Cld.MathChannel))) {
+                    foreach (var dref in (object as Cld.MathChannel).drefs) {
+                        (object as Cld.Container).add_ref (dref);
+                    }
                 }
 
                 if (type.is_a (typeof (Cld.Column))) {

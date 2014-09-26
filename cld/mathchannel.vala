@@ -26,7 +26,7 @@ using matheval;
  * the same as the calculated value of the Virtual channel. As a scaleable channel
  * it can be connected to a PID control object, for example.
  */
-public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
+public class Cld.MathChannel : Cld.Connector, Cld.VChannel, Cld.ScalableChannel {
 
     /* Property backing fields. */
     private double _scaled_value = 0.0;
@@ -37,7 +37,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
     private string[]? _variable_names = null;
 
     /* Evaluator fields */
-    /* XXX TBD This should work with ScalableChannel asn DataSeries. */
+    /* XXX TBD This should work with ScalableChannel and DataSeries. */
     private Evaluator evaluator = null;
 
     private double[]? variable_vals;
@@ -49,6 +49,11 @@ public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
         get { return _variable_names; }
         private set { _variable_names = value; }
     }
+
+    /**
+     * A list of channel references.
+     */
+    public Gee.List<string>? drefs { get; set; }
 
     /**
      * Mathematical expression to be used to evaluate the variable value.
@@ -86,18 +91,21 @@ public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
             if (_expression != null) {
                 /* Resample variables and return value */
                 for (int i = 0; i < _variable_names.length; i++ ) {
-                    foreach (string ref_id in _objects.keys) {
-                        if (_variable_names [i].contains (ref_id) && (_objects.get (ref_id) is DataSeries)) {
-                            int n;
-                            double val;
-                            if (get_index_from_name (_variable_names [i], out n)) {
-                                if ((_objects.get (ref_id) as DataSeries).
-                                                        get_nth_value (n, out val)) {
-                                    variable_vals [i] = val;
+                    foreach (var object in objects.values) {
+                        if (object is Cld.DataSeries || object is Cld.ScalableChannel) {
+                            if (_variable_names [i].contains (object.alias)) {
+                                if (object is Cld.DataSeries) {
+                                    int n;
+                                    double val;
+                                    if (get_index_from_name (_variable_names [i], out n)) {
+                                        if ((object as DataSeries).get_nth_value (n, out val)) {
+                                            variable_vals [i] = val;
+                                        }
+                                    }
+                                } else if (object is ScalableChannel) {
+                                    variable_vals [i] = (object as ScalableChannel).scaled_value;
                                 }
                             }
-                        } else if (_objects.get (ref_id) is ScalableChannel) {
-                            variable_vals [i] = (_objects.get (ref_id) as ScalableChannel).scaled_value;
                         }
                     }
                 }
@@ -106,6 +114,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
 
             return _calculated_value;
             } else {
+
                 return 0.0;
             }
         }
@@ -113,11 +122,6 @@ public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
             _calculated_value = value;
             new_value (id, value);
         }
-    }
-
-    public void add_object (string name, Cld.Object? object) {
-        /* Instantiate dummy objects and populate objectss TreeMap */
-        _objects.set ( name, (object as Cld.Object) ) ;
     }
 
     /**
@@ -170,7 +174,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
 
     /* default constructor */
     construct {
-        _objects = new Gee.TreeMap <string, Cld.Object> ();
+        drefs = new Gee.ArrayList<string> ();
     }
 
     public MathChannel () {
@@ -210,8 +214,11 @@ public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
                         case "calref":
                             calref = iter->get_content ();
                             break;
-                        case "devref":
-                            devref = iter->get_content ();
+                        case "dref":
+                            drefs.add (iter->get_content ());
+                            break;
+                        case "alias":
+                            alias = iter->get_content ();
                             break;
                         default:
                             break;
@@ -245,28 +252,47 @@ public class Cld.MathChannel : Cld.VChannel, Cld.ScalableChannel {
      * Connect signals that trigger updates to the calculated value as a result of an input value change.
      */
     public void connect_signals () {
+//        if (expression != null) {
+//            for (int i = 0; i < variable_names.length; i++) {
+//                Cld.Object obj;
+//                string name  = variable_names [i];
+//                foreach (string ref_id in objects.keys) {
+//                    obj = get_object (ref_id);
+//                    if (name.contains (ref_id) && (objects.get (ref_id) is DataSeries)) {
+//                        (((obj as DataSeries).channel) as Cld.ScalableChannel).new_value.connect ((id, val) => {
+//                        double num = calculated_value;
+//                    });
+//
+//                    } else if (name == ref_id && (objects.get (ref_id) is Cld.ScalableChannel)) {
+//                        obj = get_object (ref_id);
+//                        (obj as Cld.ScalableChannel).new_value.connect ((id, val) => {
+//                            double num = calculated_value;
+//                        });
+//                    } else {
+//                        obj = null;
+//                    }
+//                    if (obj != null) {
+//                        add_object (ref_id, obj);
+//                        Cld.debug ("Assigning Cld.Object %s to MathChannel %s", name, this.id);
+//                    }
+//                }
+//            }
+//        }
         if (expression != null) {
             for (int i = 0; i < variable_names.length; i++) {
-                Cld.Object obj;
-                string name  = variable_names [i];
-                foreach (string ref_id in objects.keys) {
-                    obj = get_object (ref_id);
-                    if (name.contains (ref_id) && (objects.get (ref_id) is DataSeries)) {
-                        (((obj as DataSeries).channel) as Cld.ScalableChannel).new_value.connect ((id, val) => {
+                var name  = variable_names [i];
+                var obj = get_object_from_alias (name);
+                if (obj != null) {
+                    Cld.debug ("Assigning Cld.Object %s to MathChannel %s", obj.id, this.id);
+                    if (obj is Cld.DataSeries) {
+                        (((obj as Cld.DataSeries).channel) as Cld.ScalableChannel).new_value.connect ((id, val) => {
                         double num = calculated_value;
                     });
 
-                    } else if (name == ref_id && (objects.get (ref_id) is Cld.ScalableChannel)) {
-                        obj = get_object (ref_id);
+                    } else if (obj is Cld.ScalableChannel) {
                         (obj as Cld.ScalableChannel).new_value.connect ((id, val) => {
                             double num = calculated_value;
                         });
-                    } else {
-                        obj = null;
-                    }
-                    if (obj != null) {
-                        add_object (ref_id, obj);
-                        Cld.debug ("Assigning Cld.Object %s to MathChannel %s", name, this.id);
                     }
                 }
             }

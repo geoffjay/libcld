@@ -41,6 +41,10 @@ public interface Cld.Object : GLib.Object {
      */
     public abstract Cld.Object parent { get; set; }
 
+    /**
+     * An alternative identifier for the object.
+     */
+    public abstract string alias { get; set; }
 
     /**
      * Converts the contents into an output string.

@@ -137,6 +137,9 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
                             val = iter->get_content ();
                             range = int.parse (val);
                             break;
+                        case "alias":
+                            alias = iter->get_content ();
+                            break;
                         default:
                             break;
                     }

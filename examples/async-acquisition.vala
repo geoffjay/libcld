@@ -619,8 +619,8 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
 
         GLib.Timeout.add_seconds (2, start_acq_cb);
         GLib.Timeout.add_seconds (1, start_log_cb);
-        GLib.Timeout.add_seconds (122, stop_log_cb);
-        GLib.Timeout.add_seconds (123, quit_cb);
+        GLib.Timeout.add_seconds (21, stop_log_cb);
+        GLib.Timeout.add_seconds (23, quit_cb);
 
         loop.run ();
     }

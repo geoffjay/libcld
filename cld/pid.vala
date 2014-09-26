@@ -47,6 +47,7 @@ public class Cld.Pid : AbstractContainer {
      */
     public double ki {
         get { return _ki; }
+        /* FIXME pointless */
         set { _ki = (value == 0.0) ? 0.000001 : value; }
     }
 
@@ -336,6 +337,7 @@ public class Cld.Pid : AbstractContainer {
     }
 
     /**
+     * FIXME should be pid2
      * Add a process value object to be used as either the process variable for
      * feedback, or the manipulated variable that is being controlled.
      *
@@ -869,6 +871,9 @@ public class Cld.Pid2 : AbstractContainer {
                         case "sp_chref":
                             sp_chref = iter->get_content ();
                             break;
+                        case "alias":
+                            alias = iter->get_content ();
+                            break;
                         default:
                             break;
                     }
@@ -919,6 +924,30 @@ public class Cld.Pid2 : AbstractContainer {
         }
     }
 
+    public void start () {
+        if (!running) {
+            calculate_preload_bias ();
+            running = true;
+            GLib.Timeout.add (dt, update, GLib.Priority.DEFAULT);
+        }
+//        GLib.Thread<void*> thread;
+//        if (!running) {
+//            calculate_preload_bias ();
+//            try {
+//                running = true;
+//                Cld.Pid2.Thread pid_thread = new Cld.Pid2.Thread (this);
+//                thread = new GLib.Thread<void *> ("do_pid", pid_thread.run);
+//            } catch (GLib.ThreadError e) {
+//                running = false;
+//                thread.join ();
+//            }
+//        }
+    }
+
+    public void stop () {
+        running = false;
+    }
+
     /**
      * Calculate the initial error values, effectively produces a `bumpless`
      * transfer when switched to automatic mode as part of a control loop.
@@ -933,21 +962,22 @@ public class Cld.Pid2 : AbstractContainer {
         pv.get_nth_value (2, out past_previous_value);
 
         p_err = sp - previous_value;
+
         if (ki != 0) {
                 i_err = ((mv.channel as AOChannel).scaled_value - (kp * p_err) - (kd * d_err)) / ki;
         } else {
             i_err = 0;
         }
-        d_err = (previous_value - past_previous_value) / dt;
+
+        d_err = 1000 * (previous_value - past_previous_value) / dt;
     }
 
     /**
      * This should - @inheritDoc - but this class doesn't use the Control yet as
      * its base class.
      */
-    public void update () {
+    public bool update () {
         /* do the calculation */
-        mutex.lock ();
         double current_value;
         double previous_value;
         double past_previous_value;
@@ -957,38 +987,50 @@ public class Cld.Pid2 : AbstractContainer {
         pv.get_nth_value (2, out past_previous_value);
 
         p_err = sp - previous_value;
-        i_err += p_err * dt;
-        d_err = (current_value - previous_value) / dt;
+        i_err += p_err * dt / 1000;
+        d_err = 1000 * (current_value - previous_value) / dt;
 
         lock (mv) {
-        /* Anti-windup technique. See http://www.controlguru.com/2008/021008.html */
-        if ((mv.channel as AOChannel).scaled_value > limit_high) {
-            (mv.channel as AOChannel).raw_value = limit_high;
-            if (ki != 0) {
-                    i_err = ((mv.channel as AOChannel).scaled_value - (kp * p_err) - (kd * d_err)) / ki;
-            } else {
-                i_err = 0;
+            /* Anti-windup technique. See http://www.controlguru.com/2008/021008.html */
+            if ((mv.channel as AOChannel).scaled_value > limit_high) {
+                (mv.channel as AOChannel).raw_value = limit_high;
+                if (ki != 0) {
+                        i_err = ((mv.channel as AOChannel).scaled_value - (kp * p_err) - (kd * d_err)) / ki;
+                } else {
+                    i_err = 0;
+                }
+            } else if ((mv.channel as AOChannel).scaled_value < limit_low) {
+                (mv.channel as AOChannel).raw_value = limit_low;
+                if (ki != 0) {
+                        i_err = ((mv.channel as AOChannel).scaled_value - (kp * p_err) - (kd * d_err)) / ki;
+                } else {
+                    i_err = 0;
+                }
             }
-        } else if ((mv.channel as AOChannel).scaled_value < limit_low) {
-            (mv.channel as AOChannel).raw_value = limit_low;
-            if (ki != 0) {
-                    i_err = ((mv.channel as AOChannel).scaled_value - (kp * p_err) - (kd * d_err)) / ki;
-            } else {
-                i_err = 0;
-            }
-        /* Set the output */
-        }
-            (mv.channel as AOChannel).raw_value = (kp * p_err) + (ki * i_err) + (kd * d_err);
-        }
+//        Cld.debug ("SP: %.2f, MV: %.2f, PV: %.2f, PVPR: %.2f, PVPPR: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
+//               sp, mv.channel.scaled_value, current_value, previous_value, past_previous_value, p_err, i_err, d_err);
 
-        //Cld.debug ("SP: %.2f, MV: %.2f, PV: %.2f, PVPR: %.2f, PVPPR: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
-        //       sp, mv.scaled_value, pv.current_value, pv.previous_value, pv.past_previous_value, p_err, i_err, d_err);
+
+
+            /* Set the output */
+            var val = (kp * p_err) + (ki * i_err) + (kd * d_err);
+            if (val > limit_high) {
+                val = limit_high;
+            } else if (val < limit_low) {
+                val = limit_low;
+            }
+            (mv.channel as AOChannel).raw_value = val;
+        }
 
         /* XXX Not sure whether or not to raise an output event here, or simple
          *     write out for channel, or just let an external thread handle the
          *     output and assume that we're done. */
 
-        mutex.unlock ();
+        if (running) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
 //    /**

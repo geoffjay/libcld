@@ -78,6 +78,14 @@ public interface Cld.Container : Cld.Object {
     public abstract Cld.Object? get_object (string id);
 
     /**
+     * Search the object list for the object with the given alias
+     *
+     * @param alias The alias of the the object to retrieve
+     * @return The object it found, null otherwise
+     */
+    public abstract Cld.Object? get_object_from_alias (string alias);
+
+    /**
      * Retrieves a map of all objects of a certain type.
      *
      * {{{

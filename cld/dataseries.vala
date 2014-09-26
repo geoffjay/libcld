@@ -24,7 +24,7 @@ using Gsl;
 /**
  * A data series or array of values
  */
-public class Cld.DataSeries : Cld.AbstractContainer {
+public class Cld.DataSeries : Cld.Connector, Cld.AbstractContainer {
 
     /**
      * The number of elements in the series
@@ -51,29 +51,26 @@ public class Cld.DataSeries : Cld.AbstractContainer {
      */
     public string chref { get; set; }
 
+    private weak Cld.ScalableChannel? _channel = null;
+
     /**
      * The channel that is buffered
      */
     public Cld.ScalableChannel channel {
         get {
-          var channels = get_children (typeof (Cld.Channel));
-          foreach (var chan in channels.values) {
-
-            return chan as Cld.ScalableChannel;
-          }
-
-            return null;
+            if (_channel == null) {
+                var channels = get_children (typeof (Cld.ScalableChannel));
+                foreach (var chan in channels.values) {
+                    _channel = chan as Cld.ScalableChannel;
+                }
+            }
+            return _channel;
         }
         set {
             objects.unset_all (get_children (typeof (Cld.ScalableChannel)));
             objects.set (value.id, value);
         }
     }
-
-    /**
-     * The reference channel value type that the data series derives from
-     */
-    public string vtype { get; set; default = "scaled"; }
 
     /**
      * XXX This may belong somewhere else but is left here for future development.
@@ -122,10 +119,6 @@ public class Cld.DataSeries : Cld.AbstractContainer {
                             value = iter->get_content ();
                             chref = value;
                             break;
-                        case "vtype":
-                            value = iter->get_content ();
-                            vtype = value;
-                            break;
                         case "taps":
                             value = iter->get_content ();
                             string [] tapstring =  value.split_set (", :/", -1);
@@ -146,6 +139,9 @@ public class Cld.DataSeries : Cld.AbstractContainer {
                                 }
                             }
                             break;
+                        case "alias":
+                            alias = iter->get_content ();
+                            break;
                         default:
                             break;
                     }
@@ -161,7 +157,7 @@ public class Cld.DataSeries : Cld.AbstractContainer {
     /**
      * Push a new value into the buffer of values and relay generate a new value signal.
      */
-    public void connect_input () {
+    public void connect_signals () {
         (channel as ScalableChannel).new_value.connect ((id, val) => {
             buffer [j] = val;
             /*

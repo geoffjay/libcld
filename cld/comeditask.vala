@@ -448,8 +448,8 @@ public class Cld.ComediTask : AbstractTask {
             bytes_per_sample = sizeof (ushort);
         }
 
-//        device_fd = (device as ComediDevice).dev.fileno ();
-//        Posix.fcntl (device_fd, Posix.F_SETFL, Posix.O_NONBLOCK);
+        device_fd = (device as ComediDevice).dev.fileno ();
+        Posix.fcntl (device_fd, Posix.F_SETFL, Posix.O_NONBLOCK);
 
         active = true;
 
@@ -472,44 +472,93 @@ public class Cld.ComediTask : AbstractTask {
                 }
 
                 int count = 0;
-//                while (active) {
-//                    /* Device can be read using select or pselect */
-//                    ushort[] buf = new ushort[bufsz];
-//                    Posix.fd_set rdset;
+                int front = 0;
+                int back = 0;
+                ushort *map;
+                ushort word = 0;
+
+                var size = (device as ComediDevice).dev.get_buffer_size (subdevice);
+                map = Posix.mmap (null, size, Posix.PROT_READ, Posix.MAP_SHARED, device_fd, 0);
+
+                while (active) {
+/* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+                    /* Device can be read using select or pselect */
+                    ushort[] buf = new ushort[bufsz];
+                    Posix.fd_set rdset;
+
+                    //Posix.timeval timeout = Posix.timeval ();
+                    Posix.timespec timeout = Posix.timespec ();
+                    Posix.FD_ZERO (out rdset);
+                    Posix.FD_SET (device_fd, ref rdset);
+                    timeout.tv_sec = 0;
+                    //timeout.tv_usec = 50000;
+                    timeout.tv_nsec = 50000000;
+                    Posix.sigset_t sigset = new Posix.sigset_t ();
+                    Posix.sigemptyset (sigset);
+                    //ret = Posix.select (device_fd + 1, &rdset, null, null, timeout);
+                    ret = Posix.pselect (device_fd + 1, &rdset, null, null, timeout, sigset);
+
+                    if (ret < 0) {
+                        if (Posix.errno == Posix.EAGAIN) {
+                            perror("read");
+                        }
+                    } else if (ret == 0) {
+                        //stdout.printf ("%s hit timeout\n", uri);
+                    } else if ((Posix.FD_ISSET (device_fd, rdset)) == 1) {
+                        ret = (int)Posix.read (device_fd, buf, bufsz);
+                        total += ret;
+                        lock (queue) {
+                            for (int i = 0; i < ret / bytes_per_sample; i++) {
+                                queue.offer_head (buf [i]);
+                                if (queue.size > qsize) {
+                                    /* Dump the oldest value */
+                                    queue.poll_tail ();
+                                }
+                            }
+//if ((total % 32768) == 0) { stdout.printf ("%d: total from %s %d  QSIZE: %d\n",Linux.gettid (), uri, total, queue.size); }
+                        }
+                    }
+/* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+/* -------------------------------- Using memory map (XXX not working yet) ---------------------- */
 //
-//                    //Posix.timeval timeout = Posix.timeval ();
-//                    Posix.timespec timeout = Posix.timespec ();
-//                    Posix.FD_ZERO (out rdset);
-//                    Posix.FD_SET (device_fd, ref rdset);
-//                    timeout.tv_sec = 0;
-//                    //timeout.tv_usec = 50000;
-//                    timeout.tv_nsec = 50000000;
-//                    Posix.sigset_t sigset = new Posix.sigset_t ();
-//                    Posix.sigemptyset (sigset);
-//                    //ret = Posix.select (device_fd + 1, &rdset, null, null, timeout);
-//                    ret = Posix.pselect (device_fd + 1, &rdset, null, null, timeout, sigset);
+//                    front += (device as Cld.ComediDevice).dev.get_buffer_contents (subdevice);
+//                    if(front < back) break;
+//                    if(front == back){
+//                        //comedi_poll(dev, options.subdevice);
+//                        //printf("waiting \n");
+//                        GLib.Thread.usleep(10000);
+//                        continue;
+//                    }
 //
-//                    if (ret < 0) {
-//                        if (Posix.errno == Posix.EAGAIN) {
-//                            perror("read");
-//                        }
-//                    } else if (ret == 0) {
-//                        //stdout.printf ("%s hit timeout\n", uri);
-//                    } else if ((Posix.FD_ISSET (device_fd, rdset)) == 1) {
-//                        ret = (int)Posix.read (device_fd, buf, bufsz);
-//                        total += ret;
-//                        lock (queue) {
-//                            for (int i = 0; i < ret / bytes_per_sample; i++) {
-//                                queue.offer_head (buf [i]);
-//                                if (queue.size > qsize) {
-//                                    /* Dump the oldest value */
-//                                    queue.poll_tail ();
-//                                }
+//                    lock (queue) {
+//                        for (int i = back; i < front; i ++) {
+//                            word = *(map + (i % size));
+//
+//                            if ((count % 16) == 0) {
+//                                int col = 0;
+//                                stdout.printf("%d %d \n", count,  word);
+//                                col++;
 //                            }
-////if ((total % 32768) == 0) { stdout.printf ("%d: total from %s %d  QSIZE: %d\n",Linux.gettid (), uri, total, queue.size); }
+//
+//                            queue.offer_head (word);
+//                            if (queue.size > qsize) {
+//                                /* Dump the oldest value */
+//                                queue.poll_tail ();
+//                            }
+//if ((total % 32768) == 0) { stdout.printf ("%d: total from %s %d  QSIZE: %d\n",Linux.gettid (), uri, total, queue.size); }
+//                            count ++;
 //                        }
 //                    }
-//                }
+//
+//                    ret = (device as Cld.ComediDevice).dev.mark_buffer_read (subdevice, front - back);
+//                    if(ret < 0){
+//                        Cld.error ("comedi_mark_buffer_read");
+//                        break;
+//                    }
+//                    back = front;
+/* ------------------------------------------------ end memory map ------------------------------ */
+
+                }
 
                 Idle.add ((owned) callback);
                 return 0;

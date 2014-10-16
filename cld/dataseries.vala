@@ -24,7 +24,7 @@ using Gsl;
 /**
  * A data series or array of values
  */
-public class Cld.DataSeries : Cld.Connector, Cld.AbstractContainer {
+public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
 
     /**
      * The number of elements in the series

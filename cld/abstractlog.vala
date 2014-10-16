@@ -231,7 +231,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
 
                 mutex.lock ();
                 try {
-                    end_time = start_time_mono + count++ * (1000 /  (int)rate) * TimeSpan.MILLISECOND;
+                    end_time = start_time_mono + count++ * (1000 / (int)rate) * TimeSpan.MILLISECOND;
                     while (cond.wait_until (mutex, end_time))
                         ; /* do nothing */
                 } finally {

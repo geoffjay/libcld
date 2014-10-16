@@ -540,7 +540,7 @@ public class Cld.Pid : AbstractContainer {
 /**
  * An alternate control object for doing Proportional Integral Derivitive control loops.
  */
-public class Cld.Pid2 : AbstractContainer {
+public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
 
     /**
      * XXX Consider renaming Pid to PidControl to avoid any confusion with a
@@ -891,7 +891,7 @@ public class Cld.Pid2 : AbstractContainer {
     /**
      * Connect the setpoint channel if it exists.
      */
-    public void connect_sp () {
+    public void connect_signals () {
         if (sp_channel != null) {
             (sp_channel as ScalableChannel).new_value.connect ((id, scaled_value) => {
                sp = scaled_value;

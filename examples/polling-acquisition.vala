@@ -25,7 +25,7 @@ class Cld.PollingExample : Cld.Example {
                         <cld:object id="dev0" type="device" driver="comedi">
                             <cld:property name="hardware">PCI-1713</cld:property>
                             <cld:property name="type">input</cld:property>
-                            <cld:property name="filename">/dev/comedi1</cld:property>
+                            <cld:property name="filename">/dev/comedi0</cld:property>
                             <cld:object id="tk0" type="task" ttype="comedi">
                                 <cld:property name="exec-type">polling</cld:property>
                                 <cld:property name="devref">/ctr0/daqctl0/dev0</cld:property>

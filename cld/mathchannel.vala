@@ -26,7 +26,7 @@ using matheval;
  * the same as the calculated value of the Virtual channel. As a scaleable channel
  * it can be connected to a PID control object, for example.
  */
-public class Cld.MathChannel : Cld.Connector, Cld.VChannel, Cld.ScalableChannel {
+public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel {
 
     /* Property backing fields. */
     private double _scaled_value = 0.0;

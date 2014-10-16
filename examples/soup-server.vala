@@ -78,6 +78,8 @@ class Cld.SoupServerExample : Cld.Example {
                 id = kv[1];
         }
 
+        message ("%s", path);
+
         /* doesn't handle any errors in HTTP request */
         message ("Retrieving channel: %s", id);
         var channel = context.get_object (id);
@@ -98,6 +100,7 @@ class Cld.SoupServerExample : Cld.Example {
 
         message ("JSON Response: %s", response_text);
 
+        msg.status_code = 200;
         msg.response_headers.append ("Access-Control-Allow-Origin", "*");
         msg.set_response ("application/json", Soup.MemoryUse.COPY, response_text.data);
 

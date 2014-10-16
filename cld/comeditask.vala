@@ -47,7 +47,7 @@ public class Cld.ComediTask : AbstractTask {
             if (_device == null) {
                 /* If the task references a parent device */
                 if ((parent is Cld.ComediDevice) && (uri.contains (devref))) {
-                _device = parent as Cld.ComediDevice;
+                    _device = parent as Cld.ComediDevice;
                 }
             }
 
@@ -75,7 +75,7 @@ public class Cld.ComediTask : AbstractTask {
      * Sampling interval in nanoseconds for a single channel. This is the inverse
      * of the scan rate.
      */
-    public int interval_ns { get; set; }
+    public int64 interval_ns { get; set; }
 
     /**
      * The resolution (in nanoseconds) of the time between samples of adjacent channels (ie. the
@@ -169,7 +169,7 @@ public class Cld.ComediTask : AbstractTask {
         device = new ComediDevice ();
         exec_type = "polling";
         direction = "read";
-        interval_ns = (int)1e8;
+        interval_ns = (int64)1e8;
     }
 
     /**
@@ -198,12 +198,13 @@ public class Cld.ComediTask : AbstractTask {
                             direction = iter->get_content ();
                             break;
                         case "interval-ns":
-                            interval_ns = int.parse (iter->get_content ());
+                            interval_ns = int64.parse (iter->get_content ());
                             break;
                         case "resolution-ns":
                             resolution_ns = int.parse (iter->get_content ());
                             break;
                         case "chref":
+                            GLib.message ("::: adding - %s", iter->get_content ());
                             chrefs.add (iter->get_content ());
                             break;
                         case "fifo":
@@ -648,8 +649,8 @@ public class Cld.ComediTask : AbstractTask {
             instructions[n].subdev          = (channel as Channel).subdevnum;
 
             if (channel is AIChannel) {
-                instructions[n].chanspec    = pack (n, (channel as AIChannel).
-                                                    range, AnalogReference.GROUND);
+                instructions[n].chanspec    = pack (n, (channel as AIChannel).range,
+                                                    AnalogReference.GROUND);
                 instructions[n].n            = NSAMPLES;
             } else if (channel is DIChannel) {
                 instructions[n].chanspec     = pack (n, 0, 0);
@@ -729,10 +730,12 @@ public class Cld.ComediTask : AbstractTask {
 
                 //Cld.debug ("Channel: %s, Raw value: %.3f", (channel as DIChannel).id, meas);
             }
+
+            i++;
         }
     }
 
-     public void execute_polled_output () {
+    public void execute_polled_output () {
         Comedi.Range range;
         uint maxdata,  data;
         double val;
@@ -766,7 +769,7 @@ public class Cld.ComediTask : AbstractTask {
                     0, 0, data);
             }
         }
-     }
+    }
 
     /**
      * Write the data to fifos using the LogEntry class as a convenience for timestamping.
@@ -793,7 +796,7 @@ public class Cld.ComediTask : AbstractTask {
             /* Write message to fifo. */
             ssize_t w = Posix.write (fd, mess, mess.length);
         }
-     }
+    }
 
     /**
      * A thread that is used to implement a polling task.
@@ -803,8 +806,11 @@ public class Cld.ComediTask : AbstractTask {
         private static int64 start_time = get_monotonic_time ();
         private static int64 count = 1;
 
+        int interval_ms;
+
         public Thread (ComediTask task) {
             this.task = task;
+            this.interval_ms = (int)task.interval_ns / 1000000;
         }
 
         /**
@@ -816,14 +822,16 @@ public class Cld.ComediTask : AbstractTask {
             int64 end_time;
 
             while (task.active) {
-                lock (task) {
+                //lock (task) {
                     task.trigger_device ();
-                    task.write_fifos ();
-                }
+                    //task.write_fifos ();
+                //}
+
+                //GLib.message ("--- %d ---", this.interval_ms);
 
                 mutex.lock ();
                 try {
-                    end_time = start_time + count++ * (task.interval_ns / 1000000) * TimeSpan.MILLISECOND;
+                    end_time = start_time + count++ * /*(task.interval_ns / 1000000)*/100 * TimeSpan.MILLISECOND;
                     while (cond.wait_until (mutex, end_time))
                         ; /* do nothing */
                 } finally {

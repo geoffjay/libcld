@@ -60,6 +60,7 @@ examples/.libs/
 examples/async-acquisition
 examples/build-from-xml
 examples/context-validation
+examples/polling-acquisition
 examples/soup-server
 
 # Test programs

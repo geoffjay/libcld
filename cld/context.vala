@@ -33,10 +33,18 @@
 public class Cld.Context : Cld.AbstractContainer {
 
     /**
-     * The Controllers for this Context.
+     * Logging controller.
+     */
+    public Cld.LogController log_controller;
+
+    /**
+     * Acquisition controller.
      */
     public Cld.AcquisitionController acquisition_controller;
-    public Cld.LogController log_controller;
+
+    /**
+     * Automation controller.
+     */
     public Cld.AutomationController automation_controller;
 
     /**
@@ -94,6 +102,7 @@ public class Cld.Context : Cld.AbstractContainer {
         Cld.Container self;
         Cld.Object reference;
         var list = get_descendant_ref_list ();
+
         foreach (var entry in list.read_only_view) {
             self = get_object_from_uri ((entry
                 as Cld.AbstractContainer.Reference).self_uri)
@@ -124,6 +133,8 @@ public class Cld.Context : Cld.AbstractContainer {
                 automation_controller = control as Cld.AutomationController;
                 automation_controller.generate ();
             }
+
+            (controller as Cld.Controller).generate ();
         }
 
         /* Connect signals */

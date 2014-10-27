@@ -128,7 +128,6 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
         return object;
     }
 
-
     /**
      * {@inheritDoc}
      */
@@ -137,8 +136,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
         if (dev != null) {
             _is_open = true;
             return true;
-        }
-        else {
+        } else {
             _is_open = false;
             return false;
         }
@@ -155,7 +153,6 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
         else
             return false;
     }
-
 
     /**
      * Retrieve information about the Comedi device.

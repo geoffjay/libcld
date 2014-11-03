@@ -72,8 +72,13 @@ public class Cld.ComediTask : AbstractTask {
     public string direction { get; set; }
 
     /**
+     * Use this for polling tasks
+     */
+    public int interval_ms { get; set; }
+
+    /**
      * Sampling interval in nanoseconds for a single channel. This is the inverse
-     * of the scan rate.
+     * of the scan rate. Use this for asynchronous.
      */
     public int64 interval_ns { get; set; }
 
@@ -196,6 +201,9 @@ public class Cld.ComediTask : AbstractTask {
                             break;
                         case "direction":
                             direction = iter->get_content ();
+                            break;
+                        case "interval-ms":
+                            interval_ms = int.parse (iter->get_content ());
                             break;
                         case "interval-ns":
                             interval_ns = int64.parse (iter->get_content ());
@@ -810,7 +818,6 @@ public class Cld.ComediTask : AbstractTask {
 
         public Thread (ComediTask task) {
             this.task = task;
-            this.interval_ms = (int)task.interval_ns / 1000000;
         }
 
         /**
@@ -822,16 +829,16 @@ public class Cld.ComediTask : AbstractTask {
             int64 end_time;
 
             while (task.active) {
-                //lock (task) {
+                lock (task) {
                     task.trigger_device ();
                     //task.write_fifos ();
-                //}
+                }
 
                 //GLib.message ("--- %d ---", this.interval_ms);
 
                 mutex.lock ();
                 try {
-                    end_time = start_time + count++ * /*(task.interval_ns / 1000000)*/100 * TimeSpan.MILLISECOND;
+                    end_time = start_time + count++ * task.interval_ms * TimeSpan.MILLISECOND;
                     while (cond.wait_until (mutex, end_time))
                         ; /* do nothing */
                 } finally {

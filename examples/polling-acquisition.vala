@@ -25,13 +25,13 @@ class Cld.PollingExample : Cld.Example {
                         <cld:object id="dev0" type="device" driver="comedi">
                             <cld:property name="hardware">PCI-1713</cld:property>
                             <cld:property name="type">input</cld:property>
-                            <cld:property name="filename">/dev/comedi0</cld:property>
+                            <cld:property name="filename">/dev/comedi1</cld:property>
                             <cld:object id="tk0" type="task" ttype="comedi">
                                 <cld:property name="exec-type">polling</cld:property>
                                 <cld:property name="devref">/ctr0/daqctl0/dev0</cld:property>
                                 <cld:property name="subdevice">0</cld:property>
                                 <cld:property name="direction">read</cld:property>
-                                <cld:property name="interval-ms">100</cld:property>
+                                <cld:property name="interval-ms">10</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai0</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai1</cld:property>
                                 <cld:property name="chref">/ctr0/daqctl0/dev0/ai2</cld:property>

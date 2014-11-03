@@ -14,6 +14,7 @@ class Cld.Pid2Example : Cld.Example {
     public Cld.Pid2 pid;
     public Cld.MathChannel input;
     public Cld.AOChannel output;
+    public Cld.AIChannel spchan;
     public Cld.DataSeries dsoutput;
     public Cld.DataSeries dsinput;
     public double sp = 50;
@@ -25,6 +26,7 @@ class Cld.Pid2Example : Cld.Example {
                     <cld:object id="ac0" type="controller" ctype="automation">
                         <cld:object id="pid0" type="pid-2">
                             <cld:property name="sp">0.000</cld:property>
+                            <cld:property name="sp_chref">/ctr0/spchan</cld:property>
                             <cld:property name="dt">10</cld:property>
                             <cld:property name="kp">0.0</cld:property>
                             <cld:property name="ki">1.5</cld:property>
@@ -39,6 +41,10 @@ class Cld.Pid2Example : Cld.Example {
                         <cld:property name="desc">Sample Output</cld:property>
                         <cld:property name="calref">/ctr0/cal0</cld:property>
                         <cld:property name="alias">Vctrl</cld:property>
+                    </cld:object>
+                    <cld:object id="spchan" type="channel" ctype="analog" direction="input">
+                        <cld:property name="tag">IN</cld:property>
+                        <cld:property name="calref">/ctr0/cal0</cld:property>
                     </cld:object>
                     <cld:object id="cal0" type="calibration">
                         <cld:property name="units">Volts</cld:property>
@@ -94,6 +100,7 @@ class Cld.Pid2Example : Cld.Example {
         pid = context.get_object ("pid0") as Cld.Pid2;
         input = context.get_object ("mc00") as Cld.MathChannel;
         output = context.get_object ("aout") as Cld.AOChannel;
+        spchan = context.get_object ("spchan") as Cld.AIChannel;
         dsoutput = context.get_object ("dsout") as Cld.DataSeries;
         dsinput = context.get_object ("dsin") as Cld.DataSeries;
         output.raw_value = 0.0;
@@ -110,16 +117,19 @@ class Cld.Pid2Example : Cld.Example {
     /* Write data to stdout */
     public bool output_cb () {
         stdout.printf ("%8.3f %8.3f %8.3f\n",
-            pid.sp, output.scaled_value, input.scaled_value);
+            spchan.scaled_value, output.scaled_value, input.scaled_value);
 
         return true;
     }
 
     /* change to the setpoint */
     public bool start_cb () {
-        if (pid.sp == 0) {
-            pid.sp = sp;
-            //GLib.Timeout.add_seconds (10, toggle_cb);
+//        if (pid.sp == 0) {
+//            pid.sp = sp;
+//            //GLib.Timeout.add_seconds (10, toggle_cb);
+//        }
+        if (spchan.raw_value == 0) {
+            spchan.add_raw_value (50);
         }
 
         return false;

@@ -42,8 +42,12 @@ public class Cld.XmlConfig : GLib.Object {
     public string file_name { get; set; }
 
     private Xml.Doc *doc;
+    private Xml.Node* root;
     private Xml.XPath.Context *ctx;
     private Xml.XPath.Object *obj;
+
+    // Line indentation
+    private int indent = 0;
 
     /**
      * Default construction
@@ -79,7 +83,7 @@ public class Cld.XmlConfig : GLib.Object {
      */
     public XmlConfig.from_node (Xml.Node *node) {
         doc = new Xml.Doc ("1.0");
-        Xml.Node *root = new Xml.Node (null, "cld");
+        root = new Xml.Node (null, "cld");
         doc->set_root_element (root);
         root->add_child (node);
         ctx = new Xml.XPath.Context (doc);
@@ -105,243 +109,249 @@ public class Cld.XmlConfig : GLib.Object {
      *
      * @param config ...
      */
-    public void update_config (Gee.Map<string, Cld.Object> objects) {
-        foreach (Cld.Object object in objects.values) {
-            if (object is Cld.Channel) {
-                Cld.message ("Changing %s description to %s",
-                    object.id, (object as Cld.Channel).desc);
+    public void update_config (Cld.Context cld_context) {
+        var objects = cld_context.get_object_map (typeof (Cld.Object));
 
-                /* update the Channel values of the XML data in memory */
-                var xpath_base = "//cld/cld:objects/cld:object";
+      // Let's parse those nodes
+        parse_node (root);
 
-                var xpath = "%s[@type=\"channel\" and @id=\"%s\"]/cld:property[@name=\"desc\"]".printf (xpath_base, object.id);
-                try {
-                edit_node_content (xpath, (object as Cld.Channel).desc);
-                } catch (Cld.XmlError e) {
-                    Cld.error (e.message);
-                }
-
-            } else if (object is Cld.AIChannel) {
-
-            } else if (object is Cld.AOChannel) {
-
-            } else if (object is Cld.DIChannel) {
-
-            } else if (object is Cld.VChannel) {
-
-            } else if (object is Cld.Calibration) {
-                /**
-                 * Edit the following properties:
-                 * - Map<Coefficient>
-                 * - units
-                 */
-                Cld.message ("Changing %s units to %s",
-                              object.id, (object as Cld.Calibration).units);
-
-                /* update the calibration settings of the xml data in memory */
-                var xpath_base = "//cld/cld:objects/cld:object";
-
-                var xpath = "%s[@type=\"calibration\" and @id=\"%s\"]/cld:property[@name=\"units\"]".printf (xpath_base, object.id);
-                try {
-                    edit_node_content (xpath, (object as Cld.Calibration).units);
-                    var coefficients = (object as Cld.Calibration).coefficients;
-                    update_coefficient_config (object.id, (object as Calibration).coefficients);
-                } catch (Cld.XmlError e) {
-                    Cld.error (e.message);
-                }
-
-            } else if (object is Cld.Control) {
-                foreach (var control in (object as Container).objects.values) {
-                    /**
-                     * Edit the following properties:
-                     * - kp
-                     * - ki
-                     * - kd
-                     * - dt
-                     * - pv_id
-                     * - mv_id
-                     */
-                    if (control is Cld.Pid) {
-                        var process_values = (control as Cld.Pid).process_values;
-                        var pv = process_values.get ("pv0");
-                        var mv = process_values.get ("pv1");
-                        Cld.message ("Control - %s: (PV: %s) & (MV: %s)", control.id, (pv as ProcessValue).chref,
-                                                                            (mv as ProcessValue).chref);
-                        /* update the PID values of the XML data in memory */
-                        var xpath_base = "//cld/cld:objects/cld:object[@type=\"control\"]/cld:object[@id=\"%s\"]".printf (control.id);
-
-                        var xpath = "%s/cld:property[@name=\"kp\"]".printf (xpath_base);
-                        try {
-                            var value = "%.6f".printf ((control as Cld.Pid).kp);
-                            edit_node_content (xpath, value);
-                        } catch (Cld.XmlError e) {
-                            Cld.error (e.message);
-                        }
-
-                        xpath = "%s/cld:property[@name=\"ki\"]".printf (xpath_base);
-                        try {
-                            var value = "%.6f".printf ((control as Cld.Pid).ki);
-                            edit_node_content (xpath, value);
-                        } catch (Cld.XmlError e) {
-                            Cld.error (e.message);
-                        }
-
-                        xpath = "%s/cld:property[@name=\"kd\"]".printf (xpath_base);
-                        try {
-                            var value = "%.6f".printf ((control as Cld.Pid).kd);
-                            edit_node_content (xpath, value);
-                        } catch (Cld.XmlError e) {
-                            Cld.error (e.message);
-                        }
-
-                        xpath = "%s/cld:property[@name=\"dt\"]".printf (xpath_base);
-                        try {
-                            var value = "%.6f".printf ((control as Cld.Pid).dt);
-                            edit_node_content (xpath, value);
-                        } catch (Cld.XmlError e) {
-                            Cld.error (e.message);
-                        }
-
-                        /* update the channel ID references for the process values */
-                        xpath = "%s/cld:object[@id=\"%s\"]".printf (xpath_base, pv.id);
-                        try {
-                            edit_node_attribute (xpath, "chref", (pv as Cld.ProcessValue).chref);
-                        } catch (Cld.XmlError e) {
-                            Cld.error (e.message);
-                        }
-
-                        xpath = "%s/cld:object[@id=\"%s\"]".printf (xpath_base, mv.id);
-                        try {
-                            edit_node_attribute (xpath, "chref", (mv as Cld.ProcessValue).chref);
-                        } catch (Cld.XmlError e) {
-                            Cld.error (e.message);
-                        }
-
-                    } else if (control is Cld.Pid2) {
-                        var process_values = (control as Cld.Pid2).process_values;
-                        var pv = process_values.get ("pv0");
-                        var mv = process_values.get ("pv1");
-
-                        /* update the PID values of the XML data in memory */
-                        var xpath_base = "//cld/cld:objects/cld:object[@type=\"control\"]/cld:object[@id=\"%s\"]".printf (control.id);
-                        var xpath = "%s/cld:property[@name=\"kp\"]".printf (xpath_base);
-                        var value = "%.6f".printf ((control as Cld.Pid2).kp);
-                        Cld.message ("Control - %s: (PV: %s) & (MV: %s)", control.id, (pv as ProcessValue2).dsref,
-                                                                            (mv as ProcessValue2).dsref);
-                        try {
-                            edit_node_content (xpath, value);
-                        } catch (Cld.XmlError e) {
-                            Cld.error (e.message);
-                        }
-
-                        xpath = "%s/cld:property[@name=\"ki\"]".printf (xpath_base);
-                        value = "%.6f".printf ((control as Cld.Pid2).ki);
-                        try {
-                            edit_node_content (xpath, value);
-                        } catch (Cld.XmlError e) {
-                            Cld.error (e.message);
-                        }
-
-                        xpath = "%s/cld:property[@name=\"kd\"]".printf (xpath_base);
-                        value = "%.6f".printf ((control as Cld.Pid2).kd);
-                        try {
-                            edit_node_content (xpath, value);
-                        } catch (Cld.XmlError e) {
-                            Cld.error (e.message);
-                        }
-
-                        xpath = "%s/cld:property[@name=\"dt\"]".printf (xpath_base);
-                        value = "%.6f".printf ((control as Cld.Pid2).dt);
-                        try {
-                            edit_node_content (xpath, value);
-                        } catch (Cld.XmlError e) {
-                            Cld.error (e.message);
-                        }
-
-                        /* update the channel ID references for the process values */
-                        xpath = "%s/cld:object[@id=\"%s\"]".printf (xpath_base, pv.id);
-                        try {
-                            edit_node_attribute (xpath, "dsref", (pv as Cld.ProcessValue2).dsref);
-                        } catch (Cld.XmlError e) {
-                            Cld.error (e.message);
-                        }
-
-                        xpath = "%s/cld:object[@id=\"%s\"]".printf (xpath_base, mv.id);
-                        try {
-                            edit_node_attribute (xpath, "dsref", (mv as Cld.ProcessValue2).dsref);
-                        } catch (Cld.XmlError e) {
-                            Cld.error (e.message);
-                        }
-                    }
-                }
-            } else if (object is Cld.Module) {
-                /**
-                 * Edit the following properties:
-                 * - program
-                 */
-                /* update the module content of the XML data in memory */
-                var xpath_base = "//cld/cld:objects/cld:object";
-                if (object is Cld.VelmexModule) {
-                    Cld.message ("Changing VelmexModule %s program to %s", object.id, (object as Cld.VelmexModule).program);
-                    var xpath = "%s[@type=\"module\" and @id=\"%s\"]/cld:property[@name=\"program\"]".printf (xpath_base, object.id);
-                    try {
-                        edit_node_content (xpath, (object as Cld.VelmexModule).program);
-                    } catch (Cld.XmlError e) {
-                        Cld.error (e.message);
-                    }
-                }
-            } else if (object is Cld.Log) {
-                /**
-                 * Edit the following properties:
-                 * - name
-                 * - path
-                 * - file
-                 * - date format
-                 * - rate
-                 */
-                /* XXX add better debugging */
-                Cld.message ("Changing log file %s", object.id);
-
-                /* update the AI channel values of the XML data in memory */
-                var xpath_base = "//cld/cld:objects/cld:object[@type=\"log\" and @id=\"%s\"]".printf (object.id);
-
-                var xpath = "%s/cld:property[@name=\"title\"]".printf (xpath_base);
-                try {
-                    edit_node_content (xpath, (object as Cld.Log).name);
-                } catch (Cld.XmlError e) {
-                    Cld.error (e.message);
-                }
-
-                xpath = "%s/cld:property[@name=\"path\"]".printf (xpath_base);
-                try {
-                    edit_node_content (xpath, (object as Cld.Log).path);
-                } catch (Cld.XmlError e) {
-                    Cld.error (e.message);
-                }
-
-                xpath = "%s/cld:property[@name=\"file\"]".printf (xpath_base);
-                try {
-                    edit_node_content (xpath, (object as Cld.Log).file);
-                } catch (Cld.XmlError e) {
-                    Cld.error (e.message);
-                }
-
-                xpath = "%s/cld:property[@name=\"format\"]".printf (xpath_base);
-                try {
-                    edit_node_content (xpath, (object as Cld.Log).date_format);
-                } catch (Cld.XmlError e) {
-                    Cld.error (e.message);
-                }
-
-                xpath = "%s/cld:property[@name=\"rate\"]".printf (xpath_base);
-                try {
-                    var value = "%.3f".printf ((object as Cld.Log).rate);
-                    edit_node_content (xpath, value);
-                } catch (Cld.XmlError e) {
-                    Cld.error (e.message);
-                }
-            }
-        }
+//        foreach (Cld.Object object in objects.values) {
+//            Cld.message ("%s", object.uri);
+//            if (object is Cld.Channel) {
+//                Cld.message ("Changing %s description to %s",
+//                    object.id, (object as Cld.Channel).desc);
+//
+//                /* update the Channel values of the XML data in memory */
+//                var xpath_base = "//cld/cld:objects/cld:object";
+//
+//                var xpath = "%s[@type=\"channel\" and @id=\"%s\"]/cld:property[@name=\"desc\"]".printf (xpath_base, object.id);
+//                try {
+//                edit_node_content (xpath, (object as Cld.Channel).desc);
+//                } catch (Cld.XmlError e) {
+//                    Cld.error (e.message);
+//                }
+//
+//            } else if (object is Cld.AIChannel) {
+//
+//            } else if (object is Cld.AOChannel) {
+//
+//            } else if (object is Cld.DIChannel) {
+//
+//            } else if (object is Cld.VChannel) {
+//
+//            } else if (object is Cld.Calibration) {
+//                /**/
+//                 * Edit the following properties:
+//                 * - Map<Coefficient>
+//                 * - units
+//                 */
+//                Cld.message ("Changing %s units to %s",
+//                              object.id, (object as Cld.Calibration).units);
+//
+//                /* update the calibration settings of the xml data in memory */
+//                var xpath_base = "//cld/cld:objects/cld:object";
+//
+//                var xpath = "%s[@type=\"calibration\" and @id=\"%s\"]/cld:property[@name=\"units\"]".printf (xpath_base, object.id);
+//                try {
+//                    edit_node_content (xpath, (object as Cld.Calibration).units);
+//                    var coefficients = (object as Cld.Calibration).coefficients;
+//                    update_coefficient_config (object.id, (object as Calibration).coefficients);
+//                } catch (Cld.XmlError e) {
+//                    Cld.error (e.message);
+//                }
+//
+//            } else if (object is Cld.Control) {
+//                foreach (var control in (object as Container).objects.values) {
+//                    /**
+//                     * Edit the following properties:
+//                     * - kp
+//                     * - ki
+//                     * - kd
+//                     * - dt
+//                     * - pv_id
+//                     * - mv_id
+//                     */
+//                    if (control is Cld.Pid) {
+//                        var process_values = (control as Cld.Pid).process_values;
+//                        var pv = process_values.get ("pv0");
+//                        var mv = process_values.get ("pv1");
+//                        Cld.message ("Control - %s: (PV: %s) & (MV: %s)", control.id, (pv as ProcessValue).chref,
+//                                                                            (mv as ProcessValue).chref);
+//                        /* update the PID values of the XML data in memory */
+//                        var xpath_base = "//cld/cld:objects/cld:object[@type=\"control\"]/cld:object[@id=\"%s\"]".printf (control.id);
+//
+//                        var xpath = "%s/cld:property[@name=\"kp\"]".printf (xpath_base);
+//                        try {
+//                            var value = "%.6f".printf ((control as Cld.Pid).kp);
+//                            edit_node_content (xpath, value);
+//                        } catch (Cld.XmlError e) {
+//                            Cld.error (e.message);
+//                        }
+//
+//                        xpath = "%s/cld:property[@name=\"ki\"]".printf (xpath_base);
+//                        try {
+//                            var value = "%.6f".printf ((control as Cld.Pid).ki);
+//                            edit_node_content (xpath, value);
+//                        } catch (Cld.XmlError e) {
+//                            Cld.error (e.message);
+//                        }
+//
+//                        xpath = "%s/cld:property[@name=\"kd\"]".printf (xpath_base);
+//                        try {
+//                            var value = "%.6f".printf ((control as Cld.Pid).kd);
+//                            edit_node_content (xpath, value);
+//                        } catch (Cld.XmlError e) {
+//                            Cld.error (e.message);
+//                        }
+//
+//                        xpath = "%s/cld:property[@name=\"dt\"]".printf (xpath_base);
+//                        try {
+//                            var value = "%.6f".printf ((control as Cld.Pid).dt);
+//                            edit_node_content (xpath, value);
+//                        } catch (Cld.XmlError e) {
+//                            Cld.error (e.message);
+//                        }
+//
+//                        /* update the channel ID references for the process values */
+//                        xpath = "%s/cld:object[@id=\"%s\"]".printf (xpath_base, pv.id);
+//                        try {
+//                            edit_node_attribute (xpath, "chref", (pv as Cld.ProcessValue).chref);
+//                        } catch (Cld.XmlError e) {
+//                            Cld.error (e.message);
+//                        }
+//
+//                        xpath = "%s/cld:object[@id=\"%s\"]".printf (xpath_base, mv.id);
+//                        try {
+//                            edit_node_attribute (xpath, "chref", (mv as Cld.ProcessValue).chref);
+//                        } catch (Cld.XmlError e) {
+//                            Cld.error (e.message);
+//                        }
+//
+//                    } else if (control is Cld.Pid2) {
+//                        var process_values = (control as Cld.Pid2).process_values;
+//                        var pv = process_values.get ("pv0");
+//                        var mv = process_values.get ("pv1");
+//
+//                        /* update the PID values of the XML data in memory */
+//                        var xpath_base = "//cld/cld:objects/cld:object[@type=\"control\"]/cld:object[@id=\"%s\"]".printf (control.id);
+//                        var xpath = "%s/cld:property[@name=\"kp\"]".printf (xpath_base);
+//                        var value = "%.6f".printf ((control as Cld.Pid2).kp);
+//                        Cld.message ("Control - %s: (PV: %s) & (MV: %s)", control.id, (pv as ProcessValue2).dsref,
+//                                                                            (mv as ProcessValue2).dsref);
+//                        try {
+//                            edit_node_content (xpath, value);
+//                        } catch (Cld.XmlError e) {
+//                            Cld.error (e.message);
+//                        }
+//
+//                        xpath = "%s/cld:property[@name=\"ki\"]".printf (xpath_base);
+//                        value = "%.6f".printf ((control as Cld.Pid2).ki);
+//                        try {
+//                            edit_node_content (xpath, value);
+//                        } catch (Cld.XmlError e) {
+//                            Cld.error (e.message);
+//                        }
+//
+//                        xpath = "%s/cld:property[@name=\"kd\"]".printf (xpath_base);
+//                        value = "%.6f".printf ((control as Cld.Pid2).kd);
+//                        try {
+//                            edit_node_content (xpath, value);
+//                        } catch (Cld.XmlError e) {
+//                            Cld.error (e.message);
+//                        }
+//
+//                        xpath = "%s/cld:property[@name=\"dt\"]".printf (xpath_base);
+//                        value = "%.6f".printf ((control as Cld.Pid2).dt);
+//                        try {
+//                            edit_node_content (xpath, value);
+//                        } catch (Cld.XmlError e) {
+//                            Cld.error (e.message);
+//                        }
+//
+//                        /* update the channel ID references for the process values */
+//                        xpath = "%s/cld:object[@id=\"%s\"]".printf (xpath_base, pv.id);
+//                        try {
+//                            edit_node_attribute (xpath, "dsref", (pv as Cld.ProcessValue2).dsref);
+//                        } catch (Cld.XmlError e) {
+//                            Cld.error (e.message);
+//                        }
+//
+//                        xpath = "%s/cld:object[@id=\"%s\"]".printf (xpath_base, mv.id);
+//                        try {
+//                            edit_node_attribute (xpath, "dsref", (mv as Cld.ProcessValue2).dsref);
+//                        } catch (Cld.XmlError e) {
+//                            Cld.error (e.message);
+//                        }
+//                    }
+//                }
+//            } else if (object is Cld.Module) {
+//                /**
+//                 * Edit the following properties:
+//                 * - program
+//                 */
+//                /* update the module content of the XML data in memory */
+//                var xpath_base = "//cld/cld:objects/cld:object";
+//                if (object is Cld.VelmexModule) {
+//                    Cld.message ("Changing VelmexModule %s program to %s", object.id, (object as Cld.VelmexModule).program);
+//                    var xpath = "%s[@type=\"module\" and @id=\"%s\"]/cld:property[@name=\"program\"]".printf (xpath_base, object.id);
+//                    try {
+//                        edit_node_content (xpath, (object as Cld.VelmexModule).program);
+//                    } catch (Cld.XmlError e) {
+//                        Cld.error (e.message);
+//                    }
+//                }
+//            } else if (object is Cld.Log) {
+//                /**
+//                 * Edit the following properties:
+//                 * - name
+//                 * - path
+//                 * - file
+//                 * - date format
+//                 * - rate
+//                 */
+//                /* XXX add better debugging */
+//                Cld.message ("Changing log file %s", object.id);
+//
+//                /* update the AI channel values of the XML data in memory */
+//                var xpath_base = "//cld/cld:objects/cld:object[@type=\"log\" and @id=\"%s\"]".printf (object.id);
+//
+//                var xpath = "%s/cld:property[@name=\"title\"]".printf (xpath_base);
+//                try {
+//                    edit_node_content (xpath, (object as Cld.Log).name);
+//                } catch (Cld.XmlError e) {
+//                    Cld.error (e.message);
+//                }
+//
+//                xpath = "%s/cld:property[@name=\"path\"]".printf (xpath_base);
+//                try {
+//                    edit_node_content (xpath, (object as Cld.Log).path);
+//                } catch (Cld.XmlError e) {
+//                    Cld.error (e.message);
+//                }
+//
+//                xpath = "%s/cld:property[@name=\"file\"]".printf (xpath_base);
+//                try {
+//                    edit_node_content (xpath, (object as Cld.Log).file);
+//                } catch (Cld.XmlError e) {
+//                    Cld.error (e.message);
+//                }
+//
+//                xpath = "%s/cld:property[@name=\"format\"]".printf (xpath_base);
+//                try {
+//                    edit_node_content (xpath, (object as Cld.Log).date_format);
+//                } catch (Cld.XmlError e) {
+//                    Cld.error (e.message);
+//                }
+//
+//                xpath = "%s/cld:property[@name=\"rate\"]".printf (xpath_base);
+//                try {
+//                    var value = "%.3f".printf ((object as Cld.Log).rate);
+//                    edit_node_content (xpath, value);
+//                } catch (Cld.XmlError e) {
+//                    Cld.error (e.message);
+//                }
+//            }
+//        }
     }
 
     private void update_coefficient_config (string calibration_id, Gee.Map<string, Cld.Object> coefficients) {
@@ -374,6 +384,42 @@ public class Cld.XmlConfig : GLib.Object {
         string str_indent = string.nfill (4, ' ');
         stdout.printf ("%s%c%s: %s\n",
                        str_indent, token, node_name, node_content);
+    }
+
+    private void parse_node (Xml.Node* node) {
+        this.indent++;
+        // Loop over the passed node's children
+        for (Xml.Node* iter = node->children; iter != null; iter = iter->next) {
+            // Spaces between tags are also nodes, discard them
+            if (iter->type != Xml.ElementType.ELEMENT_NODE) {
+                continue;
+            }
+
+            // Get the node's name
+            string node_name = iter->name;
+            // Get the node's content with <tags> stripped
+            string node_content = iter->get_content ();
+            print_indent (node_name, node_content);
+
+            // Now parse the node's properties (attributes) ...
+            parse_properties (iter);
+
+            // Followed by its children nodes
+            parse_node (iter);
+        }
+        this.indent--;
+    }
+
+    private void parse_properties (Xml.Node* node) {
+        // Loop over the passed node's properties (attributes)
+        for (Xml.Attr* prop = node->properties; prop != null; prop = prop->next) {
+            string attr_name = prop->name;
+
+            // Notice the ->children which points to a Node*
+            // (Attr doesn't feature content)
+            string attr_content = prop->children->content;
+            print_indent (attr_name, attr_content, '|');
+        }
     }
 
     public int child_element_count (string xpath) throws Cld.XmlError {

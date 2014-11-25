@@ -153,7 +153,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         if (objects != null) {
             foreach (var object in objects.values) {
                 if (object.get_type ().is_a (type)) {
-                    Cld.debug ("uri: %s type: %s", object.uri, type.name ());
+                    //Cld.debug ("uri: %s type: %s", object.uri, type.name ());
                     map.set (object.uri, object);
                 }
 

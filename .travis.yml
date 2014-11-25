@@ -1,12 +1,18 @@
 language: c
 compiler: gcc
+
+notifications:
+  email:
+    - geoff.jay@gmail.com
+
 before_install:
   - sudo add-apt-repository ppa:vala-team/ppa -y
   - sudo apt-get update -qq
   - sudo apt-get install -qq gnome-common libglib2.0-dev libjson-glib-dev
     libgee-dev libvala-0.22-dev libgsl0-dev libsqlite0-dev libxml2-dev
     libmatheval-dev libmodbus-dev libcomedi-dev valac-0.22 gobject-introspection
+
 script:
-  - export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:./deps
-  - ./autogen.sh --with-modbus --with-comedi
+  - ./autogen.sh
+  - PKG_CONFIG_PATH=./deps/ ./configure --with-modbus --with-comedi
   - make

@@ -159,6 +159,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
         this.tag = "CH0";
         this.desc = "Input Channel";
         preload_raw_value_list ();
+        connect_signals ();
     }
 
     /**
@@ -166,6 +167,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
      */
     public AIChannel.from_xml_node (Xml.Node *node) {
         string val;
+        this.node = node;
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -213,8 +215,94 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
                 }
             }
         }
-
+        connect_signals ();
         preload_raw_value_list ();
+    }
+
+    /**
+     * Connect all the notify signals that should require the node to update
+     */
+    private void connect_signals () {
+        notify["tag"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["desc"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["num"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["subdevnum"].connect ((s, p) => {
+            Cld.debug ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
+            update_node ();
+        });
+        /* FIXME: This signal does not seem to connect ??? */
+        notify["raw_value_list_size"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["calref"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["range"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+    }
+
+    /**
+     * Update the XML Node for this object.
+     */
+    private void update_node () {
+        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+            node->type != Xml.ElementType.COMMENT_NODE) {
+            /* iterate through node children */
+            for (Xml.Node *iter = node->children;
+                 iter != null;
+                 iter = iter->next) {
+                if (iter->name == "property") {
+                    switch (iter->get_prop ("name")) {
+                        case "tag":
+                            iter->set_content (tag);
+                            break;
+                        case "desc":
+                            iter->set_content (desc);
+                            break;
+                        case "num":
+                            iter->set_content (num.to_string ());
+                            break;
+                        case "subdevnum":
+                            iter->set_content (subdevnum.to_string ());
+                            Cld.debug ("Writing %s to XML node for subdevnum", subdevnum.to_string ());
+                            break;
+                        case "naverage":
+                            iter->set_content (raw_value_list_size.to_string ());
+                            Cld.debug ("node avg set to %s", iter->get_content ());
+                            break;
+                        case "calref":
+                            iter->set_content (calref);
+                            break;
+                        case "range":
+                            iter->set_content (range.to_string ());
+                            break;
+                        case "alias":
+                            iter->set_content (alias);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
     }
 
     /**

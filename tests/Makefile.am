@@ -37,7 +37,7 @@ tests_DEPENDENCIES = \
 
 tests_VALAFLAGS = \
 	--basedir $(top_srcdir) \
-	--vapidir $(top_srcdir)/cld \
+	--vapidir $(top_srcdir)/cld --vapidir=$(srcdir)/../vapi \
 	--pkg cld-0.2 @VALA_PACKAGES@ --pkg libmatheval --pkg posix \
 	$(NULL)
 

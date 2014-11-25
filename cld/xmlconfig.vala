@@ -110,10 +110,10 @@ public class Cld.XmlConfig : GLib.Object {
      * @param config ...
      */
     public void update_config (Cld.Context cld_context) {
-        var objects = cld_context.get_object_map (typeof (Cld.Object));
+//        var objects = cld_context.get_object_map (typeof (Cld.Object));
 
       // Let's parse those nodes
-        parse_node (root);
+//        parse_node (root);
 
 //        foreach (Cld.Object object in objects.values) {
 //            Cld.message ("%s", object.uri);

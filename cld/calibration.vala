@@ -56,6 +56,7 @@ public class Cld.Calibration : Cld.AbstractContainer {
         /* set defaults */
         add (new Cld.Coefficient.with_data ("cft0", 0, 0.0));
         add (new Cld.Coefficient.with_data ("cft1", 1, 1.0));
+        connect_signals ();
     }
 
     public Calibration.with_units (string units) {
@@ -63,10 +64,12 @@ public class Cld.Calibration : Cld.AbstractContainer {
         this.units = units;
         id = "cal0";
         _objects = new Gee.TreeMap<string, Cld.Object> ();
+        connect_signals ();
     }
 
     public Calibration.from_xml_node (Xml.Node *node) {
         _objects = new Gee.TreeMap<string, Cld.Object> ();
+        this.node = node;
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -93,11 +96,45 @@ public class Cld.Calibration : Cld.AbstractContainer {
                 }
             }
         }
+        connect_signals ();
     }
 
     ~Calibration () {
         if (_objects != null)
             _objects.clear ();
+    }
+
+    /**
+     * Connect all the notify signals that should require the node to update
+     */
+    private void connect_signals () {
+        notify["units"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+    }
+
+    /**
+     * Update the XML Node for this object.
+     */
+    private void update_node () {
+        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+            node->type != Xml.ElementType.COMMENT_NODE) {
+            /* iterate through node children */
+            for (Xml.Node *iter = node->children;
+                 iter != null;
+                 iter = iter->next) {
+                if (iter->name == "property") {
+                    switch (iter->get_prop ("name")) {
+                        case "units":
+                            iter->set_content (units);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
     }
 
     public int coefficient_count () {

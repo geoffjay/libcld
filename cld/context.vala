@@ -124,7 +124,9 @@ public class Cld.Context : Cld.AbstractContainer {
         }
 
         /* Connect signals */
+        Cld.debug ("context 127");
         var connectors = get_object_map (typeof (Cld.Connector));
+        Cld.debug ("context 128");
         foreach (var connector in connectors.values) {
             (connector as Cld.Connector).connect_signals ();
         }

@@ -36,10 +36,12 @@ public class Cld.Coefficient : AbstractObject {
         this.id = id;
         this.n = n;
         this.value = value;
+        connect_signals ();
     }
 
     public Coefficient.from_xml_node (Xml.Node *node) {
         string val;
+        this.node = node;
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -65,7 +67,51 @@ public class Cld.Coefficient : AbstractObject {
                 }
             }
         }
+        connect_signals ();
     }
+
+    /**
+     * Connect all the notify signals that should require the node to update
+     */
+    private void connect_signals () {
+        notify["n"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["value"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+    }
+
+    /**
+     * Update the XML Node for this object.
+     */
+    private void update_node () {
+        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+            node->type != Xml.ElementType.COMMENT_NODE) {
+            /* iterate through node children */
+            for (Xml.Node *iter = node->children;
+                 iter != null;
+                 iter = iter->next) {
+                if (iter->name == "property") {
+                    switch (iter->get_prop ("name")) {
+                        case "n":
+                            iter->set_content (n.to_string ());
+                            break;
+                        case "value":
+                            iter->set_content (value.to_string ());
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+
 //
 //    public override string to_string () {
 //        string str_data  = "[%s] : Coefficient\n".printf (id);

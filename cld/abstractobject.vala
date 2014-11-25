@@ -71,6 +71,11 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
     }
 
     /**
+     * The XML Node that corresponds to this.
+     */
+    public Xml.Node* node;
+
+    /**
      * {@inheritDoc}
      */
     public virtual string to_string () {

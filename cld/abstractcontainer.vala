@@ -152,12 +152,14 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         Gee.Map<string, Cld.Object> map = new Gee.TreeMap<string, Cld.Object> ();
         if (objects != null) {
             foreach (var object in objects.values) {
+                //Cld.debug ("1) uri: %s type: %s", object.uri, type.name ());
                 if (object.get_type ().is_a (type)) {
-                    //Cld.debug ("uri: %s type: %s", object.uri, type.name ());
+                    //Cld.debug ("2) uri: %s type: %s", object.uri, type.name ());
                     map.set (object.uri, object);
                 }
 
                 if (object is Cld.Container) {
+                    //Cld.debug ("%s is a container", object.id);
                     var sub_map = (object as Cld.Container).get_object_map (type);
                     foreach (var sub_object in sub_map.values) {
                         map.set (sub_object.uri, sub_object);

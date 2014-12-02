@@ -53,6 +53,7 @@ public class Cld.DIChannel : Cld.AbstractChannel, Cld.DChannel, Cld.IChannel {
     public DIChannel.from_xml_node (Xml.Node *node) {
         string value;
 
+        this.node = node;
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
@@ -76,6 +77,65 @@ public class Cld.DIChannel : Cld.AbstractChannel, Cld.DChannel, Cld.IChannel {
                         case "subdevnum":
                             value = iter->get_content ();
                             subdevnum = int.parse (value);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+        connect_signals ();
+    }
+
+    /**
+     * Connect all the notify signals that should require the node to update
+     */
+    private void connect_signals () {
+        notify["tag"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["desc"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["num"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["subdevnum"].connect ((s, p) => {
+            Cld.debug ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
+            update_node ();
+        });
+    }
+
+        /**
+     * Update the XML Node for this object.
+     */
+    private void update_node () {
+        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+            node->type != Xml.ElementType.COMMENT_NODE) {
+            /* iterate through node children */
+            for (Xml.Node *iter = node->children;
+                 iter != null;
+                 iter = iter->next) {
+                if (iter->name == "property") {
+                    switch (iter->get_prop ("name")) {
+                        case "tag":
+                            iter->set_content (tag);
+                            break;
+                        case "desc":
+                            iter->set_content (desc);
+                            break;
+                        case "num":
+                            iter->set_content (num.to_string ());
+                            break;
+                        case "subdevnum":
+                            iter->set_content (subdevnum.to_string ());
+                            Cld.debug ("Writing %s to XML node for subdevnum", subdevnum.to_string ());
                             break;
                         default:
                             break;

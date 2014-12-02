@@ -116,40 +116,20 @@ public class Cld.Context : Cld.AbstractContainer {
         foreach (var control in controllers.values) {
             if (control is Cld.AcquisitionController) {
                 acquisition_controller = control as Cld.AcquisitionController;
+                //acquisition_controller.generate ();
             } else if (control is Cld.LogController) {
                 log_controller = control as Cld.LogController;
+                log_controller.generate ();
             } else if (control is Cld.AutomationController) {
                 automation_controller = control as Cld.AutomationController;
+                automation_controller.generate ();
             }
         }
 
         /* Connect signals */
-        Cld.debug ("context 127");
         var connectors = get_object_map (typeof (Cld.Connector));
-        Cld.debug ("context 128");
         foreach (var connector in connectors.values) {
             (connector as Cld.Connector).connect_signals ();
         }
-
-        /* Generate FIFOs for log to read from and aquisitions to write to */
-        var logs = log_controller.get_children (typeof (Cld.Log));
-//        foreach (var log in logs.values) {
-//            /* Generate the filename */
-//            string fname = "/tmp/libcld_%s".printf (log.uri.hash ().to_string ());
-//            /* add it to the logs fifo list */
-//            (log as Cld.Log).fifos.set (fname, -1);
-//            /* Create the FIFO */
-//            if (Posix.access (fname, Posix.F_OK) == -1) {
-//                int res = Posix.mkfifo (fname, 0777);
-//                if (res != 0) {
-//                    Cld.error ("Context could not create fifo %s\n", fname);
-//                }
-//            }
-//            acquisition_controller.new_fifo (log as Cld.Log, fname);
-//        }
-
-        acquisition_controller.generate ();
-        log_controller.generate ();
-        automation_controller.generate ();
     }
 }

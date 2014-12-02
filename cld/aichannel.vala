@@ -257,6 +257,11 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
             Cld.debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
+
+        notify["alias"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
     }
 
     /**

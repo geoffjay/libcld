@@ -99,11 +99,13 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
         this.desc = "Output Channel";
 
         raw_value = 0.0;
+        connect_signals ();
     }
 
     public AOChannel.from_xml_node (Xml.Node *node) {
         string val;
 
+        this.node = node;
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
@@ -139,6 +141,90 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
                             break;
                         case "alias":
                             alias = iter->get_content ();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+        connect_signals ();
+    }
+
+    /**
+     * Connect all the notify signals that should require the node to update
+     */
+    private void connect_signals () {
+        notify["tag"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["desc"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["num"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["subdevnum"].connect ((s, p) => {
+            Cld.debug ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
+            update_node ();
+        });
+
+        notify["calref"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["range"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["alias"].connect ((s, p) => {
+            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+    }
+
+    /**
+     * Update the XML Node for this object.
+     */
+    private void update_node () {
+        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+            node->type != Xml.ElementType.COMMENT_NODE) {
+            /* iterate through node children */
+            for (Xml.Node *iter = node->children;
+                 iter != null;
+                 iter = iter->next) {
+                if (iter->name == "property") {
+                    Cld.debug ("property", iter->get_prop ("name"));
+                    switch (iter->get_prop ("name")) {
+                        case "tag":
+                            iter->set_content (tag);
+                            break;
+                        case "desc":
+                            iter->set_content (desc);
+                            break;
+                        case "num":
+                            iter->set_content (num.to_string ());
+                            break;
+                        case "subdevnum":
+                            iter->set_content (subdevnum.to_string ());
+                            Cld.debug ("Writing %s to XML node for subdevnum", subdevnum.to_string ());
+                            break;
+                        case "calref":
+                            iter->set_content (calref);
+                            break;
+                        case "range":
+                            iter->set_content (range.to_string ());
+                            break;
+                        case "alias":
+                            iter->set_content (alias);
                             break;
                         default:
                             break;

@@ -1026,7 +1026,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         if (!(Posix.access (db_filename, Posix.W_OK) == 0) &&
            !(Posix.access (db_filename, Posix.R_OK) == 0)) {
             throw new Cld.FileError.ACCESS (
-                    "Can't open database file %s: %d: %s", db_filename
+                    "Can't open database file %s", db_filename
                 );
             backup_is_open = false;
 

@@ -122,15 +122,15 @@ public class Cld.Context : Cld.AbstractContainer {
     public void generate () {
         /* Get the controllers */
         var controllers = get_children (typeof (Cld.Controller));
-        foreach (var control in controllers.values) {
-            if (control is Cld.AcquisitionController) {
-                acquisition_controller = control as Cld.AcquisitionController;
+        foreach (var controller in controllers.values) {
+            if (controller is Cld.AcquisitionController) {
+                acquisition_controller = controller as Cld.AcquisitionController;
                 //acquisition_controller.generate ();
-            } else if (control is Cld.LogController) {
-                log_controller = control as Cld.LogController;
+            } else if (controller is Cld.LogController) {
+                log_controller = controller as Cld.LogController;
                 log_controller.generate ();
-            } else if (control is Cld.AutomationController) {
-                automation_controller = control as Cld.AutomationController;
+            } else if (controller is Cld.AutomationController) {
+                automation_controller = controller as Cld.AutomationController;
                 automation_controller.generate ();
             }
 

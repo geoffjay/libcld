@@ -17,7 +17,6 @@ endif
 
 SUBDIRS = \
 	cld \
-	rpm \
 	tests \
 	vapi \
 	$(DOC_SUBDIR) \

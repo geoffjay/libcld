@@ -1,1 +1,0 @@
-subdirs = fedora generic

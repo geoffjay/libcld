@@ -83,7 +83,7 @@ public interface Cld.Log : Cld.Object {
                     return NEVER;
                 }
             } catch (RegexError e) {
-                Cld.message ("TimeStampFlag regex error: %s", e.message);
+                message ("TimeStampFlag regex error: %s", e.message);
             }
 
             return NEVER;

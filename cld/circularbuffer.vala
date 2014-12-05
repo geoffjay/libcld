@@ -81,7 +81,7 @@ public class Cld.CircularBuffer<G> : GLib.Object {
 //        }
         if (end == start) {
             _full = true;
-            //Cld.message ("Circular buffer is full. Overwriting data");
+            //message ("Circular buffer is full. Overwriting data");
             start = (start + 1) % size; /* full, overwrite */
         }
     }

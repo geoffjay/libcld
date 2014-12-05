@@ -60,7 +60,7 @@ public class Cld.LogController : Cld.AbstractController {
                             try {
                                 add (log);
                             } catch (Cld.Error.KEY_EXISTS e) {
-                                Cld.error (e.message);
+                                error (e.message);
                             }
                             break;
                         default:

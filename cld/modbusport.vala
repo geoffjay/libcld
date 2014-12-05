@@ -69,7 +69,7 @@ public class Cld.ModbusPort : AbstractPort {
      */
     public ModbusPort () {
         this.settings_changed.connect (update_settings);
-        Cld.debug ("also done");
+        message ("also done");
     }
 
     /**
@@ -126,7 +126,7 @@ public class Cld.ModbusPort : AbstractPort {
     public override bool open () {
         ctx = new Modbus.Context.tcp (ip_address, TcpAttributes.DEFAULT_PORT);
         if (ctx.connect () == -1) {
-            Cld.debug ("Connection failed.");
+            message ("Connection failed.");
             _connected = false;
             return false;
         } else {
@@ -142,7 +142,7 @@ public class Cld.ModbusPort : AbstractPort {
         if (connected) {
             ctx.close ();
             _connected = false;
-            Cld.debug ("Closed Modbus port.");
+            message ("Closed Modbus port.");
             }
     }
 
@@ -151,9 +151,9 @@ public class Cld.ModbusPort : AbstractPort {
      **/
     public void read_registers (int addr, uint16[] dest) {
         if  (ctx == null)
-            Cld.debug ("Port has no context");
+            message ("Port has no context");
             if (ctx.read_registers (addr, dest) == -1)
-                Cld.debug ("Modbus read error.");
+                message ("Modbus read error.");
      }
 
      /**
@@ -161,9 +161,9 @@ public class Cld.ModbusPort : AbstractPort {
       **/
     public void write_register (int addr, int val) {
         if  (ctx == null)
-            Cld.debug ("Port has no context");
+            message ("Port has no context");
             if (ctx.write_register (addr, val) == -1)
-                Cld.debug ("Modbus write single register error.");
+                message ("Modbus write single register error.");
     }
 
     /**
@@ -171,8 +171,8 @@ public class Cld.ModbusPort : AbstractPort {
      **/
     public void write_registers (int addr, uint16[] data) {
         if (ctx == null)
-            Cld.debug ("Port has no context.");
+            message ("Port has no context.");
             if (ctx.write_registers (addr, data) == -1)
-                Cld.debug ("Modbus write registers error.");
+                message ("Modbus write registers error.");
     }
 }

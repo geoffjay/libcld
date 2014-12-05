@@ -235,37 +235,37 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
      */
     private void connect_notify () {
         notify["tag"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["desc"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["expression"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["num"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["subdevnum"].connect ((s, p) => {
-            Cld.debug ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
+            message ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
             update_node ();
         });
 
         notify["calref"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["alias"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
     }
@@ -281,7 +281,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
                  iter != null;
                  iter = iter->next) {
                 if (iter->name == "property") {
-                    Cld.debug ("property", iter->get_prop ("name"));
+                    debug ("property: %s", iter->get_prop ("name"));
                     switch (iter->get_prop ("name")) {
                         case "tag":
                             iter->set_content (tag);
@@ -358,7 +358,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
 //                    }
 //                    if (obj != null) {
 //                        add_object (ref_id, obj);
-//                        Cld.debug ("Assigning Cld.Object %s to MathChannel %s", name, this.id);
+//                        message ("Assigning Cld.Object %s to MathChannel %s", name, this.id);
 //                    }
 //                }
 //            }
@@ -368,7 +368,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
                 var name  = variable_names [i];
                 var obj = get_object_from_alias (name);
                 if (obj != null) {
-                    Cld.debug ("Assigning Cld.Object %s to MathChannel %s", obj.id, this.id);
+                    message ("Assigning Cld.Object %s to MathChannel %s", obj.id, this.id);
                     if (obj is Cld.DataSeries) {
                         (((obj as Cld.DataSeries).channel) as Cld.ScalableChannel).new_value.connect ((id, val) => {
                         double num = calculated_value;

@@ -45,13 +45,13 @@ public class CalibrationTests : ObjectTests {
         try {
             test_calibration.add (new Coefficient.with_data ("cft0", 0, 0.0));
         } catch (Cld.Error e) {
-            Cld.error ("%s", e.message);
+            error ("%s", e.message);
         }
 
         try {
             test_calibration.add (new Coefficient.with_data ("cft1", 1, 0.0));
         } catch (Cld.Error e) {
-            Cld.error ("%s", e.message);
+            error ("%s", e.message);
         }
 
         test_calibration.set_default ();

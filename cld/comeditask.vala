@@ -346,13 +346,13 @@ public class Cld.ComediTask : AbstractTask {
         GLib.stdout.printf ("device: %s\n", device.id);
         (device as ComediDevice).dev.set_max_buffer_size (subdevice, 1048576);
         (device as ComediDevice).dev.set_buffer_size (subdevice, 1048576);
-        Cld.debug (" buffer size: %d", (device as ComediDevice).dev.get_buffer_size (subdevice));
+        message (" buffer size: %d", (device as ComediDevice).dev.get_buffer_size (subdevice));
         scan_period_nanosec = (uint)interval_ns;
 
         /* Make chanlist sequential and without gaps. XXX Need this for Advantech 1710. */
         foreach (var channel in channels.values) {
             if ((channel as Channel).num >= channels.size) {
-                Cld.error ("Channel list must be sequential and with no gaps.");
+                error ("Channel list must be sequential and with no gaps.");
                 return;
             }
             chanlist[(channel as Channel).num] = Comedi.pack (
@@ -472,7 +472,7 @@ public class Cld.ComediTask : AbstractTask {
                  * enables a concurent start of multiple tasks.
                  *
                  */
-                Cld.debug ("Asynchronous acquisition started for ComediTask %s @ %lld", uri, GLib.get_monotonic_time ());
+                message ("Asynchronous acquisition started for ComediTask %s @ %lld", uri, GLib.get_monotonic_time ());
                 ret = (device as ComediDevice).dev.command (cmd);
 
                 GLib.stdout.printf ("test ret = %d\n", ret);
@@ -561,7 +561,7 @@ public class Cld.ComediTask : AbstractTask {
 //
 //                    ret = (device as Cld.ComediDevice).dev.mark_buffer_read (subdevice, front - back);
 //                    if(ret < 0){
-//                        Cld.error ("comedi_mark_buffer_read");
+//                        error ("comedi_mark_buffer_read");
 //                        break;
 //                    }
 //                    back = front;
@@ -699,7 +699,7 @@ public class Cld.ComediTask : AbstractTask {
         /*XXX Consider getting rid of Channel timestamps. They are nod needed if using FIFOs. */
         GLib.DateTime timestamp = new DateTime.now_local ();
 
-        //Cld.debug ("\t\t\t\texecute_instruction_list (), get_seconds (): %.3f", timestamp.get_seconds ());
+        //message ("\t\t\t\texecute_instruction_list (), get_seconds (): %.3f", timestamp.get_seconds ());
         ret = (device as ComediDevice).dev.do_insnlist (instruction_list);
         if (ret < 0)
             perror ("do_insnlist failed:");
@@ -727,7 +727,7 @@ public class Cld.ComediTask : AbstractTask {
                 meas = meas / (j);
                 (channel as AIChannel).add_raw_value (meas);
 
-                //Cld.debug ("Channel: %s, Raw value: %.3f", (channel as AIChannel).id, (channel as AIChannel).raw_value);
+                //message ("Channel: %s, Raw value: %.3f", (channel as AIChannel).id, (channel as AIChannel).raw_value);
             } else if (channel is DIChannel) {
                 meas = instruction_list.insns[i].data[0];
                 if (meas > 0.0) {
@@ -736,7 +736,7 @@ public class Cld.ComediTask : AbstractTask {
                     (channel as DChannel).state = false;
                 }
 
-                //Cld.debug ("Channel: %s, Raw value: %.3f", (channel as DIChannel).id, meas);
+                //message ("Channel: %s, Raw value: %.3f", (channel as DIChannel).id, meas);
             }
 
             i++;
@@ -762,7 +762,7 @@ public class Cld.ComediTask : AbstractTask {
 
                 maxdata = (device as ComediDevice).dev.get_maxdata ((channel as Channel).subdevnum, (channel as AOChannel).num);
                 data = (uint)((val / 100.0) * maxdata);
-                //Cld.debug ("%s scaled_value: %.3f, data: %u", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
+                //message ("%s scaled_value: %.3f, data: %u", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
                 (device as ComediDevice).dev.data_write (
                     (channel as Channel).subdevnum, (channel as AOChannel).num,
                     (channel as AOChannel).range, AnalogReference.GROUND, data);
@@ -771,7 +771,7 @@ public class Cld.ComediTask : AbstractTask {
                     data = 1;
                 else
                     data = 0;
-                //Cld.debug ("%s data value: %u", (channel as DOChannel).id, data);
+                //message ("%s data value: %u", (channel as DOChannel).id, data);
                 (device as ComediDevice).dev.data_write (
                     (channel as Channel).subdevnum, (channel as DOChannel).num,
                     0, 0, data);

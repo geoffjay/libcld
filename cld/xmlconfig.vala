@@ -57,7 +57,7 @@ public class Cld.XmlConfig : GLib.Object {
         try {
             load_document (this.file_name);
         } catch (Cld.XmlError e) {
-            Cld.error (e.message);
+            error (e.message);
         }
     }
 
@@ -71,7 +71,7 @@ public class Cld.XmlConfig : GLib.Object {
         try {
             load_document (this.file_name);
         } catch (Cld.XmlError e) {
-            Cld.error (e.message);
+            error (e.message);
         }
 
     }
@@ -116,9 +116,9 @@ public class Cld.XmlConfig : GLib.Object {
 //        parse_node (root);
 
 //        foreach (Cld.Object object in objects.values) {
-//            Cld.message ("%s", object.uri);
+//            message ("%s", object.uri);
 //            if (object is Cld.Channel) {
-//                Cld.message ("Changing %s description to %s",
+//                message ("Changing %s description to %s",
 //                    object.id, (object as Cld.Channel).desc);
 //
 //                /* update the Channel values of the XML data in memory */
@@ -128,7 +128,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                try {
 //                edit_node_content (xpath, (object as Cld.Channel).desc);
 //                } catch (Cld.XmlError e) {
-//                    Cld.error (e.message);
+//                    error (e.message);
 //                }
 //
 //            } else if (object is Cld.AIChannel) {
@@ -145,7 +145,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                 * - Map<Coefficient>
 //                 * - units
 //                 */
-//                Cld.message ("Changing %s units to %s",
+//                message ("Changing %s units to %s",
 //                              object.id, (object as Cld.Calibration).units);
 //
 //                /* update the calibration settings of the xml data in memory */
@@ -157,7 +157,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                    var coefficients = (object as Cld.Calibration).coefficients;
 //                    update_coefficient_config (object.id, (object as Calibration).coefficients);
 //                } catch (Cld.XmlError e) {
-//                    Cld.error (e.message);
+//                    error (e.message);
 //                }
 //
 //            } else if (object is Cld.Control) {
@@ -175,7 +175,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                        var process_values = (control as Cld.Pid).process_values;
 //                        var pv = process_values.get ("pv0");
 //                        var mv = process_values.get ("pv1");
-//                        Cld.message ("Control - %s: (PV: %s) & (MV: %s)", control.id, (pv as ProcessValue).chref,
+//                        message ("Control - %s: (PV: %s) & (MV: %s)", control.id, (pv as ProcessValue).chref,
 //                                                                            (mv as ProcessValue).chref);
 //                        /* update the PID values of the XML data in memory */
 //                        var xpath_base = "//cld/cld:objects/cld:object[@type=\"control\"]/cld:object[@id=\"%s\"]".printf (control.id);
@@ -185,7 +185,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                            var value = "%.6f".printf ((control as Cld.Pid).kp);
 //                            edit_node_content (xpath, value);
 //                        } catch (Cld.XmlError e) {
-//                            Cld.error (e.message);
+//                            error (e.message);
 //                        }
 //
 //                        xpath = "%s/cld:property[@name=\"ki\"]".printf (xpath_base);
@@ -193,7 +193,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                            var value = "%.6f".printf ((control as Cld.Pid).ki);
 //                            edit_node_content (xpath, value);
 //                        } catch (Cld.XmlError e) {
-//                            Cld.error (e.message);
+//                            error (e.message);
 //                        }
 //
 //                        xpath = "%s/cld:property[@name=\"kd\"]".printf (xpath_base);
@@ -201,7 +201,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                            var value = "%.6f".printf ((control as Cld.Pid).kd);
 //                            edit_node_content (xpath, value);
 //                        } catch (Cld.XmlError e) {
-//                            Cld.error (e.message);
+//                            error (e.message);
 //                        }
 //
 //                        xpath = "%s/cld:property[@name=\"dt\"]".printf (xpath_base);
@@ -209,7 +209,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                            var value = "%.6f".printf ((control as Cld.Pid).dt);
 //                            edit_node_content (xpath, value);
 //                        } catch (Cld.XmlError e) {
-//                            Cld.error (e.message);
+//                            error (e.message);
 //                        }
 //
 //                        /* update the channel ID references for the process values */
@@ -217,14 +217,14 @@ public class Cld.XmlConfig : GLib.Object {
 //                        try {
 //                            edit_node_attribute (xpath, "chref", (pv as Cld.ProcessValue).chref);
 //                        } catch (Cld.XmlError e) {
-//                            Cld.error (e.message);
+//                            error (e.message);
 //                        }
 //
 //                        xpath = "%s/cld:object[@id=\"%s\"]".printf (xpath_base, mv.id);
 //                        try {
 //                            edit_node_attribute (xpath, "chref", (mv as Cld.ProcessValue).chref);
 //                        } catch (Cld.XmlError e) {
-//                            Cld.error (e.message);
+//                            error (e.message);
 //                        }
 //
 //                    } else if (control is Cld.Pid2) {
@@ -236,12 +236,12 @@ public class Cld.XmlConfig : GLib.Object {
 //                        var xpath_base = "//cld/cld:objects/cld:object[@type=\"control\"]/cld:object[@id=\"%s\"]".printf (control.id);
 //                        var xpath = "%s/cld:property[@name=\"kp\"]".printf (xpath_base);
 //                        var value = "%.6f".printf ((control as Cld.Pid2).kp);
-//                        Cld.message ("Control - %s: (PV: %s) & (MV: %s)", control.id, (pv as ProcessValue2).dsref,
+//                        message ("Control - %s: (PV: %s) & (MV: %s)", control.id, (pv as ProcessValue2).dsref,
 //                                                                            (mv as ProcessValue2).dsref);
 //                        try {
 //                            edit_node_content (xpath, value);
 //                        } catch (Cld.XmlError e) {
-//                            Cld.error (e.message);
+//                            error (e.message);
 //                        }
 //
 //                        xpath = "%s/cld:property[@name=\"ki\"]".printf (xpath_base);
@@ -249,7 +249,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                        try {
 //                            edit_node_content (xpath, value);
 //                        } catch (Cld.XmlError e) {
-//                            Cld.error (e.message);
+//                            error (e.message);
 //                        }
 //
 //                        xpath = "%s/cld:property[@name=\"kd\"]".printf (xpath_base);
@@ -257,7 +257,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                        try {
 //                            edit_node_content (xpath, value);
 //                        } catch (Cld.XmlError e) {
-//                            Cld.error (e.message);
+//                            error (e.message);
 //                        }
 //
 //                        xpath = "%s/cld:property[@name=\"dt\"]".printf (xpath_base);
@@ -265,7 +265,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                        try {
 //                            edit_node_content (xpath, value);
 //                        } catch (Cld.XmlError e) {
-//                            Cld.error (e.message);
+//                            error (e.message);
 //                        }
 //
 //                        /* update the channel ID references for the process values */
@@ -273,14 +273,14 @@ public class Cld.XmlConfig : GLib.Object {
 //                        try {
 //                            edit_node_attribute (xpath, "dsref", (pv as Cld.ProcessValue2).dsref);
 //                        } catch (Cld.XmlError e) {
-//                            Cld.error (e.message);
+//                            error (e.message);
 //                        }
 //
 //                        xpath = "%s/cld:object[@id=\"%s\"]".printf (xpath_base, mv.id);
 //                        try {
 //                            edit_node_attribute (xpath, "dsref", (mv as Cld.ProcessValue2).dsref);
 //                        } catch (Cld.XmlError e) {
-//                            Cld.error (e.message);
+//                            error (e.message);
 //                        }
 //                    }
 //                }
@@ -292,12 +292,12 @@ public class Cld.XmlConfig : GLib.Object {
 //                /* update the module content of the XML data in memory */
 //                var xpath_base = "//cld/cld:objects/cld:object";
 //                if (object is Cld.VelmexModule) {
-//                    Cld.message ("Changing VelmexModule %s program to %s", object.id, (object as Cld.VelmexModule).program);
+//                    message ("Changing VelmexModule %s program to %s", object.id, (object as Cld.VelmexModule).program);
 //                    var xpath = "%s[@type=\"module\" and @id=\"%s\"]/cld:property[@name=\"program\"]".printf (xpath_base, object.id);
 //                    try {
 //                        edit_node_content (xpath, (object as Cld.VelmexModule).program);
 //                    } catch (Cld.XmlError e) {
-//                        Cld.error (e.message);
+//                        error (e.message);
 //                    }
 //                }
 //            } else if (object is Cld.Log) {
@@ -310,7 +310,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                 * - rate
 //                 */
 //                /* XXX add better debugging */
-//                Cld.message ("Changing log file %s", object.id);
+//                message ("Changing log file %s", object.id);
 //
 //                /* update the AI channel values of the XML data in memory */
 //                var xpath_base = "//cld/cld:objects/cld:object[@type=\"log\" and @id=\"%s\"]".printf (object.id);
@@ -319,28 +319,28 @@ public class Cld.XmlConfig : GLib.Object {
 //                try {
 //                    edit_node_content (xpath, (object as Cld.Log).name);
 //                } catch (Cld.XmlError e) {
-//                    Cld.error (e.message);
+//                    error (e.message);
 //                }
 //
 //                xpath = "%s/cld:property[@name=\"path\"]".printf (xpath_base);
 //                try {
 //                    edit_node_content (xpath, (object as Cld.Log).path);
 //                } catch (Cld.XmlError e) {
-//                    Cld.error (e.message);
+//                    error (e.message);
 //                }
 //
 //                xpath = "%s/cld:property[@name=\"file\"]".printf (xpath_base);
 //                try {
 //                    edit_node_content (xpath, (object as Cld.Log).file);
 //                } catch (Cld.XmlError e) {
-//                    Cld.error (e.message);
+//                    error (e.message);
 //                }
 //
 //                xpath = "%s/cld:property[@name=\"format\"]".printf (xpath_base);
 //                try {
 //                    edit_node_content (xpath, (object as Cld.Log).date_format);
 //                } catch (Cld.XmlError e) {
-//                    Cld.error (e.message);
+//                    error (e.message);
 //                }
 //
 //                xpath = "%s/cld:property[@name=\"rate\"]".printf (xpath_base);
@@ -348,7 +348,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                    var value = "%.3f".printf ((object as Cld.Log).rate);
 //                    edit_node_content (xpath, value);
 //                } catch (Cld.XmlError e) {
-//                    Cld.error (e.message);
+//                    error (e.message);
 //                }
 //            }
 //        }
@@ -361,7 +361,7 @@ public class Cld.XmlConfig : GLib.Object {
          */
         foreach (var coefficient in coefficients.values) {
             var value = "%.4f".printf ((coefficient as Cld.Coefficient).value);
-            Cld.message ("Changing %s value to %s", coefficient.id, value);
+            message ("Changing %s value to %s", coefficient.id, value);
 
             /* update the AI channel values of the XML data in memory */
             var xpath_base = "//cld/cld:objects/cld:object";
@@ -370,7 +370,7 @@ public class Cld.XmlConfig : GLib.Object {
             try {
                 edit_node_content (xpath, value);
             } catch (Cld.XmlError e) {
-                Cld.error (e.message);
+                error (e.message);
             }
         }
     }

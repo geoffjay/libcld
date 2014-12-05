@@ -121,7 +121,7 @@ public class Cld.VelmexModule : AbstractModule {
         loaded = (port.open ()) ? true : false;
         port.send_byte ('F');
 
-        Cld.debug ("VelmexModule :: load ()");
+        message ("VelmexModule :: load ()");
 
         return loaded;
     }
@@ -135,6 +135,6 @@ public class Cld.VelmexModule : AbstractModule {
 
         loaded = false; // XXX There is currently no way to verify this.
 
-        Cld.debug ("VelmexModule :: unload ()");
+        message ("VelmexModule :: unload ()");
     }
 }

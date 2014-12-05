@@ -75,7 +75,7 @@ public class Cld.AcquisitionController : Cld.AbstractController {
                                 try {
                                     add (dev);
                                 } catch (Cld.Error.KEY_EXISTS e) {
-                                    Cld.error (e.message);
+                                    error (e.message);
                                 }
                             }
                             break;
@@ -85,7 +85,7 @@ public class Cld.AcquisitionController : Cld.AbstractController {
                             try {
                                 add (mux);
                             } catch (Cld.Error.KEY_EXISTS e) {
-                                Cld.error (e.message);
+                                error (e.message);
                             }
                             break;
                         default:
@@ -277,21 +277,21 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
             /* get a file descriptor */
             try {
                 int fd = open_fifo.end (res);
-                Cld.debug ("Multiplexer with fifo %s and fd %d has a reader", fname, fd);
+                message ("Multiplexer with fifo %s and fd %d has a reader", fname, fd);
 
                 bg_multiplex_data.begin (fd, (obj, res) => {
                     try {
                         bg_multiplex_data.end (res);
-                        Cld.debug ("Multiplexer with fifo %s multiplex data async ended", fname);
+                        message ("Multiplexer with fifo %s multiplex data async ended", fname);
                     } catch (ThreadError e) {
                         string msg = e.message;
-                        Cld.error (@"Thread error: $msg");
+                        error (@"Thread error: $msg");
                     }
                 });
 
             } catch (ThreadError e) {
                 string msg = e.message;
-                Cld.error (@"Thread error: $msg");
+                error (@"Thread error: $msg");
             }
         });
     }
@@ -305,12 +305,12 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
         SourceFunc callback = open_fifo.callback;
         int fd = -1;
         GLib.Thread<int> thread = new GLib.Thread<int> ("open_fifo", () => {
-            Cld.debug ("Acquisition controller is waiting for a reader to FIFO %s", fname);
+            message ("Acquisition controller is waiting for a reader to FIFO %s", fname);
             fd = Posix.open (fname, Posix.O_WRONLY);
             if (fd == -1) {
-                Cld.debug ("%s Posix.open error: %d: %s", fname, Posix.errno, Posix.strerror (Posix.errno));
+                message ("%s Posix.open error: %d: %s", fname, Posix.errno, Posix.strerror (Posix.errno));
             } else {
-                Cld.debug ("Acquisition controller opening FIFO %s fd: %d", fname, fd);
+                message ("Acquisition controller opening FIFO %s fd: %d", fname, fd);
             }
 
             Idle.add ((owned) callback);
@@ -528,7 +528,7 @@ stdout.printf ("%d: total written to multiplexer: %d            nscan: %d\n",
 //                        if  (ret != (nscan * nchans [i])) {
 //                        //if  (ret > 4096) {
 //
-//                            Cld.error ("Comedi mark_buffer_read failed %12d %12d %12d %12d %12d",
+//                            error ("Comedi mark_buffer_read failed %12d %12d %12d %12d %12d",
 //                                    ret,
 //                                    nscan * nchans [i],
 //                                    ret + nscan * nchans [i],

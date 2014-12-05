@@ -69,7 +69,7 @@ internal class Cld.Builder : GLib.Object {
             }
         }
 
-        Cld.debug ("Adding nodeset to %s for: %s", ctr.id, xpath);
+        message ("Adding nodeset to %s for: %s", ctr.id, xpath);
 
         /* request the nodeset from the configuration */
         try {
@@ -82,7 +82,7 @@ internal class Cld.Builder : GLib.Object {
 
                     /* Load all available objects */
                     if (node->name == "object") {
-                        Cld.debug ("Level: %d", level);
+                        message ("Level: %d", level);
                         object = node_to_object (node);
 
                         /* Recursively add objects */
@@ -96,19 +96,19 @@ internal class Cld.Builder : GLib.Object {
                         /* No point adding an object type that isn't recognized */
                         if (object != null) {
                             try {
-                                Cld.debug ("Adding object of type %s with id %s to %s",
+                                message ("Adding object of type %s with id %s to %s",
                                            ((object as GLib.Object).get_type ()).name (),
                                            object.id, ctr.id);
                                 ctr.add (object);
                             } catch (Cld.Error.KEY_EXISTS e) {
-                                Cld.error (e.message);
+                                error (e.message);
                             }
                         }
                     }
                 }
             }
         } catch (Cld.XmlError e) {
-            Cld.error (e.message);
+            error (e.message);
         }
     }
 
@@ -151,7 +151,7 @@ internal class Cld.Builder : GLib.Object {
                 break;
         }
 
-        Cld.debug ("Loading object of type %s with id %s", type, object.id);
+        message ("Loading object of type %s with id %s", type, object.id);
 
         return object;
     }

@@ -113,7 +113,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
                         case "length":
                             value = iter->get_content ();
                             length = int.parse (value);
-                            Cld.debug ("%s length: %d", id, this.length);
+                            message ("%s length: %d", id, this.length);
                             break;
                         case "chref":
                             value = iter->get_content ();
@@ -122,12 +122,12 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
                         case "taps":
                             value = iter->get_content ();
                             string [] tapstring =  value.split_set (", :/", -1);
-                            Cld.debug ("tapstring.length: %d", tapstring.length);
+                            message ("tapstring.length: %d", tapstring.length);
                             taps = new int [tapstring.length];
                             int len = length;
                             for (int i = 0; i < tapstring.length; i++) {
                                 taps [i] = int.parse (tapstring [i]);
-                                Cld.debug ("taps [%d]: %d", i, taps [i]);
+                                message ("taps [%d]: %d", i, taps [i]);
                                 Cld.Object object = new VChannel ();
                                 (object as VChannel).id = "vc-%s-%d".printf (this.id, taps [i]);
                                 (object as VChannel).tag = "%s [%d]".printf (this.id, taps [i]);
@@ -135,7 +135,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
                                 try {
                                     add (object);
                                 } catch (Cld.Error.KEY_EXISTS e) {
-                                    Cld.error (e.message);
+                                    error (e.message);
                                 }
                             }
                             break;
@@ -161,11 +161,11 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
         (channel as ScalableChannel).new_value.connect ((id, val) => {
             buffer [j] = val;
             /*
-            Cld.debug ("buffer [0 : %d]: ", buffer.length);
+            message ("buffer [0 : %d]: ", buffer.length);
             for (int i = 0; i < buffer.length; i++) {
-                Cld.debug ("%.3f  ", buffer [i]);
+                message ("%.3f  ", buffer [i]);
             }
-            Cld.debug ("\n");
+            message ("\n");
             */
             new_value (this.id, buffer [j]);
             j++;
@@ -191,8 +191,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
         }
 
         if ((i > length) || (i < 0)) {
-            Cld.debug ("DataSeries.get_nth_value (n) Failed!");
-
+            message ("DataSeries.get_nth_value (n) Failed!");
             return false;
         } else {
             val = buffer[i];

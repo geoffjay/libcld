@@ -284,7 +284,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             /* Open the database file*/
             int ec = Sqlite.Database.open (db_filename, out db);
             if (ec != Sqlite.OK) {
-                Cld.error ("Can't open database: %d: %s\n", db.errcode (), db.errmsg ());
+                error ("Can't open database: %d: %s\n", db.errcode (), db.errmsg ());
                 is_open = false;
             } else {
                 is_open = true;
@@ -357,7 +357,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         DateTime created_time = new DateTime.now_local ();
 
         /* open the file */
-        Cld.debug ("filename: %s ", filename);
+        message ("filename: %s ", filename);
         file_stream = FileStream.open (filename, "w+");
         if (file_stream == null) {
            success = false;
@@ -451,38 +451,38 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 if (Posix.access (fname, Posix.F_OK) == -1) {
                     int res = Posix.mkfifo (fname, 0777);
                     if (res != 0) {
-                        Cld.error ("Context could not create fifo %s\n", fname);
+                        error ("Context could not create fifo %s\n", fname);
                     }
                 }
 
                 open_fifo.begin (fname, (obj, res) => {
                     try {
                         int fd = open_fifo.end (res);
-                        Cld.debug ("got a writer for %s", fname);
+                        message ("got a writer for %s", fname);
 
                         /* Background fifo watch queues fills the entry queue */
                         bg_fifo_watch.begin (fd, (obj, res) => {
                             try {
                                 bg_fifo_watch.end (res);
-                                Cld.debug ("Log fifo watch async ended");
+                                message ("Log fifo watch async ended");
                             } catch (ThreadError e) {
                                 string msg = e.message;
-                                Cld.error (@"Thread error: $msg");
+                                error (@"Thread error: $msg");
                             }
                         });
 
                         bg_raw_process.begin ((obj, res) => {
                             try {
                                 bg_raw_process.end (res);
-                                Cld.debug ("Raw data queue processing async ended");
+                                message ("Raw data queue processing async ended");
                             } catch (ThreadError e) {
                                 string msg = e.message;
-                                Cld.error (@"Thread error: $msg");
+                                error (@"Thread error: $msg");
                             }
                         });
                     } catch (ThreadError e) {
                         string msg = e.message;
-                        Cld.error (@"Thread error: $msg");
+                        error (@"Thread error: $msg");
                     }
                 });
             }
@@ -490,20 +490,20 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             /* Background channel watch fills the entry queue */
             bg_channel_watch.begin (() => {
                 try {
-                    Cld.debug ("Channel watch async ended");
+                    message ("Channel watch async ended");
                 } catch (ThreadError e) {
                     string msg = e.message;
-                    Cld.error (@"Thread error: $msg");
+                    error (@"Thread error: $msg");
                 }
             });
         }
 
         bg_entry_write.begin (() => {
             try {
-                Cld.debug ("Log entry queue write async ended");
+                message ("Log entry queue write async ended");
             } catch (ThreadError e) {
                 string msg = e.message;
-                Cld.error (@"Thread error: $msg");
+                error (@"Thread error: $msg");
             }
         });
 
@@ -526,13 +526,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         int fd = -1;
 
         GLib.Thread<int> thread = new GLib.Thread<int> ("open_fifo_%s".printf (fname), () => {
-            Cld.debug ("%s is is waiting for a writer to FIFO %s",this.id, fname);
+            message ("%s is is waiting for a writer to FIFO %s",this.id, fname);
             fd = Posix.open (fname, Posix.O_RDONLY);
             fifos.set (fname, fd);
             if (fd == -1) {
-                Cld.debug ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
+                message ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
             } else {
-                Cld.debug ("Sqlite log is opening FIFO %s fd: %d", fname, fd);
+                message ("Sqlite log is opening FIFO %s fd: %d", fname, fd);
             }
 
             Idle.add ((owned) callback);
@@ -829,7 +829,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         stmt.reset ();
 
         if (size != columns) {
-            Cld.debug ("Sqlite.Log.get_log_entry (..) :The number log table columns does not match the data size.");
+            message ("Sqlite.Log.get_log_entry (..) :The number log table columns does not match the data size.");
         }
 
         query = "SELECT * FROM %s WHERE id=$ID;".printf (table_name);
@@ -901,7 +901,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 database_open ();
             } catch (Cld.FileError e) {
                 if (e is Cld.FileError.ACCESS) {
-                    Cld.error ("File access error: %s%s", path, file);
+                    error ("File access error: %s%s", path, file);
                     is_open = false;
 
                     return null;
@@ -979,7 +979,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                  backup_open ();
             } catch (Cld.FileError e) {
                 if (e is Cld.FileError.ACCESS) {
-                    Cld.error ("File access error: %s%s", path, file);
+                    error ("File access error: %s%s", path, file);
                     is_open = false;
 
                     return;
@@ -1105,10 +1105,10 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 ;
             """.printf (name, start.to_string ().substring (0, 19),
                         stop.to_string ().substring (0, 19));
-            Cld.debug ("%s", query);
+            message ("%s", query);
             ec = db.prepare_v2 (query, query.length, out stmt);
             if (ec != Sqlite.OK) {
-                Cld.debug ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+                message ("Error: %d: %s\n", db.errcode (), db.errmsg ());
             }
 
             while (stmt.step () == Sqlite.ROW) {

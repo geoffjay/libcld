@@ -117,28 +117,4 @@ namespace Cld {
     public void decrease_log_level () {
         verbosity = (verbosity == 0) ? verbosity : verbosity--;
     }
-
-    public void error (string format, ...) {
-        if (verbosity >= 0) {
-            var list = va_list();
-            string res = "libcld [ERROR] %s\n".printf (format.vprintf (list));
-            stderr.puts (res);
-        }
-    }
-
-    public void message (string format, ...) {
-        if (verbosity >= 1) {
-            var list = va_list();
-            string res = "libcld [MSG] %s\n".printf (format.vprintf (list));
-            stdout.puts (res);
-        }
-    }
-
-    public void debug (string format, ...) {
-        if (verbosity >= 2) {
-            var list = va_list();
-            string res = "libcld [DEBUG] %s\n".printf (format.vprintf (list));
-            stdout.puts (res);
-        }
-    }
 }

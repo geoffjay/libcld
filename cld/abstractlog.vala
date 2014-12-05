@@ -166,14 +166,14 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
 
                 if (ret < 0) {
                     if (Posix.errno == Posix.EAGAIN) {
-                        Cld.error ("Posix pselect error EAGAIN");
+                        error ("Posix pselect error EAGAIN");
                     }
                 } else if (ret == 0) {
                     stdout.printf ("%s hit timeout\n", id);
                 } else if ((Posix.FD_ISSET (fd, rdset)) == 1) {
                     ret = (int)Posix.read (fd, buf, bufsz);
                     if (ret == -1) {
-                        Cld.error ("Posix.errno = %d", Posix.errno);
+                        error ("Posix.errno = %d", Posix.errno);
                     }
                     lock (raw_queue) {
                         for (int i = 0; i < ret / 2; i++) {

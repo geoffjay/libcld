@@ -77,6 +77,7 @@ libcld_0_2_la_SOURCES = \
 
 INCLUDES = \
 	-include common.h \
+	-DG_LOG_DOMAIN='"Cld"' \
 	-DPKGDATADIR=\""$(pkgdatadir)"\" \
 	-DPKGLIBDIR=\""$(pkglibdir)"\" \
 	$(NULL)

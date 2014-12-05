@@ -75,12 +75,12 @@ public class Cld.Coefficient : AbstractObject {
      */
     private void connect_signals () {
         notify["n"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["value"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
     }

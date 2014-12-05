@@ -156,37 +156,37 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
      */
     private void connect_signals () {
         notify["tag"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["desc"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["num"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["subdevnum"].connect ((s, p) => {
-            Cld.debug ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
+            message ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
             update_node ();
         });
 
         notify["calref"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["range"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["alias"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
     }
@@ -202,7 +202,7 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
                  iter != null;
                  iter = iter->next) {
                 if (iter->name == "property") {
-                    Cld.debug ("property", iter->get_prop ("name"));
+                    debug ("property: %s", iter->get_prop ("name"));
                     switch (iter->get_prop ("name")) {
                         case "tag":
                             iter->set_content (tag);
@@ -215,7 +215,7 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
                             break;
                         case "subdevnum":
                             iter->set_content (subdevnum.to_string ());
-                            Cld.debug ("Writing %s to XML node for subdevnum", subdevnum.to_string ());
+                            message ("Writing %s to XML node for subdevnum", subdevnum.to_string ());
                             break;
                         case "calref":
                             iter->set_content (calref);

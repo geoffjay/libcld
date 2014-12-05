@@ -53,7 +53,7 @@ public class Cld.AutomationController : Cld.AbstractController {
                             try {
                                 add (pid);
                             } catch (Cld.Error.KEY_EXISTS e) {
-                                Cld.error (e.message);
+                                error (e.message);
                             }
                             break;
                         case "pid-2":
@@ -62,7 +62,7 @@ public class Cld.AutomationController : Cld.AbstractController {
                             try {
                                 add (pid);
                             } catch (Cld.Error.KEY_EXISTS e) {
-                                Cld.error (e.message);
+                                error (e.message);
                             }
                             break;
                         default:

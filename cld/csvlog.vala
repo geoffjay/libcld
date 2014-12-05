@@ -148,7 +148,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
             filename = "%s/%s".printf (path, temp);
 
         /* open the file */
-        Cld.debug ("Opening file: %s", filename);
+        message ("Opening file: %s", filename);
         file_stream = FileStream.open (filename, "w+");
 
         if (file_stream == null) {
@@ -232,11 +232,11 @@ public class Cld.CsvLog : Cld.AbstractLog {
         string cals = "Channel Calibrations:\n\n";
 
         foreach (var object in objects.values) {
-            Cld.debug ("Found object [%s]", object.id);
+            message ("Found object [%s]", object.id);
             if (object is Column) {
                 var channel = ((object as Column).channel as Channel);
                 Type type = (channel as GLib.Object).get_type ();
-                Cld.debug ("Received object is Column - %s", type.name ());
+                message ("Received object is Column - %s", type.name ());
 
                 if (channel is ScalableChannel) {
                     var calibration = (channel as ScalableChannel).calibration;
@@ -307,31 +307,31 @@ public class Cld.CsvLog : Cld.AbstractLog {
                 open_fifo.begin (fname, (obj, res) => {
                     try {
                         int fd = open_fifo.end (res);
-                        Cld.debug ("got a writer for %s", fname);
+                        message ("got a writer for %s", fname);
 
                         /* Background fifo watch queues fills the entry queue */
                         bg_fifo_watch.begin (fd, (obj, res) => {
                             try {
                                 bg_fifo_watch.end (res);
-                                Cld.debug ("Log fifo watch async ended");
+                                message ("Log fifo watch async ended");
                             } catch (ThreadError e) {
                                 string msg = e.message;
-                                Cld.error (@"Thread error: $msg");
+                                error (@"Thread error: $msg");
                             }
                         });
 
                         bg_raw_process.begin ((obj, res) => {
                             try {
                                 bg_raw_process.end (res);
-                                Cld.debug ("Raw data queue processing async ended");
+                                message ("Raw data queue processing async ended");
                             } catch (ThreadError e) {
                                 string msg = e.message;
-                                Cld.error (@"Thread error: $msg");
+                                error (@"Thread error: $msg");
                             }
                         });
                     } catch (ThreadError e) {
                         string msg = e.message;
-                        Cld.error (@"Thread error: $msg");
+                        error (@"Thread error: $msg");
                     }
                 });
             }
@@ -339,20 +339,20 @@ public class Cld.CsvLog : Cld.AbstractLog {
             /* Background channel watch fills the entry queue */
             bg_channel_watch.begin (() => {
                 try {
-                    Cld.debug ("Channel watch async ended");
+                    message ("Channel watch async ended");
                 } catch (ThreadError e) {
                     string msg = e.message;
-                    Cld.error (@"Thread error: $msg");
+                    error (@"Thread error: $msg");
                 }
             });
         }
 
         bg_entry_write.begin (() => {
             try {
-                Cld.debug ("Log entry queue write async ended");
+                message ("Log entry queue write async ended");
             } catch (ThreadError e) {
                 string msg = e.message;
-                Cld.error (@"Thread error: $msg");
+                error (@"Thread error: $msg");
             }
         });
     }
@@ -362,13 +362,13 @@ public class Cld.CsvLog : Cld.AbstractLog {
         int fd = -1;
 
         GLib.Thread<int> thread = new GLib.Thread<int> ("open_fifo_%s".printf (fname), () => {
-            Cld.debug ("%s is is waiting for a writer to FIFO %s",this.id, fname);
+            message ("%s is is waiting for a writer to FIFO %s",this.id, fname);
             fd = Posix.open (fname, Posix.O_RDONLY);
             fifos.set (fname, fd);
             if (fd == -1) {
-                Cld.debug ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
+                message ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
             } else {
-                Cld.debug ("Sqlite log is opening FIFO %s fd: %d", fname, fd);
+                message ("Sqlite log is opening FIFO %s fd: %d", fname, fd);
             }
 
             Idle.add ((owned) callback);

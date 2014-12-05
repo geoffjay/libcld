@@ -73,7 +73,7 @@ public interface Cld.Port : Cld.Object {
                     return NONE;
                 }
             } catch (RegexError e) {
-                Cld.debug ("Error %s", e.message);
+                message ("Error %s", e.message);
             }
 
             /* XXX need to return something */

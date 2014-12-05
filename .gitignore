@@ -52,6 +52,7 @@ cld/libcld_0_2_la_vala.stamp-t
 
 # Documentation
 !docs/Makefile
+docs/build
 
 # Example programs
 examples/*.stamp
@@ -61,6 +62,7 @@ examples/async-acquisition
 examples/build-from-xml
 examples/context-validation
 examples/polling-acquisition
+examples/pid2-mathchannel
 examples/soup-server
 
 # Test programs

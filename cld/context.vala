@@ -60,17 +60,17 @@ public class Cld.Context : Cld.AbstractContainer {
         var builder = new Cld.Builder.from_xml_config (xml);
         objects = builder.objects;
 
-        Cld.debug ("\nCld.Context is generating reference list...\n");
+        message ("Generating reference list...");
         generate_ref_list ();
-        Cld.debug ("\nGenerate reference list finished.\n");
+        message ("Generate reference list finished");
 
-        Cld.debug ("\nCld.Context is generating references ..\n");
+        message ("Generating references...");
         generate_references ();
-        Cld.debug ("\nGenerate references finished.\n");
+        message ("Generate references finished");
 
-        Cld.debug ("\nCld.Context is generating controllers..\n");
+        message ("Generating controllers...");
         generate ();
-        Cld.debug ("\nGenerate controllers finished.\n");
+        message ("Generate controllers finished");
     }
 
     /**
@@ -89,7 +89,7 @@ public class Cld.Context : Cld.AbstractContainer {
     public void print_ref_list () {
         var list = get_descendant_ref_list ();
         foreach (var entry in list.read_only_view) {
-            Cld.debug ("%-30s %s", (entry
+            message ("%-30s %s", (entry
                 as Cld.AbstractContainer.Reference).self_uri,
                 (entry as Cld.AbstractContainer.Reference).reference_uri);
         }
@@ -109,7 +109,7 @@ public class Cld.Context : Cld.AbstractContainer {
                 as Cld.Container;
             reference = get_object_from_uri ((entry
                 as Cld.AbstractContainer.Reference).reference_uri);
-//            Cld.debug ("%-30s %s", (self as Cld.Object).uri, (reference as Cld.Object).uri);
+//            message ("%-30s %s", (self as Cld.Object).uri, (reference as Cld.Object).uri);
             if ((reference != null)) {
                 self.add (reference);
             }

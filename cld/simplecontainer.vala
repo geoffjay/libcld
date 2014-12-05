@@ -26,6 +26,6 @@ internal class Cld.SimpleContainer : Cld.AbstractContainer {
 
     internal SimpleContainer () {
         _objects = new Gee.TreeMap<string, Cld.Object> ();
-        Cld.debug ("SimpleContainer ()");
+        message ("SimpleContainer ()");
     }
 }

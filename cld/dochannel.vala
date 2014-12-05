@@ -92,22 +92,22 @@ public class Cld.DOChannel : Cld.AbstractChannel, Cld.DChannel, Cld.OChannel {
      */
     private void connect_signals () {
         notify["tag"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["desc"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["num"].connect ((s, p) => {
-            Cld.debug ("Property %s changed for %s", p.get_name (), uri);
+            message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["subdevnum"].connect ((s, p) => {
-            Cld.debug ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
+            message ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
             update_node ();
         });
     }
@@ -135,7 +135,7 @@ public class Cld.DOChannel : Cld.AbstractChannel, Cld.DChannel, Cld.OChannel {
                             break;
                         case "subdevnum":
                             iter->set_content (subdevnum.to_string ());
-                            Cld.debug ("Writing %s to XML node for subdevnum", subdevnum.to_string ());
+                            message ("Writing %s to XML node for subdevnum", subdevnum.to_string ());
                             break;
                         default:
                             break;

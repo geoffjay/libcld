@@ -169,11 +169,14 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      */
     public signal void backup_progress_updated (int remaining, int pagecount);
 
-    /* constructor */
+    /* Common construction */
     construct {
         Cld.LogEntry entry = new Cld.LogEntry ();
     }
 
+    /**
+     * Default constructor
+     */
     public SqliteLog () {
         id = "database0";
         name = "Log Database File";
@@ -185,6 +188,9 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         time_stamp = TimeStampFlag.OPEN;
     }
 
+    /**
+     * Construction using an XML node
+     */
     public SqliteLog.from_xml_node (Xml.Node *node) {
         string value;
 
@@ -249,6 +255,9 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         }
     }
 
+    /**
+     * Destructor
+     */
     ~SqliteLog () {
         if (_objects != null) {
             _objects.clear ();
@@ -290,14 +299,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 is_open = true;
             }
         }
-
-        /* XXX Memory mapped I/O doesn't seem to improve performance. */
-//        string query = "PRAGMA mmap_size=536870912;";
-//        ec = db.exec (query, null, out errmsg);
-//        if (ec != Sqlite.OK) {
-//            stderr.printf ("Error: %s\n", errmsg);
-//        }
-
     }
 
     /**
@@ -356,14 +357,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         bool success;
         DateTime created_time = new DateTime.now_local ();
 
-        /* open the file */
+        /* Open the file */
         message ("filename: %s ", filename);
         file_stream = FileStream.open (filename, "w+");
         if (file_stream == null) {
            success = false;
         } else {
-           // is_open = true;
-            /* add the header */
+            /* Add the header */
             file_stream.printf ("Log file: %s created at %s\n\n",
                                 name, created_time.format ("%F %T"));
             success = true;
@@ -401,7 +401,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             }
         }
     }
-
 
     /**
      * Writes a standard header to the top of the file.
@@ -511,13 +510,16 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         create_tables ();
         start_time = new DateTime.now_local ();
         _experiment_name = "experiment_%s".printf (
-            start_time.to_string ().replace ("-", "_").replace (":", "_")
+                start_time.to_string ().replace ("-", "_").replace (":", "_")
             );
         update_experiment_table ();
         update_channel_table ();
         add_log_table ();
 
-        GLib.Timeout.add_full (GLib.Priority.DEFAULT_IDLE, backup_interval_ms, backup_cb);
+        if (backup_file != null || backup_path != null)
+            GLib.Timeout.add_full (GLib.Priority.DEFAULT_IDLE,
+                                   backup_interval_ms,
+                                   backup_cb);
 
     }
 
@@ -549,12 +551,9 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      */
     public override void process_entry_queue () {
         ec = db.exec ("BEGIN TRANSACTION", null, out errmsg);
-
         for (int i = 0; i < entry_queue.size; i++) {
-//entry_queue.poll_tail ();
             log_entry_write (entry_queue.poll_tail ());
         }
-
         ec = db.exec ("END TRANSACTION", null, out errmsg);
     }
 
@@ -913,9 +912,11 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         query = "SELECT * FROM experiment;";
         ec = db.prepare_v2 (query, query.length, out stmt);
+
         if (ec != Sqlite.OK) {
             stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
         }
+
         while (stmt.step () == Sqlite.ROW) {
             Cld.ExperimentEntry ent = Cld.ExperimentEntry ();
             ent.id = stmt.column_int (ExperimentColumn.ID);
@@ -941,9 +942,11 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         query = "SELECT * FROM channel WHERE experiment_id=%d".printf (experiment_id);
         ec = db.prepare_v2 (query, query.length, out stmt);
+
         if (ec != Sqlite.OK) {
             stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
         }
+
         while (stmt.step () == Sqlite.ROW) {
             Cld.ChannelEntry ent  = Cld.ChannelEntry ();
             ent.id = stmt.column_int (ChannelColumn.ID);
@@ -1012,9 +1015,11 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      */
     public void backup_open () throws Cld.FileError {
         string db_filename;
+
         if (!backup_path.has_suffix ("/")) {
             backup_path = "%s%s".printf (backup_path, "/");
         }
+
         var now = new DateTime.now_local ();
         string stamp = now.to_string ();
 
@@ -1023,6 +1028,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         if (!(Posix.access (db_filename, Posix.F_OK) == 0)) { // if file doesn't exist...
             FileStream.open (db_filename, "a+");
         }
+
         if (!(Posix.access (db_filename, Posix.W_OK) == 0) &&
            !(Posix.access (db_filename, Posix.R_OK) == 0)) {
             throw new Cld.FileError.ACCESS (

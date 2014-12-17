@@ -696,8 +696,11 @@ public class Cld.ComediTask : AbstractTask {
         int ret, i = 0, j;
         double meas;
 
-        /*XXX Consider getting rid of Channel timestamps. They are nod needed if using FIFOs. */
+        /* XXX Consider getting rid of Channel timestamps. They are nod needed if using FIFOs. */
         GLib.DateTime timestamp = new DateTime.now_local ();
+
+        /* Set the OOR behavior */
+        Comedi.set_global_oor_behavior (Comedi.OorBehavior.NUMBER);
 
         //message ("\t\t\t\texecute_instruction_list (), get_seconds (): %.3f", timestamp.get_seconds ());
         ret = (device as ComediDevice).dev.do_insnlist (instruction_list);

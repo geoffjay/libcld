@@ -1,19 +1,18 @@
-# configure.ac
-# process this file with autoconf to produce a configure script
+dnl Process this file with autoconf to produce a configure script
+AC_PREREQ([2.64])
+AC_INIT([libcld], m4_esyscmd([build-aux/git-version-gen .tarball-version]))
 
-AC_INIT([libcld], [0.2.7], [geoff.jay@gmail.com], [libcld])
-AC_CONFIG_SRCDIR([Makefile.am])
-AC_CONFIG_HEADER(config.h)
-AC_CONFIG_MACRO_DIR(m4)
-AM_INIT_AUTOMAKE(dist-bzip2)
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_SRCDIR([cld/cld.vala])
+AC_CONFIG_HEADER([config.h])
+AC_CONFIG_MACRO_DIR([m4])
 
 m4_define([package_major_version], [0])
 m4_define([package_minor_version], [2])
 m4_define([package_micro_version], [7])
 m4_define([package_version], [package_major_version.package_minor_version.package_micro_version])
 
-# Make sure the right substitution is done
+dnl Make sure the right substitution is done
 [LIBCLD_MAJOR_VERSION]=package_major_version
 [LIBCLD_MINOR_VERSION]=package_minor_version
 [LIBCLD_MICRO_VERSION]=package_micro_version
@@ -25,7 +24,20 @@ dnl For libtool current:revision:age where age <= current
 LIBCLD_LT_VERSION=0:2:0
 AC_SUBST(LIBCLD_LT_VERSION)
 
-# checks for programs
+dnl Initialize automake
+AM_INIT_AUTOMAKE([1.11.1 foreign no-dist-gzip dist-xs -Wno-portability])
+AM_MAINTAINER_MODE([enable])
+
+dnl Initialize libtool
+LT_PREREQ([2.2.6])
+LT_INIT([dlopen disable-static])
+
+GOBJECT_INTROSPECTION_REQUIRE([1.33.4])
+
+dnl Enable silent rules if available
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
+dnl Programs
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
@@ -37,10 +49,6 @@ AC_PROG_LIBTOOL
 
 AM_PROG_VALAC([0.14.0])
 AC_SUBST(VALAC)
-
-dnl ---------------------------------------------------------------------------
-dnl Mandatory Libraries
-dnl ---------------------------------------------------------------------------
 
 VALA_PACKAGES=""
 
@@ -109,9 +117,6 @@ fi
 
 AC_SUBST(VALA_PACKAGES)
 
-dnl ---------------------------------------------------------------------------
-dnl CFLAGS
-dnl ---------------------------------------------------------------------------
 dnl if test x$GCC = xyes
 dnl then
 dnl CLD_CHECK_FLAG([-g])
@@ -127,54 +132,54 @@ dnl CLD_CHECK_FLAG([-Wwrite-strings])
 dnl CLD_CHECK_FLAG([-pedantic])
 dnl fi
 
-dnl ---------------------------------------------------------------------------
-dnl Build Options
-dnl ---------------------------------------------------------------------------
-
 dnl Debugging
 AC_ARG_ENABLE(debug,
 	AS_HELP_STRING([--enable-debug],
 		[Enable debugging (default: disabled)]),,
 	enable_debug=no)
 
-AC_SUBST(VALAFLAGS)
-AC_SUBST(CFLAGS)
-AC_SUBST(CPPFLAGS)
-AC_SUBST(LDFLAGS)
+if test "x$enable_debug" = xyes; then
+	AM_CFLAGS="$AM_CFLAGS -DDEBUG"
+fi
 
-# checks for libraries
-pkg_modules="glib-2.0 >= 2.0.0 gee-1.0 >= 0.1.0 libxml-2.0 >= 2.0.0"
-CLD_PACKAGES="--pkg glib-2.0 --pkg gee-1.0 --pkg libxml-2.0"
-PKG_CHECK_MODULES(CLD, [$pkg_modules])
-AC_SUBST(CLD_CFLAGS)
-AC_SUBST(CLD_LIBS)
-AC_SUBST(CLD_PACKAGES)
+dnl Documentation
+AC_ARG_ENABLE(doc,
+	AS_HELP_STRING([--enable-doc],
+		[Enable documentation generation]), enable_doc=$enableval,
+	enable_doc=no)
+AM_CONDITIONAL(ENABLE_DOC, test x$enable_doc = xyes)
 
-# checks for header files
-AC_HEADER_STDC
-AC_CHECK_HEADERS(   \
-    stdlib.h          \
-    time.h            \
-    string.h          \
-    unistd.h          \
-    glib.h
-)
+AS_IF([test "x$enable_doc" != xno],
+	[AC_PATH_PROG(VALADOC, valadoc, :)
+	 AC_SUBST(VALADOC)
+	 AS_IF([test "$VALADOC" = :],
+		[AC_MSG_ERROR([valadoc not found])])])
 
-# checks for typedefs, structures, and compiler characteristics
-AC_C_CONST
-AC_TYPE_SIZE_T
+dnl Examples
+AC_ARG_ENABLE(examples,
+	AS_HELP_STRING([--enable-examples],
+		[Enable example programs generation]), enable_examples=$enableval,
+	enable_examples=no)
+AM_CONDITIONAL(ENABLE_EXAMPLES, test x$enable_examples = xyes)
 
-GETTEXT_PACKAGE=libcld
-AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE], ["$GETTEXT_PACKAGE"], [Gettext Package])
-AC_SUBST(GETTEXT_PACKAGE)
-AM_GNU_GETTEXT_VERSION([1.11])
-AM_GLIB_GNU_GETTEXT
+AC_OUTPUT([Makefile
+           cld-0.2.pc
+           cld/Makefile
+           doc/Makefile
+           examples/Makefile
+           tests/Makefile
+           vapi/Makefile])
 
-AC_CONFIG_FILES([
-	Makefile
-	cld-0.2.pc
-	po/Makefile.in
-	cld/Makefile
-	vapi/Makefile
+dnl Generate build report
+AC_MSG_NOTICE([
+
+    $PACKAGE $VERSION
+    =============================================================
+
+    CFLAGS:                         ${CFLAGS}
+    VALAFLAGS:                      ${VALAFLAGS}
+
+    ... more to come ...
+
+    $PACKAGE will be installed in $libdir
 ])
-AC_OUTPUT

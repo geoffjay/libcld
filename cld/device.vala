@@ -49,6 +49,7 @@ public interface Cld.Device :  Cld.Object {
      *
      */
     public abstract int unix_fd { get; set; }
+
     /**
      * A function to open the device for read and write operations.
      */

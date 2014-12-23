@@ -34,17 +34,8 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
     /**
      * The comedi specific hardware device that this class will use.
      */
-    protected Comedi.Device device;
-    private bool _is_open;
-    public bool is_open { get; }
+    public Comedi.Device dev;
 
-
-    private Comedi.InstructionList instruction_list;
-    private Gee.Map<string, Object> ai_channels;
-    private Gee.Map<string, Object> ao_channels;
-    private const int NSAMPLES = 10; //XXX Why is this set to 10 (Steve)??
-    private int ai_subdevice;
-    private int ao_subdevice;
     /**
      * Default construction
      */
@@ -222,4 +213,3 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
         }
     }
 }
-

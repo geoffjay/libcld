@@ -49,6 +49,8 @@ public class Cld.VelmexModule : AbstractModule {
     public VelmexModule.from_xml_node (Xml.Node *node) {
         string val;
 
+        this.node = node;
+
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
@@ -67,6 +69,35 @@ public class Cld.VelmexModule : AbstractModule {
                         default:
                             break;
                     }
+                }
+            }
+        }
+
+        connect_signals ();
+    }
+
+    /**
+     * Connect the notify signals that require the node to update.
+     */
+    private void connect_signals () {
+        notify["program"].connect ((s, p) => {
+            message ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+    }
+
+    /**
+     * Update the XML node for this object.
+     */
+    private void update_node () {
+        for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
+            if (iter->name == "property") {
+                switch (iter->get_prop ("name")) {
+                    case "program":
+                        iter->set_content (program);
+                        break;
+                    default:
+                        break;
                 }
             }
         }

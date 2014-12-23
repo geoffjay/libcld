@@ -1,11 +1,1 @@
-# steps used to setup ssh key and push master
-ssh-keygen -t dsa -f gitorious -C "captainron@gitorious.org"
-cat gitorious.pub >> authorized_keys2 
-ssh-add gitorious
-cat gitorious.pub 
-# add output as new ssh key in gitorious
-git clone git@gitorious.org/libcld/libcld.git
-# code
-git add .
-git commit -m "initial import"
-git push origin master
+README.rst

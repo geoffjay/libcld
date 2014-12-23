@@ -1,6 +1,22 @@
+#!/bin/bash
+
+# FIXME: this should check the header of the file and update only if necessary
+
+project="libcld"
+year=`date +%Y`
+owner="Geoff Johnson"
+
+#if [ "`pwd | tr '/' '\n' | tail -n 1`" -eq "util" ]; then
+  #cd ..
+#fi
+
+for file in `find cld -iname '*.vala'`; do
+
+  ed -s $file <<EOF
+0a
 /**
- * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * ${project}
+ * Copyright (c) ${year}, ${owner}, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,27 +31,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library.
  */
+.
+w
+EOF
 
-/**
- * Skeletal implementation of the {@link Task} interface.
- *
- * Contains common code shared by all task implementations.
- */
-public abstract class Cld.AbstractTask : AbstractContainer, Task {
-
-    /**
-     * {@inheritDoc}
-     **/
-     public virtual bool active { get; set; }
-
-    /**
-     * {@inheritDoc}
-     **/
-     public abstract void run ();
-
-    /**
-     * {@inheritDoc}
-     **/
-    public abstract void stop ();
-
-}
+done

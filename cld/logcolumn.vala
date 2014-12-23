@@ -1,3 +1,4 @@
+
 /**
  * Column class to reference channels to log.
  */

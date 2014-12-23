@@ -25,7 +25,7 @@ LIBCLD_LT_VERSION=0:2:0
 AC_SUBST(LIBCLD_LT_VERSION)
 
 dnl Initialize automake
-AM_INIT_AUTOMAKE([1.11.1 foreign no-dist-gzip dist-xs -Wno-portability])
+AM_INIT_AUTOMAKE([1.11.1 foreign no-dist-gzip dist-xz -Wno-portability])
 AM_MAINTAINER_MODE([enable])
 
 dnl Initialize libtool

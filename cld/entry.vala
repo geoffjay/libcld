@@ -1,3 +1,4 @@
+
 /**
  * A log file entry class consists of a row of data and timestamp information.
  */

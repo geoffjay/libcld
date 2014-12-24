@@ -1,7 +1,7 @@
 include $(top_srcdir)/Makefile.decl
 
 lib_LTLIBRARIES = \
-	libcld-0.2.la \
+	libcld-0.3.la \
 	$(NULL)
 
 #if USE_COMEDI
@@ -17,7 +17,7 @@ MODBUS_SOURCES = \
 	$(NULL)
 #endif
 
-libcld_0_2_la_SOURCES = \
+libcld_0_3_la_SOURCES = \
 	abstractchannel.vala \
 	abstractcontainer.vala \
 	abstractcontroller.vala \
@@ -82,16 +82,16 @@ INCLUDES = \
 	-DPKGLIBDIR=\""$(pkglibdir)"\" \
 	$(NULL)
 
-libcld_0_2_la_VALAFLAGS = \
-	-H cld.h --vapi cld-0.2.vapi \
+libcld_0_3_la_VALAFLAGS = \
+	-H cld.h --vapi cld-0.3.vapi \
 	-h cld-internals.h -g -X -DDEBUG \
-	--internal-vapi cld-internals-0.2.vapi \
-	--library cld-0.2 --gir Cld-0.2.gir \
+	--internal-vapi cld-internals-0.3.vapi \
+	--library cld-0.3 --gir Cld-0.3.gir \
 	--vapidir=$(srcdir)/../vapi --pkg config \
-	@VALA_PACKAGES@ --pkg linux --pkg posix --pkg libmatheval --pkg gsl --target-glib 2.32 \
+	@VALA_PACKAGES@ --pkg linux --pkg posix --pkg libmatheval --pkg gsl \
 	$(NULL)
 
-libcld_0_2_la_CPPFLAGS = \
+libcld_0_3_la_CPPFLAGS = \
 	$(GLIB_CFLAGS) \
 	$(GEE_CFLAGS) \
 	$(GIO_CFLAGS) \
@@ -104,7 +104,7 @@ libcld_0_2_la_CPPFLAGS = \
 	$(SQLITE_CFLAGS) \
 	$(NULL)
 
-libcld_0_2_la_LIBADD = \
+libcld_0_3_la_LIBADD = \
 	$(GLIB_LIBS) \
 	$(GEE_LIBS) \
 	$(GIO_LIBS) \
@@ -117,18 +117,18 @@ libcld_0_2_la_LIBADD = \
 	$(SQLITE_LIBS) \
 	$(NULL)
 
-libcld_0_2_la_LDFLAGS = \
+libcld_0_3_la_LDFLAGS = \
 	-version-info $(LIBCLD_LT_VERSION) \
 	-no-undefined \
 	$(NULL)
 
-cldincludedir = $(includedir)/cld-0.2
+cldincludedir = $(includedir)/cld-0.3
 
 cldinclude_HEADERS = \
 	cld.h \
 	$(NULL)
 
-library_includedir = $(includedir)/cld-0.2/cld
+library_includedir = $(includedir)/cld-0.3/cld
 
 library_include_HEADERS = \
 	common.h \
@@ -137,31 +137,31 @@ library_include_HEADERS = \
 vapidir = $(datadir)/vala/vapi
 
 dist_vapi_DATA = \
-	cld-0.2.vapi \
+	cld-0.3.vapi \
 	$(NULL)
 
 if HAVE_INTROSPECTION
 girdir = @INTROSPECTION_GIRDIR@
 gir_DATA = \
-	Cld-0.2.gir \
+	Cld-0.3.gir \
 	$(NULL)
 
 typelibdir = @INTROSPECTION_TYPELIBDIR@
 typelib_DATA = \
-	Cld-0.2.typelib \
+	Cld-0.3.typelib \
 	$(NULL)
 
-Cld-0.2.typelib: Cld-0.2.gir
+Cld-0.3.typelib: Cld-0.3.gir
 	@INTROSPECTION_COMPILER@ --debug --verbose \
 		--includedir=$(srcdir) --includedir=. \
-		--shared-library=libcld-0.2.so $^ -o $@
+		--shared-library=libcld-0.3.so $^ -o $@
 endif
 
-Cld-0.2.gir cld-internals-0.2.vapi cld-0.2.vapi: libcld-0.2.la
+Cld-0.3.gir cld-internals-0.3.vapi cld-0.3.vapi: libcld-0.3.la
 
 CLEANFILES = \
-	cld-0.2.vapi \
-	cld-internals-0.2.vapi \
-	Cld-0.2.typelib \
-	Cld-0.2.gir \
+	cld-0.3.vapi \
+	cld-internals-0.3.vapi \
+	Cld-0.3.typelib \
+	Cld-0.3.gir \
 	$(NULL)

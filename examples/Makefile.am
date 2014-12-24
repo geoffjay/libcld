@@ -24,7 +24,7 @@ example_DEPENDENCIES = \
 example_VALAFLAGS = \
 	--basedir $(top_srcdir) \
 	--vapidir $(top_srcdir)/cld \
-	--pkg cld-0.2 --pkg comedi --pkg gee-1.0 --pkg libxml-2.0 --pkg posix --pkg gsl \
+	--pkg cld-0.3 --pkg comedi --pkg gee-1.0 --pkg libxml-2.0 --pkg posix --pkg gsl \
 	$(NULL)
 
 example_CPPFLAGS = \
@@ -37,7 +37,7 @@ example_CPPFLAGS = \
 	$(NULL)
 
 example_LDADD = \
-	../cld/libcld-0.2.la \
+	../cld/libcld-0.3.la \
 	$(GLIB_LIBS) \
 	$(GEE_LIBS) \
 	$(XML_LIBS) \

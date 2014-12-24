@@ -27,7 +27,7 @@ cld_configdir = $(libdir)/cld-0.2/include
 cld_config_DATA = config.h
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = cld-0.2.pc
+pkgconfig_DATA = cld-0.3.pc
 
 dist-hook: gen-ChangeLog
 
@@ -54,5 +54,5 @@ tags: ctags etags
 EXTRA_DIST += \
 	gitlog-to-changelog \
 	MAINTAINERS \
-	cld-0.2.pc.in \
+	cld-0.3.pc.in \
 	$(NULL)

@@ -38,7 +38,7 @@ tests_DEPENDENCIES = \
 tests_VALAFLAGS = \
 	--basedir $(top_srcdir) \
 	--vapidir $(top_srcdir)/cld --vapidir=$(srcdir)/../vapi \
-	--pkg cld-0.2 @VALA_PACKAGES@ --pkg libmatheval --pkg posix \
+	--pkg cld-0.3 @VALA_PACKAGES@ --pkg libmatheval --pkg posix \
 	$(NULL)
 
 tests_CPPFLAGS = \
@@ -53,7 +53,7 @@ tests_CPPFLAGS = \
 	$(NULL)
 
 tests_LDADD = \
-	../cld/libcld-0.2.la \
+	../cld/libcld-0.3.la \
 	$(GLIB_LIBS) \
 	$(GEE_LIBS) \
 	$(XML_LIBS) \

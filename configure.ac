@@ -8,8 +8,8 @@ AC_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
 m4_define([package_major_version], [0])
-m4_define([package_minor_version], [2])
-m4_define([package_micro_version], [7])
+m4_define([package_minor_version], [3])
+m4_define([package_micro_version], [0])
 m4_define([package_version], [package_major_version.package_minor_version.package_micro_version])
 
 dnl Make sure the right substitution is done
@@ -21,7 +21,7 @@ AC_SUBST([LIBCLD_MINOR_VERSION])
 AC_SUBST([LIBCLD_MICRO_VERSION])
 
 dnl For libtool current:revision:age where age <= current
-LIBCLD_LT_VERSION=0:2:0
+LIBCLD_LT_VERSION=0:3:0
 AC_SUBST(LIBCLD_LT_VERSION)
 
 dnl Initialize automake
@@ -159,7 +159,7 @@ AC_ARG_ENABLE(examples,
 AM_CONDITIONAL(ENABLE_EXAMPLES, test x$enable_examples = xyes)
 
 AC_OUTPUT([Makefile
-           cld-0.2.pc
+           cld-0.3.pc
            cld/Makefile
            doc/Makefile
            examples/Makefile

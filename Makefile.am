@@ -23,7 +23,7 @@ SUBDIRS = \
 	$(EXAMPLES_SUBDIR) \
 	$(NULL)
 
-cld_configdir = $(libdir)/cld-0.1/include
+cld_configdir = $(libdir)/cld-0.2/include
 cld_config_DATA = config.h
 
 pkgconfigdir = $(libdir)/pkgconfig

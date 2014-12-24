@@ -82,11 +82,11 @@ INCLUDES = \
 	-DPKGLIBDIR=\""$(pkglibdir)"\" \
 	$(NULL)
 
-AM_VALAFLAGS = \
-	-H cld.h --vapi cld-0.1.vapi \
-	-h cld-internals.h -g \
-	--internal-vapi cld-internals-0.1.vapi \
-	--library cld-0.1 --gir Cld-0.1.gir \
+libcld_0_2_la_VALAFLAGS = \
+	-H cld.h --vapi cld-0.2.vapi \
+	-h cld-internals.h -g -X -DDEBUG \
+	--internal-vapi cld-internals-0.2.vapi \
+	--library cld-0.2 --gir Cld-0.2.gir \
 	--vapidir=$(srcdir)/../vapi --pkg config \
 	@VALA_PACKAGES@ --pkg linux --pkg posix --pkg libmatheval --pkg gsl --target-glib 2.32 \
 	$(NULL)

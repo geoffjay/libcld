@@ -19,10 +19,16 @@
 /**
  * Internal container to use during context construction.
  */
-internal class Cld.SimpleContainer : Cld.AbstractContainer {
+internal class Cld.RootContainer : Cld.AbstractContainer {
 
-    internal SimpleContainer () {
+    /* Avoid the need to include /ctr uri lookup strings */
+    public override string uri {
+        get { return ""; }
+        set { _uri = value; }
+    }
+
+    internal RootContainer () {
+        debug ("Construction");
         _objects = new Gee.TreeMap<string, Cld.Object> ();
-        message ("SimpleContainer ()");
     }
 }

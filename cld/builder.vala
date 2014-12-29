@@ -35,8 +35,8 @@ internal class Cld.Builder : GLib.Object {
     }
 
     construct {
-        container = new Cld.SimpleContainer ();
-        container.id = "ctr0";
+        container = new Cld.RootContainer ();
+        container.id = "root";
         container.parent = null;
     }
 

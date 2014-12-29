@@ -67,6 +67,7 @@ public interface Cld.Object : GLib.Object {
      * @return  ``true`` or ``false`` depending on whether or not the id
      *          parameters match
      */
+    [Deprecated (replacement="Cld.Functions.get_equal_func_for", since="0.3")]
     public abstract bool equal (Object a, Object b);
 
     /**

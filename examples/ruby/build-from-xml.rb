@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 require 'gir_ffi'
 
 GirFFI.setup :Cld

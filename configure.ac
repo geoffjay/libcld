@@ -164,7 +164,7 @@ AM_CONDITIONAL(ENABLE_EXAMPLES, test x$enable_examples = xyes)
 AC_OUTPUT([Makefile
            cld-0.3.pc
            cld/Makefile
-           doc/Makefile
+           docs/Makefile
            examples/Makefile
            tests/Makefile
            vapi/Makefile])

@@ -1,4 +1,5 @@
 include $(top_srcdir)/Makefile.decl
+include Makefile.sphinx
 
 SRC_DIR = $(top_srcdir)/cld
 
@@ -36,5 +37,4 @@ cld-0.3/index.html:
 		--pkg=config --pkg=sqlite3 --vapidir=$(vapidir) --vapidir=../vapi
 
 EXTRA_DIST += \
-	index.wiki \
 	$(NULL)

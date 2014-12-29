@@ -32,7 +32,7 @@ dnl Initialize libtool
 LT_PREREQ([2.2.6])
 LT_INIT([dlopen disable-static])
 
-GOBJECT_INTROSPECTION_REQUIRE([1.33.4])
+GOBJECT_INTROSPECTION_REQUIRE([0.9.0])
 
 dnl Enable silent rules if available
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
@@ -89,7 +89,7 @@ dnl libmodbus support
 AC_ARG_WITH(modbus,
 [  --with-modbus         Use Modbus library],
 	[use_modbus=$withval],
-	[use_modbus=no])
+	[use_modbus=yes])
 AC_MSG_RESULT(checking whether libmodbus support was selected... $use_modbus)
 
 if test "x$use_modbus" != "xno" ; then
@@ -103,7 +103,7 @@ dnl Comedi
 AC_ARG_WITH(comedi,
 [  --with-comedi         Use Comedi drivers],
 	[use_comedi=$withval],
-	[use_comedi=no])
+	[use_comedi=yes])
 AC_MSG_RESULT(checking whether Comedi drivers were selected... $use_comedi)
 
 if test "x$use_comedi" != "xno" ; then

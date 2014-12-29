@@ -22,9 +22,10 @@ example_DEPENDENCIES = \
 	$(NULL)
 
 example_VALAFLAGS = \
+	$(VALAFLAGS) \
 	--basedir $(top_srcdir) \
 	--vapidir $(top_srcdir)/cld \
-	--pkg cld-0.3 --pkg comedi --pkg gee-1.0 --pkg libxml-2.0 --pkg posix --pkg gsl \
+	--pkg cld-0.3 --pkg comedi --pkg gee-0.8 --pkg libxml-2.0 --pkg posix --pkg gsl \
 	$(NULL)
 
 example_CPPFLAGS = \

@@ -52,6 +52,7 @@ libcld_0_3_la_SOURCES = \
 	dochannel.vala \
 	entry.vala \
 	filter.vala \
+	functions.vala \
 	heidolphmodule.vala \
 	licormodule.vala \
 	log.vala \
@@ -89,6 +90,7 @@ libcld_0_3_la_VALAFLAGS = \
 	--library cld-0.3 --gir Cld-0.3.gir \
 	--vapidir=$(srcdir)/../vapi --pkg config \
 	@VALA_PACKAGES@ --pkg linux --pkg posix --pkg libmatheval --pkg gsl \
+	$(VALAFLAGS) \
 	$(NULL)
 
 libcld_0_3_la_CPPFLAGS = \

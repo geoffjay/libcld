@@ -144,7 +144,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
 
 	    Posix.fcntl (fd, Posix.F_SETFL, Posix.O_NONBLOCK);
 
-        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_fifo_watch",  () => {
+        GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_fifo_watch",  () => {
 
             while (active) {
                 ushort[] buf = new ushort[bufsz];
@@ -204,7 +204,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
 
         int total = 0;
 
-        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_channel_watch", () => {
+        GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_channel_watch", () => {
             Mutex mutex = new Mutex ();
             Cond cond = new Cond ();
             int64 end_time;
@@ -254,7 +254,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
         int total = 0;
         int nscans = 0;
 
-        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_process_raw", () => {
+        GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_process_raw", () => {
             while (active) {
                 lock (raw_queue) {
                     lock (entry_queue) {
@@ -299,7 +299,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
         //int maxqmin = 1600;
         //int minqmin = 400;
         //int diff = 0;
-        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_entry_write", () => {
+        GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_entry_write", () => {
             while (active) {
                 if (entry_queue.size > qmin) {
                     lock (entry_queue) {

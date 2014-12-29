@@ -11,7 +11,7 @@ m4/lt*.m4
 # Files that get generated automatically by automake/autoconf
 aclocal.m4
 autom4te.cache/
-cld-0.2.pc
+cld-0.3.pc
 compile
 configure
 depcomp
@@ -42,15 +42,16 @@ config.sub
 !cld/common.h
 cld/.deps/
 cld/.libs/
-cld/Cld-0.2.gir
-cld/Cld-0.2.typelib
-cld/cld-0.2.vapi
-cld/cld-internals-0.2.vapi
-cld/libcld-0.2.la
-cld/libcld_0_2_la_vala.stamp
-cld/libcld_0_2_la_vala.stamp-t
+cld/Cld-0.3.gir
+cld/Cld-0.3.typelib
+cld/cld-0.3.vapi
+cld/cld-internals-0.3.vapi
+cld/libcld-0.3.la
+cld/libcld_0_3_la_vala.stamp
+cld/libcld_0_3_la_vala.stamp-t
 
 # Documentation
+doc/cld-0.3
 !docs/Makefile
 docs/build
 

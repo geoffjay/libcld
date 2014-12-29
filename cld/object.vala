@@ -76,6 +76,7 @@ public interface Cld.Object : GLib.Object {
      *
      * @return  ``0`` if they contain the same id, ``1`` otherwise
      */
+    [Deprecated (replacement="Cld.Functions.get_compare_func_for", since="0.3")]
     public abstract int compare (Object a);
 
     /**

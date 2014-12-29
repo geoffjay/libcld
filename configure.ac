@@ -46,7 +46,9 @@ AC_PROG_LIBTOOL
 AM_PROG_VALAC([0.14.0])
 AC_SUBST(VALAC)
 
+dnl Library checks
 VALA_PACKAGES=""
+VALAFLAGS="--enable-deprecated --target-glib=2.32 $VALAFLAGS"
 
 GLIB_REQUIRED=2.32.0
 PKG_CHECK_MODULES([GLIB], [glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED gthread-2.0 >= $GLIB_REQUIRED],
@@ -55,9 +57,9 @@ PKG_CHECK_MODULES([GLIB], [glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUI
 		[AC_MSG_ERROR(glib-2.12 is required)])
 	])
 
-PKG_CHECK_MODULES([GEE], [gee-1.0],
-    [VALA_PACKAGES="$VALA_PACKAGES --pkg gee-1.0"],
-	[AC_MSG_ERROR(gee-1.0 is required)])
+PKG_CHECK_MODULES([GEE], [gee-0.8],
+    [VALA_PACKAGES="$VALA_PACKAGES --pkg gee-0.8"],
+	[AC_MSG_ERROR(gee-0.8 is required)])
 
 PKG_CHECK_MODULES([GIO], [gio-2.0],
     [VALA_PACKAGES="$VALA_PACKAGES --pkg gio-2.0"],
@@ -112,6 +114,7 @@ if test "x$use_comedi" != "xno" ; then
 fi
 
 AC_SUBST(VALA_PACKAGES)
+AC_SUBST(VALAFLAGS)
 
 dnl if test x$GCC = xyes
 dnl then

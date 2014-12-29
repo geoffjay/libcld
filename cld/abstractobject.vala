@@ -143,7 +143,6 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
         return result;
     }
 
-
     /**
      * {@inheritDoc}
      */

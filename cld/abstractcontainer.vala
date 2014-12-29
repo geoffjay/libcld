@@ -146,7 +146,9 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      * {@inheritDoc}
      */
     public virtual Gee.Map<string, Cld.Object> get_object_map (Type type) {
-        Gee.Map<string, Cld.Object> map = new Gee.TreeMap<string, Cld.Object> ();
+        Gee.Map<string, Cld.Object> map = new Gee.TreeMap<string, Cld.Object> (
+            (GLib.CompareDataFunc)Cld.Functions.get_compare_func_for,
+            (Gee.EqualDataFunc)Cld.Functions.get_equal_func_for);
         if (objects != null) {
             foreach (var object in objects.values) {
                 //message ("1) uri: %s type: %s", object.uri, type.name ());
@@ -188,7 +190,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         Gee.List<Cld.Object> map_values = new Gee.ArrayList<Cld.Object> ();
 
         map_values.add_all (objects.values);
-        map_values.sort ((GLib.CompareFunc) Cld.Object.compare);
+        map_values.sort ((GLib.CompareDataFunc) Cld.Functions.get_compare_func_for);
         objects.clear ();
         foreach (Cld.Object object in map_values) {
             objects.set (object.id, object);

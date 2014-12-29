@@ -65,9 +65,9 @@ libcld_0_3_la_SOURCES = \
 	pid.vala \
 	port.vala \
 	serialport.vala \
-	simplecontainer.vala \
 	socketport.vala \
 	sqlitelog.vala \
+	rootcontainer.vala \
 	task.vala \
 	vchannel.vala \
 	velmexmodule.vala \

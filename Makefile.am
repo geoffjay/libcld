@@ -5,7 +5,7 @@ include $(top_srcdir)/Makefile.decl
 
 if ENABLE_DOC
 DOC_SUBDIR = \
-	doc \
+	docs \
 	$(NULL)
 endif
 

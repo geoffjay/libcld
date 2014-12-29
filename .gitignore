@@ -51,8 +51,8 @@ cld/libcld_0_3_la_vala.stamp
 cld/libcld_0_3_la_vala.stamp-t
 
 # Documentation
-doc/cld-0.3
-!docs/Makefile
+docs/cld-0.3
+docs/Makefile
 docs/build
 
 # Example programs

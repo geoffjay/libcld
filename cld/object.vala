@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -67,7 +67,7 @@ public interface Cld.Object : GLib.Object {
      * @return  ``true`` or ``false`` depending on whether or not the id
      *          parameters match
      */
-    public abstract bool equal (Object a, Object b);
+    public abstract bool equal (Cld.Object a, Cld.Object b);
 
     /**
      * Compares the object to another that is provided.
@@ -76,7 +76,7 @@ public interface Cld.Object : GLib.Object {
      *
      * @return  ``0`` if they contain the same id, ``1`` otherwise
      */
-    public abstract int compare (Object a);
+    public abstract int compare (Cld.Object a);
 
     /**
      * Prints the contents to the stream given.

@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,9 +27,7 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
     /* Evaluator fields */
     private Evaluator evaluator = null;
 
-    /**
-     * @deprecated cld-0.2
-     */
+    [Deprecated (since="0.2")]
     private HashTable<string, AIChannel> channels =
         new HashTable<string, AIChannel> (str_hash, str_equal);
     private double[]? channel_vals;
@@ -52,8 +50,8 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
 
     /**
      * Mathematical expression to be used to evaluate the channel value.
-     * @deprecated cld-0.2
      */
+    [Deprecated (since="0.2")]
     public virtual string? expression {
         get { return _expression; }
         set {
@@ -74,9 +72,7 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
         }
     }
 
-    /**
-     * @deprecated cld-0.2
-     */
+    [Deprecated (since="0.2")]
     public double calculated_value {
         get {
             if (_expression != null) {

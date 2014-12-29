@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -99,8 +99,8 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
                                             variable_vals [i] = val;
                                         }
                                     }
-                                } else if (object is ScalableChannel) {
-                                    variable_vals [i] = (object as ScalableChannel).scaled_value;
+                                } else if (object is Cld.ScalableChannel) {
+                                    variable_vals [i] = (object as Cld.ScalableChannel).scaled_value;
                                 }
                             }
                         }

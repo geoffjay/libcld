@@ -1,22 +1,19 @@
 /**
- * Copyright (C) 2010 Geoff Johnson
+ * libcld
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * (at your option) any later version.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- *
- * Author:
- *  Geoff Johnson <geoff.jay@gmail.com>
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library.
  */
 
 using Cld;
@@ -25,7 +22,7 @@ public class CalibrationTests : ObjectTests {
 
     public CalibrationTests () {
         base ("Calibration");
-        add_test ("[Calibration] default scale factors", test_default_scale);
+        add_test ("[Calibration] Test default scale factors", test_default_scale);
     }
 
     public override void set_up () {
@@ -42,17 +39,9 @@ public class CalibrationTests : ObjectTests {
         // Check the calibration exists
         assert (test_calibration != null);
 
-        try {
-            test_calibration.add (new Coefficient.with_data ("cft0", 0, 0.0));
-        } catch (Cld.Error e) {
-            error ("%s", e.message);
-        }
-
-        try {
-            test_calibration.add (new Coefficient.with_data ("cft1", 1, 0.0));
-        } catch (Cld.Error e) {
-            error ("%s", e.message);
-        }
+        // Change the values and then reset to defaults
+        test_calibration.set_nth_coefficient (0, -5.0);
+        test_calibration.set_nth_coefficient (1, 2.0);
 
         test_calibration.set_default ();
         assert (test_calibration.get_coefficient (0).value == 0.0);

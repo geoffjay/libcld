@@ -171,7 +171,7 @@ class Cld.BuildFromXmlExample : Cld.Example {
         stdout.printf ("\n Finished.\n\n");
 
         stdout.printf ("\nPrinting reference table..\n\n");
-        context.print_ref_list ();
+        (context as Cld.Container).print_ref_list ();
         stdout.printf ("\n Finished.\n\n");
 
         stdout.printf ("\nDemonstrating the to_string () method..\n\n");

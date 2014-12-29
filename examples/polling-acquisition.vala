@@ -128,7 +128,7 @@ class Cld.PollingExample : Cld.Example {
         //stdout.printf ("\n Finished.\n\n");
 
         stdout.printf ("\nPrinting reference table..\n\n");
-        context.print_ref_list ();
+        (context as Cld.Container).print_ref_list ();
         stdout.printf ("\n Finished.\n\n");
 
         /* Here the device can be accessed without referring to it directly from either its id or uri*/

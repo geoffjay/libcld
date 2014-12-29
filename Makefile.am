@@ -5,7 +5,7 @@ include $(top_srcdir)/Makefile.decl
 
 if ENABLE_DOC
 DOC_SUBDIR = \
-	doc \
+	docs \
 	$(NULL)
 endif
 
@@ -17,6 +17,7 @@ endif
 
 SUBDIRS = \
 	cld \
+	data \
 	tests \
 	vapi \
 	$(DOC_SUBDIR) \

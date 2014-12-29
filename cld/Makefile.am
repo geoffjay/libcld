@@ -27,13 +27,16 @@ libcld_0_3_la_SOURCES = \
 	abstractmodule.vala \
 	abstractobject.vala \
 	abstractport.vala \
+	abstractsensor.vala \
 	abstracttask.vala \
+	actuator.vala \
 	aichannel.vala \
 	aochannel.vala \
 	acquisitioncontroller.vala \
 	automationcontroller.vala \
 	brabendermodule.vala\
 	builder.vala \
+	buildable.vala \
 	calibration.vala \
 	channel.vala \
 	circularbuffer.vala \
@@ -52,21 +55,26 @@ libcld_0_3_la_SOURCES = \
 	dochannel.vala \
 	entry.vala \
 	filter.vala \
+	flowsensor.vala \
 	heidolphmodule.vala \
 	licormodule.vala \
 	log.vala \
 	logcolumn.vala \
 	logcontroller.vala \
 	mathchannel.vala \
+	multiplexer.vala \
 	module.vala \
 	object.vala \
 	parkermodule.vala \
 	pid.vala \
 	port.vala \
+	rootcontainer.vala \
+	rawchannel.vala \
+	sensor.vala \
 	serialport.vala \
-	simplecontainer.vala \
 	socketport.vala \
 	sqlitelog.vala \
+	system.vala \
 	task.vala \
 	vchannel.vala \
 	velmexmodule.vala \
@@ -89,6 +97,7 @@ libcld_0_3_la_VALAFLAGS = \
 	--library cld-0.3 --gir Cld-0.3.gir \
 	--vapidir=$(srcdir)/../vapi --pkg config \
 	@VALA_PACKAGES@ --pkg linux --pkg posix --pkg libmatheval --pkg gsl \
+	$(VALAFLAGS) \
 	$(NULL)
 
 libcld_0_3_la_CPPFLAGS = \
@@ -152,7 +161,7 @@ typelib_DATA = \
 	$(NULL)
 
 Cld-0.3.typelib: Cld-0.3.gir
-	@INTROSPECTION_COMPILER@ --debug --verbose \
+	@INTROSPECTION_COMPILER@ \
 		--includedir=$(srcdir) --includedir=. \
 		--shared-library=libcld-0.3.so $^ -o $@
 endif

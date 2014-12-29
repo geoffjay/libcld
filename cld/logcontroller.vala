@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -87,6 +87,9 @@ public class Cld.LogController : Cld.AbstractController {
         logs = get_object_map (typeof (Cld.Log));
         foreach (var log in logs.values) {
             (log as Cld.Log).connect_signals ();
+            if (log is Cld.SqliteLog) {
+                (log as Cld.SqliteLog).connect_data_source ();
+            }
         }
     }
 }

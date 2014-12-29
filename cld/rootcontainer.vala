@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,10 +19,16 @@
 /**
  * Internal container to use during context construction.
  */
-internal class Cld.SimpleContainer : Cld.AbstractContainer {
+internal class Cld.RootContainer : Cld.AbstractContainer {
 
-    internal SimpleContainer () {
+    /* Avoid the need to include /ctr uri lookup strings */
+    public override string uri {
+        get { return ""; }
+        set { _uri = value; }
+    }
+
+    internal RootContainer () {
+        debug ("Construction");
         _objects = new Gee.TreeMap<string, Cld.Object> ();
-        message ("SimpleContainer ()");
     }
 }

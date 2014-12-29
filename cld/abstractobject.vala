@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -110,7 +110,6 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
         string result = "";
         Type type = get_type ();
         ObjectClass ocl = (ObjectClass)type.class_ref ();
-
         result += "\nCld.Object.id: %s (%s)\n".printf (id, type.name ());
         result += "\tProperties:\n\n";
         result += "\t%-24s%-35s%-20s%-24s\n\n".printf ("name:", "value:", "value type:", "owner type:");
@@ -143,7 +142,6 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
         return result;
     }
 
-
     /**
      * {@inheritDoc}
      */
@@ -155,7 +153,7 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
      * {@inheritDoc}
      */
     public virtual int compare (Cld.Object a) {
-        return id.ascii_casecmp (a.id);
+        return this.id.ascii_casecmp (a.id);
     }
 
     /**

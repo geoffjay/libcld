@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -41,7 +41,7 @@ public class Cld.LogEntry : Cld.AbstractObject {
     private string _time_as_string;
     public string time_as_string {
         get {
-            _time_as_string = "%s.%06d".printf (timestamp.format ("%FT%H:%M:%S"), timestamp.get_microsecond ());
+            _time_as_string = "%s.%06d".printf (_timestamp.format ("%FT%H:%M:%S"), _timestamp.get_microsecond ());
             return _time_as_string;
         }
         set { _time_as_string = value; }

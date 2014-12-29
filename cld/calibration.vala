@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -51,8 +51,12 @@ public class Cld.Calibration : Cld.AbstractContainer {
         id = "cal0";
         _objects = new Gee.TreeMap<string, Cld.Object> ();
         /* set defaults */
-        add (new Cld.Coefficient.with_data ("cft0", 0, 0.0));
-        add (new Cld.Coefficient.with_data ("cft1", 1, 1.0));
+        try {
+            add (new Cld.Coefficient.with_data ("cft0", 0, 0.0));
+            add (new Cld.Coefficient.with_data ("cft1", 1, 1.0));
+        } catch (Cld.Error e) {
+            critical (e.message);
+        }
         connect_signals ();
     }
 
@@ -88,7 +92,11 @@ public class Cld.Calibration : Cld.AbstractContainer {
                     if (iter->get_prop ("type") == "coefficient") {
                         var coeff = new Cld.Coefficient.from_xml_node (iter);
                         coeff.parent = this;
-                        add (coeff);
+                        try {
+                            add (coeff);
+                        } catch (Cld.Error e) {
+                            critical (e.message);
+                        }
                     }
                 }
             }
@@ -153,16 +161,12 @@ public class Cld.Calibration : Cld.AbstractContainer {
     }
 
     public void set_nth_coefficient (int index, double val) {
-        foreach (var coefficient in objects.values) {
-            if ((coefficient as Cld.Coefficient).n == index)
-                objects.unset (coefficient.id);
+        var coefficients = get_object_map (typeof (Cld.Coefficient));
+        foreach (var coefficient in coefficients.values) {
+            if ((coefficient as Cld.Coefficient).n == index) {
+                (coefficient as Cld.Coefficient).value = val;
+            }
         }
-
-        /* either it didn't exist or we dropped it */
-        var c = new Cld.Coefficient ();
-        c.n = index;
-        c.value = val;
-        add (c);
     }
 
     public void set_coefficient (string id, Cld.Coefficient coefficient) {
@@ -189,7 +193,11 @@ public class Cld.Calibration : Cld.AbstractContainer {
         var c = new Cld.Coefficient ();
         c.n = index;
         c.value = val;
-        add (c);
+        try {
+            add (c);
+        } catch (Cld.Error e) {
+            critical (e.message);
+        }
     }
 
     /**

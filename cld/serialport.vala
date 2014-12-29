@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -69,17 +69,16 @@ public class Cld.SerialPort : AbstractPort {
                 var regex_mark  = new Regex ("mark", RegexCompileFlags.CASELESS);
                 var regex_space = new Regex ("space", RegexCompileFlags.CASELESS);
 
-                if (regex_none.match (value)) {
+                if (regex_none.match (value))
                     return NONE;
-                } else if (regex_odd.match (value)) {
+                else if (regex_odd.match (value))
                     return ODD;
-                } else if (regex_even.match (value)) {
+                else if (regex_even.match (value))
                     return EVEN;
-                } else if (regex_mark.match (value)) {
+                else if (regex_mark.match (value))
                     return MARK;
-                } else if (regex_space.match (value)) {
+                else if (regex_space.match (value))
                     return SPACE;
-                }
             } catch (RegexError e) {
                 message ("Error %s", e.message);
             }
@@ -119,15 +118,14 @@ public class Cld.SerialPort : AbstractPort {
                 var regex_software = new Regex ("software", RegexCompileFlags.CASELESS);
                 var regex_both     = new Regex ("both", RegexCompileFlags.CASELESS);
 
-                if (regex_none.match (value)) {
+                if (regex_none.match (value))
                     return NONE;
-                } else if (regex_hardware.match (value)) {
+                else if (regex_hardware.match (value))
                     return HARDWARE;
-                } else if (regex_software.match (value)) {
+                else if (regex_software.match (value))
                     return SOFTWARE;
-                } else if (regex_both.match (value)) {
+                else if (regex_both.match (value))
                     return BOTH;
-                }
             } catch (RegexError e) {
                 message ("Error %s", e.message);
             }
@@ -164,13 +162,12 @@ public class Cld.SerialPort : AbstractPort {
                 var regex_ro = new Regex ("ro|read(\\040)*only", RegexCompileFlags.CASELESS);
                 var regex_wo = new Regex ("wo|write(\\040)*only", RegexCompileFlags.CASELESS);
 
-                if (regex_rw.match (value)) {
+                if (regex_rw.match (value))
                     return READWRITE;
-                } else if (regex_ro.match (value)) {
+                else if (regex_ro.match (value))
                     return READONLY;
-                } else if (regex_wo.match (value)) {
+                else if (regex_wo.match (value))
                     return WRITEONLY;
-                }
             } catch (RegexError e) {
                 message ("Error %s", e.message);
             }
@@ -342,14 +339,13 @@ public class Cld.SerialPort : AbstractPort {
      */
     public SerialPort.from_xml_node (Xml.Node *node) {
         string val;
+        this.node = node;
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
             /* iterate through node children */
-            for (Xml.Node *iter = node->children;
-                 iter != null;
-                 iter = iter->next) {
+            for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
                 if (iter->name == "property") {
                     switch (iter->get_prop ("name")) {
                         case "device":
@@ -390,7 +386,85 @@ public class Cld.SerialPort : AbstractPort {
             }
         }
 
-        this.settings_changed.connect (update_settings);
+        connect_signals ();
+        settings_changed.connect (update_settings);
+    }
+
+    private void connect_signals () {
+        notify["device"].connect ((s, p) => {
+            message ("Property `%s' changed for `%s'", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["baud-rate"].connect ((s, p) => {
+            debug ("Property `%s' changed for `%s'", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["data-bits"].connect ((s, p) => {
+            debug ("Property `%s' changed for `%s'", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["stop-bits"].connect ((s, p) => {
+            debug ("Property `%s' changed for `%s'", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["parity"].connect ((s, p) => {
+            debug ("Property `%s' changed for `%s'", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["handshake"].connect ((s, p) => {
+            debug ("Property `%s' changed for `%s'", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["access-mode"].connect ((s, p) => {
+            debug ("Property `%s' changed for `%s'", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["echo"].connect ((s, p) => {
+            debug ("Property `%s' changed for `%s'", p.get_name (), uri);
+            update_node ();
+        });
+    }
+
+    private void update_node () {
+        for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
+            if (iter->name == "property") {
+                switch (iter->get_prop ("name")) {
+                    case "device":
+                        iter->set_content (device);
+                        break;
+                    case "baudrate":
+                        iter->set_content (baud_rate_to_string ());
+                        break;
+                    case "databits":
+                        iter->set_content (data_bits.to_string ());
+                        break;
+                    case "stopbits":
+                        iter->set_content (stop_bits.to_string ());
+                        break;
+                    case "parity":
+                        iter->set_content (parity.to_string ());
+                        break;
+                    case "handshake":
+                        iter->set_content (handshake.to_string ());
+                        break;
+                    case "accessmode":
+                        iter->set_content (access_mode.to_string ());
+                        break;
+                    case "echo":
+                        iter->set_content (echo.to_string ());
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     /**
@@ -408,6 +482,7 @@ public class Cld.SerialPort : AbstractPort {
         /* Make non-blocking */
         if ((fd = Posix.open (device, flags | Posix.O_NONBLOCK | Posix.O_NOCTTY)) < 0) {
             fd = -1;
+
             return false;
         }
 
@@ -432,11 +507,13 @@ public class Cld.SerialPort : AbstractPort {
         if (connected) {
             GLib.Source.remove (source_id);
             source_id = null;
+
             try {
                 fd_channel.shutdown (true);
             } catch (GLib.IOChannelError e) {
                 message ("%s", e.message);
             }
+
             non_printable = 0;
             last_rx_was_cr = false;
             fd_channel = null;
@@ -482,6 +559,7 @@ public class Cld.SerialPort : AbstractPort {
     public override bool read_bytes (GLib.IOChannel source, GLib.IOCondition condition) {
         if (!connected)
             return false;
+
         uchar[] buf = new uchar[bufsz];
         int nread = (int)Posix.read (fd, buf, bufsz);
         _rx_count += (ulong)nread;
@@ -494,7 +572,9 @@ public class Cld.SerialPort : AbstractPort {
         for (int i = 0; i < nread; i++) {
             sized_buf[i] = buf[i];
         }
+
         new_data (sized_buf, nread);
+
         if (echo)
             send_bytes ((char[])sized_buf, nread);
 
@@ -589,5 +669,32 @@ public class Cld.SerialPort : AbstractPort {
             newtio.c_cflag |= Linux.Termios.CRTSCTS;
         else
             newtio.c_cflag &= ~Linux.Termios.CRTSCTS;
+    }
+
+    /**
+     * XXX this should be part of a Baudrate enum
+     *
+     * Helper function for saving the baudrate as a readable value.
+     */
+    private string baud_rate_to_string () {
+        switch (baud_rate) {
+        case Posix.B300:                return "300";
+        case Posix.B600:                return "600";
+        case Posix.B1200:               return "1200";
+        case Posix.B2400:               return "2400";
+        case Posix.B4800:               return "4800";
+        case Posix.B9600:               return "9600";
+        case Posix.B19200:              return "19200";
+        case Posix.B38400:              return "38400";
+        case Posix.B57600:              return "57600";
+        case Posix.B115200:             return "115200";
+        case Posix.B230400:             return "230400";
+        case Linux.Termios.B460800:     return "460800";
+        case Linux.Termios.B576000:     return "576000";
+        case Linux.Termios.B921600:     return "921600";
+        case Linux.Termios.B1000000:    return "1000000";
+        case Linux.Termios.B2000000:    return "2000000";
+        default:                        return "9600";
+        }
     }
 }

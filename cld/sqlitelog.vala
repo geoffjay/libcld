@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,47 @@
 public class Cld.SqliteLog : Cld.AbstractLog {
 
     /**
+     * Enumerated Experiment table column names.
+     */
+    public enum ExperimentColumn {
+        ID,
+        NAME,
+        START_DATE,
+        STOP_DATE,
+        START_TIME,
+        STOP_TIME,
+        LOG_RATE
+    }
+
+    /**
+     * Enumerated Channel table column names.
+     */
+    public enum ChannelColumn {
+        ID,
+        EXPERIMENT_ID,
+        CHAN_URI,
+        DESC,
+        TAG,
+        TYPE,
+        EXPRESSION,
+        COEFF_X0,
+        COEFF_X1,
+        COEFF_X2,
+        COEFF_X3,
+        UNITS
+    }
+
+    /**
+     * Enumerated subset of the column names in an experiment table.
+     */
+    public enum ExperimentDataColumns {
+        ID,
+        EXPERIMENT_ID,
+        TIME,
+        DATA0
+    }
+
+    /**
      * Property backing fields.
      */
     private string _experiment_name;
@@ -34,22 +75,22 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * File path to backup location.
      */
-    public string backup_path;
+    public string backup_path { get; set; }
 
     /**
      * Backup file name.
      */
-    public string backup_file;
+    public string backup_file { get; set; }
 
     /**
-     * The interval at which the database will be automativcally backed up.
+     * The interval at which the database will be automatically backed up.
      */
-    public int backup_interval_ms;
+    public int backup_interval_ms { get; set; }
 
     /**
      * The source of the channel value information.
      * fifo: The data comes from a named pipe.
-     * channel: The data comes from reading the value directly from the Cld.Channel
+     * channel: The data comes from reading the value directly from the channel
      */
     public string data_source;
 
@@ -71,7 +112,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     private Sqlite.Database db;
 
     /**
-     * An SQLite database object for backups.\
+     * An SQLite database object for backups.
      */
     private Sqlite.Database backup_db;
 
@@ -119,45 +160,9 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     private bool backup_is_open;
 
     /**
-     * Enumerated Experiment table column names.
+     * A file descriptor for the FIFO
      */
-    public enum ExperimentColumn {
-        ID,
-        NAME,
-        START_DATE,
-        STOP_DATE,
-        START_TIME,
-        STOP_TIME,
-        LOG_RATE
-    }
-
-    /**
-     * Enumerated Channel table column names.
-     */
-    public enum ChannelColumn {
-        ID,
-        EXPERIMENT_ID,
-        CHAN_URI,
-        DESC,
-        TAG,
-        TYPE,
-        EXPRESSION,
-        COEFF_X0,
-        COEFF_X1,
-        COEFF_X2,
-        COEFF_X3,
-        UNITS
-    }
-
-    /**
-     * Enumerated subset of the column names in an experiment table.
-     */
-    public enum ExperimentDataColumns {
-        ID,
-        EXPERIMENT_ID,
-        TIME,
-        DATA0
-    }
+    private int fd = -1;
 
     /**
      * Report the backup progress.
@@ -182,6 +187,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         active = false;
         is_open = false;
         time_stamp = TimeStampFlag.OPEN;
+        connect_signals ();
     }
 
     /**
@@ -189,6 +195,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      */
     public SqliteLog.from_xml_node (Xml.Node *node) {
         string value;
+        this.node = node;
 
         active = false;
         is_open = false;
@@ -249,6 +256,70 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 }
             }
         }
+        connect_signals ();
+    }
+
+    /* Connect the notify signals */
+    private void connect_signals () {
+        Type type = get_type ();
+        ObjectClass ocl = (ObjectClass)type.class_ref ();
+
+        foreach (ParamSpec spec in ocl.list_properties ()) {
+            message ("spec name: %s", spec.get_name ());
+            notify[spec.get_name ()].connect ((s, p) => {
+            update_node ();
+            });
+        }
+    }
+
+    private void update_node () {
+        if (node != null) {
+            if (node->type == Xml.ElementType.ELEMENT_NODE &&
+                node->type != Xml.ElementType.COMMENT_NODE) {
+                /* iterate through node children */
+                for (Xml.Node *iter = node->children;
+                     iter != null;
+                     iter = iter->next) {
+                    if (iter->name == "property") {
+                        switch (iter->get_prop ("name")) {
+                            case "title":
+                                iter->set_content (name);
+                                break;
+                            case "path":
+                                iter->set_content (path);
+                                break;
+                            case "file":
+                                iter->set_content (file);
+                                break;
+                            case "rate":
+                                iter->set_content (rate.to_string ());
+                                break;
+                            case "format":
+                                iter->set_content (date_format);
+                                break;
+                            case "time-stamp":
+                                iter->set_content (time_stamp.to_string ());
+                                break;
+                            case "backup-path":
+                                iter->set_content (backup_path);
+                                break;
+                            case "backup-file":
+                                iter->set_content (backup_file);
+                                break;
+                            case "backup-interval-hrs":
+                                int hrs = (int) (backup_interval_ms / (60 * 60 * 1000));
+                                iter->set_content (hrs.to_string ());
+                                break;
+                            case "data-source":
+                                iter->set_content (data_source);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -258,6 +329,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         if (_objects != null) {
             _objects.clear ();
         }
+    }
+
+    public void connect_data_source () {
+        var mux = get_object_from_uri (data_source);
+        message ("Connecting to data source `%s' from `%s'",
+                (mux as Cld.Multiplexer).fname, mux.id);
+        fifos.set ((mux as Cld.Multiplexer).fname, -1);
     }
 
     /**
@@ -375,10 +453,10 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         DateTime time = new DateTime.now_local ();
 
         if (is_open) {
-            /* add the footer */
+            /* Add the footer */
             file_stream.printf ("\nLog file: %s closed at %s",
                                 name, time.format ("%F %T"));
-            /* setting a GLib.FileStream object to null apparently forces a
+            /* Setting a GLib.FileStream object to null apparently forces a
              * call to stdlib's close () */
             file_stream = null;
             is_open = false;
@@ -437,10 +515,20 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public override void start () {
         /* Count the number of channels */
         var columns = get_children (typeof (Cld.Column));
-        nchans = columns.size;
 
+        nchans = columns.size;
         active = true;
-        if (data_source == "fifo") {
+        if (data_source == "channel" || data_source == null) {
+            /* Background channel watch fills the entry queue */
+            bg_channel_watch.begin (() => {
+                try {
+                    message ("Channel watch async ended");
+                } catch (ThreadError e) {
+                    string msg = e.message;
+                    error (@"Thread error: $msg");
+                }
+            });
+        } else {
             /* Open the FIFO data buffers. */
             foreach (string fname in fifos.keys) {
                 if (Posix.access (fname, Posix.F_OK) == -1) {
@@ -449,11 +537,10 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                         error ("Context could not create fifo %s\n", fname);
                     }
                 }
-
                 open_fifo.begin (fname, (obj, res) => {
                     try {
-                        int fd = open_fifo.end (res);
-                        message ("got a writer for %s", fname);
+                        fd = open_fifo.end (res);
+                        message ("Got a writer for %s", fname);
 
                         /* Background fifo watch queues fills the entry queue */
                         bg_fifo_watch.begin (fd, (obj, res) => {
@@ -481,17 +568,8 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                     }
                 });
             }
-        } else if (data_source == "channel") {
-            /* Background channel watch fills the entry queue */
-            bg_channel_watch.begin (() => {
-                try {
-                    message ("Channel watch async ended");
-                } catch (ThreadError e) {
-                    string msg = e.message;
-                    error (@"Thread error: $msg");
-                }
-            });
         }
+
 
         bg_entry_write.begin (() => {
             try {
@@ -519,13 +597,38 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public override void stop () {
+        string query = """
+            UPDATE experiment
+            SET stop_date = DATE('now', 'localtime'),
+                stop_time = TIME('now', 'localtime')
+            WHERE id = %s;
+        """.printf (experiment_id.to_string ());
+
+        ec = db.prepare_v2 (query, query.length, out stmt);
+        if (ec != Sqlite.OK) {
+            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+        }
+
+        stmt.step ();
+        stmt.reset ();
+
+        if (active) {
+            /* Wait for the queue to be empty */
+            GLib.Timeout.add (100, deactivate_cb);
+        }
+    }
+
     private async int open_fifo (string fname) {
         SourceFunc callback = open_fifo.callback;
-        int fd = -1;
 
-        GLib.Thread<int> thread = new GLib.Thread<int> ("open_fifo_%s".printf (fname), () => {
+        GLib.Thread<int> thread = new GLib.Thread<int>.try ("open_fifo_%s".printf (fname), () => {
             message ("%s is is waiting for a writer to FIFO %s",this.id, fname);
-            fd = Posix.open (fname, Posix.O_RDONLY);
+            if (fd == -1)
+                fd = Posix.open (fname, Posix.O_RDONLY);
             fifos.set (fname, fd);
             if (fd == -1) {
                 message ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
@@ -579,7 +682,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             VALUES
             (
                 $NAME,
-                DATE('now'),
+                DATE('now', 'localtime'),
                 $STOP_DATE,
                 TIME ('now', 'localtime'),
                 $STOP_TIME,
@@ -846,31 +949,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         return ent;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public override void stop () {
-        string query = """
-            UPDATE experiment
-            SET stop_date = DATE('now'),
-                stop_time = TIME('now', 'localtime')
-            WHERE id = %s;
-        """.printf (experiment_id.to_string ());
-
-        ec = db.prepare_v2 (query, query.length, out stmt);
-        if (ec != Sqlite.OK) {
-            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
-        }
-
-        stmt.step ();
-        stmt.reset ();
-
-        if (active) {
-            /* Wait for the queue to be empty */
-            GLib.Timeout.add (100, deactivate_cb);
-        }
-    }
-
     private bool deactivate_cb () {
         if (entry_queue.size == 0) {
             active = false;
@@ -1061,16 +1139,43 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                             int exp_id_end,
                             DateTime start,
                             DateTime stop,
-                            int step) {
+                            int step,
+                            bool single_header) {
         string query;
         string name = "";
         string line = "";
         char sep = '\t';
         int count = 0;
+        Cld.AIChannel [] chan_ary;
+
+        /* Create dummy channels that do the calibration conversions */
+        var cols = get_children (typeof (Cld.Column));
+        chan_ary = new Cld.AIChannel [cols.size];
+        int i = 0;
+        foreach (var column in cols.values) {
+            Cld.Calibration cal;
+            var chan = (column as Cld.Column).channel;
+            chan_ary [i] = new Cld.AIChannel ();
+            if (chan is Cld.ScalableChannel) {
+                /* use the cal from the corresponding channel */
+                cal = (chan as Cld.ScalableChannel).calibration;
+                var c0 = (cal as Cld.Calibration).get_coefficient (0);
+                var c1 = (cal as Cld.Calibration).get_coefficient (1);
+            } else {
+                /* get a new default calibration */
+                cal = new Cld.Calibration ();
+            }
+            chan_ary [i].calibration = cal;
+            i++;
+        }
 
         file_open (filename);
         for (int exp_id = exp_id_begin; exp_id <= exp_id_end; exp_id++) {
-            write_header (exp_id);
+            if (exp_id == exp_id_begin) {
+                write_header (exp_id);
+            } else if (!single_header) {
+                write_header (exp_id);
+            }
 
             /* Get the table name of the experiment */
             query = "SELECT * FROM experiment WHERE id=$ID;";
@@ -1113,11 +1218,19 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 message ("Error: %d: %s\n", db.errcode (), db.errmsg ());
             }
 
-            while (stmt.step () == Sqlite.ROW) {
+            bool ret;
+            while (ret = stmt.step () == Sqlite.ROW) {
                 line = "%s\t".printf (stmt.column_text (ExperimentDataColumns.TIME));
-                for (int column = 0; column < columns; column++) {
-                    line += "%f%c".printf (stmt.column_double (column +
-                                            ExperimentDataColumns.DATA0), sep);
+                for (int column = 0; column < columns - 1; column++) {
+                    //line += "%f%c".printf (stmt.column_double (column +
+                      //                      ExperimentDataColumns.DATA0), sep);
+
+                    double value = stmt.column_double (column +
+                                            ExperimentDataColumns.DATA0);
+                    chan_ary [column].add_raw_value (value);
+                    value = chan_ary [column].scaled_value;
+
+                    line += "%f%c".printf (value, sep);
                 }
                 line += "\n";
                 if (count == 0) {

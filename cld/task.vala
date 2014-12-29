@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,8 +21,40 @@
  */
 [GenericAccessors]
 public interface Cld.Task : Cld.Object {
+
    /**
-    * Abstract properties
+    * Indicates the current status of the task.
     */
-    public abstract bool active { get; set;  }
+    public abstract bool active { get; set; }
+
+    /**
+     * Launch the task.
+     */
+     public abstract void run ();
+
+    /**
+     * Stop an active task.
+     */
+    public abstract void stop ();
+
+    /**
+     * Non-blocking sleep thread used by implementing classes that request their
+     * data at a timed interval.
+     *
+     * @param interval delay in ms
+     * @param priority the thread priority to use
+     */
+    public virtual async void nap (uint interval, int priority = GLib.Priority.DEFAULT) {
+        GLib.Timeout.add (interval, () => {
+            nap.callback ();
+            return false;
+        }, priority);
+        yield;
+    }
+}
+
+public interface Cld.PollingTask : Cld.AbstractTask, Cld.Task {
+}
+
+public interface Cld.StreamingTask : Cld.AbstractTask, Cld.Task {
 }

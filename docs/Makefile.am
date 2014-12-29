@@ -1,4 +1,5 @@
 include $(top_srcdir)/Makefile.decl
+include Makefile.sphinx
 
 SRC_DIR = $(top_srcdir)/cld
 
@@ -29,8 +30,11 @@ img_DATA = \
 $(doc_data) $(innerdoc_DATA) $(img_DATA): cld-0.3/index.html
 
 cld-0.3/index.html:
-	$(VALADOC) -o cld-0.3/ --wiki ./ --force -b $(top_srcdir) $(SRC_DIR)/*.vala --pkg=gee-1.0 --pkg=libxml-2.0 --pkg=json-glib-1.0 --pkg=linux --pkg=posix --pkg=comedi --pkg=libmodbus --pkg=libmatheval --pkg=gsl --pkg=config --pkg=sqlite3 --vapidir=$(vapidir) --vapidir=../vapi
+	$(VALADOC) -o cld-0.3/ --wiki ./ --target-glib=2.32 \
+		--force -b $(top_srcdir) $(SRC_DIR)/*.vala \
+		--pkg=gee-0.8 --pkg=libxml-2.0 --pkg=json-glib-1.0 --pkg=linux \
+		--pkg=posix --pkg=comedi --pkg=libmodbus --pkg=libmatheval --pkg=gsl \
+		--pkg=config --pkg=sqlite3 --vapidir=$(vapidir) --vapidir=../vapi
 
 EXTRA_DIST += \
-	index.wiki \
 	$(NULL)

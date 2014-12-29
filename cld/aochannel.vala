@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -81,6 +81,11 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
      * {@inheritDoc}
      */
     public virtual double avg_value { get; private set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual double ssdev_value { get; private set; }
 
     /**
      * Wrong spot to store information about control loop, should move it.

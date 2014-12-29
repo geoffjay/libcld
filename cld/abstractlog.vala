@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -69,7 +69,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     /**
      * A double ended queue for raw data.
      */
-    protected virtual Gee.Deque<ushort> raw_queue { get; set; }
+    protected virtual Gee.Deque<float?> raw_queue { get; set; }
 
     /**
      * DateTime data to use for time stamping log file.
@@ -88,7 +88,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
 
     construct {
         fifos = new Gee.TreeMap<string, int> ();
-        raw_queue = new Gee.LinkedList<ushort> ();
+        raw_queue = new Gee.LinkedList<float?> ();
         entry_queue = new Gee.LinkedList<Cld.LogEntry> ();
     }
 
@@ -144,10 +144,12 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
 
 	    Posix.fcntl (fd, Posix.F_SETFL, Posix.O_NONBLOCK);
 
-        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_fifo_watch",  () => {
+        GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_fifo_watch",  () => {
 
             while (active) {
-                ushort[] buf = new ushort[bufsz];
+                uint8 *data = GLib.malloc (sizeof (float));
+                float *result = GLib.malloc (sizeof (float));
+                uint8[] buf = new uint8[bufsz];
                 Posix.fd_set rdset;
                 //Posix.timeval timeout = Posix.timeval ();
                 Posix.timespec timeout = Posix.timespec ();
@@ -165,25 +167,40 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                     if (Posix.errno == Posix.EAGAIN) {
                         error ("Posix pselect error EAGAIN");
                     }
-                } else if (ret == 0) {
-                    stdout.printf ("%s hit timeout\n", id);
+                //} else if (ret == 0) {
+                    //stdout.printf ("%s hit timeout\n", id);
+                    message ("ret: %d", ret);
                 } else if ((Posix.FD_ISSET (fd, rdset)) == 1) {
                     ret = (int)Posix.read (fd, buf, bufsz);
+                    message ("ret: %d", ret);
                     if (ret == -1) {
-                        error ("Posix.errno = %d", Posix.errno);
+                        GLib.error ("Posix.errno = %d", Posix.errno);
                     }
                     lock (raw_queue) {
-                        for (int i = 0; i < ret / 2; i++) {
+                        for (int i = 0; i < (ret / (int) sizeof (float)); i++) {
                             total++;
-//if ((total % 32768) == 0) { stdout.printf ("%d: total read by %s: %d\n",Linux.gettid (), uri, total); }
-                            (raw_queue as Gee.Deque<ushort>).offer_head (buf [i]);
-//                        stdout.printf ("%4X ", buf [i]);
-//                        if ((total % nchans) == 0) {
-//                            stdout.printf ("\n");
-//                        }
+                            //*data = (float) buf [i];
+                            int ix = i * (int) sizeof (float);
+                            data [0] = buf [ix];
+                            data [1] = buf [ix + 1];
+                            data [2] = buf [ix + 2];
+                            data [3] = buf [ix + 3];
+                            Posix.memcpy (result, data, sizeof (float));
+
+                            //if ((total % 256) == 0) {
+                                //message ("%d: total read by %s: %d",
+                                         //Linux.gettid (), uri, total);
+                            //}
+
+                            /* Queue data only if the log is active */
+                            if (active) {
+                                raw_queue.offer_head (*result);
+                            }
                         }
                     }
                 }
+                GLib.free (data);
+                GLib.free (result);
             }
 
             Idle.add ((owned) callback);
@@ -204,7 +221,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
 
         int total = 0;
 
-        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_channel_watch", () => {
+        GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_channel_watch", () => {
             Mutex mutex = new Mutex ();
             Cond cond = new Cond ();
             int64 end_time;
@@ -216,6 +233,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                 entry.time_us = entry.timestamp.difference (start_time);
 
                 int i = 0;
+
                 foreach (var column in objects.values) {
                     if (column is Cld.Column) {
                         entry.data [i++] = (column as Cld.Column).channel_value;
@@ -250,11 +268,14 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
      */
     protected async void bg_raw_process () throws ThreadError {
         SourceFunc callback = bg_raw_process.callback;
-        ushort datum = 0;
+        float datum = 0;
         int total = 0;
         int nscans = 0;
 
-        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_process_raw", () => {
+        GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_process_raw", () => {
+
+            GLib.DateTime timestamp = new GLib.DateTime.now_local ();
+
             while (active) {
                 lock (raw_queue) {
                     lock (entry_queue) {
@@ -265,15 +286,25 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                             for (int i = 0; i < nscans; i++) {
                                 Cld.LogEntry entry = new Cld.LogEntry ();
                                 entry.data = new double [nchans];
-                                entry.timestamp = entry.timestamp.add_seconds (0.00016);
+                                /**
+                                 * The timestamp is artificially generated from
+                                 * the rate parameter which is assumed to be
+                                 * correct.
+                                 */
+                                timestamp = timestamp.add_seconds (1 / rate);
+                                entry.timestamp = timestamp;
 
                                 for (int j = 0; j < nchans; j++) {
                                         datum = raw_queue.poll_tail ();
                                         entry.data [j] = (double) datum;
                                         total++;
-//if ((total % 32768) == 0) { stdout.printf ("%d: total raw dequed: %d  qsize: %d\n",Linux.gettid (), total, raw_queue.size); }
+                                    if ((total % 256) == 0) {
+                                        //message ("%d: total raw dequed: %d  qsize: %d",
+                                                       //Linux.gettid (),
+                                                       //total,
+                                                       //raw_queue.size);
+                                    }
                                 }
-
                                 entry_queue.offer_head (entry);
                             }
                         }
@@ -299,7 +330,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
         //int maxqmin = 1600;
         //int minqmin = 400;
         //int diff = 0;
-        GLib.Thread<int> thread = new GLib.Thread<int> ("bg_entry_write", () => {
+        GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_entry_write", () => {
             while (active) {
                 if (entry_queue.size > qmin) {
                     lock (entry_queue) {

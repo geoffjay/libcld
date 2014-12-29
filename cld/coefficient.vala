@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,9 +19,11 @@
 /**
  * A single nth coefficient to be used to make up a calibration/scale.
  */
-public class Cld.Coefficient : AbstractObject {
-    public int             n     { get; set; }
-    public double          value { get; set; }
+public class Cld.Coefficient : Cld.AbstractObject {
+
+    public int n { get; set; }
+
+    public double value { get; set; }
 
     public Coefficient () {
         id = "cft0";
@@ -33,7 +35,6 @@ public class Cld.Coefficient : AbstractObject {
         this.id = id;
         this.n = n;
         this.value = value;
-        connect_signals ();
     }
 
     public Coefficient.from_xml_node (Xml.Node *node) {
@@ -107,12 +108,4 @@ public class Cld.Coefficient : AbstractObject {
             }
         }
     }
-
-
-//
-//    public override string to_string () {
-//        string str_data  = "[%s] : Coefficient\n".printf (id);
-//               str_data += "\tn: %d\n\tvalue: %f\n".printf (n, value);
-//        return str_data;
-//    }
 }

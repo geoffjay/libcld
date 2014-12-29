@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -47,10 +47,12 @@ public class Cld.CsvLog : Cld.AbstractLog {
         active = false;
         is_open = false;
         time_stamp = TimeStampFlag.OPEN;
+        connect_signals ();
     }
 
     public CsvLog.from_xml_node (Xml.Node *node) {
         string value;
+        this.node = node;
 
         active = false;
         is_open = false;
@@ -97,6 +99,57 @@ public class Cld.CsvLog : Cld.AbstractLog {
                 }
             }
         }
+        connect_signals ();
+    }
+
+    /* Connect the notify signals */
+    private void connect_signals () {
+        Type type = get_type ();
+        ObjectClass ocl = (ObjectClass)type.class_ref ();
+
+        foreach (ParamSpec spec in ocl.list_properties ()) {
+            notify[spec.get_name ()].connect ((s, p) => {
+            update_node ();
+            });
+        }
+    }
+
+    private void update_node () {
+        if (node != null) {
+            if (node->type == Xml.ElementType.ELEMENT_NODE &&
+                node->type != Xml.ElementType.COMMENT_NODE) {
+                /* iterate through node children */
+                for (Xml.Node *iter = node->children;
+                     iter != null;
+                     iter = iter->next) {
+                    if (iter->name == "property") {
+                        switch (iter->get_prop ("name")) {
+                            case "title":
+                                iter->set_content (name);
+                                break;
+                            case "path":
+                                iter->set_content (path);
+                                break;
+                            case "file":
+                                iter->set_content (file);
+                                break;
+                            case "rate":
+                                message ("rate %.3f", rate);
+                                iter->set_content (rate.to_string ());
+                                break;
+                            case "format":
+                                iter->set_content (date_format);
+                                break;
+                            case "time-stamp":
+                                iter->set_content (time_stamp.to_string ());
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     ~CsvLog () {
@@ -113,6 +166,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
         if (is_open) {
             lock (file_stream) {
                 file_stream.printf ("%s", toprint);
+                file_stream.flush ();
             }
         }
     }
@@ -144,7 +198,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
             filename = "%s/%s".printf (path, temp);
 
         /* open the file */
-        message ("Opening file: %s", filename);
+        debug ("Opening file: %s", filename);
         file_stream = FileStream.open (filename, "w+");
 
         if (file_stream == null) {
@@ -228,11 +282,11 @@ public class Cld.CsvLog : Cld.AbstractLog {
         string cals = "Channel Calibrations:\n\n";
 
         foreach (var object in objects.values) {
-            message ("Found object [%s]", object.id);
+            debug ("Found object [%s]", object.id);
             if (object is Column) {
                 var channel = ((object as Column).channel as Channel);
                 Type type = (channel as GLib.Object).get_type ();
-                message ("Received object is Column - %s", type.name ());
+                debug ("Received object is Column - %s", type.name ());
 
                 if (channel is ScalableChannel) {
                     var calibration = (channel as ScalableChannel).calibration;
@@ -303,13 +357,13 @@ public class Cld.CsvLog : Cld.AbstractLog {
                 open_fifo.begin (fname, (obj, res) => {
                     try {
                         int fd = open_fifo.end (res);
-                        message ("got a writer for %s", fname);
+                        debug ("got a writer for %s", fname);
 
                         /* Background fifo watch queues fills the entry queue */
                         bg_fifo_watch.begin (fd, (obj, res) => {
                             try {
                                 bg_fifo_watch.end (res);
-                                message ("Log fifo watch async ended");
+                                debug ("Log fifo watch async ended");
                             } catch (ThreadError e) {
                                 string msg = e.message;
                                 error (@"Thread error: $msg");
@@ -319,7 +373,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
                         bg_raw_process.begin ((obj, res) => {
                             try {
                                 bg_raw_process.end (res);
-                                message ("Raw data queue processing async ended");
+                                debug ("Raw data queue processing async ended");
                             } catch (ThreadError e) {
                                 string msg = e.message;
                                 error (@"Thread error: $msg");
@@ -335,7 +389,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
             /* Background channel watch fills the entry queue */
             bg_channel_watch.begin (() => {
                 try {
-                    message ("Channel watch async ended");
+                    debug ("Channel watch async ended");
                 } catch (ThreadError e) {
                     string msg = e.message;
                     error (@"Thread error: $msg");
@@ -345,7 +399,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
         bg_entry_write.begin (() => {
             try {
-                message ("Log entry queue write async ended");
+                debug ("Log entry queue write async ended");
             } catch (ThreadError e) {
                 string msg = e.message;
                 error (@"Thread error: $msg");
@@ -357,14 +411,14 @@ public class Cld.CsvLog : Cld.AbstractLog {
         SourceFunc callback = open_fifo.callback;
         int fd = -1;
 
-        GLib.Thread<int> thread = new GLib.Thread<int> ("open_fifo_%s".printf (fname), () => {
-            message ("%s is is waiting for a writer to FIFO %s",this.id, fname);
+        GLib.Thread<int> thread = new GLib.Thread<int>.try ("open_fifo_%s".printf (fname), () => {
+            debug ("%s is is waiting for a writer to FIFO %s",this.id, fname);
             fd = Posix.open (fname, Posix.O_RDONLY);
             fifos.set (fname, fd);
             if (fd == -1) {
-                message ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
+                debug ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
             } else {
-                message ("Sqlite log is opening FIFO %s fd: %d", fname, fd);
+                debug ("Sqlite log is opening FIFO %s fd: %d", fname, fd);
             }
 
             Idle.add ((owned) callback);

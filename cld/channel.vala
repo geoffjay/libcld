@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -66,6 +66,13 @@ public interface Cld.Channel : Cld.Container {
      * A name that identifies this. It is used by MathChannel.
      */
     public abstract string alias { get; set; }
+
+    /**
+     * Raised when the channel has been assigned a new value.
+     *
+     * FIXME: This should replace non-variant equivalents.
+     */
+    public abstract signal void __new_value (string id, GLib.Variant value);
 }
 
 /**
@@ -82,6 +89,12 @@ public interface Cld.AChannel : Cld.AbstractChannel, Cld.Channel {
      *
      */
     public abstract double avg_value { get; private set; }
+
+    /*
+     * The sample standard deviation
+     * http://mathworld.wolfram.com/StandardDeviation.html
+     */
+    public abstract double ssdev_value { get; private set; }
 
     /**
      * Relates to the measurement range of the hardware.
@@ -104,7 +117,6 @@ public interface Cld.DChannel : Cld.AbstractChannel, Cld.Channel {
      * Raised when the binary state changed.
      */
     public abstract signal void new_value (string id, bool value);
-
 }
 
 /**
@@ -132,7 +144,7 @@ public interface Cld.ScalableChannel : Cld.AbstractChannel, Cld.Channel {
     /**
      * Calibration object used to calculate the scaled value.
      */
-    public abstract weak Calibration calibration { get; set; }
+    public abstract weak Cld.Calibration calibration { get; set; }
 
     /**
      * The scaled value that is calculated using the calibration.

@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,8 +15,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library.
  */
-
-using Config;
 
 /**
  * Control Logging and Data Acquisition library
@@ -37,6 +35,11 @@ namespace Cld {
 
     public errordomain FileError {
         ACCESS
+    }
+
+    public errordomain ConfigurationError {
+        EMPTY_NODESET,
+        INVALID_CONFIGURATION
     }
 
     /**
@@ -114,4 +117,15 @@ namespace Cld {
     public void decrease_log_level () {
         verbosity = (verbosity == 0) ? verbosity : verbosity--;
     }
+
+#if USE_COMEDI
+
+    namespace Comedi {
+
+        public static Comedi.Polynomial calibration_to_polynomial (Cld.Calibration calibration) {
+            /* Future for comedi_to_physical replacement in Comedi.Task ??? */
+        }
+    }
+
+#endif
 }

@@ -32,10 +32,17 @@ dnl Initialize libtool
 LT_PREREQ([2.2.6])
 LT_INIT([dlopen disable-static])
 
-GOBJECT_INTROSPECTION_REQUIRE([1.33.4])
+GOBJECT_INTROSPECTION_REQUIRE([0.9.0])
 
 dnl Enable silent rules if available
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
+PACKAGE_SUFFIX=-0.3
+
+AC_SUBST(PACKAGE_SUFFIX)
+AC_DEFINE_UNQUOTED(PACKAGE_SUFFIX, "$PACKAGE_SUFFIX", [Define to the suffix of this package])
+
+AC_SUBST(pkgdatadir, [${datadir}/cld${PACKAGE_SUFFIX}])
 
 dnl Programs
 AC_PROG_CC
@@ -46,18 +53,16 @@ AC_PROG_LIBTOOL
 AM_PROG_VALAC([0.14.0])
 AC_SUBST(VALAC)
 
+dnl Library checks
 VALA_PACKAGES=""
+VALAFLAGS="--enable-deprecated --target-glib=2.38 $VALAFLAGS"
 
-GLIB_REQUIRED=2.32.0
-PKG_CHECK_MODULES([GLIB], [glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED gthread-2.0 >= $GLIB_REQUIRED],
-	[AC_DEFINE(HAVE_GLIB232, [], [GLib 2.32 available])],
-	[PKG_CHECK_MODULES([GLIB], [glib-2.0 gobject-2.0 gthread-2.0],,
-		[AC_MSG_ERROR(glib-2.12 is required)])
-	])
+PKG_CHECK_MODULES([GLIB], [glib-2.0 gobject-2.0 gthread-2.0],,
+    [AC_MSG_ERROR(glib-2.12 is required)])
 
-PKG_CHECK_MODULES([GEE], [gee-1.0],
-    [VALA_PACKAGES="$VALA_PACKAGES --pkg gee-1.0"],
-	[AC_MSG_ERROR(gee-1.0 is required)])
+PKG_CHECK_MODULES([GEE], [gee-0.8],
+    [VALA_PACKAGES="$VALA_PACKAGES --pkg gee-0.8"],
+	[AC_MSG_ERROR(gee-0.8 is required)])
 
 PKG_CHECK_MODULES([GIO], [gio-2.0],
     [VALA_PACKAGES="$VALA_PACKAGES --pkg gio-2.0"],
@@ -87,7 +92,7 @@ dnl libmodbus support
 AC_ARG_WITH(modbus,
 [  --with-modbus         Use Modbus library],
 	[use_modbus=$withval],
-	[use_modbus=no])
+	[use_modbus=yes])
 AC_MSG_RESULT(checking whether libmodbus support was selected... $use_modbus)
 
 if test "x$use_modbus" != "xno" ; then
@@ -101,7 +106,7 @@ dnl Comedi
 AC_ARG_WITH(comedi,
 [  --with-comedi         Use Comedi drivers],
 	[use_comedi=$withval],
-	[use_comedi=no])
+	[use_comedi=yes])
 AC_MSG_RESULT(checking whether Comedi drivers were selected... $use_comedi)
 
 if test "x$use_comedi" != "xno" ; then
@@ -112,6 +117,7 @@ if test "x$use_comedi" != "xno" ; then
 fi
 
 AC_SUBST(VALA_PACKAGES)
+AC_SUBST(VALAFLAGS)
 
 dnl if test x$GCC = xyes
 dnl then
@@ -161,7 +167,10 @@ AM_CONDITIONAL(ENABLE_EXAMPLES, test x$enable_examples = xyes)
 AC_OUTPUT([Makefile
            cld-0.3.pc
            cld/Makefile
-           doc/Makefile
+           docs/Makefile
+           data/Makefile
+           data/device/Makefile
+           data/system/Makefile
            examples/Makefile
            tests/Makefile
            vapi/Makefile])

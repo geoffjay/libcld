@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -792,8 +792,9 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     /**
-     * @deprecated This method is application specific. Use move_relative instead.
+     * This method is application specific.
      */
+    [Deprecated (replacement="move_relative", since="0.2.7")]
     public async void step (double step_size, int direction) {
         if (active_command == null) {
             message ("step_size: %.3f direction: %d position %.3f", step_size, direction, position);

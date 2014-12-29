@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -77,7 +77,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
      */
     public int[]? taps { get; set; default = null; }
 
-    private double [] buffer;
+    private double[] buffer;
     private int j;
 
     public signal void new_value (string id, double val);
@@ -90,6 +90,8 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
     }
     public DataSeries () {
         _objects = new Gee.TreeMap<string, Cld.Object> ();
+
+
     }
 
     /**
@@ -99,6 +101,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
      */
     public DataSeries.from_xml_node (Xml.Node *node) {
         string value;
+        this.node = node;
         _objects = new Gee.TreeMap<string, Cld.Object> ();
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
@@ -119,17 +122,17 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
                             break;
                         case "taps":
                             value = iter->get_content ();
-                            string [] tapstring =  value.split_set (", :/", -1);
+                            string[] tapstring =  value.split_set (", :/", -1);
                             message ("tapstring.length: %d", tapstring.length);
-                            taps = new int [tapstring.length];
+                            taps = new int[tapstring.length];
                             int len = length;
                             for (int i = 0; i < tapstring.length; i++) {
-                                taps [i] = int.parse (tapstring [i]);
-                                message ("taps [%d]: %d", i, taps [i]);
+                                taps[i] = int.parse (tapstring[i]);
+                                message ("taps[%d]: %d", i, taps[i]);
                                 Cld.Object object = new VChannel ();
-                                (object as VChannel).id = "vc-%s-%d".printf (this.id, taps [i]);
-                                (object as VChannel).tag = "%s [%d]".printf (this.id, taps [i]);
-                                (object as VChannel).num = taps [i];
+                                (object as VChannel).id = "vc-%s-%d".printf (this.id, taps[i]);
+                                (object as VChannel).tag = "%s[%d]".printf (this.id, taps[i]);
+                                (object as VChannel).num = taps[i];
                                 try {
                                     add (object);
                                 } catch (Cld.Error.KEY_EXISTS e) {
@@ -148,24 +151,34 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
         }
         buffer = new double[length];
         for (int i = 0; i < length; i++) {
-            buffer [i] = 0.0;
+            buffer[i] = 0.0;
         }
     }
 
     /**
      * Push a new value into the buffer of values and relay generate a new value signal.
+     * Connect the notify signals
      */
     public void connect_signals () {
+        Type type = get_type ();
+        ObjectClass ocl = (ObjectClass)type.class_ref ();
+
+        foreach (ParamSpec spec in ocl.list_properties ()) {
+            notify[spec.get_name ()].connect ((s, p) => {
+            update_node ();
+            });
+        }
+
         (channel as ScalableChannel).new_value.connect ((id, val) => {
-            buffer [j] = val;
+            buffer[j] = val;
             /*
-            message ("buffer [0 : %d]: ", buffer.length);
+            message ("buffer[0 : %d]: ", buffer.length);
             for (int i = 0; i < buffer.length; i++) {
-                message ("%.3f  ", buffer [i]);
+                message ("%.3f  ", buffer[i]);
             }
             message ("\n");
             */
-            new_value (this.id, buffer [j]);
+            new_value (this.id, buffer[j]);
             j++;
 
             if (j > (buffer.length - 1)) {
@@ -173,6 +186,35 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
             }
         });
     }
+
+    /**
+     * Update the XML Node for this object.
+     */
+    private void update_node () {
+        if (node != null) {
+            if (node->type == Xml.ElementType.ELEMENT_NODE &&
+                node->type != Xml.ElementType.COMMENT_NODE) {
+                /* iterate through node children */
+                for (Xml.Node *iter = node->children;
+                     iter != null;
+                     iter = iter->next) {
+                    if (iter->name == "property") {
+                        switch (iter->get_prop ("name")) {
+                            case "length":
+                                iter->set_content (length.to_string ());
+                                break;
+                            case "chref":
+                                iter->set_content (chref);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     /**
      * A convenience method used to retrieve a buffered value from its index.
@@ -203,7 +245,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
     public void activate_vchannels () {
         foreach (Cld.Object object in objects.values) {
             if (object is VChannel && object.id.contains (this.id)) {
-                (object as VChannel).desc = "%s [n - %d]".printf (((channel as Channel).id),
+                (object as VChannel).desc = "%s[n - %d]".printf (((channel as Channel).id),
                             (object as VChannel).num);
                 (object as VChannel).calref = (channel as ScalableChannel).calref;
                 (object as VChannel).calibration = (channel as ScalableChannel).calibration;

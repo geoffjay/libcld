@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,7 +19,8 @@
 /**
  * Analog input channel used with measurements and other control functions.
  */
-public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cld.ScalableChannel {
+public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
+                                Cld.ScalableChannel, Cld.Connector {
     /**
      * Property backing fields to allow the channels to have a short history
      * for use with control loop calculations.
@@ -27,7 +28,6 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
     private double[] _raw_value = { 0.0, 0.0, 0.0 };
     private double[] _avg_value = { 0.0, 0.0, 0.0 };
     private double[] _scaled_value = { 0.0, 0.0, 0.0 };
-
 
     /**
      * {@inheritDoc}
@@ -37,7 +37,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
     /**
      * {@inheritDoc}
      */
-    public virtual Calibration calibration {
+    public virtual Cld.Calibration calibration {
         get {
             var calibrations = get_children (typeof (Cld.Calibration));
             foreach (var cal in calibrations.values) {
@@ -45,11 +45,10 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
                 /* this should only happen once */
                 return cal as Cld.Calibration;
             }
-
             return null;
         }
         set {
-            objects.unset_all (get_children (typeof (Cld.Calibration))) ;
+            objects.unset_all (get_children (typeof (Cld.Calibration)));
             objects.set (value.id, value);
         }
     }
@@ -88,6 +87,11 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
     /**
      * {@inheritDoc}
      */
+    public virtual double ssdev_value { get; private set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public virtual double scaled_value {
         get { return _scaled_value[0]; }
         private set {
@@ -105,7 +109,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
     public double current_value {
         get {
             /* XXX why not just return scaled_value ??? */
-            return calibration.apply (_raw_value[0]);
+            return ((calibration != null) ? calibration.apply (_raw_value[0]) : -99.9);
         }
     }
 
@@ -114,7 +118,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
      * XXX consider name change
      */
     public double previous_value {
-        get { return calibration.apply (_raw_value[1]); }
+        get { return ((calibration != null) ? calibration.apply (_raw_value[1]) : -99.9); }
     }
 
     /**
@@ -123,7 +127,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
      * XXX consider name change
      */
     public double past_previous_value {
-        get { return calibration.apply (_raw_value[2]); }
+        get { return ((calibration != null) ? calibration.apply (_raw_value[2]) : -99.9); }
     }
 
     /**
@@ -155,7 +159,6 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
         this.devref = "dev0";
         this.tag = "CH0";
         this.desc = "Input Channel";
-        preload_raw_value_list ();
         connect_signals ();
     }
 
@@ -213,7 +216,6 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
             }
         }
         connect_signals ();
-        preload_raw_value_list ();
     }
 
     /**
@@ -239,8 +241,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
             message ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
             update_node ();
         });
-        /* FIXME: This signal does not seem to connect ??? */
-        notify["raw_value_list_size"].connect ((s, p) => {
+        notify["raw-value-list-size"].connect ((s, p) => {
             message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
@@ -268,9 +269,8 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             /* iterate through node children */
-            for (Xml.Node *iter = node->children;
-                 iter != null;
-                 iter = iter->next) {
+
+            for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
                 if (iter->name == "property") {
                     switch (iter->get_prop ("name")) {
                         case "tag":
@@ -284,11 +284,9 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
                             break;
                         case "subdevnum":
                             iter->set_content (subdevnum.to_string ());
-                            message ("Writing %s to XML node for subdevnum", subdevnum.to_string ());
                             break;
                         case "naverage":
                             iter->set_content (raw_value_list_size.to_string ());
-                            message ("node avg set to %s", iter->get_content ());
                             break;
                         case "calref":
                             iter->set_content (calref);
@@ -310,7 +308,11 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
     /**
      * The previous version had some issues where the list size was 0 to begin
      * with, this is just to avoid that.
+     *
+     * XXX: This isn't necessary and gives an incorrect average until the list
+     *      fills.
      */
+    [Deprecated (since="0.3")]
     private void preload_raw_value_list () {
         for (int i = 0; i < raw_value_list_size; i++) {
             add_raw_value (0.0);
@@ -325,16 +327,19 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
             raw_value = value;
 
             if (raw_value_list.size > raw_value_list_size) {
-                /* throw away the value */
-                (raw_value_list as Gee.LinkedList<double?>).poll_head ();
+                /* throw away the extra values */
+                for (int i = raw_value_list_size; i < raw_value_list.size; i++) {
+                    (raw_value_list as Gee.LinkedList<double?>).poll_head ();
+                }
             }
 
             /* update the average */
             update_avg_value ();
+            update_ssdev_value ();
         }
 
         /* update the scaled value */
-        scaled_value = calibration.apply (avg_value);
+        scaled_value = (calibration != null) ? calibration.apply (_raw_value [0]) : -99.9;
     }
 
     /**
@@ -351,5 +356,17 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
         } else {
             avg_value = 0.0;
         }
+    }
+
+    /**
+     * Update the value for the running average that represents the contents
+     * of the raw data list.
+     */
+    private void update_ssdev_value () {
+        double[] list = new double [raw_value_list.size];
+        var l = raw_value_list.to_array ();
+        for (int i = 0; i < l.length; i++)
+            list [i] = l [i];
+        ssdev_value = Gsl.Stats.sd (list, 1, list.length);
     }
 }

@@ -60,6 +60,7 @@ libcld_0_3_la_SOURCES = \
 	logcolumn.vala \
 	logcontroller.vala \
 	mathchannel.vala \
+	multiplexer.vala \
 	module.vala \
 	object.vala \
 	parkermodule.vala \

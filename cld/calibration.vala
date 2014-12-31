@@ -51,8 +51,12 @@ public class Cld.Calibration : Cld.AbstractContainer {
         id = "cal0";
         _objects = new Gee.TreeMap<string, Cld.Object> ();
         /* set defaults */
-        add (new Cld.Coefficient.with_data ("cft0", 0, 0.0));
-        add (new Cld.Coefficient.with_data ("cft1", 1, 1.0));
+        try {
+            add (new Cld.Coefficient.with_data ("cft0", 0, 0.0));
+            add (new Cld.Coefficient.with_data ("cft1", 1, 1.0));
+        } catch (Cld.Error e) {
+            critical (e.message);
+        }
         connect_signals ();
     }
 
@@ -88,7 +92,11 @@ public class Cld.Calibration : Cld.AbstractContainer {
                     if (iter->get_prop ("type") == "coefficient") {
                         var coeff = new Cld.Coefficient.from_xml_node (iter);
                         coeff.parent = this;
-                        add (coeff);
+                        try {
+                            add (coeff);
+                        } catch (Cld.Error e) {
+                            critical (e.message);
+                        }
                     }
                 }
             }
@@ -162,7 +170,11 @@ public class Cld.Calibration : Cld.AbstractContainer {
         var c = new Cld.Coefficient ();
         c.n = index;
         c.value = val;
-        add (c);
+        try {
+            add (c);
+        } catch (Cld.Error e) {
+            critical (e.message);
+        }
     }
 
     public void set_coefficient (string id, Cld.Coefficient coefficient) {
@@ -189,7 +201,11 @@ public class Cld.Calibration : Cld.AbstractContainer {
         var c = new Cld.Coefficient ();
         c.n = index;
         c.value = val;
-        add (c);
+        try {
+            add (c);
+        } catch (Cld.Error e) {
+            critical (e.message);
+        }
     }
 
     /**

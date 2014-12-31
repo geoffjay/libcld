@@ -16,17 +16,12 @@
  * License along with this library.
  */
 
-using Comedi;
-
 /**
  * An task object that uses a Comedi device.
  */
+public class Cld.ComediTask : Cld.AbstractTask {
 
-public class Cld.ComediTask : AbstractTask {
-
-    /**
-     * Property backing fields.
-     */
+    /* Property backing fields. */
     private Gee.Map<string, Object>? _channels = null;
     private Cld.Device _device = null;
 
@@ -68,20 +63,20 @@ public class Cld.ComediTask : AbstractTask {
     public string direction { get; set; }
 
     /**
-     * Use this for polling tasks
+     * Use this for polling tasks.
      */
     public int interval_ms { get; set; }
 
     /**
-     * Sampling interval in nanoseconds for a single channel. This is the inverse
-     * of the scan rate. Use this for asynchronous.
+     * Sampling interval in nanoseconds for a single channel. This is the
+     * inverse of the scan rate. Use this for asynchronous.
      */
     public int64 interval_ns { get; set; }
 
     /**
-     * The resolution (in nanoseconds) of the time between samples of adjacent channels (ie. the
-     * inverse of the sampling frequency.)
-     * This parameter may need to be adjusted to get streaming acquisition to work properly.
+     * The resolution (in nanoseconds) of the time between samples of adjacent
+     * channels (ie. the inverse of the sampling frequency.) This parameter may
+     * need to be adjusted to get streaming acquisition to work properly.
      */
     public int resolution_ns { get; set; default = 100; }
 
@@ -95,8 +90,8 @@ public class Cld.ComediTask : AbstractTask {
      */
     public Gee.Map<string, Object>? channels {
         get {
-            _channels = get_children (typeof (Cld.Channel)) as Gee.TreeMap<string, Cld.Object>;
-
+            _channels = get_children (typeof (Cld.Channel))
+                                      as Gee.TreeMap<string, Cld.Object>;
             return _channels;
         }
         set {
@@ -134,12 +129,13 @@ public class Cld.ComediTask : AbstractTask {
     private int device_fd = -1;
 
     /**
-     * A Comedi command fields used only with streaming acquisition.
+     * A Comedi command field used only with streaming acquisition.
      */
     private Comedi.Command cmd;
     private uint[] chanlist;
-    /* An array to map the chanlist [] index to a channel */
-    private Cld.AIChannel [] channel_array;
+
+    /* An array to map the chanlist[] index to a channel */
+    private Cld.AIChannel[] channel_array;
     private uint scan_period_nanosec;
 
     /**
@@ -208,7 +204,7 @@ public class Cld.ComediTask : AbstractTask {
                             resolution_ns = int.parse (iter->get_content ());
                             break;
                         case "chref":
-                            GLib.message ("::: adding - %s", iter->get_content ());
+                            debug ("::: adding - %s", iter->get_content ());
                             chrefs.add (iter->get_content ());
                             break;
                         case "fifo":
@@ -320,6 +316,7 @@ public class Cld.ComediTask : AbstractTask {
 
     /**
      * A thread safe method to poll the queue.
+     *
      * @return a data value from the queue.
      */
     public ushort poll_queue () {
@@ -336,8 +333,8 @@ public class Cld.ComediTask : AbstractTask {
      */
     private void do_async () {
         Comedi.loglevel (4);
-        chanlist = new uint [channels.size];
-        channel_array = new Cld.AIChannel [channels.size];
+        chanlist = new uint[channels.size];
+        channel_array = new Cld.AIChannel[channels.size];
 
         GLib.stdout.printf ("device: %s\n", device.id);
         (device as ComediDevice).dev.set_max_buffer_size (subdevice, 1048576);
@@ -356,18 +353,20 @@ public class Cld.ComediTask : AbstractTask {
                                                              (channel as Cld.AIChannel).range,
                                                              Comedi.AnalogReference.GROUND
                                                              );
-            channel_array [(channel as AIChannel).num] = channel as Cld.AIChannel;
+            channel_array[(channel as AIChannel).num] = channel as Cld.AIChannel;
         }
 
         for (int i = 0; i < channels.size; i++) {
-            var channel = channel_array [i];
+            var channel = channel_array[i];
             //stdout.printf ("i: %d, num: %d\n", i, (channel as Channel).num);
         }
 
         int ret;
-        /* This comedilib function will get us a generic timed
-        * command for a particular board.  If it returns -1,
-        * that's bad. */
+        /**
+         * This comedilib function will get us a generic timed
+         * command for a particular board.  If it returns -1,
+         * that's bad.
+         */
         ret = (device as ComediDevice).dev.get_cmd_generic_timed (subdevice,
                     out cmd, channels.size, scan_period_nanosec);
 
@@ -389,19 +388,19 @@ public class Cld.ComediTask : AbstractTask {
 
         cmd.flags = 0;//TriggerFlag.WAKE_EOS;
 
-        cmd.start_src = TriggerSource.NOW;
+        cmd.start_src = Comedi.TriggerSource.NOW;
         cmd.start_arg = 0;
 
-        cmd.scan_begin_src = TriggerSource.FOLLOW;
+        cmd.scan_begin_src = Comedi.TriggerSource.FOLLOW;
         //cmd.scan_begin_arg = scan_period_nanosec; //nanoseconds;
 
-    	cmd.convert_src = TriggerSource.TIMER;
+    	cmd.convert_src = Comedi.TriggerSource.TIMER;
 	    cmd.convert_arg = convert_nanosec;
 
-        cmd.scan_end_src = TriggerSource.COUNT;
+        cmd.scan_end_src = Comedi.TriggerSource.COUNT;
         cmd.scan_end_arg = channels.size;
 
-        cmd.stop_src = TriggerSource.NONE;//COUNT;
+        cmd.stop_src = Comedi.TriggerSource.NONE;//COUNT;
         cmd.stop_arg = 0;
 
         cmd.chanlist = chanlist;
@@ -411,7 +410,7 @@ public class Cld.ComediTask : AbstractTask {
     private void test_cmd () {
         int ret;
 
-        ret = (device as ComediDevice).dev.command_test (cmd);
+        ret = (device as Cld.ComediDevice).dev.command_test (cmd);
 
         GLib.stdout.printf ("test ret = %d\n", ret);
         if (ret < 0) {
@@ -421,7 +420,7 @@ public class Cld.ComediTask : AbstractTask {
 
     	dump_cmd ();
 
-        ret = (device as ComediDevice).dev.command_test (cmd);
+        ret = (device as Cld.ComediDevice).dev.command_test (cmd);
 
         GLib.stdout.printf ("test ret = %d\n", ret);
         if (ret < 0) {
@@ -431,7 +430,7 @@ public class Cld.ComediTask : AbstractTask {
 
     	dump_cmd ();
 
-		    return;
+        return;
 	}
 
     /**
@@ -444,16 +443,16 @@ public class Cld.ComediTask : AbstractTask {
         uint raw;
         ulong bytes_per_sample;
         Comedi.Range crange;
-        int subdev_flags = (device as ComediDevice).dev.get_subdevice_flags (subdevice);
+        int subdev_flags = (device as Cld.ComediDevice).dev.get_subdevice_flags (subdevice);
         SourceFunc callback = do_select.callback;
 
-        if ((subdev_flags & SubdeviceFlag.LSAMPL) != 0) {
+        if ((subdev_flags & Comedi.SubdeviceFlag.LSAMPL) != 0) {
             bytes_per_sample = sizeof (uint);
         } else {
             bytes_per_sample = sizeof (ushort);
         }
 
-        device_fd = (device as ComediDevice).dev.fileno ();
+        device_fd = (device as Cld.ComediDevice).dev.fileno ();
         Posix.fcntl (device_fd, Posix.F_SETFL, Posix.O_NONBLOCK);
 
         active = true;
@@ -505,7 +504,7 @@ public class Cld.ComediTask : AbstractTask {
 
                     if (ret < 0) {
                         if (Posix.errno == Posix.EAGAIN) {
-                            perror("read");
+                            Comedi.perror("read");
                         }
                     } else if (ret == 0) {
                         //stdout.printf ("%s hit timeout\n", uri);
@@ -514,7 +513,7 @@ public class Cld.ComediTask : AbstractTask {
                         total += ret;
                         lock (queue) {
                             for (int i = 0; i < ret / bytes_per_sample; i++) {
-                                queue.offer_head (buf [i]);
+                                queue.offer_head (buf[i]);
                                 if (queue.size > qsize) {
                                     /* Dump the oldest value */
                                     queue.poll_tail ();
@@ -590,15 +589,15 @@ public class Cld.ComediTask : AbstractTask {
     private string cmd_src (uint src) {
         string buf = "";
 
-        if ((src & TriggerSource.NONE) != 0) buf = "none|";
-        if ((src & TriggerSource.NOW) != 0) buf = "now|";
-        if ((src & TriggerSource.FOLLOW) != 0) buf = "follow|";
-        if ((src & TriggerSource.TIME) != 0) buf = "time|";
-        if ((src & TriggerSource.TIMER) != 0) buf = "timer|";
-        if ((src & TriggerSource.COUNT) != 0) buf = "count|";
-        if ((src & TriggerSource.EXT) != 0) buf = "ext|";
-        if ((src & TriggerSource.INT) != 0) buf = "int|";
-        if ((src & TriggerSource.OTHER) != 0) buf = "other|";
+        if ((src & Comedi.TriggerSource.NONE) != 0) buf = "none|";
+        if ((src & Comedi.TriggerSource.NOW) != 0) buf = "now|";
+        if ((src & Comedi.TriggerSource.FOLLOW) != 0) buf = "follow|";
+        if ((src & Comedi.TriggerSource.TIME) != 0) buf = "time|";
+        if ((src & Comedi.TriggerSource.TIMER) != 0) buf = "timer|";
+        if ((src & Comedi.TriggerSource.COUNT) != 0) buf = "count|";
+        if ((src & Comedi.TriggerSource.EXT) != 0) buf = "ext|";
+        if ((src & Comedi.TriggerSource.INT) != 0) buf = "int|";
+        if ((src & Comedi.TriggerSource.OTHER) != 0) buf = "other|";
 
         if (Posix.strlen (buf) == 0) {
             buf = "unknown src";
@@ -610,24 +609,23 @@ public class Cld.ComediTask : AbstractTask {
     }
 
     private void dump_cmd () {
-        message ("subdevice:      %u", cmd.subdev);
-        message ("start:      %-8s %u", cmd_src (cmd.start_src), cmd.start_arg);
-        message ("scan_begin: %-8s %u", cmd_src (cmd.scan_begin_src), cmd.scan_begin_arg);
-        message ("convert:    %-8s %u", cmd_src (cmd.convert_src), cmd.convert_arg);
-        message ("scan_end:   %-8s %u", cmd_src (cmd.scan_end_src), cmd.scan_end_arg);
-        message ("stop:       %-8s %u", cmd_src (cmd.stop_src), cmd.stop_arg);
+        debug ("subdevice:       %u", cmd.subdev);
+        debug ("start:      %-8s %u", cmd_src (cmd.start_src), cmd.start_arg);
+        debug ("scan_begin: %-8s %u", cmd_src (cmd.scan_begin_src), cmd.scan_begin_arg);
+        debug ("convert:    %-8s %u", cmd_src (cmd.convert_src), cmd.convert_arg);
+        debug ("scan_end:   %-8s %u", cmd_src (cmd.scan_end_src), cmd.scan_end_arg);
+        debug ("stop:       %-8s %u", cmd_src (cmd.stop_src), cmd.stop_arg);
     }
 
     private void print_datum (uint raw, int channel_index, bool is_physical) {
         double physical_value;
-        var channel = channel_array [channel_index] as Cld.AIChannel;
-        Comedi.Range crange = (device as ComediDevice).dev.get_range (
-                                                                     subdevice,
-                                                                     channel_index,
-                                                                     channel.range
-                                                                     );
+        var channel = channel_array[channel_index] as Cld.AIChannel;
+        Comedi.Range crange = (device as Cld.ComediDevice).dev.get_range (
+                                                                subdevice,
+                                                                channel_index,
+                                                                channel.range);
 
-        uint maxdata = (device as ComediDevice).dev.get_maxdata (0, 0);
+        uint maxdata = (device as Cld.ComediDevice).dev.get_maxdata (0, 0);
         if (!is_physical) {
             GLib.stdout.printf ("%u ",raw);
         } else {
@@ -639,26 +637,27 @@ public class Cld.ComediTask : AbstractTask {
     /**
      * Build a Comedi instruction list for a single subdevice
      * from a list of channels.
-     **/
+     */
     public void set_insn_list () {
-        Instruction[] instructions = new Instruction [channels.size];
+        Comedi.Instruction[] instructions = new Comedi.Instruction[channels.size];
         int n = 0;
 
         instruction_list.n_insns = channels.size;
 
         foreach (var channel in channels.values) {
-            instructions[n]                 = Instruction ();
-            instructions[n].insn            = InstructionAttribute.READ;
-            instructions[n].data            = new uint [NSAMPLES];
-            instructions[n].subdev          = (channel as Channel).subdevnum;
+            instructions[n] = Comedi.Instruction ();
+            instructions[n].insn = Comedi.InstructionAttribute.READ;
+            instructions[n].data = new uint[NSAMPLES];
+            instructions[n].subdev = (channel as Channel).subdevnum;
 
-            if (channel is AIChannel) {
-                instructions[n].chanspec    = pack (n, (channel as AIChannel).range,
-                                                    AnalogReference.GROUND);
-                instructions[n].n            = NSAMPLES;
-            } else if (channel is DIChannel) {
-                instructions[n].chanspec     = pack (n, 0, 0);
-                instructions[n].n            = 1;
+            if (channel is Cld.AIChannel) {
+                instructions[n].chanspec = Comedi.pack (n,
+                                                 (channel as AIChannel).range,
+                                                 Comedi.AnalogReference.GROUND);
+                instructions[n].n = NSAMPLES;
+            } else if (channel is Cld.DIChannel) {
+                instructions[n].chanspec = Comedi.pack (n, 0, 0);
+                instructions[n].n = 1;
             }
             n++;
         }
@@ -692,31 +691,34 @@ public class Cld.ComediTask : AbstractTask {
         int ret, i = 0, j;
         double meas;
 
-        /* XXX Consider getting rid of Channel timestamps. They are nod needed if using FIFOs. */
+        /**
+         * XXX Consider getting rid of Channel timestamps, they are not needed
+         *     if using FIFOs
+         */
         GLib.DateTime timestamp = new DateTime.now_local ();
 
         /* Set the OOR behavior */
         Comedi.set_global_oor_behavior (Comedi.OorBehavior.NUMBER);
 
         //message ("\t\t\t\texecute_instruction_list (), get_seconds (): %.3f", timestamp.get_seconds ());
-        ret = (device as ComediDevice).dev.do_insnlist (instruction_list);
+        ret = (device as Cld.ComediDevice).dev.do_insnlist (instruction_list);
         if (ret < 0)
-            perror ("do_insnlist failed:");
+            Comedi.perror ("do_insnlist failed:");
 
         foreach (var channel in channels.values) {
             /*XXX Consider getting rid of Channel timestamps. They are nod needed if using FIFOs. */
-            (channel as Channel).timestamp = timestamp;
-            maxdata = (device as ComediDevice).dev.get_maxdata (
-                        (channel as Channel).subdevnum, (channel as Channel).num);
+            (channel as Cld.Channel).timestamp = timestamp;
+            maxdata = (device as Cld.ComediDevice).dev.get_maxdata (
+                        (channel as Cld.Channel).subdevnum, (channel as Cld.Channel).num);
 
             /* Analog Input */
-            if (channel is AIChannel) {
+            if (channel is Cld.AIChannel) {
 
                 meas = 0.0;
                 for (j = 0; j < NSAMPLES; j++) {
-                    range = (device as ComediDevice).dev.get_range (
-                        (channel as Channel).subdevnum, (channel as Channel).num,
-                        (channel as AIChannel).range);
+                    range = (device as Cld.ComediDevice).dev.get_range (
+                        (channel as Cld.Channel).subdevnum, (channel as Cld.Channel).num,
+                        (channel as Cld.AIChannel).range);
 
                     //message ("range min: %.3f, range max: %.3f, units: %u", range.min, range.max, range.unit);
                     meas += Comedi.to_phys (instruction_list.insns[i].data[j], range, maxdata);
@@ -724,15 +726,15 @@ public class Cld.ComediTask : AbstractTask {
                 }
 
                 meas = meas / (j);
-                (channel as AIChannel).add_raw_value (meas);
+                (channel as Cld.AIChannel).add_raw_value (meas);
 
                 //message ("Channel: %s, Raw value: %.3f", (channel as AIChannel).id, (channel as AIChannel).raw_value);
-            } else if (channel is DIChannel) {
+            } else if (channel is Cld.DIChannel) {
                 meas = instruction_list.insns[i].data[0];
                 if (meas > 0.0) {
-                    (channel as DChannel).state = true;
+                    (channel as Cld.DChannel).state = true;
                 } else {
-                    (channel as DChannel).state = false;
+                    (channel as Cld.DChannel).state = false;
                 }
 
                 //message ("Channel: %s, Raw value: %.3f", (channel as DIChannel).id, meas);
@@ -752,27 +754,28 @@ public class Cld.ComediTask : AbstractTask {
         foreach (var channel in channels.values) {
 
             /*XXX Consider getting rid of Channel timestamps. They are not needed if using FIFOs. */
-            (channel as Channel).timestamp = timestamp;
-            if (channel is AOChannel) {
-                val = (channel as AOChannel).scaled_value;
-                range = (device as ComediDevice).dev.get_range (
-                        (channel as Channel).subdevnum, (channel as AOChannel).num,
-                        (channel as AOChannel).range);
+            (channel as Cld.Channel).timestamp = timestamp;
+            if (channel is Cld.AOChannel) {
+                val = (channel as Cld.AOChannel).scaled_value;
+                range = (device as Cld.ComediDevice).dev.get_range (
+                        (channel as Cld.Channel).subdevnum, (channel as Cld.AOChannel).num,
+                        (channel as Cld.AOChannel).range);
 
-                maxdata = (device as ComediDevice).dev.get_maxdata ((channel as Channel).subdevnum, (channel as AOChannel).num);
+                maxdata = (device as Cld.ComediDevice).dev.get_maxdata ((channel as Cld.Channel).subdevnum, (channel as Cld.AOChannel).num);
                 data = (uint)((val / 100.0) * maxdata);
                 //message ("%s scaled_value: %.3f, data: %u", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
-                (device as ComediDevice).dev.data_write (
-                    (channel as Channel).subdevnum, (channel as AOChannel).num,
-                    (channel as AOChannel).range, AnalogReference.GROUND, data);
-            } else if (channel is DOChannel) {
-                if ((channel as DOChannel).state)
+                (device as Cld.ComediDevice).dev.data_write (
+                    (channel as Cld.Channel).subdevnum, (channel as Cld.AOChannel).num,
+                    (channel as Cld.AOChannel).range, Comedi.AnalogReference.GROUND, data);
+            } else if (channel is Cld.DOChannel) {
+                if ((channel as Cld.DOChannel).state)
                     data = 1;
                 else
                     data = 0;
                 //message ("%s data value: %u", (channel as DOChannel).id, data);
-                (device as ComediDevice).dev.data_write (
-                    (channel as Channel).subdevnum, (channel as DOChannel).num,
+                (device as Cld.ComediDevice).dev.data_write (
+                    (channel as Cld.Channel).subdevnum,
+                    (channel as Cld.DOChannel).num,
                     0, 0, data);
             }
         }
@@ -789,7 +792,7 @@ public class Cld.ComediTask : AbstractTask {
             foreach (var channel in channels.values) {
                 var type = channel.get_type ();
                 if (type.is_a (typeof (Cld.ScalableChannel))) {
-                        mess += "%s %.6f\t".printf (channel.uri, (channel as ScalableChannel).scaled_value);
+                        mess += "%s %.6f\t".printf (channel.uri, (channel as Cld.ScalableChannel).scaled_value);
                 } else if (type.is_a (typeof (Cld.DChannel))) {
                     if ((channel as DChannel).state) {
                         mess += "%s %.1f\t".printf (channel.uri, 1.0);

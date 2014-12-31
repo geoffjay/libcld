@@ -66,6 +66,13 @@ public interface Cld.Channel : Cld.Container {
      * A name that identifies this. It is used by MathChannel.
      */
     public abstract string alias { get; set; }
+
+    /**
+     * Raised when the channel has been assigned a new value.
+     *
+     * FIXME: This should replace non-variant equivalents.
+     */
+    public abstract signal void __new_value (string id, GLib.Variant value);
 }
 
 /**
@@ -132,7 +139,7 @@ public interface Cld.ScalableChannel : Cld.AbstractChannel, Cld.Channel {
     /**
      * Calibration object used to calculate the scaled value.
      */
-    public abstract weak Calibration calibration { get; set; }
+    public abstract weak Cld.Calibration calibration { get; set; }
 
     /**
      * The scaled value that is calculated using the calibration.

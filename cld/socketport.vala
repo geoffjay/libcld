@@ -150,24 +150,24 @@ public class Cld.SocketPort : AbstractPort {
      * {@inheritDoc}
      */
     public override bool open () {
-
-        resolver = Resolver.get_default ();
-        addresses = resolver.lookup_by_name (host, null);
-        address = addresses.nth_data (0);
-        client = new SocketClient ();
-
         try {
+            resolver = Resolver.get_default ();
+            addresses = resolver.lookup_by_name (host, null);
+            address = addresses.nth_data (0);
+            client = new SocketClient ();
+
             connection = client.connect (new InetSocketAddress (address, (uint16)port));
             _connected = true;
-        } catch (Error e) {
-            message ("Received error on connect %s", e.message);
-        }
 
-        /* XXX should probably be inside try/catch */
-        socket = connection.socket;
-        fd = socket.fd;
-        fd_channel = new GLib.IOChannel.unix_new (fd);
-        source_id = fd_channel.add_watch (GLib.IOCondition.IN, this.read_bytes);
+            /* XXX should probably be inside try/catch */
+            socket = connection.socket;
+            fd = socket.fd;
+            fd_channel = new GLib.IOChannel.unix_new (fd);
+            source_id = fd_channel.add_watch (GLib.IOCondition.IN, this.read_bytes);
+        } catch (GLib.Error e) {
+            critical ("Socket connection error: %s", e.message);
+            return false;
+        }
 
         return true;
     }
@@ -204,11 +204,17 @@ public class Cld.SocketPort : AbstractPort {
             b[0] = byte;
             size_t n;
             string command = "";
+
             foreach (var c in b) {
                 command += "%c".printf (c);
             }
-            connection.output_stream.write_all (command.data, out n);
-            _tx_count += n;
+
+            try {
+                connection.output_stream.write_all (command.data, out n);
+                _tx_count += n;
+            } catch (GLib.IOError e) {
+                critical (e.message);
+            }
         }
     }
 
@@ -220,11 +226,17 @@ public class Cld.SocketPort : AbstractPort {
         if (connected) {
             size_t n;
             string command = "";
+
             foreach (var byte in bytes) {
                 command += "%c".printf (byte);
             }
-            connection.output_stream.write_all (command.data, out n);
-            _tx_count += n;
+
+            try {
+                connection.output_stream.write_all (command.data, out n);
+                _tx_count += n;
+            } catch (GLib.IOError e) {
+                critical (e.message);
+            }
         }
     }
 

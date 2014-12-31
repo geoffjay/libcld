@@ -107,7 +107,11 @@ public class Cld.Context : Cld.AbstractContainer {
                 as Cld.AbstractContainer.Reference).reference_uri);
 //            message ("%-30s %s", (self as Cld.Object).uri, (reference as Cld.Object).uri);
             if ((reference != null)) {
-                self.add (reference);
+                try {
+                    self.add (reference);
+                } catch (GLib.Error e) {
+                    critical (e.message);
+                }
             }
         }
     }

@@ -34,6 +34,7 @@ libcld_0_3_la_SOURCES = \
 	automationcontroller.vala \
 	brabendermodule.vala\
 	builder.vala \
+	buildable.vala \
 	calibration.vala \
 	channel.vala \
 	circularbuffer.vala \
@@ -64,10 +65,11 @@ libcld_0_3_la_SOURCES = \
 	parkermodule.vala \
 	pid.vala \
 	port.vala \
+	rootcontainer.vala \
+	rawchannel.vala \
 	serialport.vala \
 	socketport.vala \
 	sqlitelog.vala \
-	rootcontainer.vala \
 	task.vala \
 	vchannel.vala \
 	velmexmodule.vala \
@@ -154,7 +156,7 @@ typelib_DATA = \
 	$(NULL)
 
 Cld-0.3.typelib: Cld-0.3.gir
-	@INTROSPECTION_COMPILER@ --debug --verbose \
+	@INTROSPECTION_COMPILER@ \
 		--includedir=$(srcdir) --includedir=. \
 		--shared-library=libcld-0.3.so $^ -o $@
 endif

@@ -28,7 +28,6 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
     private double[] _avg_value = { 0.0, 0.0, 0.0 };
     private double[] _scaled_value = { 0.0, 0.0, 0.0 };
 
-
     /**
      * {@inheritDoc}
      */
@@ -37,19 +36,21 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
     /**
      * {@inheritDoc}
      */
-    public virtual Calibration calibration {
+    public virtual Cld.Calibration calibration {
         get {
             var calibrations = get_children (typeof (Cld.Calibration));
-            foreach (var cal in calibrations.values) {
-
-                /* this should only happen once */
-                return cal as Cld.Calibration;
+            if (calibrations.values.is_empty) {
+                /* If there are no calibrations add a default one */
+                Cld.Calibration cal = new Cld.Calibration ();
+                objects.set (cal.id, cal);
+                /* Pull the list again */
+                calibrations = get_children (typeof (Cld.Calibration));
             }
 
-            return null;
+            return calibrations.values.to_array ()[0] as Cld.Calibration;
         }
         set {
-            objects.unset_all (get_children (typeof (Cld.Calibration))) ;
+            objects.unset_all (get_children (typeof (Cld.Calibration)));
             objects.set (value.id, value);
         }
     }

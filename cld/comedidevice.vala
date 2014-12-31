@@ -81,12 +81,20 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
                         case "task":
                             var task = new Cld.ComediTask.from_xml_node (iter);
                             task.parent = this;
-                            add (task as Cld.Object);
+                            try {
+                                add (task as Cld.Object);
+                            } catch (GLib.Error e) {
+                                critical (e.message);
+                            }
                             break;
                         case "channel":
                             var channel = node_to_channel (iter);
                             channel.parent = this;
-                            add (channel as Cld.Object);
+                            try {
+                                add (channel as Cld.Object);
+                            } catch (GLib.Error e) {
+                                critical (e.message);
+                            }
                             break;
                         default:
                             break;

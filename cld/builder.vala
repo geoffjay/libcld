@@ -93,8 +93,8 @@ internal class Cld.Builder : GLib.Object {
                         if (object != null) {
                             try {
                                 message ("Adding object of type %s with id %s to %s",
-                                           ((object as GLib.Object).get_type ()).name (),
-                                           object.id, ctr.id);
+                                         ((object as GLib.Object).get_type ()).name (),
+                                         object.id, ctr.id);
                                 ctr.add (object);
                             } catch (Cld.Error.KEY_EXISTS e) {
                                 error (e.message);

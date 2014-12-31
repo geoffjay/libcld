@@ -18,9 +18,8 @@
 
 /**
  * Hardware definition class.
- *
- * @deprecated cld-0.2.7
  */
+[Deprecated (since="0.2.7")]
 public class Cld.Daq : Cld.AbstractContainer {
 
     public double rate { get; set; }

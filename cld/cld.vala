@@ -39,6 +39,11 @@ namespace Cld {
         ACCESS
     }
 
+    public errordomain ConfigurationError {
+        EMPTY_NODESET,
+        INVALID_CONFIGURATION
+    }
+
     /**
      * Future plan is to incorporate more device-specific setup and features
      * including information about the hardware, eg. bit count of a DAC or

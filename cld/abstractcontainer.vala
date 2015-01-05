@@ -146,23 +146,19 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      * {@inheritDoc}
      */
     public virtual Gee.Map<string, Cld.Object> get_object_map (Type type) {
-        /*
-         *Gee.Map<string, Cld.Object> map = new Gee.TreeMap<string, Cld.Object> (
-         *    (GLib.CompareDataFunc)Cld.Functions.get_compare_func_for,
-         *    (Gee.EqualDataFunc)Cld.Functions.get_equal_func_for);
-         */
-        Gee.Map<string, Cld.Object> map = new Gee.TreeMap<string, Cld.Object> (
-            (GLib.CompareDataFunc<string>?)Cld.Object.compare_id);
+        Gee.Map<string, Cld.Object> map = new Gee.TreeMap<string, Cld.Object> ();
+        //debug ("Retrieve object map of type: %s", type.name ());
+
         if (objects != null) {
             foreach (var object in objects.values) {
-                //message ("1) uri: %s type: %s", object.uri, type.name ());
+                //debug ("1) uri: %s type: %s", object.uri, type.name ());
                 if (object.get_type ().is_a (type)) {
-                    //message ("2) uri: %s type: %s", object.uri, type.name ());
+                    debug ("2) uri: %s type: %s", object.uri, type.name ());
                     map.set (object.id, object);
                 }
 
                 if (object is Cld.Container) {
-                    //message ("%s is a container", object.id);
+                    //debug ("%s is a container", object.id);
                     var sub_map = (object as Cld.Container).get_object_map (type);
                     foreach (var sub_object in sub_map.values) {
                         map.set (sub_object.id, sub_object);
@@ -194,7 +190,6 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         Gee.List<Cld.Object> map_values = new Gee.ArrayList<Cld.Object> ();
 
         map_values.add_all (objects.values);
-        //map_values.sort ((GLib.CompareDataFunc) Cld.Functions.get_compare_func_for);
         map_values.sort ((GLib.CompareDataFunc<Cld.Object>?) Cld.Object.compare);
         objects.clear ();
         foreach (Cld.Object object in map_values) {
@@ -206,11 +201,15 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      * {@inheritDoc}
      */
     public virtual void print_objects (int depth = 0) {
+        assert (objects != null);
         foreach (var object in objects.values) {
+            debug ("%s is type: %s", object.id, object.get_type ().name ());
             string indent = string.nfill (depth * 2, ' ');
-            string line = "%s[%s: %s]".printf (indent, object.get_type ().name (),
-                        object.id);
-            stdout.printf ("%-40s parent: %-14s uri: %s\n", line, object.parent.id, object.uri);
+            string line = "%s[%s: %s]".printf (indent,
+                                               object.get_type ().name (),
+                                               object.id);
+            string parent = (object.parent == null) ? "" : object.parent.id;
+            stdout.printf ("%-40s parent: %-14s uri: %s\n", line, parent, object.uri);
             if ((object is Cld.Container)) {// && (!(this.uri.contains (object.uri)))) {
                     (object as Cld.Container).print_objects (depth + 1);
             }

@@ -154,14 +154,7 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
      * {@inheritDoc}
      */
     public virtual int compare (Cld.Object a) {
-        return id.ascii_casecmp (a.id);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public virtual int compare_id (string a) {
-        return id.ascii_casecmp (a);
+        return this.id.ascii_casecmp (a.id);
     }
 
     /**

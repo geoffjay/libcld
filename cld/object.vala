@@ -67,7 +67,6 @@ public interface Cld.Object : GLib.Object {
      * @return  ``true`` or ``false`` depending on whether or not the id
      *          parameters match
      */
-    [Deprecated (replacement="Cld.Functions.get_equal_func_for", since="0.3")]
     public abstract bool equal (Cld.Object a, Cld.Object b);
 
     /**
@@ -77,10 +76,7 @@ public interface Cld.Object : GLib.Object {
      *
      * @return  ``0`` if they contain the same id, ``1`` otherwise
      */
-    [Deprecated (replacement="Cld.Functions.get_compare_func_for", since="0.3")]
     public abstract int compare (Cld.Object a);
-
-    public abstract int compare_id (string a);
 
     /**
      * Prints the contents to the stream given.

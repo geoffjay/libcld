@@ -53,7 +53,6 @@ libcld_0_3_la_SOURCES = \
 	dochannel.vala \
 	entry.vala \
 	filter.vala \
-	functions.vala \
 	heidolphmodule.vala \
 	licormodule.vala \
 	log.vala \

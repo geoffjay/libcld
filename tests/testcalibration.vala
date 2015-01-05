@@ -22,7 +22,7 @@ public class CalibrationTests : ObjectTests {
 
     public CalibrationTests () {
         base ("Calibration");
-        add_test ("[Calibration] default scale factors", test_default_scale);
+        add_test ("[Calibration] Test default scale factors", test_default_scale);
     }
 
     public override void set_up () {
@@ -38,8 +38,6 @@ public class CalibrationTests : ObjectTests {
 
         // Check the calibration exists
         assert (test_calibration != null);
-
-        stdout.printf ("%s", (test_calibration as Cld.Container).to_string_recursive ());
 
         // Change the values and then reset to defaults
         test_calibration.set_nth_coefficient (0, -5.0);

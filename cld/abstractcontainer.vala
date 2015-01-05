@@ -146,22 +146,26 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      * {@inheritDoc}
      */
     public virtual Gee.Map<string, Cld.Object> get_object_map (Type type) {
+        /*
+         *Gee.Map<string, Cld.Object> map = new Gee.TreeMap<string, Cld.Object> (
+         *    (GLib.CompareDataFunc)Cld.Functions.get_compare_func_for,
+         *    (Gee.EqualDataFunc)Cld.Functions.get_equal_func_for);
+         */
         Gee.Map<string, Cld.Object> map = new Gee.TreeMap<string, Cld.Object> (
-            (GLib.CompareDataFunc)Cld.Functions.get_compare_func_for,
-            (Gee.EqualDataFunc)Cld.Functions.get_equal_func_for);
+            (GLib.CompareDataFunc<string>?)Cld.Object.compare_id);
         if (objects != null) {
             foreach (var object in objects.values) {
                 //message ("1) uri: %s type: %s", object.uri, type.name ());
                 if (object.get_type ().is_a (type)) {
                     //message ("2) uri: %s type: %s", object.uri, type.name ());
-                    map.set (object.uri, object);
+                    map.set (object.id, object);
                 }
 
                 if (object is Cld.Container) {
                     //message ("%s is a container", object.id);
                     var sub_map = (object as Cld.Container).get_object_map (type);
                     foreach (var sub_object in sub_map.values) {
-                        map.set (sub_object.uri, sub_object);
+                        map.set (sub_object.id, sub_object);
                     }
                 }
             }
@@ -190,7 +194,8 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         Gee.List<Cld.Object> map_values = new Gee.ArrayList<Cld.Object> ();
 
         map_values.add_all (objects.values);
-        map_values.sort ((GLib.CompareDataFunc) Cld.Functions.get_compare_func_for);
+        //map_values.sort ((GLib.CompareDataFunc) Cld.Functions.get_compare_func_for);
+        map_values.sort ((GLib.CompareDataFunc<Cld.Object>?) Cld.Object.compare);
         objects.clear ();
         foreach (Cld.Object object in map_values) {
             objects.set (object.id, object);

@@ -204,7 +204,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
                             resolution_ns = int.parse (iter->get_content ());
                             break;
                         case "chref":
-                            debug ("::: adding - %s", iter->get_content ());
+                            debug ("adding - %s", iter->get_content ());
                             chrefs.add (iter->get_content ());
                             break;
                         case "fifo":

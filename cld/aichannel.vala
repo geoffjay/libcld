@@ -156,7 +156,6 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
         this.devref = "dev0";
         this.tag = "CH0";
         this.desc = "Input Channel";
-        preload_raw_value_list ();
         connect_signals ();
     }
 
@@ -214,7 +213,6 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
             }
         }
         connect_signals ();
-        preload_raw_value_list ();
     }
 
     /**
@@ -311,7 +309,11 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
     /**
      * The previous version had some issues where the list size was 0 to begin
      * with, this is just to avoid that.
+     *
+     * XXX: This isn't necessary and gives an incorrect average until the list
+     *      fills.
      */
+    [Deprecated (since="0.3")]
     private void preload_raw_value_list () {
         for (int i = 0; i < raw_value_list_size; i++) {
             add_raw_value (0.0);

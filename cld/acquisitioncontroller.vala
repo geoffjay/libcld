@@ -102,8 +102,12 @@ public class Cld.AcquisitionController : Cld.AbstractController {
      * {@inheritDoc}
      */
     public override void generate () {
-        tasks = get_object_map (typeof (Cld.ComediTask));
+        debug ("Loading tasks");
+        // FIXME: Crashes here!
+        //tasks = get_object_map (typeof (Cld.ComediTask));
+        debug ("Loading devices");
         devices = get_object_map (typeof (Cld.ComediDevice));
+        debug ("Loading multiplexers");
         multiplexers = get_object_map (typeof (Cld.Multiplexer));
         generate_multiplexers ();
     }

@@ -161,19 +161,11 @@ public class Cld.Calibration : Cld.AbstractContainer {
     }
 
     public void set_nth_coefficient (int index, double val) {
-        foreach (var coefficient in objects.values) {
-            if ((coefficient as Cld.Coefficient).n == index)
-                objects.unset (coefficient.id);
-        }
-
-        /* either it didn't exist or we dropped it */
-        var c = new Cld.Coefficient ();
-        c.n = index;
-        c.value = val;
-        try {
-            add (c);
-        } catch (Cld.Error e) {
-            critical (e.message);
+        var coefficients = get_object_map (typeof (Cld.Coefficient));
+        foreach (var coefficient in coefficients.values) {
+            if ((coefficient as Cld.Coefficient).n == index) {
+                (coefficient as Cld.Coefficient).value = val;
+            }
         }
     }
 

@@ -6,7 +6,8 @@ EXAMPLE_PROGS += \
 	async-acquisition \
 	build-from-xml \
 	context-validation \
-	pid2-mathchannel \
+	ndev-async-acquisition \
+	pid-mathchannel \
 	polling-acquisition \
 	soup-server \
 	$(NULL)
@@ -18,14 +19,15 @@ example_SOURCES = \
 	$(NULL)
 
 example_DEPENDENCIES = \
-	$(top_srcdir)/cld/cld-0.2.vapi \
+	$(top_srcdir)/cld/cld-0.3.vapi \
 	$(NULL)
 
 example_VALAFLAGS = \
 	$(VALAFLAGS) \
 	--basedir $(top_srcdir) \
 	--vapidir $(top_srcdir)/cld \
-	--pkg cld-0.3 --pkg comedi --pkg gee-0.8 --pkg libxml-2.0 --pkg posix --pkg gsl \
+	--pkg cld-0.3 --pkg comedi --pkg gee-0.8 \
+	--pkg libxml-2.0 --pkg posix --pkg gsl \
 	$(NULL)
 
 example_CPPFLAGS = \
@@ -66,11 +68,17 @@ context_validation_VALAFLAGS = $(example_VALAFLAGS)
 context_validation_CPPFLAGS = $(example_CPPFLAGS)
 context_validation_LDADD = $(example_LDADD)
 
-pid2_mathchannel_SOURCES = pid2-mathchannel.vala $(example_SOURCES)
-pid2_mathchannel_DEPENDENCIES = $(example_DEPENDENCIES)
-pid2_mathchannel_VALAFLAGS = $(example_VALAFLAGS)
-pid2_mathchannel_CPPFLAGS = $(example_CPPFLAGS)
-pid2_mathchannel_LDADD = $(example_LDADD)
+ndev_async_acquisition_SOURCES = ndev-async-acquisition.vala $(example_SOURCES)
+ndev_async_acquisition_DEPENDENCIES = $(example_DEPENDENCIES)
+ndev_async_acquisition_VALAFLAGS = $(example_VALAFLAGS)
+ndev_async_acquisition_CPPFLAGS = $(example_CPPFLAGS)
+ndev_async_acquisition_LDADD = $(example_LDADD)
+
+pid_mathchannel_SOURCES = pid-mathchannel.vala $(example_SOURCES)
+pid_mathchannel_DEPENDENCIES = $(example_DEPENDENCIES)
+pid_mathchannel_VALAFLAGS = $(example_VALAFLAGS)
+pid_mathchannel_CPPFLAGS = $(example_CPPFLAGS)
+pid_mathchannel_LDADD = $(example_LDADD)
 
 polling_acquisition_SOURCES = polling-acquisition.vala $(example_SOURCES)
 polling_acquisition_DEPENDENCIES = $(example_DEPENDENCIES)

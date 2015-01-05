@@ -111,7 +111,6 @@ public interface Cld.DChannel : Cld.AbstractChannel, Cld.Channel {
      * Raised when the binary state changed.
      */
     public abstract signal void new_value (string id, bool value);
-
 }
 
 /**

@@ -62,8 +62,9 @@ examples/.libs/
 examples/async-acquisition
 examples/build-from-xml
 examples/context-validation
+examples/ndev-async-acquisition
 examples/polling-acquisition
-examples/pid2-mathchannel
+examples/pid-mathchannel
 examples/soup-server
 
 # Test programs

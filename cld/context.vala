@@ -56,17 +56,19 @@ public class Cld.Context : Cld.AbstractContainer {
         var builder = new Cld.Builder.from_xml_config (xml);
         objects = builder.objects;
 
-        message ("Generating reference list...");
+        debug (to_string_recursive ());
+
+        debug ("Generating reference list...");
         generate_ref_list ();
-        message ("Generate reference list finished");
+        debug ("Generate reference list finished");
 
-        message ("Generating references...");
+        debug ("Generating references...");
         generate_references ();
-        message ("Generate references finished");
+        debug ("Generate references finished");
 
-        message ("Generating controllers...");
+        debug ("Generating controllers...");
         generate ();
-        message ("Generate controllers finished");
+        debug ("Generate controllers finished");
     }
 
     /**
@@ -95,20 +97,19 @@ public class Cld.Context : Cld.AbstractContainer {
      * Generate references between objects.
      */
     public void generate_references () {
-        Cld.Container self;
-        Cld.Object reference;
         var list = get_descendant_ref_list ();
-
         foreach (var entry in list.read_only_view) {
-            self = get_object_from_uri ((entry
-                as Cld.AbstractContainer.Reference).self_uri)
-                as Cld.Container;
-            reference = get_object_from_uri ((entry
+            var self = get_object_from_uri ((entry
+                as Cld.AbstractContainer.Reference).self_uri);
+            var reference = get_object_from_uri ((entry
                 as Cld.AbstractContainer.Reference).reference_uri);
-//            message ("%-30s %s", (self as Cld.Object).uri, (reference as Cld.Object).uri);
+
+            debug ("%-30s %s", (self as Cld.Object).uri,
+                               (reference as Cld.Object).uri);
+
             if ((reference != null)) {
                 try {
-                    self.add (reference);
+                    (self as Cld.Container).add (reference);
                 } catch (GLib.Error e) {
                     critical (e.message);
                 }
@@ -125,7 +126,7 @@ public class Cld.Context : Cld.AbstractContainer {
         foreach (var controller in controllers.values) {
             if (controller is Cld.AcquisitionController) {
                 acquisition_controller = controller as Cld.AcquisitionController;
-                //acquisition_controller.generate ();
+                acquisition_controller.generate ();
             } else if (controller is Cld.LogController) {
                 log_controller = controller as Cld.LogController;
                 log_controller.generate ();

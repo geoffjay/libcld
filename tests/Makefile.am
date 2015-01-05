@@ -7,6 +7,7 @@ TEST_PROGS += tests
 tests_SOURCES = \
 	testaichannel.vala \
 	testaochannel.vala \
+	testbuildable.vala \
 	testbuilder.vala \
 	testcalibration.vala \
 	testcase.vala \
@@ -14,20 +15,16 @@ tests_SOURCES = \
 	testcoefficient.vala \
 	testcontrol.vala \
 	testcsvlog.vala \
-	testdaq.vala \
 	testdevice.vala \
 	testdichannel.vala \
 	testdochannel.vala \
 	testfilter.vala \
-	testlicormodule.vala \
 	testmain.vala \
-	testmodule.vala \
 	testobject.vala \
 	testpid.vala \
 	testport.vala \
 	testserialport.vala \
 	testvchannel.vala \
-	testvelmexmodule.vala \
 	testxmlconfig.vala \
 	$(NULL)
 

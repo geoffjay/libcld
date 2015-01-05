@@ -160,6 +160,13 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
     /**
      * {@inheritDoc}
      */
+    public virtual int compare_id (string a) {
+        return id.ascii_casecmp (a);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public virtual void print (FileStream f) {
         f.printf ("%s\n", to_string ());
     }

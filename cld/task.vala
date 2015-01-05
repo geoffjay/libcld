@@ -21,8 +21,9 @@
  */
 [GenericAccessors]
 public interface Cld.Task : Cld.Object {
+
    /**
     * Abstract properties
     */
-    public abstract bool active { get; set;  }
+    public abstract bool active { get; set; }
 }

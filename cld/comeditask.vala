@@ -75,7 +75,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
 
     /**
      * The resolution (in nanoseconds) of the time between samples of adjacent
-     * channels (ie. the inverse of the sampling frequency.) This parameter may
+     * channels (ie. the inverse of the sampling frequency) This parameter may
      * need to be adjusted to get streaming acquisition to work properly.
      */
     public int resolution_ns { get; set; default = 100; }

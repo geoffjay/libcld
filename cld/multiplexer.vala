@@ -54,6 +54,8 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
      */
     public signal void async_start (GLib.DateTime start);
 
+    private int fd = -1;
+
     /**
      * Common construction
      */
@@ -89,7 +91,7 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
     }
 
     /**
-     * Set up a memory mapped space for each task.
+     * Perform additional multiplexer initialization.
      */
     public void generate () {
         int n = 0;
@@ -97,10 +99,6 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
 
         foreach (var task in tasks.values) {
             n += (task as Cld.ComediTask).channels.size;
-            var device = (task as Cld.ComediTask).device;
-            var subdevice = (task as Cld.ComediTask).subdevice;
-            var size = (device as Cld.ComediDevice).dev.get_buffer_size ((uint)subdevice);
-            var fd = (device as Cld.ComediDevice).dev.fileno ();
         }
 
         data_register = new ushort[n];
@@ -148,20 +146,20 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
         open_fifo.begin ((obj, res) => {
             /* Get a file descriptor */
             try {
-                int fd = open_fifo.end (res);
+                fd = open_fifo.end (res);
                 debug ("Multiplexer with fifo `%s' and fd %d has a reader",
                        fname, fd);
+            } catch (ThreadError e) {
+                string msg = e.message;
+                error (@"Thread error: $msg");
+            }
+        });
 
-                bg_multiplex_data.begin (fd, (obj, res) => {
-                    try {
-                        bg_multiplex_data.end (res);
-                        debug ("Multiplexer with fifo `%s' data async ended",
-                               fname);
-                    } catch (ThreadError e) {
-                        string msg = e.message;
-                        error (@"Thread error: $msg");
-                    }
-                });
+        bg_multiplex_data.begin ((obj, res) => {
+            try {
+                bg_multiplex_data.end (res);
+                debug ("Multiplexer with fifo `%s' data async ended",
+                        fname);
             } catch (ThreadError e) {
                 string msg = e.message;
                 error (@"Thread error: $msg");
@@ -177,14 +175,13 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
      */
     private async int open_fifo () {
         SourceFunc callback = open_fifo.callback;
-        int fd = -1;
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("open_fifo", () => {
-            debug ("Acquisition controller waiting for a reader to FIFO `%s'",
-                   fname);
+            debug ("Multiplexer `%s' waiting for a reader to FIFO `%s'",
+                   id, fname);
             fd = Posix.open (fname, Posix.O_WRONLY);
             if (fd == -1) {
-                debug ("%s Posix.open error: %d: %s",
-                       fname, Posix.errno, Posix.strerror (Posix.errno));
+                critical ("%s Posix.open error: %d: %s",
+                          fname, Posix.errno, Posix.strerror (Posix.errno));
             } else {
                 debug ("Acquisition controller opening FIFO `%s' fd: %d",
                        fname, fd);
@@ -204,7 +201,7 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
      * Also, it writes data to a FIFO for inter-process communication.
      * @param fname The path name of the named pipe.
      */
-    private async void bg_multiplex_data (int fd) throws ThreadError {
+    private async void bg_multiplex_data () throws ThreadError {
         SourceFunc callback = bg_multiplex_data.callback;
         int buffsz = 1048576;
         ushort word = 0;
@@ -272,7 +269,8 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
 
                             /* Write the data to the fifo */
                             b[0] = word;
-                            Posix.write (fd, b, 2);
+                            if (fd != -1)
+                                Posix.write (fd, b, 2);
 
                             /* Write the raw value to a register */
                             if (channelize) {

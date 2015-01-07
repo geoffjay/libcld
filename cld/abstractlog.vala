@@ -219,6 +219,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                 entry.time_us = entry.timestamp.difference (start_time);
 
                 int i = 0;
+
                 foreach (var column in objects.values) {
                     if (column is Cld.Column) {
                         entry.data [i++] = (column as Cld.Column).channel_value;
@@ -258,7 +259,8 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
         int nscans = 0;
 
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_process_raw", () => {
-            while (true) {
+
+            while (active) {
                 lock (raw_queue) {
                     lock (entry_queue) {
 

@@ -261,63 +261,10 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     }
 
     public void connect_data_source () {
-        if (data_source == "channel" || data_source == null) {
-            /* Background channel watch fills the entry queue */
-            bg_channel_watch.begin (() => {
-                try {
-                    message ("Channel watch async ended");
-                } catch (ThreadError e) {
-                    string msg = e.message;
-                    error (@"Thread error: $msg");
-                }
-            });
-        } else {
-            var mux = get_object_from_uri (data_source);
-            message ("Connecting to data source `%s' from `%s'",
-                    (mux as Cld.Multiplexer).fname, mux.id);
-            fifos.set ((mux as Cld.Multiplexer).fname, -1);
-
-            /* Open the FIFO data buffers. */
-            foreach (string fname in fifos.keys) {
-                if (Posix.access (fname, Posix.F_OK) == -1) {
-                    int res = Posix.mkfifo (fname, 0777);
-                    if (res != 0) {
-                        error ("Context could not create fifo %s\n", fname);
-                    }
-                }
-
-                open_fifo.begin (fname, (obj, res) => {
-                    try {
-                        int fd = open_fifo.end (res);
-                        message ("got a writer for %s", fname);
-
-                        /* Background fifo watch queues fills the entry queue */
-                        bg_fifo_watch.begin (fd, (obj, res) => {
-                            try {
-                                bg_fifo_watch.end (res);
-                                message ("Log fifo watch async ended");
-                            } catch (ThreadError e) {
-                                string msg = e.message;
-                                error (@"Thread error: $msg");
-                            }
-                        });
-
-                        bg_raw_process.begin ((obj, res) => {
-                            try {
-                                bg_raw_process.end (res);
-                                message ("Raw data queue processing async ended");
-                            } catch (ThreadError e) {
-                                string msg = e.message;
-                                error (@"Thread error: $msg");
-                            }
-                        });
-                    } catch (ThreadError e) {
-                        string msg = e.message;
-                        error (@"Thread error: $msg");
-                    }
-                });
-            }
-        }
+        var mux = get_object_from_uri (data_source);
+        message ("Connecting to data source `%s' from `%s'",
+                (mux as Cld.Multiplexer).fname, mux.id);
+        fifos.set ((mux as Cld.Multiplexer).fname, -1);
     }
 
     /**
@@ -500,6 +447,58 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         nchans = columns.size;
 
         active = true;
+        if (data_source == "channel" || data_source == null) {
+            /* Background channel watch fills the entry queue */
+            bg_channel_watch.begin (() => {
+                try {
+                    message ("Channel watch async ended");
+                } catch (ThreadError e) {
+                    string msg = e.message;
+                    error (@"Thread error: $msg");
+                }
+            });
+        } else {
+            /* Open the FIFO data buffers. */
+            foreach (string fname in fifos.keys) {
+                if (Posix.access (fname, Posix.F_OK) == -1) {
+                    int res = Posix.mkfifo (fname, 0777);
+                    if (res != 0) {
+                        error ("Context could not create fifo %s\n", fname);
+                    }
+                }
+
+                open_fifo.begin (fname, (obj, res) => {
+                    try {
+                        int fd = open_fifo.end (res);
+                        message ("Got a writer for %s", fname);
+
+                        /* Background fifo watch queues fills the entry queue */
+                        bg_fifo_watch.begin (fd, (obj, res) => {
+                            try {
+                                bg_fifo_watch.end (res);
+                                message ("Log fifo watch async ended");
+                            } catch (ThreadError e) {
+                                string msg = e.message;
+                                error (@"Thread error: $msg");
+                            }
+                        });
+
+                        bg_raw_process.begin ((obj, res) => {
+                            try {
+                                bg_raw_process.end (res);
+                                message ("Raw data queue processing async ended");
+                            } catch (ThreadError e) {
+                                string msg = e.message;
+                                error (@"Thread error: $msg");
+                            }
+                        });
+                    } catch (ThreadError e) {
+                        string msg = e.message;
+                        error (@"Thread error: $msg");
+                    }
+                });
+            }
+        }
 
         bg_entry_write.begin (() => {
             try {

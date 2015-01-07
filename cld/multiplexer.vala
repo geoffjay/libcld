@@ -336,7 +336,6 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
                                 (channel as Cld.AIChannel).range);
                     meas = Comedi.to_phys (data_register[i++], range, maxdata);
                     (channel as Cld.AIChannel).add_raw_value (meas);
-                    message ("%s: %f", channel.id, (channel as Cld.AIChannel).scaled_value);
                 }
             }
         }

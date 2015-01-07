@@ -92,6 +92,16 @@ public class Cld.AcquisitionController : Cld.AbstractController {
         }
     }
 
+    /**
+     * Launches acquisition by passing control onto internal multiplexers.
+     *
+     * FIXME: This should correctly launch all associated devices, tasks, and
+     *        multiplexers regardless of task type so that the user application
+     *        doesn't have to manually.
+     *
+     * FIXME: There should be an associated stop method to close devices and
+     *        perform any acquisition halt that's needed.
+     */
     public void run () {
         foreach (var multiplexer in multiplexers.values) {
             (multiplexer as Cld.Multiplexer).run ();

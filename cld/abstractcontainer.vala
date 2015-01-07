@@ -282,6 +282,8 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      * {@inheritDoc}
      */
     public virtual void generate_ref_list () {
+        debug ("Generating reference list...");
+
         if (objects == null) {
             return;
         }
@@ -292,57 +294,54 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
 
                 Type type = object.get_type ();
 
-                if (type.is_a (typeof (Cld.MathChannel))) {
-                    foreach (var dref in (object as Cld.MathChannel).drefs) {
-                        (object as Cld.Container).add_ref (dref);
+                if (type.is_a (typeof (Cld.Channel))) {
+                    if (type.is_a (typeof (Cld.MathChannel))) {
+                        foreach (var dref in (object as Cld.MathChannel).drefs) {
+                            (object as Cld.Container).add_ref (dref);
+                        }
+                    } else if (type.is_a (typeof (Cld.ScalableChannel))) {
+                        (object as Cld.Container).add_ref ((object as Cld.ScalableChannel).calref);
                     }
-                }
-
-                if (type.is_a (typeof (Cld.Column))) {
+                } else if (type.is_a (typeof (Cld.Column))) {
                     (object as Cld.Container).add_ref ((object as Cld.Column).chref);
-                }
-
-                if (type.is_a (typeof (Cld.ComediTask))) {
+                } else if (type.is_a (typeof (Cld.ComediTask))) {
                     (object as Cld.Container).add_ref ((object as Cld.ComediTask).devref);
-                }
-
-                if (type.is_a (typeof (Cld.DataSeries))) {
-                    (object as Cld.Container).add_ref ((object as Cld.DataSeries).chref);
-                }
-
-                if (type.is_a (typeof (Module))) {
-                    (object as Cld.Container).add_ref ((object as Cld.Module).devref);
-                    (object as Cld.Container).add_ref ((object as Cld.Module).portref);
-                }
-
-                if (type.is_a (typeof (Cld.Pid2))) {
-                    (object as Cld.Pid2).add_ref ((object as Cld.Pid2).sp_chref);
-                }
-
-                if (type.is_a (typeof (Cld.ProcessValue))) {
-                    (object as Cld.Container).add_ref ((object as Cld.ProcessValue).chref);
-                }
-
-                if (type.is_a (typeof (Cld.ProcessValue2))) {
-                    (object as Cld.Container).add_ref ((object as Cld.ProcessValue2).dsref);
-                }
-
-                if (type.is_a (typeof (Cld.ScalableChannel))) {
-                    (object as Cld.Container).add_ref ((object as Cld.ScalableChannel).calref);
-                }
-
-                if (type.is_a (typeof (Cld.ComediTask))) {
                     foreach (var chref in (object as ComediTask).chrefs) {
                         (object as Cld.Container).add_ref (chref);
                     }
-                }
-
-                if (type.is_a (typeof (Cld.Multiplexer))) {
+                } else if (type.is_a (typeof (Cld.DataSeries))) {
+                    (object as Cld.Container).add_ref ((object as Cld.DataSeries).chref);
+                } else if (type.is_a (typeof (Cld.Module))) {
+                    (object as Cld.Container).add_ref ((object as Cld.Module).devref);
+                    (object as Cld.Container).add_ref ((object as Cld.Module).portref);
+                } else if (type.is_a (typeof (Cld.Pid2))) {
+                    (object as Cld.Container).add_ref ((object as Cld.Pid2).sp_chref);
+                } else if (type.is_a (typeof (Cld.ProcessValue))) {
+                    (object as Cld.Container).add_ref ((object as Cld.ProcessValue).chref);
+                } else if (type.is_a (typeof (Cld.ProcessValue2))) {
+                    (object as Cld.Container).add_ref ((object as Cld.ProcessValue2).dsref);
+                } else if (type.is_a (typeof (Cld.Multiplexer))) {
                     foreach (var taskref in (object as Cld.Multiplexer).taskrefs) {
                         (object as Cld.Container).add_ref (taskref);
                     }
+                } else if (type.is_a (typeof (Cld.SqliteLog))) {
+                    (object as Cld.Container).add_ref ((object as Cld.SqliteLog).data_source);
                 }
             }
+        }
+
+        debug ("Generate reference list finished");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual void print_ref_list () {
+        var list = get_descendant_ref_list ();
+        foreach (var entry in list.read_only_view) {
+            message ("%-30s %s", (entry
+                as Cld.AbstractContainer.Reference).self_uri,
+                (entry as Cld.AbstractContainer.Reference).reference_uri);
         }
     }
 }

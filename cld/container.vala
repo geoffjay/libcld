@@ -140,4 +140,9 @@ public interface Cld.Container : Cld.Object {
      * Self generate the ref_list property.
      */
     public abstract void generate_ref_list ();
+
+    /**
+     * Prints a table of references between objects.
+     */
+    public abstract void print_ref_list ();
 }

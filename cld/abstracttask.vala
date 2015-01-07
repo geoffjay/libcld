@@ -37,5 +37,4 @@ public abstract class Cld.AbstractTask : Cld.AbstractContainer, Cld.Task {
      * {@inheritDoc}
      **/
     public abstract void stop ();
-
 }

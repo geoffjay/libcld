@@ -113,7 +113,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
     public uint qsize { get; set; default = 65536; }
 
     private Comedi.InstructionList instruction_list;
-    private const int NSAMPLES = 10;
+    protected const int NSAMPLES = 10;
 
     /**
      * Internal thread data for log file output handling.
@@ -337,8 +337,8 @@ public class Cld.ComediTask : Cld.AbstractTask {
         channel_array = new Cld.AIChannel[channels.size];
 
         GLib.stdout.printf ("device: %s\n", device.id);
-        (device as ComediDevice).dev.set_max_buffer_size (subdevice, 1048576);
-        (device as ComediDevice).dev.set_buffer_size (subdevice, 1048576);
+        //(device as ComediDevice).dev.set_max_buffer_size (subdevice, 1048576);
+        //(device as ComediDevice).dev.set_buffer_size (subdevice, 1048576);
         message (" buffer size: %d", (device as ComediDevice).dev.get_buffer_size (subdevice));
         scan_period_nanosec = (uint)interval_ns;
 
@@ -385,24 +385,17 @@ public class Cld.ComediTask : Cld.AbstractTask {
         uint convert_nanosec = (uint)(resolution_ns * (GLib.Math.round ((double)scan_period_nanosec /
                                ((double)(channels.size * resolution_ns)))));
         cmd.subdev = subdevice;
-
         cmd.flags = 0;//TriggerFlag.WAKE_EOS;
-
         cmd.start_src = Comedi.TriggerSource.NOW;
         cmd.start_arg = 0;
-
         cmd.scan_begin_src = Comedi.TriggerSource.FOLLOW;
         //cmd.scan_begin_arg = scan_period_nanosec; //nanoseconds;
-
     	cmd.convert_src = Comedi.TriggerSource.TIMER;
 	    cmd.convert_arg = convert_nanosec;
-
         cmd.scan_end_src = Comedi.TriggerSource.COUNT;
         cmd.scan_end_arg = channels.size;
-
         cmd.stop_src = Comedi.TriggerSource.NONE;//COUNT;
         cmd.stop_arg = 0;
-
         cmd.chanlist = chanlist;
         cmd.chanlist_len = channels.size;
     }
@@ -461,7 +454,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
         do_cmd.connect (() => {
 
             /* Launch select thread */
-            GLib.Thread<int> thread = new GLib.Thread<int> ("bg_device_watch",  () => {
+            GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_device_watch",  () => {
                 /**
                  * This inline method will execute when the signal do_cmd is emitted and thereby
                  * enables a concurent start of multiple tasks.
@@ -485,29 +478,24 @@ public class Cld.ComediTask : Cld.AbstractTask {
                 map = Posix.mmap (null, size, Posix.PROT_READ, Posix.MAP_SHARED, device_fd, 0);
 
                 while (active) {
-/* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
-                    /* Device can be read using select or pselect */
                     ushort[] buf = new ushort[bufsz];
                     Posix.fd_set rdset;
 
-                    //Posix.timeval timeout = Posix.timeval ();
                     Posix.timespec timeout = Posix.timespec ();
                     Posix.FD_ZERO (out rdset);
                     Posix.FD_SET (device_fd, ref rdset);
                     timeout.tv_sec = 0;
-                    //timeout.tv_usec = 50000;
                     timeout.tv_nsec = 50000000;
                     Posix.sigset_t sigset = new Posix.sigset_t ();
                     Posix.sigemptyset (sigset);
-                    //ret = Posix.select (device_fd + 1, &rdset, null, null, timeout);
                     ret = Posix.pselect (device_fd + 1, &rdset, null, null, timeout, sigset);
 
                     if (ret < 0) {
                         if (Posix.errno == Posix.EAGAIN) {
                             Comedi.perror("read");
                         }
-                    } else if (ret == 0) {
-                        //stdout.printf ("%s hit timeout\n", uri);
+                    //} else if (ret == 0) {
+                        //warning ("%s hit timeout\n", uri);
                     } else if ((Posix.FD_ISSET (device_fd, rdset)) == 1) {
                         ret = (int)Posix.read (device_fd, buf, bufsz);
                         total += ret;
@@ -522,6 +510,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
 //if ((total % 32768) == 0) { stdout.printf ("%d: total from %s %d  QSIZE: %d\n",Linux.gettid (), uri, total, queue.size); }
                         }
                     }
+
 /* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 /* -------------------------------- Using memory map (XXX not working yet) ---------------------- */
 //
@@ -638,7 +627,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
      * Build a Comedi instruction list for a single subdevice
      * from a list of channels.
      */
-    public void set_insn_list () {
+    private void set_insn_list () {
         Comedi.Instruction[] instructions = new Comedi.Instruction[channels.size];
         int n = 0;
 
@@ -853,3 +842,208 @@ public class Cld.ComediTask : Cld.AbstractTask {
     }
 }
 
+/**
+ * FIXME: ComediTask possibly shouldn't be the base class and additional
+ *        interfaces/abstract classes should be created for polling and
+ *        streaming task types. For now this is more of a place holder to
+ *        split the functionality of the one class.
+ */
+public class Cld.ComediPollingTask : Cld.ComediTask {
+
+    private Comedi.InstructionList instruction_list;
+
+    public ComediPollingTask () {
+        base ();
+    }
+
+    public ComediPollingTask.from_xml_node (Xml.Node *node) {
+        base.from_xml_node (node);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override void run () {
+        /* Start task */
+        set_insn_list ();
+        task.begin ();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override void stop () {
+        /* Stop task */
+        active = false;
+    }
+
+    private async void task () {
+        active = true;
+        while (active) {
+            debug ("Task `%s' running", id);
+            switch (direction) {
+                case "read":
+                    execute_read ();
+                    break;
+                case "write":
+                    execute_write ();
+                    break;
+                default:
+                    break;
+            }
+            yield nap (1000);
+        }
+    }
+
+    /**
+     * Build a Comedi instruction list for a single subdevice
+     * from a list of channels.
+     */
+    private void set_insn_list () {
+        Comedi.Instruction[] insns = new Comedi.Instruction[channels.size];
+        int n = 0;
+
+        instruction_list.n_insns = channels.size;
+
+        foreach (var channel in channels.values) {
+            insns[n] = Comedi.Instruction ();
+            insns[n].insn = Comedi.InstructionAttribute.READ;
+            insns[n].data = new uint[NSAMPLES];
+            insns[n].subdev = (channel as Channel).subdevnum;
+
+            if (channel is Cld.AIChannel) {
+                insns[n].chanspec = Comedi.pack (n,
+                                                 (channel as Cld.AIChannel).range,
+                                                 Comedi.AnalogReference.GROUND);
+                insns[n].n = NSAMPLES;
+            } else if (channel is Cld.DIChannel) {
+                insns[n].chanspec = Comedi.pack (n, 0, 0);
+                insns[n].n = 1;
+            }
+            n++;
+        }
+
+        instruction_list.insns = insns;
+    }
+
+    /**
+     * This method executes a Comedi Instruction list.
+     */
+    public void execute_read () {
+        Comedi.Range range;
+        uint maxdata;
+        int ret, i = 0, j;
+        double meas;
+
+        /* XXX Consider getting rid of timestamps, not needed using FIFOs */
+        GLib.DateTime timestamp = new DateTime.now_local ();
+
+        /* Set the OOR behavior */
+        Comedi.set_global_oor_behavior (Comedi.OorBehavior.NUMBER);
+
+        ret = (device as Cld.ComediDevice).dev.do_insnlist (instruction_list);
+        if (ret < 0) Comedi.perror ("do_insnlist failed:");
+
+        foreach (var channel in channels.values) {
+            (channel as Cld.Channel).timestamp = timestamp;
+            maxdata = (device as Cld.ComediDevice).dev.get_maxdata (
+                        (channel as Cld.Channel).subdevnum,
+                        (channel as Cld.Channel).num);
+            /* Analog Input */
+            if (channel is Cld.AIChannel) {
+                meas = 0.0;
+                for (j = 0; j < NSAMPLES; j++) {
+                    range = (device as Cld.ComediDevice).dev.get_range (
+                        (channel as Cld.Channel).subdevnum,
+                        (channel as Cld.Channel).num,
+                        (channel as Cld.AIChannel).range);
+                    meas += Comedi.to_phys (instruction_list.insns[i].data[j],
+                                            range,
+                                            maxdata);
+                }
+                meas = meas / (j);
+                (channel as Cld.AIChannel).add_raw_value (meas);
+            } else if (channel is Cld.DIChannel) {
+                meas = instruction_list.insns[i].data[0];
+                (channel as Cld.DChannel).state = (meas > 0.0) ? true : false;
+            }
+            i++;
+        }
+    }
+
+    private void execute_write () {
+        Comedi.Range range;
+        uint maxdata, data;
+        double val;
+
+        /* XXX Consider getting rid of timestamps, not needed using FIFOs */
+        GLib.DateTime timestamp = new DateTime.now_local ();
+
+        foreach (var channel in channels.values) {
+            (channel as Cld.Channel).timestamp = timestamp;
+            if (channel is Cld.AOChannel) {
+                val = (channel as Cld.AOChannel).scaled_value;
+                range = (device as Cld.ComediDevice).dev.get_range (
+                        (channel as Cld.Channel).subdevnum,
+                        (channel as Cld.AOChannel).num,
+                        (channel as Cld.AOChannel).range);
+                maxdata = (device as Cld.ComediDevice).dev.get_maxdata (
+                    (channel as Cld.Channel).subdevnum,
+                    (channel as Cld.AOChannel).num);
+                data = (uint)((val / 100.0) * maxdata);
+                (device as Cld.ComediDevice).dev.data_write (
+                    (channel as Cld.Channel).subdevnum,
+                    (channel as Cld.Channel).num,
+                    (channel as Cld.AChannel).range,
+                    Comedi.AnalogReference.GROUND, data);
+            } else if (channel is Cld.DOChannel) {
+                data = ((channel as Cld.DOChannel).state) ? 1 : 0;
+                (device as Cld.ComediDevice).dev.data_write (
+                    (channel as Cld.Channel).subdevnum,
+                    (channel as Cld.DOChannel).num,
+                    0, 0, data);
+            }
+        }
+    }
+}
+
+/**
+ * FIXME: ComediTask possibly shouldn't be the base class and additional
+ *        interfaces/abstract classes should be created for polling and
+ *        streaming task types. For now this is more of a place holder to
+ *        split the functionality of the one class.
+ */
+public class Cld.ComediStreamingTask : Cld.ComediTask {
+
+    public ComediStreamingTask () {
+        base ();
+    }
+
+    public ComediStreamingTask.from_xml_node (Xml.Node *node) {
+        base.from_xml_node (node);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override void run () {
+        /* Start task */
+        task.begin ();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override void stop () {
+        /* Stop task */
+        active = false;
+    }
+
+    private async void task () throws ThreadError {
+        active = true;
+        while (active) {
+            debug ("Task `%s' running", id);
+            yield nap (1000);
+        }
+    }
+}

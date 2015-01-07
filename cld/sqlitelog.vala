@@ -22,6 +22,47 @@
 public class Cld.SqliteLog : Cld.AbstractLog {
 
     /**
+     * Enumerated Experiment table column names.
+     */
+    public enum ExperimentColumn {
+        ID,
+        NAME,
+        START_DATE,
+        STOP_DATE,
+        START_TIME,
+        STOP_TIME,
+        LOG_RATE
+    }
+
+    /**
+     * Enumerated Channel table column names.
+     */
+    public enum ChannelColumn {
+        ID,
+        EXPERIMENT_ID,
+        CHAN_URI,
+        DESC,
+        TAG,
+        TYPE,
+        EXPRESSION,
+        COEFF_X0,
+        COEFF_X1,
+        COEFF_X2,
+        COEFF_X3,
+        UNITS
+    }
+
+    /**
+     * Enumerated subset of the column names in an experiment table.
+     */
+    public enum ExperimentDataColumns {
+        ID,
+        EXPERIMENT_ID,
+        TIME,
+        DATA0
+    }
+
+    /**
      * Property backing fields.
      */
     private string _experiment_name;
@@ -49,7 +90,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * The source of the channel value information.
      * fifo: The data comes from a named pipe.
-     * channel: The data comes from reading the value directly from the Cld.Channel
+     * channel: The data comes from reading the value directly from the channel
      */
     public string data_source;
 
@@ -71,7 +112,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     private Sqlite.Database db;
 
     /**
-     * An SQLite database object for backups.\
+     * An SQLite database object for backups.
      */
     private Sqlite.Database backup_db;
 
@@ -117,47 +158,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * Flag if backup database is open.
      */
     private bool backup_is_open;
-
-    /**
-     * Enumerated Experiment table column names.
-     */
-    public enum ExperimentColumn {
-        ID,
-        NAME,
-        START_DATE,
-        STOP_DATE,
-        START_TIME,
-        STOP_TIME,
-        LOG_RATE
-    }
-
-    /**
-     * Enumerated Channel table column names.
-     */
-    public enum ChannelColumn {
-        ID,
-        EXPERIMENT_ID,
-        CHAN_URI,
-        DESC,
-        TAG,
-        TYPE,
-        EXPRESSION,
-        COEFF_X0,
-        COEFF_X1,
-        COEFF_X2,
-        COEFF_X3,
-        UNITS
-    }
-
-    /**
-     * Enumerated subset of the column names in an experiment table.
-     */
-    public enum ExperimentDataColumns {
-        ID,
-        EXPERIMENT_ID,
-        TIME,
-        DATA0
-    }
 
     /**
      * Report the backup progress.
@@ -257,6 +257,66 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     ~SqliteLog () {
         if (_objects != null) {
             _objects.clear ();
+        }
+    }
+
+    public void connect_data_source () {
+        if (data_source == "channel" || data_source == null) {
+            /* Background channel watch fills the entry queue */
+            bg_channel_watch.begin (() => {
+                try {
+                    message ("Channel watch async ended");
+                } catch (ThreadError e) {
+                    string msg = e.message;
+                    error (@"Thread error: $msg");
+                }
+            });
+        } else {
+            var mux = get_object_from_uri (data_source);
+            message ("Connecting to data source `%s' from `%s'",
+                    (mux as Cld.Multiplexer).fname, mux.id);
+            fifos.set ((mux as Cld.Multiplexer).fname, -1);
+
+            /* Open the FIFO data buffers. */
+            foreach (string fname in fifos.keys) {
+                if (Posix.access (fname, Posix.F_OK) == -1) {
+                    int res = Posix.mkfifo (fname, 0777);
+                    if (res != 0) {
+                        error ("Context could not create fifo %s\n", fname);
+                    }
+                }
+
+                open_fifo.begin (fname, (obj, res) => {
+                    try {
+                        int fd = open_fifo.end (res);
+                        message ("got a writer for %s", fname);
+
+                        /* Background fifo watch queues fills the entry queue */
+                        bg_fifo_watch.begin (fd, (obj, res) => {
+                            try {
+                                bg_fifo_watch.end (res);
+                                message ("Log fifo watch async ended");
+                            } catch (ThreadError e) {
+                                string msg = e.message;
+                                error (@"Thread error: $msg");
+                            }
+                        });
+
+                        bg_raw_process.begin ((obj, res) => {
+                            try {
+                                bg_raw_process.end (res);
+                                message ("Raw data queue processing async ended");
+                            } catch (ThreadError e) {
+                                string msg = e.message;
+                                error (@"Thread error: $msg");
+                            }
+                        });
+                    } catch (ThreadError e) {
+                        string msg = e.message;
+                        error (@"Thread error: $msg");
+                    }
+                });
+            }
         }
     }
 
@@ -375,10 +435,10 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         DateTime time = new DateTime.now_local ();
 
         if (is_open) {
-            /* add the footer */
+            /* Add the footer */
             file_stream.printf ("\nLog file: %s closed at %s",
                                 name, time.format ("%F %T"));
-            /* setting a GLib.FileStream object to null apparently forces a
+            /* Setting a GLib.FileStream object to null apparently forces a
              * call to stdlib's close () */
             file_stream = null;
             is_open = false;
@@ -440,58 +500,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         nchans = columns.size;
 
         active = true;
-        if (data_source == "fifo") {
-            /* Open the FIFO data buffers. */
-            foreach (string fname in fifos.keys) {
-                if (Posix.access (fname, Posix.F_OK) == -1) {
-                    int res = Posix.mkfifo (fname, 0777);
-                    if (res != 0) {
-                        error ("Context could not create fifo %s\n", fname);
-                    }
-                }
-
-                open_fifo.begin (fname, (obj, res) => {
-                    try {
-                        int fd = open_fifo.end (res);
-                        message ("got a writer for %s", fname);
-
-                        /* Background fifo watch queues fills the entry queue */
-                        bg_fifo_watch.begin (fd, (obj, res) => {
-                            try {
-                                bg_fifo_watch.end (res);
-                                message ("Log fifo watch async ended");
-                            } catch (ThreadError e) {
-                                string msg = e.message;
-                                error (@"Thread error: $msg");
-                            }
-                        });
-
-                        bg_raw_process.begin ((obj, res) => {
-                            try {
-                                bg_raw_process.end (res);
-                                message ("Raw data queue processing async ended");
-                            } catch (ThreadError e) {
-                                string msg = e.message;
-                                error (@"Thread error: $msg");
-                            }
-                        });
-                    } catch (ThreadError e) {
-                        string msg = e.message;
-                        error (@"Thread error: $msg");
-                    }
-                });
-            }
-        } else if (data_source == "channel") {
-            /* Background channel watch fills the entry queue */
-            bg_channel_watch.begin (() => {
-                try {
-                    message ("Channel watch async ended");
-                } catch (ThreadError e) {
-                    string msg = e.message;
-                    error (@"Thread error: $msg");
-                }
-            });
-        }
 
         bg_entry_write.begin (() => {
             try {
@@ -523,7 +531,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         SourceFunc callback = open_fifo.callback;
         int fd = -1;
 
-        GLib.Thread<int> thread = new GLib.Thread<int> ("open_fifo_%s".printf (fname), () => {
+        GLib.Thread<int> thread = new GLib.Thread<int>.try ("open_fifo_%s".printf (fname), () => {
             message ("%s is is waiting for a writer to FIFO %s",this.id, fname);
             fd = Posix.open (fname, Posix.O_RDONLY);
             fifos.set (fname, fd);

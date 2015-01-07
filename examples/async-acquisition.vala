@@ -19,7 +19,6 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                 <cld:object id="mux0" type="multiplexer">
                   <cld:property name="taskref">/daqctl0/dev0/tk0</cld:property>
                   <cld:property name="interval-ms">100</cld:property>
-                  <cld:property name="fname">/tmp/fifo0</cld:property>
                 </cld:object>
                 <cld:object id="dev0" type="device" driver="comedi">
                   <cld:property name="hardware">PCI-1713</cld:property>
@@ -181,7 +180,7 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                   <cld:property name="file">log0.db</cld:property>
                   <cld:property name="format">%F-%T</cld:property>
                   <cld:property name="rate">1.000</cld:property>
-                  <cld:property name="data-source">channel</cld:property>
+                  <cld:property name="data-source">/daqctl0/mux0</cld:property>
                   <cld:object id="col00" type="column" chref="/daqctl0/dev0/ai00"/>
                   <cld:object id="col01" type="column" chref="/daqctl0/dev0/ai01"/>
                   <cld:object id="col02" type="column" chref="/daqctl0/dev0/ai02"/>
@@ -225,7 +224,7 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
         stdout.printf ("Comedi.Device information:\n%s\n", info.to_string ());
 
         GLib.Timeout.add_seconds (2, start_acq_cb);
-        GLib.Timeout.add_seconds (1, start_log_cb);
+        GLib.Timeout.add_seconds (10, start_log_cb);
         GLib.Timeout.add_seconds (21, stop_log_cb);
         GLib.Timeout.add_seconds (23, quit_cb);
 
@@ -233,13 +232,13 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
     }
 
     public bool start_acq_cb () {
-        context.acquisition_controller.run ();
+        var ctl = context.get_object ("daqctl0");
+        (ctl as Cld.AcquisitionController).run ();
         return false;
     }
 
     public bool start_log_cb () {
         var log0 = context.get_object_from_uri ("/logctl0/log0") as Cld.SqliteLog;
-        (log0 as Cld.SqliteLog).fifos.set ("/tmp/fifo0", -1);
         stdout.printf ("Log:\n%s\n", log0.to_string ());
         log0.start ();
         return false;

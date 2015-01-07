@@ -29,9 +29,7 @@ internal class Cld.Builder : GLib.Object {
     private Cld.Container container;
 
     public Gee.Map<string, Cld.Object> objects {
-        get {
-            return container.objects;
-        }
+        get { return container.objects; }
     }
 
     construct {

@@ -933,7 +933,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
 //            try {
 //                running = true;
 //                Cld.Pid2.Thread pid_thread = new Cld.Pid2.Thread (this);
-//                thread = new GLib.Thread<void *> ("do_pid", pid_thread.run);
+//                thread = new GLib.Thread<void *>.try ("do_pid", pid_thread.run);
 //            } catch (GLib.ThreadError e) {
 //                running = false;
 //                thread.join ();

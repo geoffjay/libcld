@@ -29,74 +29,30 @@
 public class Cld.Context : Cld.AbstractContainer {
 
     /**
-     * Logging controller.
-     */
-    public Cld.LogController log_controller;
-
-    /**
-     * Acquisition controller.
-     */
-    public Cld.AcquisitionController acquisition_controller;
-
-    /**
-     * Automation controller.
-     */
-    public Cld.AutomationController automation_controller;
-
-    /**
      * Default construction.
      */
-    public Context () {
-        acquisition_controller = new Cld.AcquisitionController ();
-        log_controller = new Cld.LogController ();
-        automation_controller = new Cld.AutomationController ();
-    }
+    public Context () { }
 
+    /**
+     * Construction using a configuration file.
+     */
     public Context.from_config (Cld.XmlConfig xml) {
         var builder = new Cld.Builder.from_xml_config (xml);
         objects = builder.objects;
 
         debug (to_string_recursive ());
 
-        debug ("Generating reference list...");
         generate_ref_list ();
-        debug ("Generate reference list finished");
 
-        debug ("Generating references...");
-        generate_references ();
-        debug ("Generate references finished");
-
-        debug ("Generating controllers...");
-        generate ();
-        debug ("Generate controllers finished");
-    }
-
-    /**
-     * Destruction.
-     *
-     * XXX not even sure if this is necessary or if a Gee.Map will clear itself
-     */
-    ~Context () {
-        if (_objects != null)
-            _objects.clear ();
-    }
-
-    /**
-     * Prints a table of references between objects.
-     */
-    public void print_ref_list () {
-        var list = get_descendant_ref_list ();
-        foreach (var entry in list.read_only_view) {
-            message ("%-30s %s", (entry
-                as Cld.AbstractContainer.Reference).self_uri,
-                (entry as Cld.AbstractContainer.Reference).reference_uri);
-        }
+        setup_references ();
+        setup_controllers ();
     }
 
     /**
      * Generate references between objects.
      */
-    public void generate_references () {
+    private void setup_references () {
+        debug ("Generating references...");
         var list = get_descendant_ref_list ();
         foreach (var entry in list.read_only_view) {
             var self = get_object_from_uri ((entry
@@ -115,26 +71,17 @@ public class Cld.Context : Cld.AbstractContainer {
                 }
             }
         }
+        debug ("Generate references finished");
     }
 
     /**
      * Generate internal objects and connections.
      */
-    public void generate () {
+    private void setup_controllers () {
+        debug ("Generating controllers...");
         /* Get the controllers */
         var controllers = get_children (typeof (Cld.Controller));
         foreach (var controller in controllers.values) {
-            if (controller is Cld.AcquisitionController) {
-                acquisition_controller = controller as Cld.AcquisitionController;
-                acquisition_controller.generate ();
-            } else if (controller is Cld.LogController) {
-                log_controller = controller as Cld.LogController;
-                log_controller.generate ();
-            } else if (controller is Cld.AutomationController) {
-                automation_controller = controller as Cld.AutomationController;
-                automation_controller.generate ();
-            }
-
             (controller as Cld.Controller).generate ();
         }
 
@@ -143,5 +90,6 @@ public class Cld.Context : Cld.AbstractContainer {
         foreach (var connector in connectors.values) {
             (connector as Cld.Connector).connect_signals ();
         }
+        debug ("Generate controllers finished");
     }
 }

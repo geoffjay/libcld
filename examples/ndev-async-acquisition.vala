@@ -617,7 +617,8 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
     }
 
     public bool start_acq_cb () {
-        context.acquisition_controller.run ();
+        var ctl = context.get_object ("daqctl0");
+        (ctl as Cld.AcquisitionController).run ();
 
         return false;
     }

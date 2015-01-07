@@ -119,4 +119,15 @@ namespace Cld {
     public void decrease_log_level () {
         verbosity = (verbosity == 0) ? verbosity : verbosity--;
     }
+
+#if USE_COMEDI
+
+    namespace Comedi {
+
+        public static Comedi.Polynomial calibration_to_polynomial (Cld.Calibration calibration) {
+            /* Future for comedi_to_physical replacement in Comedi.Task ??? */
+        }
+    }
+
+#endif
 }

@@ -165,8 +165,8 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                     if (Posix.errno == Posix.EAGAIN) {
                         error ("Posix pselect error EAGAIN");
                     }
-                } else if (ret == 0) {
-                    stdout.printf ("%s hit timeout\n", id);
+                //} else if (ret == 0) {
+                    //stdout.printf ("%s hit timeout\n", id);
                 } else if ((Posix.FD_ISSET (fd, rdset)) == 1) {
                     ret = (int)Posix.read (fd, buf, bufsz);
                     if (ret == -1) {
@@ -175,12 +175,15 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                     lock (raw_queue) {
                         for (int i = 0; i < ret / 2; i++) {
                             total++;
-//if ((total % 32768) == 0) { stdout.printf ("%d: total read by %s: %d\n",Linux.gettid (), uri, total); }
+                            //if ((total % 256) == 0) {
+                                //message ("%d: total read by %s: %d",
+                                         //Linux.gettid (), uri, total);
+                            //}
                             (raw_queue as Gee.Deque<ushort>).offer_head (buf [i]);
-//                        stdout.printf ("%4X ", buf [i]);
-//                        if ((total % nchans) == 0) {
-//                            stdout.printf ("\n");
-//                        }
+                            //stdout.printf ("%4X ", buf [i]);
+                            //if ((total % nchans) == 0) {
+                                //stdout.printf ("\n");
+                            //}
                         }
                     }
                 }
@@ -255,7 +258,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
         int nscans = 0;
 
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_process_raw", () => {
-            while (active) {
+            while (true) {
                 lock (raw_queue) {
                     lock (entry_queue) {
 
@@ -271,7 +274,12 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                                         datum = raw_queue.poll_tail ();
                                         entry.data [j] = (double) datum;
                                         total++;
-//if ((total % 32768) == 0) { stdout.printf ("%d: total raw dequed: %d  qsize: %d\n",Linux.gettid (), total, raw_queue.size); }
+                                    if ((total % 256) == 0) {
+                                        //message ("%d: total raw dequed: %d  qsize: %d",
+                                                       //Linux.gettid (),
+                                                       //total,
+                                                       //raw_queue.size);
+                                    }
                                 }
 
                                 entry_queue.offer_head (entry);

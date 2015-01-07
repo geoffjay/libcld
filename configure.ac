@@ -48,7 +48,7 @@ AC_SUBST(VALAC)
 
 dnl Library checks
 VALA_PACKAGES=""
-VALAFLAGS="--enable-deprecated --target-glib=2.32 $VALAFLAGS"
+VALAFLAGS="--enable-deprecated --target-glib=2.38 $VALAFLAGS"
 
 GLIB_REQUIRED=2.32.0
 PKG_CHECK_MODULES([GLIB], [glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED gthread-2.0 >= $GLIB_REQUIRED],

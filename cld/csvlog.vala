@@ -357,7 +357,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
         SourceFunc callback = open_fifo.callback;
         int fd = -1;
 
-        GLib.Thread<int> thread = new GLib.Thread<int> ("open_fifo_%s".printf (fname), () => {
+        GLib.Thread<int> thread = new GLib.Thread<int>.try ("open_fifo_%s".printf (fname), () => {
             message ("%s is is waiting for a writer to FIFO %s",this.id, fname);
             fd = Posix.open (fname, Posix.O_RDONLY);
             fifos.set (fname, fd);

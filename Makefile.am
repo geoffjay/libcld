@@ -17,6 +17,7 @@ endif
 
 SUBDIRS = \
 	cld \
+	data \
 	tests \
 	vapi \
 	$(DOC_SUBDIR) \

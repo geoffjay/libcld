@@ -1,3 +1,6 @@
+SUBDIRS = \
+	device
+
 noinst_DATA = \
     config.xsd \
     config.xml

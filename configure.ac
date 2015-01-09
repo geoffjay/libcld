@@ -37,6 +37,13 @@ GOBJECT_INTROSPECTION_REQUIRE([0.9.0])
 dnl Enable silent rules if available
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
+PACKAGE_SUFFIX=-0.3
+
+AC_SUBST(PACKAGE_SUFFIX)
+AC_DEFINE_UNQUOTED(PACKAGE_SUFFIX, "$PACKAGE_SUFFIX", [Define to the suffix of this package])
+
+AC_SUBST(pkgdatadir, [${datadir}/cld${PACKAGE_SUFFIX}])
+
 dnl Programs
 AC_PROG_CC
 AM_PROG_CC_C_O
@@ -50,12 +57,8 @@ dnl Library checks
 VALA_PACKAGES=""
 VALAFLAGS="--enable-deprecated --target-glib=2.38 $VALAFLAGS"
 
-GLIB_REQUIRED=2.32.0
-PKG_CHECK_MODULES([GLIB], [glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED gthread-2.0 >= $GLIB_REQUIRED],
-	[AC_DEFINE(HAVE_GLIB232, [], [GLib 2.32 available])],
-	[PKG_CHECK_MODULES([GLIB], [glib-2.0 gobject-2.0 gthread-2.0],,
-		[AC_MSG_ERROR(glib-2.12 is required)])
-	])
+PKG_CHECK_MODULES([GLIB], [glib-2.0 gobject-2.0 gthread-2.0],,
+    [AC_MSG_ERROR(glib-2.12 is required)])
 
 PKG_CHECK_MODULES([GEE], [gee-0.8],
     [VALA_PACKAGES="$VALA_PACKAGES --pkg gee-0.8"],
@@ -165,6 +168,8 @@ AC_OUTPUT([Makefile
            cld-0.3.pc
            cld/Makefile
            docs/Makefile
+           data/Makefile
+           data/device/Makefile
            examples/Makefile
            tests/Makefile
            vapi/Makefile])

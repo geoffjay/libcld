@@ -28,6 +28,7 @@ libcld_0_3_la_SOURCES = \
 	abstractobject.vala \
 	abstractport.vala \
 	abstracttask.vala \
+	actuator.vala \
 	aichannel.vala \
 	aochannel.vala \
 	acquisitioncontroller.vala \
@@ -67,9 +68,11 @@ libcld_0_3_la_SOURCES = \
 	port.vala \
 	rootcontainer.vala \
 	rawchannel.vala \
+	sensor.vala \
 	serialport.vala \
 	socketport.vala \
 	sqlitelog.vala \
+	system.vala \
 	task.vala \
 	vchannel.vala \
 	velmexmodule.vala \

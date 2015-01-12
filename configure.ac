@@ -170,6 +170,7 @@ AC_OUTPUT([Makefile
            docs/Makefile
            data/Makefile
            data/device/Makefile
+           data/system/Makefile
            examples/Makefile
            tests/Makefile
            vapi/Makefile])

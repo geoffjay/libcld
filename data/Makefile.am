@@ -1,5 +1,6 @@
 SUBDIRS = \
-	device
+	device \
+	system
 
 noinst_DATA = \
     config.xsd \

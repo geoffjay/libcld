@@ -47,10 +47,12 @@ public class Cld.CsvLog : Cld.AbstractLog {
         active = false;
         is_open = false;
         time_stamp = TimeStampFlag.OPEN;
+        connect_signals ();
     }
 
     public CsvLog.from_xml_node (Xml.Node *node) {
         string value;
+        this.node = node;
 
         active = false;
         is_open = false;
@@ -93,6 +95,57 @@ public class Cld.CsvLog : Cld.AbstractLog {
                         var column = new Column.from_xml_node (iter);
                         column.parent = this;
                         add (column);
+                    }
+                }
+            }
+        }
+        connect_signals ();
+    }
+
+    /* Connect the notify signals */
+    private void connect_signals () {
+        Type type = get_type ();
+        ObjectClass ocl = (ObjectClass)type.class_ref ();
+
+        foreach (ParamSpec spec in ocl.list_properties ()) {
+            notify[spec.get_name ()].connect ((s, p) => {
+            update_node ();
+            });
+        }
+    }
+
+    private void update_node () {
+        if (node != null) {
+            if (node->type == Xml.ElementType.ELEMENT_NODE &&
+                node->type != Xml.ElementType.COMMENT_NODE) {
+                /* iterate through node children */
+                for (Xml.Node *iter = node->children;
+                     iter != null;
+                     iter = iter->next) {
+                    if (iter->name == "property") {
+                        switch (iter->get_prop ("name")) {
+                            case "title":
+                                iter->set_content (name);
+                                break;
+                            case "path":
+                                iter->set_content (path);
+                                break;
+                            case "file":
+                                iter->set_content (file);
+                                break;
+                            case "rate":
+                                message ("rate %.3f", rate);
+                                iter->set_content (rate.to_string ());
+                                break;
+                            case "format":
+                                iter->set_content (date_format);
+                                break;
+                            case "time-stamp":
+                                iter->set_content (time_stamp.to_string ());
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }
             }

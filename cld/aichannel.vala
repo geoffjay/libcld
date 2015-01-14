@@ -19,7 +19,8 @@
 /**
  * Analog input channel used with measurements and other control functions.
  */
-public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cld.ScalableChannel {
+public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
+                                Cld.ScalableChannel, Cld.Connector {
     /**
      * Property backing fields to allow the channels to have a short history
      * for use with control loop calculations.

@@ -90,6 +90,8 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
     }
     public DataSeries () {
         _objects = new Gee.TreeMap<string, Cld.Object> ();
+
+
     }
 
     /**
@@ -99,6 +101,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
      */
     public DataSeries.from_xml_node (Xml.Node *node) {
         string value;
+        this.node = node;
         _objects = new Gee.TreeMap<string, Cld.Object> ();
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
@@ -154,8 +157,18 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
 
     /**
      * Push a new value into the buffer of values and relay generate a new value signal.
+     * Connect the notify signals
      */
     public void connect_signals () {
+        Type type = get_type ();
+        ObjectClass ocl = (ObjectClass)type.class_ref ();
+
+        foreach (ParamSpec spec in ocl.list_properties ()) {
+            notify[spec.get_name ()].connect ((s, p) => {
+            update_node ();
+            });
+        }
+
         (channel as ScalableChannel).new_value.connect ((id, val) => {
             buffer[j] = val;
             /*
@@ -173,6 +186,35 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
             }
         });
     }
+
+    /**
+     * Update the XML Node for this object.
+     */
+    private void update_node () {
+        if (node != null) {
+            if (node->type == Xml.ElementType.ELEMENT_NODE &&
+                node->type != Xml.ElementType.COMMENT_NODE) {
+                /* iterate through node children */
+                for (Xml.Node *iter = node->children;
+                     iter != null;
+                     iter = iter->next) {
+                    if (iter->name == "property") {
+                        switch (iter->get_prop ("name")) {
+                            case "length":
+                                iter->set_content (length.to_string ());
+                                break;
+                            case "chref":
+                                iter->set_content (chref);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     /**
      * A convenience method used to retrieve a buffered value from its index.

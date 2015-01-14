@@ -75,17 +75,17 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * File path to backup location.
      */
-    public string backup_path;
+    public string backup_path { get; set; }
 
     /**
      * Backup file name.
      */
-    public string backup_file;
+    public string backup_file { get; set; }
 
     /**
-     * The interval at which the database will be automativcally backed up.
+     * The interval at which the database will be automatically backed up.
      */
-    public int backup_interval_ms;
+    public int backup_interval_ms { get; set; }
 
     /**
      * The source of the channel value information.
@@ -182,6 +182,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         active = false;
         is_open = false;
         time_stamp = TimeStampFlag.OPEN;
+        connect_signals ();
     }
 
     /**
@@ -189,6 +190,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      */
     public SqliteLog.from_xml_node (Xml.Node *node) {
         string value;
+        this.node = node;
 
         active = false;
         is_open = false;
@@ -245,6 +247,70 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                         var column = new Column.from_xml_node (iter);
                         column.parent = this;
                         add (column);
+                    }
+                }
+            }
+        }
+        connect_signals ();
+    }
+
+    /* Connect the notify signals */
+    private void connect_signals () {
+        Type type = get_type ();
+        ObjectClass ocl = (ObjectClass)type.class_ref ();
+
+        foreach (ParamSpec spec in ocl.list_properties ()) {
+            message ("spec name: %s", spec.get_name ());
+            notify[spec.get_name ()].connect ((s, p) => {
+            update_node ();
+            });
+        }
+    }
+
+    private void update_node () {
+        if (node != null) {
+            if (node->type == Xml.ElementType.ELEMENT_NODE &&
+                node->type != Xml.ElementType.COMMENT_NODE) {
+                /* iterate through node children */
+                for (Xml.Node *iter = node->children;
+                     iter != null;
+                     iter = iter->next) {
+                    if (iter->name == "property") {
+                        switch (iter->get_prop ("name")) {
+                            case "title":
+                                iter->set_content (name);
+                                break;
+                            case "path":
+                                iter->set_content (path);
+                                break;
+                            case "file":
+                                iter->set_content (file);
+                                break;
+                            case "rate":
+                                iter->set_content (rate.to_string ());
+                                break;
+                            case "format":
+                                iter->set_content (date_format);
+                                break;
+                            case "time-stamp":
+                                iter->set_content (time_stamp.to_string ());
+                                break;
+                            case "backup-path":
+                                iter->set_content (backup_path);
+                                break;
+                            case "backup-file":
+                                iter->set_content (backup_file);
+                                break;
+                            case "backup-interval-hrs":
+                                int hrs = (int) (backup_interval_ms / (60 * 60 * 1000));
+                                iter->set_content (hrs.to_string ());
+                                break;
+                            case "data-source":
+                                iter->set_content (data_source);
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }
             }

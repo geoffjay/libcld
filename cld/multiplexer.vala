@@ -139,6 +139,14 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
             (task as Cld.ComediTask).run ();
         }
 
+        /* Create the fifo if it doesn't exist */
+        if (Posix.access (fname, Posix.F_OK) == -1) {
+            int result = Posix.mkfifo (fname, 0777);
+            if (result != 0) {
+                error ("Context could not create fifo %s\n", fname);
+            }
+        }
+
         /* Async tasks require one extra step for a synchronized start. */
         var start = new GLib.DateTime.now_local ();
         async_start (start);
@@ -165,6 +173,17 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
                 error (@"Thread error: $msg");
             }
         });
+    }
+
+    /**
+     * Stop the streaming data tasks
+     */
+    public void stop () {
+        var tasks = get_object_map (typeof (Cld.ComediTask));
+
+        foreach (var task in tasks.values) {
+            (task as Cld.ComediTask).stop ();
+        }
     }
 
     /**
@@ -254,7 +273,7 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
                 int counter = 0;
                 for (i = 0; i < nscan; i++) {
                     /* FIXME: this is just for debugging purposes */
-                    channelize = ((total % 20) == 0);
+                    channelize = ((total % 3200) == 0);
 
                     int raw_index = 0;      // data register index for channels digital raw value.
 

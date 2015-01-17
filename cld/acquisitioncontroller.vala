@@ -108,6 +108,12 @@ public class Cld.AcquisitionController : Cld.AbstractController {
         }
     }
 
+    public void stop () {
+        foreach (var multiplexer in multiplexers.values) {
+            (multiplexer as Cld.Multiplexer).stop ();
+        }
+    }
+
     /**
      * {@inheritDoc}
      */

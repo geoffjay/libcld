@@ -10,6 +10,7 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
     }
 
     public GLib.MainLoop loop;
+    public Cld.AIChannel chan;
 
     construct {
         xml = """
@@ -29,7 +30,7 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                     <cld:property name="devref">/daqctl0/dev0</cld:property>
                     <cld:property name="subdevice">0</cld:property>
                     <cld:property name="direction">read</cld:property>
-                    <cld:property name="interval-ns">480000</cld:property>
+                    <cld:property name="interval-ns">5000000</cld:property>
                     <cld:property name="resolution-ns">200</cld:property>
                     <cld:property name="chref">/daqctl0/dev0/ai00</cld:property>
                     <cld:property name="chref">/daqctl0/dev0/ai01</cld:property>
@@ -224,11 +225,20 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
         stdout.printf ("Comedi.Device information:\n%s\n", info.to_string ());
 
         GLib.Timeout.add_seconds (2, start_acq_cb);
-        GLib.Timeout.add_seconds (10, start_log_cb);
-        GLib.Timeout.add_seconds (21, stop_log_cb);
-        GLib.Timeout.add_seconds (23, quit_cb);
+        GLib.Timeout.add_seconds (5, start_log_cb);
+        chan = context.get_object ("ai00") as Cld.AIChannel;
+        GLib.Timeout.add (200, print_data_cb);
+        GLib.Timeout.add_seconds (15, stop_log_cb);
+        GLib.Timeout.add_seconds (50, stop_acq_cb);
+        GLib.Timeout.add_seconds (60, quit_cb);
 
         loop.run ();
+    }
+
+    public bool print_data_cb () {
+        stdout.printf ("%.3f\n", chan.scaled_value);
+
+        return true;
     }
 
     public bool start_acq_cb () {
@@ -247,6 +257,14 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
     public bool stop_log_cb () {
         var log0 = context.get_object_from_uri ("/logctl0/log0") as Cld.SqliteLog;
         (log0 as Cld.Log).stop ();
+        return false;
+    }
+
+    public bool stop_acq_cb () {
+        var ctl = context.get_object ("daqctl0");
+        (ctl as Cld.AcquisitionController).stop ();
+        stdout.printf ("stop_acq_cb ()\n");
+
         return false;
     }
 

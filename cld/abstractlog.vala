@@ -146,7 +146,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
 
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_fifo_watch",  () => {
 
-            while (active) {
+            while (true) {
                 ushort[] buf = new ushort[bufsz];
                 Posix.fd_set rdset;
                 //Posix.timeval timeout = Posix.timeval ();
@@ -179,7 +179,10 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                                 //message ("%d: total read by %s: %d",
                                          //Linux.gettid (), uri, total);
                             //}
-                            (raw_queue as Gee.Deque<ushort>).offer_head (buf [i]);
+                            /* Queue data only if the log is active */
+                            //while (active) {
+                                (raw_queue as Gee.Deque<ushort>).offer_head (buf [i]);
+                            //}
                             //stdout.printf ("%4X ", buf [i]);
                             //if ((total % nchans) == 0) {
                                 //stdout.printf ("\n");

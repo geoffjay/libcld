@@ -254,7 +254,7 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
                 int counter = 0;
                 for (i = 0; i < nscan; i++) {
                     /* FIXME: this is just for debugging purposes */
-                    channelize = ((total % 48000) == 0);
+                    channelize = ((total % 20) == 0);
 
                     int raw_index = 0;      // data register index for channels digital raw value.
 

@@ -526,6 +526,31 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public override void stop () {
+        string query = """
+            UPDATE experiment
+            SET stop_date = DATE('now'),
+                stop_time = TIME('now', 'localtime')
+            WHERE id = %s;
+        """.printf (experiment_id.to_string ());
+
+        ec = db.prepare_v2 (query, query.length, out stmt);
+        if (ec != Sqlite.OK) {
+            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+        }
+
+        stmt.step ();
+        stmt.reset ();
+
+        if (active) {
+            /* Wait for the queue to be empty */
+            GLib.Timeout.add (100, deactivate_cb);
+        }
+    }
+
     private async int open_fifo (string fname) {
         SourceFunc callback = open_fifo.callback;
         int fd = -1;
@@ -851,31 +876,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         stmt.reset ();
 
         return ent;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public override void stop () {
-        string query = """
-            UPDATE experiment
-            SET stop_date = DATE('now'),
-                stop_time = TIME('now', 'localtime')
-            WHERE id = %s;
-        """.printf (experiment_id.to_string ());
-
-        ec = db.prepare_v2 (query, query.length, out stmt);
-        if (ec != Sqlite.OK) {
-            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
-        }
-
-        stmt.step ();
-        stmt.reset ();
-
-        if (active) {
-            /* Wait for the queue to be empty */
-            GLib.Timeout.add (100, deactivate_cb);
-        }
     }
 
     private bool deactivate_cb () {

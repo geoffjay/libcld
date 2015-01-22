@@ -444,8 +444,8 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public override void start () {
         /* Count the number of channels */
         var columns = get_children (typeof (Cld.Column));
-        nchans = columns.size;
 
+        nchans = columns.size;
         active = true;
         if (data_source == "channel" || data_source == null) {
             /* Background channel watch fills the entry queue */
@@ -466,7 +466,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                         error ("Context could not create fifo %s\n", fname);
                     }
                 }
-
                 open_fifo.begin (fname, (obj, res) => {
                     try {
                         int fd = open_fifo.end (res);
@@ -499,6 +498,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 });
             }
         }
+
 
         bg_entry_write.begin (() => {
             try {

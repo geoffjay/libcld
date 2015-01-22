@@ -24,7 +24,7 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
     /* Property backing fields */
     private Gee.List<string>? _taskrefs;
     private string _fname;
-    private int _interval_ms;
+    private int _update_stride;
 
     /**
      * A list of channel references.
@@ -41,13 +41,13 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
     }
 
     /* The update interval, in milliseconds, of the channel raw value. */
-    public int interval_ms {
-        get { return _interval_ms; }
-        set { _interval_ms = value; }
+    public int update_stride {
+        get { return _update_stride; }
+        set { _update_stride = value; }
     }
 
     /* A vector of the current binary data values of the channels */
-    private ushort[] data_register;
+    private float [] data_register;
 
     /**
      * A signal that starts streaming tasks concurrently.
@@ -55,6 +55,7 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
     public signal void async_start (GLib.DateTime start);
 
     private int fd = -1;
+    private bool channelize = false;
 
     /**
      * Common construction
@@ -75,8 +76,8 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
         for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
             if (iter->name == "property") {
                 switch (iter->get_prop ("name")) {
-                    case "interval-ms":
-                        interval_ms = int.parse (iter->get_content ());
+                    case "update-stride":
+                        update_stride = int.parse (iter->get_content ());
                         break;
                     case "taskref":
                         taskrefs.add (iter->get_content ());
@@ -101,13 +102,13 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
             n += (task as Cld.ComediTask).channels.size;
         }
 
-        data_register = new ushort[n];
+        data_register = new float [n];
     }
 
     /**
      * Set a value in the data register.
      */
-    public void set_raw (int index, ushort val) {
+    public void set_raw (int index, float val) {
         lock (data_register) {
             data_register[index] = val;
         }
@@ -116,8 +117,8 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
     /**
      * Get a value in the data register.
      */
-    public ushort get_raw (int index) {
-        ushort val;
+    public float get_raw (int index) {
+        float val;
 
         lock (data_register) {
             val = data_register[index];
@@ -195,14 +196,14 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
     private async int open_fifo () {
         SourceFunc callback = open_fifo.callback;
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("open_fifo", () => {
-            debug ("Multiplexer `%s' waiting for a reader to FIFO `%s'",
+            GLib.message ("Multiplexer `%s' waiting for a reader to FIFO `%s'",
                    id, fname);
             fd = Posix.open (fname, Posix.O_WRONLY);
             if (fd == -1) {
                 critical ("%s Posix.open error: %d: %s",
                           fname, Posix.errno, Posix.strerror (Posix.errno));
             } else {
-                debug ("Acquisition controller opening FIFO `%s' fd: %d",
+                GLib.message ("Acquisition controller opening FIFO `%s' fd: %d",
                        fname, fd);
             }
 
@@ -223,14 +224,12 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
     private async void bg_multiplex_data () throws ThreadError {
         SourceFunc callback = bg_multiplex_data.callback;
         int buffsz = 1048576;
-        ushort word = 0;
-        ushort[] b = new ushort[1];
         int total = 0;
         int i = 0;
-        bool channelize = false;
         Cld.ComediDevice[] devices;     // the Comedi devices used by these tasks
         Cld.ComediTask[] tasks;
         int[] nchans;                   // the number of channels in each task
+        int nchan = 0;                      // the total number of channels in this multiplexer
         int[] subdevices;               // the subdevice numbers for these devices
         int[] buffersizes;              // the data buffer sizes of each subdevice
         int[] buffer_contents;
@@ -248,12 +247,13 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
         buffersizes = new int[size];
         buffer_contents = new int[size];
         nscans = new int[size];
-        queues = new Gee.Deque<ushort>[size];
+        queues = new Gee.Deque<double>[size];
 
         foreach (var task in _tasks.values) {
             tasks[i] = task as ComediTask;
             devices[i] = (task as ComediTask).device as Cld.ComediDevice;
             nchans[i] = (task as ComediTask).channels.size;
+            nchan += nchans[i];
             subdevices[i] = (task as ComediTask).subdevice;
             buffersizes[i] = (devices[i] as Cld.ComediDevice).dev.get_buffer_size (subdevices[i]);
             queues[i] = (task as ComediTask).queue;
@@ -262,6 +262,9 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
 
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("%s_queue_data",  () => {
             while (true) {
+                float *value = GLib.malloc (sizeof (float));
+                uint8 *data  = GLib.malloc (sizeof (float));
+
                 /* Determine the minimum integral size data required for multiplexing */
                 nscan = int.MAX;
                 for (i = 0; i < size; i++) {
@@ -272,8 +275,6 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
                 /* scans */
                 int counter = 0;
                 for (i = 0; i < nscan; i++) {
-                    /* FIXME: this is just for debugging purposes */
-                    channelize = ((total % 3200) == 0);
 
                     int raw_index = 0;      // data register index for channels digital raw value.
 
@@ -284,37 +285,39 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
                             if (j == 0) {
                                 counter ++;
                             }
-                            word = tasks[j].poll_queue ();
 
+                            *value = tasks[j].poll_queue ();
+
+                            //tasks[j].poll_queue ();
+
+                            //*value = 6.249f;
+                            Posix.memcpy (data, value, sizeof (float));
                             /* Write the data to the fifo */
-                            b[0] = word;
-                            if (fd != -1)
-                                Posix.write (fd, b, 2);
+                            if (fd != -1) {
+                                Posix.write (fd, data, sizeof (float));
+                                //stdout.printf ("%02X%02X%02X%02X ", data[0], data[1], data[2], data[3]);
+                                //stdout.printf ("%02X%02X%02X%02X ", buf[i], buf[i + 1], buf[i + 2], buf[i + 3]);
+                                //stdout.printf ("%6.3f ", *value);
+                            }
 
                             /* Write the raw value to a register */
-                            if (channelize) {
-                                data_register[raw_index] = b[0];
-                                if  ((j == 0) && (k == 0)) {
-                                    debug ("%4X", word);
-                                }
+                            lock (data_register) {
+                                data_register[raw_index] = *value;
                             }
 
                             raw_index++;
                             total++;
-
-                            if ((total % 32768) == 0) {
-                                debug ("%d: total written to multiplexer: %12d nscan: %d\n",
-                                (int) Linux.gettid (), total, nscan);
+                            if ((total % (nchan * update_stride)) == 0) {
+                                update_channels ();
                             }
                         }
+
                     }
 
-                    if (channelize) {
-                        do_channelizer ();
-                    }
-
-                    channelize = false;
+                    //stdout.printf ("\n");
                 }
+                GLib.free (value);
+                GLib.free (data);
 
                 Thread.usleep (5000);
             }
@@ -329,7 +332,7 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
     /**
      * Update the channel values
      */
-    public void do_channelizer () {
+    private bool update_channels () {
 
         uint maxdata;
         Comedi.Range range;
@@ -338,25 +341,20 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
 
         var tasks = get_object_map (typeof (Cld.ComediTask));
 
-        foreach (var task in tasks.values) {
-            var device = (task as Cld.ComediTask).device;
-            foreach (var channel in (task as Cld.ComediTask).channels.values) {
-                (channel as Cld.Channel).timestamp = timestamp;
-                maxdata = (device as Cld.ComediDevice).dev.get_maxdata (
-                            (channel as Cld.Channel).subdevnum,
-                            (channel as Cld.Channel).num);
-
-                /* Analog Input */
-                if (channel is Cld.AIChannel) {
-                    double meas = 0.0;
-                    range = (device as Cld.ComediDevice).dev.get_range (
-                                (channel as Cld.Channel).subdevnum,
-                                (channel as Cld.Channel).num,
-                                (channel as Cld.AIChannel).range);
-                    meas = Comedi.to_phys (data_register[i++], range, maxdata);
-                    (channel as Cld.AIChannel).add_raw_value (meas);
+        lock (data_register) {
+            foreach (var task in tasks.values) {
+                var device = (task as Cld.ComediTask).device;
+                foreach (var channel in (task as Cld.ComediTask).channels.values) {
+                    (channel as Cld.Channel).timestamp = timestamp;
+                    /* Analog Input */
+                    if (channel is Cld.AIChannel) {
+                        (channel as Cld.AIChannel).add_raw_value (
+                                                    (double) data_register [i++]);
+                    }
                 }
             }
         }
+
+        return true;
     }
 }

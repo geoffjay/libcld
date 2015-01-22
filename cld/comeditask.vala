@@ -141,8 +141,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
     /**
      * A queue for holding data to be processed. XXX Deque seems to be faster.
      */
-    //private Cld.CircularBuffer<ushort> queue;
-    public Gee.Deque<ushort> queue;
+    public Gee.Deque<float?> queue;
 
     /**
      * Enables simultaneous starting of multiple asynchronous acquisitions.
@@ -157,7 +156,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
         channels = new Gee.TreeMap<string, Object> ();
         fifos = new Gee.TreeMap<string, int> ();
         active = false;
-        queue = new Gee.LinkedList<ushort> ();
+        queue = new Gee.LinkedList<float?> ();
     }
 
     public ComediTask () {
@@ -319,8 +318,8 @@ public class Cld.ComediTask : Cld.AbstractTask {
      *
      * @return a data value from the queue.
      */
-    public ushort poll_queue () {
-        ushort val;
+    public float poll_queue () {
+        float val;
         lock (queue) {
             val = queue.poll_tail ();
         }
@@ -435,9 +434,18 @@ public class Cld.ComediTask : Cld.AbstractTask {
         int bufsz = 65536;
         uint raw;
         ulong bytes_per_sample;
-        Comedi.Range crange;
         int subdev_flags = (device as Cld.ComediDevice).dev.get_subdevice_flags (subdevice);
         SourceFunc callback = do_select.callback;
+        uint maxdata = (device as Cld.ComediDevice).dev.get_maxdata (0, 0);
+        Comedi.Range [] crange = new Comedi.Range [channels.size];
+
+        int index = 0;
+        foreach (var channel in channels.values) {
+            crange [index++] = (device as Cld.ComediDevice).dev.get_range (
+                                        (channel as Cld.AIChannel).subdevnum,
+                                        (channel as Cld.AIChannel).num,
+                                        (channel as Cld.AIChannel).range);
+        }
 
         if ((subdev_flags & Comedi.SubdeviceFlag.LSAMPL) != 0) {
             bytes_per_sample = sizeof (uint);
@@ -471,14 +479,12 @@ public class Cld.ComediTask : Cld.AbstractTask {
                 int count = 0;
                 int front = 0;
                 int back = 0;
-                ushort *map;
-                ushort word = 0;
 
                 var size = (device as ComediDevice).dev.get_buffer_size (subdevice);
-                map = Posix.mmap (null, size, Posix.PROT_READ, Posix.MAP_SHARED, device_fd, 0);
 
                 while (active) {
                     ushort[] buf = new ushort[bufsz];
+                    index = 0;
                     Posix.fd_set rdset;
 
                     Posix.timespec timeout = Posix.timespec ();
@@ -501,7 +507,16 @@ public class Cld.ComediTask : Cld.AbstractTask {
                         total += ret;
                         lock (queue) {
                             for (int i = 0; i < ret / bytes_per_sample; i++) {
-                                queue.offer_head (buf[i]);
+                                /* convert buf[i] */
+                                double meas = Comedi.to_phys (
+                                                buf [i], crange [index++], maxdata);
+                                //stdout.printf ("%6.3f ", meas);
+                                if (index >= channels.size) {
+                                    index = 0;
+                                    //stdout.printf ("\n");
+                                }
+                                /* queue as double */
+                                queue.offer_head ((float) meas);
                                 if (queue.size > qsize) {
                                     /* Dump the oldest value */
                                     queue.poll_tail ();
@@ -510,47 +525,6 @@ public class Cld.ComediTask : Cld.AbstractTask {
 //if ((total % 32768) == 0) { stdout.printf ("%d: total from %s %d  QSIZE: %d\n",Linux.gettid (), uri, total, queue.size); }
                         }
                     }
-
-/* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
-/* -------------------------------- Using memory map (XXX not working yet) ---------------------- */
-//
-//                    front += (device as Cld.ComediDevice).dev.get_buffer_contents (subdevice);
-//                    if(front < back) break;
-//                    if(front == back){
-//                        //comedi_poll(dev, options.subdevice);
-//                        //printf("waiting \n");
-//                        GLib.Thread.usleep(10000);
-//                        continue;
-//                    }
-//
-//                    lock (queue) {
-//                        for (int i = back; i < front; i ++) {
-//                            word = *(map + (i % size));
-//
-//                            if ((count % 16) == 0) {
-//                                int col = 0;
-//                                stdout.printf("%d %d \n", count,  word);
-//                                col++;
-//                            }
-//
-//                            queue.offer_head (word);
-//                            if (queue.size > qsize) {
-//                                /* Dump the oldest value */
-//                                queue.poll_tail ();
-//                            }
-//if ((total % 32768) == 0) { stdout.printf ("%d: total from %s %d  QSIZE: %d\n",Linux.gettid (), uri, total, queue.size); }
-//                            count ++;
-//                        }
-//                    }
-//
-//                    ret = (device as Cld.ComediDevice).dev.mark_buffer_read (subdevice, front - back);
-//                    if(ret < 0){
-//                        error ("comedi_mark_buffer_read");
-//                        break;
-//                    }
-//                    back = front;
-/* ------------------------------------------------ end memory map ------------------------------ */
-
                 }
 
                 Idle.add ((owned) callback);
@@ -598,12 +572,12 @@ public class Cld.ComediTask : Cld.AbstractTask {
     }
 
     private void dump_cmd () {
-        debug ("subdevice:       %u", cmd.subdev);
-        debug ("start:      %-8s %u", cmd_src (cmd.start_src), cmd.start_arg);
-        debug ("scan_begin: %-8s %u", cmd_src (cmd.scan_begin_src), cmd.scan_begin_arg);
-        debug ("convert:    %-8s %u", cmd_src (cmd.convert_src), cmd.convert_arg);
-        debug ("scan_end:   %-8s %u", cmd_src (cmd.scan_end_src), cmd.scan_end_arg);
-        debug ("stop:       %-8s %u", cmd_src (cmd.stop_src), cmd.stop_arg);
+        GLib.message ("subdevice:       %u", cmd.subdev);
+        GLib.message ("start:      %-8s %u", cmd_src (cmd.start_src), cmd.start_arg);
+        GLib.message ("scan_begin: %-8s %u", cmd_src (cmd.scan_begin_src), cmd.scan_begin_arg);
+        GLib.message ("convert:    %-8s %u", cmd_src (cmd.convert_src), cmd.convert_arg);
+        GLib.message ("scan_end:   %-8s %u", cmd_src (cmd.scan_end_src), cmd.scan_end_arg);
+        GLib.message ("stop:       %-8s %u", cmd_src (cmd.stop_src), cmd.stop_arg);
     }
 
     private void print_datum (uint raw, int channel_index, bool is_physical) {

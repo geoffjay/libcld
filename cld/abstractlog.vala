@@ -69,7 +69,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     /**
      * A double ended queue for raw data.
      */
-    protected virtual Gee.Deque<ushort> raw_queue { get; set; }
+    protected virtual Gee.Deque<float?> raw_queue { get; set; }
 
     /**
      * DateTime data to use for time stamping log file.
@@ -88,7 +88,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
 
     construct {
         fifos = new Gee.TreeMap<string, int> ();
-        raw_queue = new Gee.LinkedList<ushort> ();
+        raw_queue = new Gee.LinkedList<float?> ();
         entry_queue = new Gee.LinkedList<Cld.LogEntry> ();
     }
 
@@ -147,7 +147,9 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_fifo_watch",  () => {
 
             while (true) {
-                ushort[] buf = new ushort[bufsz];
+                uint8 *data = GLib.malloc (sizeof (float));
+                float *result = GLib.malloc (sizeof (float));
+                uint8[] buf = new uint8[bufsz];
                 Posix.fd_set rdset;
                 //Posix.timeval timeout = Posix.timeval ();
                 Posix.timespec timeout = Posix.timespec ();
@@ -173,16 +175,47 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                         error ("Posix.errno = %d", Posix.errno);
                     }
                     lock (raw_queue) {
-                        for (int i = 0; i < ret / 2; i++) {
+//                        ////////// TEST //////////////////
+//
+//
+//                        for (int i = 0; i < ret; i++) {
+//                            total++;
+//                            stdout.printf ("%02X", buf[i]);
+//                            if ((total % 4) == 0) {
+//                                stdout.printf (" ");
+//                            }
+//                            if ((total % (16 * 4)) == 0) {
+//                                stdout.printf ("\n");
+//                            }
+//                        }
+//
+//
+//                        ////////// END TEST //////////////////////
+
+                        for (int i = 0; i < (ret / (int) sizeof (float)); i+= (int) sizeof (float)) {
                             total++;
+                            //*data = (float) buf [i];
+                            data [0] = buf [i];
+                            data [1] = buf [i + 1];
+                            data [2] = buf [i + 2];
+                            data [3] = buf [i + 3];
+                            Posix.memcpy (result, data, sizeof (float));
+                            //stdout.printf ("%02X%02X%02X%02X ", data[0], data[1], data[2], data[3]);
+                            //stdout.printf ("%02X%02X%02X%02X ", buf[i], buf[i + 1], buf[i + 2], buf[i + 3]);
+                            stdout.printf ("%6.3f ", *result);
+
+                            if ((total % 16) == 0) {
+                                stdout.printf ("\n");
+                            }
                             //if ((total % 256) == 0) {
                                 //message ("%d: total read by %s: %d",
                                          //Linux.gettid (), uri, total);
                             //}
+
                             /* Queue data only if the log is active */
-                            //while (active) {
-                                (raw_queue as Gee.Deque<ushort>).offer_head (buf [i]);
-                            //}
+                            if (active) {
+                                raw_queue.offer_head (*result);
+                            }
                             //stdout.printf ("%4X ", buf [i]);
                             //if ((total % nchans) == 0) {
                                 //stdout.printf ("\n");
@@ -190,6 +223,8 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                         }
                     }
                 }
+                GLib.free (data);
+                GLib.free (result);
             }
 
             Idle.add ((owned) callback);
@@ -257,9 +292,10 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
      */
     protected async void bg_raw_process () throws ThreadError {
         SourceFunc callback = bg_raw_process.callback;
-        ushort datum = 0;
+        float datum = 0;
         int total = 0;
         int nscans = 0;
+        GLib.DateTime timestamp = new GLib.DateTime.now_local ();
 
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_process_raw", () => {
 
@@ -273,7 +309,13 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                             for (int i = 0; i < nscans; i++) {
                                 Cld.LogEntry entry = new Cld.LogEntry ();
                                 entry.data = new double [nchans];
-                                entry.timestamp = entry.timestamp.add_seconds (0.00016);
+                                /**
+                                 * The timestamp is artificially generated from
+                                 * the rate parameter which is assumed to be
+                                 * correct.
+                                 */
+                                timestamp = timestamp.add_seconds (1 / rate);
+                                entry.timestamp = timestamp;
 
                                 for (int j = 0; j < nchans; j++) {
                                         datum = raw_queue.poll_tail ();
@@ -286,7 +328,6 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                                                        //raw_queue.size);
                                     }
                                 }
-
                                 entry_queue.offer_head (entry);
                             }
                         }

@@ -19,7 +19,7 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
               <cld:object id="daqctl0" type="controller" ctype="acquisition">
                 <cld:object id="mux0" type="multiplexer">
                   <cld:property name="taskref">/daqctl0/dev0/tk0</cld:property>
-                  <cld:property name="interval-ms">100</cld:property>
+                  <cld:property name="update-stride">4</cld:property>
                 </cld:object>
                 <cld:object id="dev0" type="device" driver="comedi">
                   <cld:property name="hardware">PCI-1713</cld:property>
@@ -180,8 +180,8 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
                   <cld:property name="path">/tmp</cld:property>
                   <cld:property name="file">log0.db</cld:property>
                   <cld:property name="format">%F-%T</cld:property>
-                  <cld:property name="rate">1.000</cld:property>
                   <cld:property name="data-source">/daqctl0/mux0</cld:property>
+                  <cld:property name="rate">200</cld:property>
                   <cld:object id="col00" type="column" chref="/daqctl0/dev0/ai00"/>
                   <cld:object id="col01" type="column" chref="/daqctl0/dev0/ai01"/>
                   <cld:object id="col02" type="column" chref="/daqctl0/dev0/ai02"/>
@@ -227,28 +227,29 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
         GLib.Timeout.add_seconds (2, start_acq_cb);
         GLib.Timeout.add_seconds (5, start_log_cb);
         chan = context.get_object ("ai00") as Cld.AIChannel;
-        GLib.Timeout.add (200, print_data_cb);
-        GLib.Timeout.add_seconds (15, stop_log_cb);
-        GLib.Timeout.add_seconds (50, stop_acq_cb);
-        GLib.Timeout.add_seconds (60, quit_cb);
+        //(chan as Cld.ScalableChannel).new_value.connect ((id, value) => {
+        //    stdout.printf ("> %.3f\n", chan.scaled_value);
+        //});
+
+        //GLib.Timeout.add_seconds (15, stop_log_cb);
+        //GLib.Timeout.add_seconds (50, stop_acq_cb);
+        //GLib.Timeout.add_seconds (60, quit_cb);
 
         loop.run ();
-    }
-
-    public bool print_data_cb () {
-        stdout.printf ("%.3f\n", chan.scaled_value);
-
-        return true;
     }
 
     public bool start_acq_cb () {
         var ctl = context.get_object ("daqctl0");
         (ctl as Cld.AcquisitionController).run ();
+        //Cld.SqliteLog log0 = context.get_object_from_uri ("/logctl0/log0") as Cld.SqliteLog;
+        //stdout.printf ("Log:\n%s\n", log0.to_string ());
+        //log0.start ();
+
         return false;
     }
 
     public bool start_log_cb () {
-        var log0 = context.get_object_from_uri ("/logctl0/log0") as Cld.SqliteLog;
+        Cld.SqliteLog log0 = context.get_object_from_uri ("/logctl0/log0") as Cld.SqliteLog;
         stdout.printf ("Log:\n%s\n", log0.to_string ());
         log0.start ();
         return false;

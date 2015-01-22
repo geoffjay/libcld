@@ -110,7 +110,6 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
         string result = "";
         Type type = get_type ();
         ObjectClass ocl = (ObjectClass)type.class_ref ();
-
         result += "\nCld.Object.id: %s (%s)\n".printf (id, type.name ());
         result += "\tProperties:\n\n";
         result += "\t%-24s%-35s%-20s%-24s\n\n".printf ("name:", "value:", "value type:", "owner type:");

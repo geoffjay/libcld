@@ -273,7 +273,6 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
                 }
 
                 /* scans */
-                int counter = 0;
                 for (i = 0; i < nscan; i++) {
 
                     int raw_index = 0;      // data register index for channels digital raw value.
@@ -282,22 +281,14 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
                     for (int j = 0; j < size; j++) {
                         /* channels */
                         for (int k = 0; k < nchans[j]; k++) {
-                            if (j == 0) {
-                                counter ++;
-                            }
-
                             *value = tasks[j].poll_queue ();
-
-                            //tasks[j].poll_queue ();
-
-                            //*value = 6.249f;
                             Posix.memcpy (data, value, sizeof (float));
                             /* Write the data to the fifo */
                             if (fd != -1) {
-                                Posix.write (fd, data, sizeof (float));
-                                //stdout.printf ("%02X%02X%02X%02X ", data[0], data[1], data[2], data[3]);
-                                //stdout.printf ("%02X%02X%02X%02X ", buf[i], buf[i + 1], buf[i + 2], buf[i + 3]);
-                                //stdout.printf ("%6.3f ", *value);
+                                int ret =  (int)Posix.write (fd, data, sizeof (float));
+                                if (ret == -1) {
+                                    error ("Posix.errno = %d", Posix.errno);
+                                }
                             }
 
                             /* Write the raw value to a register */
@@ -311,10 +302,7 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
                                 update_channels ();
                             }
                         }
-
                     }
-
-                    //stdout.printf ("\n");
                 }
                 GLib.free (value);
                 GLib.free (data);

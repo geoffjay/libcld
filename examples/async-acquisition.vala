@@ -227,13 +227,13 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
         GLib.Timeout.add_seconds (2, start_acq_cb);
         GLib.Timeout.add_seconds (5, start_log_cb);
         chan = context.get_object ("ai00") as Cld.AIChannel;
-        //(chan as Cld.ScalableChannel).new_value.connect ((id, value) => {
-        //    stdout.printf ("> %.3f\n", chan.scaled_value);
-        //});
+        (chan as Cld.ScalableChannel).new_value.connect ((id, value) => {
+            stdout.printf ("ai00: %8.3f\n", chan.scaled_value);
+        });
 
-        //GLib.Timeout.add_seconds (15, stop_log_cb);
-        //GLib.Timeout.add_seconds (50, stop_acq_cb);
-        //GLib.Timeout.add_seconds (60, quit_cb);
+        GLib.Timeout.add_seconds (15, stop_log_cb);
+        GLib.Timeout.add_seconds (20, stop_acq_cb);
+        GLib.Timeout.add_seconds (25, quit_cb);
 
         loop.run ();
     }

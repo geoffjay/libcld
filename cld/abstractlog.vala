@@ -175,38 +175,16 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                         error ("Posix.errno = %d", Posix.errno);
                     }
                     lock (raw_queue) {
-//                        ////////// TEST //////////////////
-//
-//
-//                        for (int i = 0; i < ret; i++) {
-//                            total++;
-//                            stdout.printf ("%02X", buf[i]);
-//                            if ((total % 4) == 0) {
-//                                stdout.printf (" ");
-//                            }
-//                            if ((total % (16 * 4)) == 0) {
-//                                stdout.printf ("\n");
-//                            }
-//                        }
-//
-//
-//                        ////////// END TEST //////////////////////
-
-                        for (int i = 0; i < (ret / (int) sizeof (float)); i+= (int) sizeof (float)) {
+                        for (int i = 0; i < (ret / (int) sizeof (float)); i++) {
                             total++;
                             //*data = (float) buf [i];
-                            data [0] = buf [i];
-                            data [1] = buf [i + 1];
-                            data [2] = buf [i + 2];
-                            data [3] = buf [i + 3];
+                            int ix = i * (int) sizeof (float);
+                            data [0] = buf [ix];
+                            data [1] = buf [ix + 1];
+                            data [2] = buf [ix + 2];
+                            data [3] = buf [ix + 3];
                             Posix.memcpy (result, data, sizeof (float));
-                            //stdout.printf ("%02X%02X%02X%02X ", data[0], data[1], data[2], data[3]);
-                            //stdout.printf ("%02X%02X%02X%02X ", buf[i], buf[i + 1], buf[i + 2], buf[i + 3]);
-                            stdout.printf ("%6.3f ", *result);
 
-                            if ((total % 16) == 0) {
-                                stdout.printf ("\n");
-                            }
                             //if ((total % 256) == 0) {
                                 //message ("%d: total read by %s: %d",
                                          //Linux.gettid (), uri, total);
@@ -216,10 +194,6 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                             if (active) {
                                 raw_queue.offer_head (*result);
                             }
-                            //stdout.printf ("%4X ", buf [i]);
-                            //if ((total % nchans) == 0) {
-                                //stdout.printf ("\n");
-                            //}
                         }
                     }
                 }

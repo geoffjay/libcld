@@ -1068,16 +1068,43 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                             int exp_id_end,
                             DateTime start,
                             DateTime stop,
-                            int step) {
+                            int step,
+                            bool single_header) {
         string query;
         string name = "";
         string line = "";
         char sep = '\t';
         int count = 0;
+        Cld.AIChannel [] chan_ary;
+
+        /* Create dummy channels that do the calibration conversions */
+        var cols = get_children (typeof (Cld.Column));
+        chan_ary = new Cld.AIChannel [cols.size];
+        int i = 0;
+        foreach (var column in cols.values) {
+            Cld.Calibration cal;
+            var chan = (column as Cld.Column).channel;
+            chan_ary [i] = new Cld.AIChannel ();
+            if (chan is Cld.ScalableChannel) {
+                /* use the cal from the corresponding channel */
+                cal = (chan as Cld.ScalableChannel).calibration;
+                var c0 = (cal as Cld.Calibration).get_coefficient (0);
+                var c1 = (cal as Cld.Calibration).get_coefficient (1);
+            } else {
+                /* get a new default calibration */
+                cal = new Cld.Calibration ();
+            }
+            chan_ary [i].calibration = cal;
+            i++;
+        }
 
         file_open (filename);
         for (int exp_id = exp_id_begin; exp_id <= exp_id_end; exp_id++) {
-            write_header (exp_id);
+            if (exp_id == exp_id_begin) {
+                write_header (exp_id);
+            } else if (!single_header) {
+                write_header (exp_id);
+            }
 
             /* Get the table name of the experiment */
             query = "SELECT * FROM experiment WHERE id=$ID;";
@@ -1120,11 +1147,19 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 message ("Error: %d: %s\n", db.errcode (), db.errmsg ());
             }
 
-            while (stmt.step () == Sqlite.ROW) {
+            bool ret;
+            while (ret = stmt.step () == Sqlite.ROW) {
                 line = "%s\t".printf (stmt.column_text (ExperimentDataColumns.TIME));
-                for (int column = 0; column < columns; column++) {
-                    line += "%f%c".printf (stmt.column_double (column +
-                                            ExperimentDataColumns.DATA0), sep);
+                for (int column = 0; column < columns - 1; column++) {
+                    //line += "%f%c".printf (stmt.column_double (column +
+                      //                      ExperimentDataColumns.DATA0), sep);
+
+                    double value = stmt.column_double (column +
+                                            ExperimentDataColumns.DATA0);
+                    chan_ary [column].add_raw_value (value);
+                    value = chan_ary [column].scaled_value;
+
+                    line += "%f%c".printf (value, sep);
                 }
                 line += "\n";
                 if (count == 0) {

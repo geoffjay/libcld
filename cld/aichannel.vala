@@ -39,15 +39,12 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
     public virtual Cld.Calibration calibration {
         get {
             var calibrations = get_children (typeof (Cld.Calibration));
-            if (calibrations.values.is_empty) {
-                /* If there are no calibrations add a default one */
-                Cld.Calibration cal = new Cld.Calibration ();
-                objects.set (cal.id, cal);
-                /* Pull the list again */
-                calibrations = get_children (typeof (Cld.Calibration));
-            }
+            foreach (var cal in calibrations.values) {
 
-            return calibrations.values.to_array ()[0] as Cld.Calibration;
+                /* this should only happen once */
+                return cal as Cld.Calibration;
+            }
+            return null;
         }
         set {
             objects.unset_all (get_children (typeof (Cld.Calibration)));

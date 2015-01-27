@@ -269,9 +269,10 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
         float datum = 0;
         int total = 0;
         int nscans = 0;
-        GLib.DateTime timestamp = new GLib.DateTime.now_local ();
 
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_process_raw", () => {
+
+            GLib.DateTime timestamp = new GLib.DateTime.now_local ();
 
             while (active) {
                 lock (raw_queue) {

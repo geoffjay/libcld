@@ -90,7 +90,6 @@ public class Cld.LogController : Cld.AbstractController {
             if (log is Cld.SqliteLog) {
                 (log as Cld.SqliteLog).connect_data_source ();
             }
-            stdout.printf ("%s\n",(log as Cld.Log).to_string ());
         }
     }
 }

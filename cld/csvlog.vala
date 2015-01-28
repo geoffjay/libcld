@@ -113,6 +113,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
         if (is_open) {
             lock (file_stream) {
                 file_stream.printf ("%s", toprint);
+                file_stream.flush ();
             }
         }
     }
@@ -144,7 +145,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
             filename = "%s/%s".printf (path, temp);
 
         /* open the file */
-        message ("Opening file: %s", filename);
+        debug ("Opening file: %s", filename);
         file_stream = FileStream.open (filename, "w+");
 
         if (file_stream == null) {
@@ -228,11 +229,11 @@ public class Cld.CsvLog : Cld.AbstractLog {
         string cals = "Channel Calibrations:\n\n";
 
         foreach (var object in objects.values) {
-            message ("Found object [%s]", object.id);
+            debug ("Found object [%s]", object.id);
             if (object is Column) {
                 var channel = ((object as Column).channel as Channel);
                 Type type = (channel as GLib.Object).get_type ();
-                message ("Received object is Column - %s", type.name ());
+                debug ("Received object is Column - %s", type.name ());
 
                 if (channel is ScalableChannel) {
                     var calibration = (channel as ScalableChannel).calibration;
@@ -303,13 +304,13 @@ public class Cld.CsvLog : Cld.AbstractLog {
                 open_fifo.begin (fname, (obj, res) => {
                     try {
                         int fd = open_fifo.end (res);
-                        message ("got a writer for %s", fname);
+                        debug ("got a writer for %s", fname);
 
                         /* Background fifo watch queues fills the entry queue */
                         bg_fifo_watch.begin (fd, (obj, res) => {
                             try {
                                 bg_fifo_watch.end (res);
-                                message ("Log fifo watch async ended");
+                                debug ("Log fifo watch async ended");
                             } catch (ThreadError e) {
                                 string msg = e.message;
                                 error (@"Thread error: $msg");
@@ -319,7 +320,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
                         bg_raw_process.begin ((obj, res) => {
                             try {
                                 bg_raw_process.end (res);
-                                message ("Raw data queue processing async ended");
+                                debug ("Raw data queue processing async ended");
                             } catch (ThreadError e) {
                                 string msg = e.message;
                                 error (@"Thread error: $msg");
@@ -335,7 +336,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
             /* Background channel watch fills the entry queue */
             bg_channel_watch.begin (() => {
                 try {
-                    message ("Channel watch async ended");
+                    debug ("Channel watch async ended");
                 } catch (ThreadError e) {
                     string msg = e.message;
                     error (@"Thread error: $msg");
@@ -345,7 +346,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
         bg_entry_write.begin (() => {
             try {
-                message ("Log entry queue write async ended");
+                debug ("Log entry queue write async ended");
             } catch (ThreadError e) {
                 string msg = e.message;
                 error (@"Thread error: $msg");
@@ -358,13 +359,13 @@ public class Cld.CsvLog : Cld.AbstractLog {
         int fd = -1;
 
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("open_fifo_%s".printf (fname), () => {
-            message ("%s is is waiting for a writer to FIFO %s",this.id, fname);
+            debug ("%s is is waiting for a writer to FIFO %s",this.id, fname);
             fd = Posix.open (fname, Posix.O_RDONLY);
             fifos.set (fname, fd);
             if (fd == -1) {
-                message ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
+                debug ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
             } else {
-                message ("Sqlite log is opening FIFO %s fd: %d", fname, fd);
+                debug ("Sqlite log is opening FIFO %s fd: %d", fname, fd);
             }
 
             Idle.add ((owned) callback);

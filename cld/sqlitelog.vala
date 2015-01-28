@@ -532,7 +532,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public override void stop () {
         string query = """
             UPDATE experiment
-            SET stop_date = DATE('now'),
+            SET stop_date = DATE('now', 'localtime'),
                 stop_time = TIME('now', 'localtime')
             WHERE id = %s;
         """.printf (experiment_id.to_string ());
@@ -611,7 +611,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             VALUES
             (
                 $NAME,
-                DATE('now'),
+                DATE('now', 'localtime'),
                 $STOP_DATE,
                 TIME ('now', 'localtime'),
                 $STOP_TIME,

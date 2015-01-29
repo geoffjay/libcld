@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -56,11 +56,10 @@ internal class Cld.Builder : GLib.Object {
         string xpath = "/cld/cld:objects";
 
         for (int i = 0; i < level + 1; i++) {
-            if (level > 0 && i == level - 1) {
+            if (level > 0 && i == level - 1)
                 xpath += "/cld:object[@id = %s]".printf (ctr.id);
-            } else {
+            else
                 xpath += "/cld:object";
-            }
         }
 
         message ("Adding nodeset to %s for: %s", ctr.id, xpath);
@@ -80,9 +79,8 @@ internal class Cld.Builder : GLib.Object {
                         object = node_to_object (node);
 
                         /* Recursively add objects */
-                        if (object is Cld.Container) {
+                        if (object is Cld.Container)
                             build_object_map (object as Cld.Container, level + 1);
-                        }
 
                         /* assign container as parent */
                         object.parent = ctr;
@@ -108,7 +106,8 @@ internal class Cld.Builder : GLib.Object {
 
     private Cld.Object? node_to_object (Xml.Node *node) {
         Cld.Object object = null;
-        string type = node->get_prop ("type");
+
+        var type = node->get_prop ("type");
 
         switch (type) {
             case "pid":
@@ -141,6 +140,9 @@ internal class Cld.Builder : GLib.Object {
             case "port":
                 object = node_to_port (node);
                 break;
+            case "sensor":
+                object = node_to_sensor (node);
+                break;
             default:
                 break;
         }
@@ -154,13 +156,13 @@ internal class Cld.Builder : GLib.Object {
         Cld.Object object = null;
 
         var ctype = node->get_prop ("ctype");
-        if (ctype == "acquisition") {
+
+        if (ctype == "acquisition")
             object = new AcquisitionController.from_xml_node (node);
-        } else if (ctype == "log") {
+        else if (ctype == "log")
             object = new LogController.from_xml_node (node);
-        } else if (ctype == "automation") {
+        else if (ctype == "automation")
             object = new AutomationController.from_xml_node (node);
-        }
 
         return object;
     }
@@ -169,11 +171,11 @@ internal class Cld.Builder : GLib.Object {
         Cld.Object object = null;
 
         var ltype = node->get_prop ("ltype");
-        if (ltype == "csv") {
+
+        if (ltype == "csv")
             object = new CsvLog.from_xml_node (node);
-        } else if (ltype == "sqlite") {
+        else if (ltype == "sqlite")
             object = new SqliteLog.from_xml_node (node);
-        }
 
         return object;
     }
@@ -184,19 +186,18 @@ internal class Cld.Builder : GLib.Object {
         var ctype = node->get_prop ("ctype");
         var direction = node->get_prop ("direction");
 
-        if (ctype == "analog" && direction == "input") {
+        if (ctype == "analog" && direction == "input")
             object = new Cld.AIChannel.from_xml_node (node);
-        } else if (ctype == "analog" && direction == "output") {
+        else if (ctype == "analog" && direction == "output")
             object = new Cld.AOChannel.from_xml_node (node);
-        } else if (ctype == "digital" && direction == "input") {
+        else if (ctype == "digital" && direction == "input")
             object = new Cld.DIChannel.from_xml_node (node);
-        } else if (ctype == "digital" && direction == "output") {
+        else if (ctype == "digital" && direction == "output")
             object = new Cld.DOChannel.from_xml_node (node);
-        } else if (ctype == "virtual") {
+        else if (ctype == "virtual")
             object = new Cld.VChannel.from_xml_node (node);
-        } else if (ctype == "calculation") {
+        else if (ctype == "calculation")
             object = new Cld.MathChannel.from_xml_node (node);
-        }
 
         return object;
     }
@@ -205,17 +206,17 @@ internal class Cld.Builder : GLib.Object {
         Cld.Object object = null;
 
         var mtype = node->get_prop ("mtype");
-        if (mtype == "velmex") {
+
+        if (mtype == "velmex")
             object = new VelmexModule.from_xml_node (node);
-        } else if (mtype == "licor") {
+        else if (mtype == "licor")
             object = new LicorModule.from_xml_node (node);
-        } else if  (mtype == "brabender") {
+        else if  (mtype == "brabender")
             object = new BrabenderModule.from_xml_node (node);
-        } else if (mtype == "parker") {
+        else if (mtype == "parker")
             object = new ParkerModule.from_xml_node (node);
-        } else if  (mtype == "heidolph") {
+        else if  (mtype == "heidolph")
             object = new HeidolphModule.from_xml_node (node);
-        }
 
         return object;
     }
@@ -224,11 +225,22 @@ internal class Cld.Builder : GLib.Object {
         Cld.Object object = null;
 
         var ptype = node->get_prop ("ptype");
-        if (ptype == "serial") {
+
+        if (ptype == "serial")
             object = new SerialPort.from_xml_node (node);
-        } else if (ptype == "modbus") {
+        else if (ptype == "modbus")
             object = new ModbusPort.from_xml_node (node);
-        }
+
+        return object;
+    }
+
+    private Cld.Object? node_to_sensor (Xml.Node *node) {
+        Cld.Object object = null;
+
+        var ptype = node->get_prop ("sensor-type");
+
+        if (ptype == "flow")
+            object = new FlowSensor.from_xml_node (node);
 
         return object;
     }

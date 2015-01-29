@@ -17,60 +17,54 @@
  */
 
 /**
- * Skeletal implementation of the {@link Channel} interface.
+ * Skeletal implementation of the {@link Sensor} interface.
  *
- * Contains common code shared by all channel implementations.
+ * Contains common code shared by all sensor implementations.
  */
-public abstract class Cld.AbstractChannel : Cld.AbstractContainer, Cld.Channel {
+public abstract class Cld.AbstractSensor : Cld.AbstractContainer, Cld.Sensor, Cld.Buildable {
 
     /**
      * {@inheritDoc}
      */
-    public virtual int num { get; set; }
+    protected abstract string xml { get; }
 
     /**
      * {@inheritDoc}
      */
-    public virtual int subdevnum { get; set; }
+    protected abstract string xsd { get; }
 
     /**
      * {@inheritDoc}
      */
-    public virtual string devref { get; set; }
+    public virtual string channel_ref { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public virtual Cld.Device device {
-        get {
-            var devices = get_children (typeof (Cld.Device));
-            foreach (var dev in devices.values) {
-
-                /* this should only happen once */
-                return dev as Cld.Device;
-            }
-
-            return null;
-        }
-        set {
-            /* remove all first */
-            objects.unset_all (get_children (typeof (Cld.Device)));
-            objects.set (value.id, value);
-        }
-    }
+    public virtual double value { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public virtual string tag { get; set; }
+    public virtual double threshold_sp { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public virtual string desc { get; set; }
+    public virtual double sensitivity { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public virtual DateTime timestamp { get; set; }
+    public virtual Cld.Sensor.Range full_scale_range { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual double hysteresis { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract void build_from_node (Xml.Node *node) throws GLib.Error;
 }

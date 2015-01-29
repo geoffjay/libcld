@@ -16,15 +16,14 @@
  * License along with this library.
  */
 
-public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
+public class Cld.FlowSensor : Cld.AbstractSensor {
 
     /* Property backing fields */
 
     private string _xml = """
-      <cld:object id="raw0" type="channel" ch-type="raw" ref="cld://daqctl0/dev0">
-        <cld:property name="tag">RAW0</cld:property>
-        <cld:property name="desc">Raw Channel</cld:property>
-        <cld:property name="num">0</cld:property>
+      <cld:object id="fs0" type="sensor" sensor-type="flow">
+        <cld:property name="channel-ref">cld://daqctl0/ai0</cld:property>
+        <cld:property name="threshold-sp">100.0</cld:property>
       </cld:object>
     """;
 
@@ -32,7 +31,7 @@ public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
       <xs:element name="object">
         <xs:attribute name="id" type="xs:string" use="required"/>
         <xs:attribute name="type" type="xs:string" use="required"/>
-        <xs:attribute name="ch-type" type="xs:string" use="required"/>
+        <xs:attribute name="sensor-type" type="xs:string" use="required"/>
         <xs:attribute name="ref" type="xs:string" use="required"/>
         <!-- FIXME: This is missing the simple type properties. -->
       </xs:element>
@@ -41,42 +40,33 @@ public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
     /* Properties */
 
     /**
-     * 16 bit value mean to be read from DAC devices.
-     *
-     * FIXME: Would make more sense to use a Variant and allow for 8/16/32 bit
-     */
-    public uint16 value { get; set; }
-
-    /**
      * {@inheritDoc}
      */
-    protected virtual string xml {
+    protected override string xml {
         get { return _xml; }
     }
 
     /**
      * {@inheritDoc}
      */
-    protected virtual string xsd {
+    protected override string xsd {
         get { return _xsd; }
     }
 
     /**
      * Default construction.
      */
-    public RawChannel () {
-        this.num = 0;
-        this.devref = "/daqctl0/dev0";
-        this.tag = "RAW0";
-        this.desc = "Raw Channel";
+    public FlowSensor () {
+        id = "fs0";
+        threshold_sp = 100.0;
 
         connect_signals ();
     }
 
     /**
-     * Construction using
+     * Construction using an XML node
      */
-    public RawChannel.from_xml_node (Xml.Node *node) {
+    public FlowSensor.from_xml_node (Xml.Node *node) {
         this.node = node;
 
         try {
@@ -84,13 +74,14 @@ public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
         } catch (GLib.Error e) {
             critical (e.message);
         }
+
         connect_signals ();
     }
 
     /**
      * {@inheritDoc}
      */
-    protected virtual void build_from_node (Xml.Node *node) throws GLib.Error {
+    protected override void build_from_node (Xml.Node *node) throws GLib.Error {
         /* Assuming that node type is valid */
         if (node->children == null)
             throw new Cld.ConfigurationError.EMPTY_NODESET (
@@ -99,24 +90,18 @@ public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
 
         /* Read in the attributes */
         id = node->get_prop ("id");
-        devref = node->get_prop ("ref");
+        channel_ref = node->get_prop ("ref");
 
         /* Read in the property/class element nodes */
         for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
             if (iter->name == "property") {
                 switch (iter->get_prop ("name")) {
-                    case "tag":
-                        tag = iter->get_content ();
+                    case "channel-ref":
+                        channel_ref = iter->get_content ();
                         break;
-                    case "desc":
-                        desc = iter->get_content ();
-                        break;
-                    case "num":
+                    case "threshold-sp":
                         var val = iter->get_content ();
-                        num = int.parse (val);
-                        break;
-                    case "alias":
-                        alias = iter->get_content ();
+                        threshold_sp = double.parse (val);
                         break;
                     default:
                         break;
@@ -130,25 +115,16 @@ public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
      * current.
      */
     private void connect_signals () {
-        notify["tag"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
-        });
+        var type = typeof (Cld.FlowSensor);
+        ObjectClass ocl = (ObjectClass)type.class_ref ();
 
-        notify["desc"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
-        });
-
-        notify["num"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
-        });
-
-        notify["alias"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
-        });
+        foreach (var spec in ocl.list_properties ()) {
+            notify[spec.get_name ()].connect ((s, p) => {
+                debug ("Property %s changed for %s", p.get_name (), uri);
+                if (node != null)
+                    update_node ();
+            });
+        }
     }
 
     /**
@@ -160,17 +136,13 @@ public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
         for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
             if (iter->name == "property") {
                 switch (iter->get_prop ("name")) {
-                    case "tag":
-                        iter->set_content (tag);
+                    case "channel-ref":
+                        debug ("Updating channel reference to: %s", channel_ref);
+                        iter->set_content (channel_ref);
                         break;
-                    case "desc":
-                        iter->set_content (desc);
-                        break;
-                    case "num":
-                        iter->set_content (num.to_string ());
-                        break;
-                    case "alias":
-                        iter->set_content (alias);
+                    case "threshold-sp":
+                        debug ("Updating threshold SP to: %s", threshold_sp.to_string ());
+                        iter->set_content (threshold_sp.to_string ());
                         break;
                     default:
                         break;
@@ -178,4 +150,5 @@ public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
             }
         }
     }
+
 }

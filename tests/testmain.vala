@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,6 +37,10 @@ void main (string[] args) {
 	//TestSuite.get_root ().add_suite (new ComediTaskTests ().get_suite ());
 
 	//TestSuite.get_root ().add_suite (new FilterTests ().get_suite ());
+
+	TestSuite.get_root ().add_suite (new FlowSensorTests ().get_suite ());
+	//TestSuite.get_root ().add_suite (new TemperatureSensorTests ().get_suite ());
+	//TestSuite.get_root ().add_suite (new PressureSensorTests ().get_suite ());
 
 	TestSuite.get_root ().add_suite (new AIChannelTests ().get_suite ());
 	//TestSuite.get_root ().add_suite (new AOChannelTests ().get_suite ());

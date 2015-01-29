@@ -19,10 +19,12 @@ tests_SOURCES = \
 	testdichannel.vala \
 	testdochannel.vala \
 	testfilter.vala \
+	testflowsensor.vala \
 	testmain.vala \
 	testobject.vala \
 	testpid.vala \
 	testport.vala \
+	testsensor.vala \
 	testserialport.vala \
 	testvchannel.vala \
 	testxmlconfig.vala \

@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2014, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -44,11 +44,10 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
             return _ref_list;
         }
         private set {
-            if (_ref_list == null) {
+            if (_ref_list == null)
                 _ref_list = new Gee.ArrayList<Cld.AbstractContainer.Reference> ();
-            } else {
+            else
                 _ref_list.clear ();
-            }
             _ref_list.add_all (value);
         }
     }
@@ -176,9 +175,8 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
     public virtual Gee.Map<string, Cld.Object> get_children (Type type) {
         Gee.Map<string, Cld.Object> map = new Gee.TreeMap<string, Cld.Object> ();
         foreach (var object in objects.values) {
-            if (object.get_type ().is_a (type)) {
+            if (object.get_type ().is_a (type))
                 map.set (object.id, object);
-            }
         }
         return map;
     }
@@ -284,9 +282,8 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
     public virtual void generate_ref_list () {
         debug ("Generating reference list...");
 
-        if (objects == null) {
+        if (objects == null)
             return;
-        }
 
         foreach (var object in objects.values) {
             if (object is Cld.Container) {
@@ -306,9 +303,12 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
                     (object as Cld.Container).add_ref ((object as Cld.Column).chref);
                 } else if (type.is_a (typeof (Cld.ComediTask))) {
                     (object as Cld.Container).add_ref ((object as Cld.ComediTask).devref);
-                    foreach (var chref in (object as ComediTask).chrefs) {
+                    foreach (var chref in (object as Cld.ComediTask).chrefs) {
                         (object as Cld.Container).add_ref (chref);
                     }
+                } else if (type.is_a (typeof (Cld.Sensor))) {
+                    if (type.is_a (typeof (Cld.FlowSensor)))
+                        (object as Cld.Container).add_ref ((object as Cld.FlowSensor).channel_ref);
                 } else if (type.is_a (typeof (Cld.DataSeries))) {
                     (object as Cld.Container).add_ref ((object as Cld.DataSeries).chref);
                 } else if (type.is_a (typeof (Cld.Module))) {
@@ -339,7 +339,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
     public virtual void print_ref_list () {
         var list = get_descendant_ref_list ();
         foreach (var entry in list.read_only_view) {
-            message ("%-30s %s", (entry
+            stdout.printf ("%-30s %s", (entry
                 as Cld.AbstractContainer.Reference).self_uri,
                 (entry as Cld.AbstractContainer.Reference).reference_uri);
         }

@@ -27,6 +27,7 @@ libcld_0_3_la_SOURCES = \
 	abstractmodule.vala \
 	abstractobject.vala \
 	abstractport.vala \
+	abstractsensor.vala \
 	abstracttask.vala \
 	actuator.vala \
 	aichannel.vala \
@@ -54,6 +55,7 @@ libcld_0_3_la_SOURCES = \
 	dochannel.vala \
 	entry.vala \
 	filter.vala \
+	flowsensor.vala \
 	heidolphmodule.vala \
 	licormodule.vala \
 	log.vala \

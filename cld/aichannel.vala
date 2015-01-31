@@ -235,8 +235,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
             message ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
             update_node ();
         });
-        /* FIXME: This signal does not seem to connect ??? */
-        notify["raw_value_list_size"].connect ((s, p) => {
+        notify["raw-value-list-size"].connect ((s, p) => {
             message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
@@ -280,11 +279,9 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
                             break;
                         case "subdevnum":
                             iter->set_content (subdevnum.to_string ());
-                            message ("Writing %s to XML node for subdevnum", subdevnum.to_string ());
                             break;
                         case "naverage":
                             iter->set_content (raw_value_list_size.to_string ());
-                            message ("node avg set to %s", iter->get_content ());
                             break;
                         case "calref":
                             iter->set_content (calref);

@@ -1,3 +1,6 @@
+.. image:: https://badge.waffle.io/geoffjay/libcld.png?label=ready&title=Ready 
+ :target: https://waffle.io/geoffjay/libcld
+ :alt: 'Stories in Ready'
 libcld
 ======
 

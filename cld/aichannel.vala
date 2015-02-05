@@ -103,7 +103,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
     public double current_value {
         get {
             /* XXX why not just return scaled_value ??? */
-            return calibration.apply (_raw_value[0]);
+            return ((calibration != null) ? calibration.apply (_raw_value[0]) : -99.9);
         }
     }
 
@@ -112,7 +112,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
      * XXX consider name change
      */
     public double previous_value {
-        get { return calibration.apply (_raw_value[1]); }
+        get { return ((calibration != null) ? calibration.apply (_raw_value[1]) : -99.9); }
     }
 
     /**
@@ -121,7 +121,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
      * XXX consider name change
      */
     public double past_previous_value {
-        get { return calibration.apply (_raw_value[2]); }
+        get { return ((calibration != null) ? calibration.apply (_raw_value[2]) : -99.9); }
     }
 
     /**
@@ -325,7 +325,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
         }
 
         /* update the scaled value */
-        scaled_value = calibration.apply (avg_value);
+        scaled_value = (calibration != null) ? calibration.apply (avg_value) : -99.9;
     }
 
     /**

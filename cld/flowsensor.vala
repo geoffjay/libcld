@@ -53,6 +53,16 @@ public class Cld.FlowSensor : Cld.AbstractSensor {
         get { return _xsd; }
     }
 
+    public double value {
+        get {
+            double tmp = -1.0;
+            var channel = (channel_ref != null) ? get_object_from_uri (channel_ref) : null;
+            if (channel != null)
+                tmp = (channel as Cld.ScalableChannel).scaled_value;
+            return tmp;
+        }
+    }
+
     /**
      * Default construction.
      */
@@ -90,7 +100,6 @@ public class Cld.FlowSensor : Cld.AbstractSensor {
 
         /* Read in the attributes */
         id = node->get_prop ("id");
-        channel_ref = node->get_prop ("ref");
 
         /* Read in the property/class element nodes */
         for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
@@ -120,9 +129,18 @@ public class Cld.FlowSensor : Cld.AbstractSensor {
 
         foreach (var spec in ocl.list_properties ()) {
             notify[spec.get_name ()].connect ((s, p) => {
-                debug ("Property %s changed for %s", p.get_name (), uri);
+                message ("Property %s changed for %s", p.get_name (), uri);
                 if (node != null)
                     update_node ();
+            });
+        }
+
+        var channel = (channel_ref != null) ? get_object_from_uri (channel_ref) as Cld.ScalableChannel : null;
+        if (channel != null) {
+            channel.new_value.connect ((id, value) => {
+                if (Math.fabs (value - threshold_sp) < (0.05 * threshold_sp)) {
+                    threshold_alarm (id, value);
+                }
             });
         }
     }

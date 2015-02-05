@@ -55,12 +55,10 @@ public class Cld.Context : Cld.AbstractContainer {
         debug ("Generating references...");
         var list = get_descendant_ref_list ();
         foreach (var entry in list.read_only_view) {
-            var self = get_object_from_uri ((entry
-                as Cld.AbstractContainer.Reference).self_uri);
-            var reference = get_object_from_uri ((entry
-                as Cld.AbstractContainer.Reference).reference_uri);
+            var self = get_object_from_uri ((entry as Cld.AbstractContainer.Reference).self_uri);
+            var reference = get_object_from_uri ((entry as Cld.AbstractContainer.Reference).reference_uri);
 
-            debug ("%-30s %s", (self as Cld.Object).uri,
+            message ("%-30s %s", (self as Cld.Object).uri,
                                (reference as Cld.Object).uri);
 
             if ((reference != null)) {

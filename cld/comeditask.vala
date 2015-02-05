@@ -338,7 +338,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
         GLib.stdout.printf ("device: %s\n", device.id);
         //(device as ComediDevice).dev.set_max_buffer_size (subdevice, 1048576);
         //(device as ComediDevice).dev.set_buffer_size (subdevice, 1048576);
-        message (" buffer size: %d", (device as ComediDevice).dev.get_buffer_size (subdevice));
+        debug (" buffer size: %d", (device as ComediDevice).dev.get_buffer_size (subdevice));
         scan_period_nanosec = (uint)interval_ns;
 
         /* Make chanlist sequential and without gaps. XXX Need this for Advantech 1710. */
@@ -370,7 +370,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
                     out cmd, channels.size, scan_period_nanosec);
 
         if (ret < 0) {
-            message ("comedi_get_cmd_generic_timed failed");
+            debug ("comedi_get_cmd_generic_timed failed");
         }
 
         /* Modify parts of the command */
@@ -468,7 +468,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
                  * enables a concurent start of multiple tasks.
                  *
                  */
-                message ("Asynchronous acquisition started for ComediTask %s @ %lld", uri, GLib.get_monotonic_time ());
+                debug ("Asynchronous acquisition started for ComediTask %s @ %lld", uri, GLib.get_monotonic_time ());
                 ret = (device as ComediDevice).dev.command (cmd);
 
                 GLib.stdout.printf ("test ret = %d\n", ret);
@@ -572,12 +572,12 @@ public class Cld.ComediTask : Cld.AbstractTask {
     }
 
     private void dump_cmd () {
-        GLib.message ("subdevice:       %u", cmd.subdev);
-        GLib.message ("start:      %-8s %u", cmd_src (cmd.start_src), cmd.start_arg);
-        GLib.message ("scan_begin: %-8s %u", cmd_src (cmd.scan_begin_src), cmd.scan_begin_arg);
-        GLib.message ("convert:    %-8s %u", cmd_src (cmd.convert_src), cmd.convert_arg);
-        GLib.message ("scan_end:   %-8s %u", cmd_src (cmd.scan_end_src), cmd.scan_end_arg);
-        GLib.message ("stop:       %-8s %u", cmd_src (cmd.stop_src), cmd.stop_arg);
+        GLib.debug ("subdevice:       %u", cmd.subdev);
+        GLib.debug ("start:      %-8s %u", cmd_src (cmd.start_src), cmd.start_arg);
+        GLib.debug ("scan_begin: %-8s %u", cmd_src (cmd.scan_begin_src), cmd.scan_begin_arg);
+        GLib.debug ("convert:    %-8s %u", cmd_src (cmd.convert_src), cmd.convert_arg);
+        GLib.debug ("scan_end:   %-8s %u", cmd_src (cmd.scan_end_src), cmd.scan_end_arg);
+        GLib.debug ("stop:       %-8s %u", cmd_src (cmd.stop_src), cmd.stop_arg);
     }
 
     private void print_datum (uint raw, int channel_index, bool is_physical) {
@@ -663,7 +663,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
         /* Set the OOR behavior */
         Comedi.set_global_oor_behavior (Comedi.OorBehavior.NUMBER);
 
-        //message ("\t\t\t\texecute_instruction_list (), get_seconds (): %.3f", timestamp.get_seconds ());
+        //debug ("\t\t\t\texecute_instruction_list (), get_seconds (): %.3f", timestamp.get_seconds ());
         ret = (device as Cld.ComediDevice).dev.do_insnlist (instruction_list);
         if (ret < 0)
             Comedi.perror ("do_insnlist failed:");
@@ -683,15 +683,15 @@ public class Cld.ComediTask : Cld.AbstractTask {
                         (channel as Cld.Channel).subdevnum, (channel as Cld.Channel).num,
                         (channel as Cld.AIChannel).range);
 
-                    //message ("range min: %.3f, range max: %.3f, units: %u", range.min, range.max, range.unit);
+                    //debug ("range min: %.3f, range max: %.3f, units: %u", range.min, range.max, range.unit);
                     meas += Comedi.to_phys (instruction_list.insns[i].data[j], range, maxdata);
-                    //message ("instruction_list.insns[%d].data[%d]: %u, physical value: %.3f", i, j, instruction_list.insns[i].data[j], meas/(j+1));
+                    //debug ("instruction_list.insns[%d].data[%d]: %u, physical value: %.3f", i, j, instruction_list.insns[i].data[j], meas/(j+1));
                 }
 
                 meas = meas / (j);
                 (channel as Cld.AIChannel).add_raw_value (meas);
 
-                //message ("Channel: %s, Raw value: %.3f", (channel as AIChannel).id, (channel as AIChannel).raw_value);
+                //debug ("Channel: %s, Raw value: %.3f", (channel as AIChannel).id, (channel as AIChannel).raw_value);
             } else if (channel is Cld.DIChannel) {
                 meas = instruction_list.insns[i].data[0];
                 if (meas > 0.0) {
@@ -700,7 +700,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
                     (channel as Cld.DChannel).state = false;
                 }
 
-                //message ("Channel: %s, Raw value: %.3f", (channel as DIChannel).id, meas);
+                //debug ("Channel: %s, Raw value: %.3f", (channel as DIChannel).id, meas);
             }
 
             i++;
@@ -726,7 +726,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
 
                 maxdata = (device as Cld.ComediDevice).dev.get_maxdata ((channel as Cld.Channel).subdevnum, (channel as Cld.AOChannel).num);
                 data = (uint)((val / 100.0) * maxdata);
-                //message ("%s scaled_value: %.3f, data: %u", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
+                //debug ("%s scaled_value: %.3f, data: %u", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
                 (device as Cld.ComediDevice).dev.data_write (
                     (channel as Cld.Channel).subdevnum, (channel as Cld.AOChannel).num,
                     (channel as Cld.AOChannel).range, Comedi.AnalogReference.GROUND, data);
@@ -735,7 +735,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
                     data = 1;
                 else
                     data = 0;
-                //message ("%s data value: %u", (channel as DOChannel).id, data);
+                //debug ("%s data value: %u", (channel as DOChannel).id, data);
                 (device as Cld.ComediDevice).dev.data_write (
                     (channel as Cld.Channel).subdevnum,
                     (channel as Cld.DOChannel).num,
@@ -799,7 +799,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
                     //task.write_fifos ();
                 }
 
-                //GLib.message ("--- %d ---", this.interval_ms);
+                //GLib.debug ("--- %d ---", this.interval_ms);
 
                 mutex.lock ();
                 try {

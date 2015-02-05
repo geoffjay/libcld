@@ -31,11 +31,10 @@ public class Cld.Column : Cld.AbstractContainer {
      */
     public Cld.Channel channel {
         get {
-          var channels = get_children (typeof (Cld.Channel));
-          foreach (var chan in channels.values) {
-
-            return chan as Cld.Channel;
-          }
+            var channels = get_children (typeof (Cld.Channel));
+            foreach (var chan in channels.values) {
+                return chan as Cld.Channel;
+            }
 
             return null;
         }

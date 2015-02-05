@@ -75,7 +75,7 @@ internal class Cld.Builder : GLib.Object {
 
                     /* Load all available objects */
                     if (node->name == "object") {
-                        message ("Level: %d", level);
+                        debug (" > Level: %d", level);
                         object = node_to_object (node);
 
                         /* Recursively add objects */
@@ -88,7 +88,7 @@ internal class Cld.Builder : GLib.Object {
                         /* No point adding an object type that isn't recognized */
                         if (object != null) {
                             try {
-                                message ("Adding object of type %s with id %s to %s",
+                                message ("   > Adding object of type %s with id %s to %s",
                                          ((object as GLib.Object).get_type ()).name (),
                                          object.id, ctr.id);
                                 ctr.add (object);
@@ -237,9 +237,9 @@ internal class Cld.Builder : GLib.Object {
     private Cld.Object? node_to_sensor (Xml.Node *node) {
         Cld.Object object = null;
 
-        var ptype = node->get_prop ("sensor-type");
+        var type = node->get_prop ("sensor-type");
 
-        if (ptype == "flow")
+        if (type == "flow")
             object = new FlowSensor.from_xml_node (node);
 
         return object;

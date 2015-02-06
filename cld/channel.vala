@@ -90,6 +90,12 @@ public interface Cld.AChannel : Cld.AbstractChannel, Cld.Channel {
      */
     public abstract double avg_value { get; private set; }
 
+    /*
+     * The sample standard deviation
+     * http://mathworld.wolfram.com/StandardDeviation.html
+     */
+    //public abstract double ssdev_value { get; private set; }
+
     /**
      * Relates to the measurement range of the hardware.
      * XXX This should perhaps be abstracted from the channel.

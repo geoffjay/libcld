@@ -316,8 +316,10 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
             raw_value = value;
 
             if (raw_value_list.size > raw_value_list_size) {
-                /* throw away the value */
-                (raw_value_list as Gee.LinkedList<double?>).poll_head ();
+                /* throw away the extra values */
+                for (int i = raw_value_list_size; i < raw_value_list.size; i++) {
+                    (raw_value_list as Gee.LinkedList<double?>).poll_head ();
+                }
             }
 
             /* update the average */
@@ -325,7 +327,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
         }
 
         /* update the scaled value */
-        scaled_value = (calibration != null) ? calibration.apply (avg_value) : -99.9;
+        scaled_value = (calibration != null) ? calibration.apply (_raw_value [0]) : -99.9;
     }
 
     /**

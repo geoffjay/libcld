@@ -94,7 +94,7 @@ public interface Cld.AChannel : Cld.AbstractChannel, Cld.Channel {
      * The sample standard deviation
      * http://mathworld.wolfram.com/StandardDeviation.html
      */
-    //public abstract double ssdev_value { get; private set; }
+    public abstract double ssdev_value { get; private set; }
 
     /**
      * Relates to the measurement range of the hardware.

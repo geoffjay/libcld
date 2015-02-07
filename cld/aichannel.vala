@@ -86,6 +86,11 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
     /**
      * {@inheritDoc}
      */
+    public virtual double ssdev_value { get; private set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public virtual double scaled_value {
         get { return _scaled_value[0]; }
         private set {
@@ -260,35 +265,40 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
      * Update the XML Node for this object.
      */
     private void update_node () {
-        for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
-            if (iter->name == "property") {
-                switch (iter->get_prop ("name")) {
-                    case "tag":
-                        iter->set_content (tag);
-                        break;
-                    case "desc":
-                        iter->set_content (desc);
-                        break;
-                    case "num":
-                        iter->set_content (num.to_string ());
-                        break;
-                    case "subdevnum":
-                        iter->set_content (subdevnum.to_string ());
-                        break;
-                    case "naverage":
-                        iter->set_content (raw_value_list_size.to_string ());
-                        break;
-                    case "calref":
-                        iter->set_content (calref);
-                        break;
-                    case "range":
-                        iter->set_content (range.to_string ());
-                        break;
-                    case "alias":
-                        iter->set_content (alias);
-                        break;
-                    default:
-                        break;
+        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+            node->type != Xml.ElementType.COMMENT_NODE) {
+            /* iterate through node children */
+
+            for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
+                if (iter->name == "property") {
+                    switch (iter->get_prop ("name")) {
+                        case "tag":
+                            iter->set_content (tag);
+                            break;
+                        case "desc":
+                            iter->set_content (desc);
+                            break;
+                        case "num":
+                            iter->set_content (num.to_string ());
+                            break;
+                        case "subdevnum":
+                            iter->set_content (subdevnum.to_string ());
+                            break;
+                        case "naverage":
+                            iter->set_content (raw_value_list_size.to_string ());
+                            break;
+                        case "calref":
+                            iter->set_content (calref);
+                            break;
+                        case "range":
+                            iter->set_content (range.to_string ());
+                            break;
+                        case "alias":
+                            iter->set_content (alias);
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
         }
@@ -324,6 +334,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
 
             /* update the average */
             update_avg_value ();
+            update_ssdev_value ();
         }
 
         /* update the scaled value */
@@ -344,5 +355,17 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel, Cl
         } else {
             avg_value = 0.0;
         }
+    }
+
+    /**
+     * Update the value for the running average that represents the contents
+     * of the raw data list.
+     */
+    private void update_ssdev_value () {
+        double[] list = new double [raw_value_list.size];
+        var l = raw_value_list.to_array ();
+        for (int i = 0; i < l.length; i++)
+            list [i] = l [i];
+        ssdev_value = Gsl.Stats.sd (list, 1, list.length);
     }
 }

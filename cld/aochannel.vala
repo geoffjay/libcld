@@ -83,6 +83,11 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
     public virtual double avg_value { get; private set; }
 
     /**
+     * {@inheritDoc}
+     */
+    public virtual double ssdev_value { get; private set; }
+
+    /**
      * Wrong spot to store information about control loop, should move it.
      */
     public bool manual { get; set; }

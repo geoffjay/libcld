@@ -22,7 +22,7 @@
 public class Cld.ComediTask : Cld.AbstractTask {
 
     /* Property backing fields. */
-    private Gee.Map<string, Object>? _channels = null;
+    private Gee.Map<string, Cld.Object>? _channels = null;
     private Cld.Device _device = null;
 
     /**
@@ -88,10 +88,13 @@ public class Cld.ComediTask : Cld.AbstractTask {
     /**
      * The channels that this task uses.
      */
-    public Gee.Map<string, Object>? channels {
+    public Gee.Map<string, Cld.Object>? channels {
         get {
-            _channels = get_children (typeof (Cld.Channel))
-                                      as Gee.TreeMap<string, Cld.Object>;
+            lock (_channels) {
+                _channels = get_children (typeof (Cld.Channel))
+                                            as Gee.TreeMap<string, Cld.Object>;
+            }
+
             return _channels;
         }
         set {
@@ -153,7 +156,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
      */
     construct {
         chrefs = new Gee.ArrayList<string> ();
-        channels = new Gee.TreeMap<string, Object> ();
+        channels = new Gee.TreeMap<string, Cld.Object> ();
         fifos = new Gee.TreeMap<string, int> ();
         active = false;
         queue = new Gee.LinkedList<float?> ();
@@ -335,7 +338,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
         chanlist = new uint[channels.size];
         channel_array = new Cld.AIChannel[channels.size];
 
-        GLib.stdout.printf ("device: %s\n", device.id);
+        debug ("device: %s\n", device.id);
         //(device as ComediDevice).dev.set_max_buffer_size (subdevice, 1048576);
         //(device as ComediDevice).dev.set_buffer_size (subdevice, 1048576);
         debug (" buffer size: %d", (device as ComediDevice).dev.get_buffer_size (subdevice));
@@ -404,7 +407,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
 
         ret = (device as Cld.ComediDevice).dev.command_test (cmd);
 
-        GLib.stdout.printf ("test ret = %d\n", ret);
+        debug ("test ret = %d\n", ret);
         if (ret < 0) {
 		    Comedi.perror("comedi_command_test");
             return;
@@ -414,7 +417,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
 
         ret = (device as Cld.ComediDevice).dev.command_test (cmd);
 
-        GLib.stdout.printf ("test ret = %d\n", ret);
+        debug ("test ret = %d\n", ret);
         if (ret < 0) {
 		    Comedi.perror("comedi_command_test");
 		    return;
@@ -471,7 +474,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
                 debug ("Asynchronous acquisition started for ComediTask %s @ %lld", uri, GLib.get_monotonic_time ());
                 ret = (device as ComediDevice).dev.command (cmd);
 
-                GLib.stdout.printf ("test ret = %d\n", ret);
+                debug ("test ret = %d\n", ret);
                 if (ret < 0) {
                     Comedi.perror("comedi_command");
                 }
@@ -562,22 +565,21 @@ public class Cld.ComediTask : Cld.AbstractTask {
         if ((src & Comedi.TriggerSource.INT) != 0) buf = "int|";
         if ((src & Comedi.TriggerSource.OTHER) != 0) buf = "other|";
 
-        if (Posix.strlen (buf) == 0) {
+        if (Posix.strlen (buf) == 0)
             buf = "unknown src";
-        } else {
+        //else
             //buf[strlen (buf)-1]=0;
-        }
 
         return buf;
     }
 
     private void dump_cmd () {
-        GLib.debug ("subdevice:       %u", cmd.subdev);
-        GLib.debug ("start:      %-8s %u", cmd_src (cmd.start_src), cmd.start_arg);
-        GLib.debug ("scan_begin: %-8s %u", cmd_src (cmd.scan_begin_src), cmd.scan_begin_arg);
-        GLib.debug ("convert:    %-8s %u", cmd_src (cmd.convert_src), cmd.convert_arg);
-        GLib.debug ("scan_end:   %-8s %u", cmd_src (cmd.scan_end_src), cmd.scan_end_arg);
-        GLib.debug ("stop:       %-8s %u", cmd_src (cmd.stop_src), cmd.stop_arg);
+        debug ("subdevice:       %u", cmd.subdev);
+        debug ("start:      %-8s %u", cmd_src (cmd.start_src), cmd.start_arg);
+        debug ("scan_begin: %-8s %u", cmd_src (cmd.scan_begin_src), cmd.scan_begin_arg);
+        debug ("convert:    %-8s %u", cmd_src (cmd.convert_src), cmd.convert_arg);
+        debug ("scan_end:   %-8s %u", cmd_src (cmd.scan_end_src), cmd.scan_end_arg);
+        debug ("stop:       %-8s %u", cmd_src (cmd.stop_src), cmd.stop_arg);
     }
 
     private void print_datum (uint raw, int channel_index, bool is_physical) {
@@ -590,10 +592,10 @@ public class Cld.ComediTask : Cld.AbstractTask {
 
         uint maxdata = (device as Cld.ComediDevice).dev.get_maxdata (0, 0);
         if (!is_physical) {
-            GLib.stdout.printf ("%u ",raw);
+            debug ("%u ",raw);
         } else {
             physical_value = Comedi.to_phys (raw, crange, maxdata);
-            GLib.stdout.printf ("%#8.6g ", physical_value);
+            debug ("%#8.6g ", physical_value);
         }
     }
 

@@ -146,18 +146,14 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      */
     public virtual Gee.Map<string, Cld.Object> get_object_map (Type type) {
         Gee.Map<string, Cld.Object> map = new Gee.TreeMap<string, Cld.Object> ();
-        //debug ("Retrieve object map of type: %s", type.name ());
 
         if (objects != null) {
             foreach (var object in objects.values) {
-                //debug ("1) uri: %s type: %s", object.uri, type.name ());
                 if (object.get_type ().is_a (type)) {
-                    debug ("2) uri: %s type: %s", object.uri, type.name ());
                     map.set (object.id, object);
                 }
 
                 if (object is Cld.Container) {
-                    //debug ("%s is a container", object.id);
                     var sub_map = (object as Cld.Container).get_object_map (type);
                     foreach (var sub_object in sub_map.values) {
                         map.set (sub_object.id, sub_object);
@@ -168,6 +164,32 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
 
         return map;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual Gee.Map<string, Cld.Object> get_object_map_from_uri (Type type) {
+        Gee.Map<string, Cld.Object> map = new Gee.TreeMap<string, Cld.Object> ();
+
+        if (objects != null) {
+            foreach (var object in objects.values) {
+                if (object.get_type ().is_a (type)) {
+                    map.set (object.uri, object);
+                }
+
+                if (object is Cld.Container) {
+                    var sub_map = (object as Cld.Container).
+                                                get_object_map_from_uri (type);
+                    foreach (var sub_object in sub_map.values) {
+                        map.set (sub_object.uri, sub_object);
+                    }
+                }
+            }
+        }
+
+        return map;
+    }
+
 
     /**
      * {@inheritDoc}

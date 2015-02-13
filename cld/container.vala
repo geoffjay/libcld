@@ -84,6 +84,7 @@ public interface Cld.Container : Cld.Object {
 
     /**
      * Retrieves a map of all objects of a certain type.
+     * Duplicated id's will be overwritten.
      *
      * {{{
      *  var sc_map = ctr.get_object_map (typeof (Cld.ScalableChannel));
@@ -93,6 +94,19 @@ public interface Cld.Container : Cld.Object {
      * @return flattened map of all objects of a certain class type
      */
     public abstract Gee.Map<string, Cld.Object> get_object_map (Type type);
+
+    /**
+     * Retrieves a map of all objects of a certain type by uri. This
+     * method is preferred when id's are not unique.
+     *
+     * {{{
+     *  var sc_map = ctr.get_object_map (typeof (Cld.ScalableChannel));
+     * }}}
+     *
+     * @param type class type to retrieve
+     * @return flattened map of all objects of a certain class type
+     */
+    public abstract Gee.Map<string, Cld.Object> get_object_map_from_uri (Type type);
 
     /**
      * Retrieve a map of the children of a certain type.

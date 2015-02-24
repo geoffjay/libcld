@@ -146,7 +146,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
 
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_fifo_watch",  () => {
 
-            while (true) {
+            while (active) {
                 uint8 *data = GLib.malloc (sizeof (float));
                 float *result = GLib.malloc (sizeof (float));
                 uint8[] buf = new uint8[bufsz];
@@ -169,10 +169,12 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                     }
                 //} else if (ret == 0) {
                     //stdout.printf ("%s hit timeout\n", id);
+                    message ("ret: %d", ret);
                 } else if ((Posix.FD_ISSET (fd, rdset)) == 1) {
                     ret = (int)Posix.read (fd, buf, bufsz);
+                    message ("ret: %d", ret);
                     if (ret == -1) {
-                        error ("Posix.errno = %d", Posix.errno);
+                        GLib.error ("Posix.errno = %d", Posix.errno);
                     }
                     lock (raw_queue) {
                         for (int i = 0; i < (ret / (int) sizeof (float)); i++) {

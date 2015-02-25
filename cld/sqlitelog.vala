@@ -160,6 +160,11 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     private bool backup_is_open;
 
     /**
+     * A file descriptor for the FIFO
+     */
+    private int fd = -1;
+
+    /**
      * Report the backup progress.
      * % Completion = 100% * (pagecount - remaining) / pagecount
      */
@@ -534,7 +539,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 }
                 open_fifo.begin (fname, (obj, res) => {
                     try {
-                        int fd = open_fifo.end (res);
+                        fd = open_fifo.end (res);
                         message ("Got a writer for %s", fname);
 
                         /* Background fifo watch queues fills the entry queue */
@@ -619,11 +624,11 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
     private async int open_fifo (string fname) {
         SourceFunc callback = open_fifo.callback;
-        int fd = -1;
 
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("open_fifo_%s".printf (fname), () => {
             message ("%s is is waiting for a writer to FIFO %s",this.id, fname);
-            fd = Posix.open (fname, Posix.O_RDONLY);
+            if (fd == -1)
+                fd = Posix.open (fname, Posix.O_RDONLY);
             fifos.set (fname, fd);
             if (fd == -1) {
                 message ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));

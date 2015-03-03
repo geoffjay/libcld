@@ -146,6 +146,10 @@ public class Cld.ComediTask : Cld.AbstractTask {
      */
     public Gee.Deque<float?> queue;
 
+    private int64 start_time = get_monotonic_time ();
+    private int64 count = 1;
+
+
     /**
      * Enables simultaneous starting of multiple asynchronous acquisitions.
      */
@@ -661,7 +665,6 @@ public class Cld.ComediTask : Cld.AbstractTask {
          *     if using FIFOs
          */
         GLib.DateTime timestamp = new DateTime.now_local ();
-
         /* Set the OOR behavior */
         Comedi.set_global_oor_behavior (Comedi.OorBehavior.NUMBER);
 
@@ -778,8 +781,6 @@ public class Cld.ComediTask : Cld.AbstractTask {
      */
     public class Thread {
         private ComediTask task;
-        private static int64 start_time = get_monotonic_time ();
-        private static int64 count = 1;
 
         int interval_ms;
 
@@ -794,6 +795,8 @@ public class Cld.ComediTask : Cld.AbstractTask {
             Mutex mutex = new Mutex ();
             Cond cond = new Cond ();
             int64 end_time;
+            task.start_time = get_monotonic_time ();
+            task.count = 1;
 
             while (task.active) {
                 lock (task) {
@@ -805,7 +808,8 @@ public class Cld.ComediTask : Cld.AbstractTask {
 
                 mutex.lock ();
                 try {
-                    end_time = start_time + count++ * task.interval_ms * TimeSpan.MILLISECOND;
+                    end_time = task.start_time + task.count++ *
+                                        task.interval_ms * TimeSpan.MILLISECOND;
                     while (cond.wait_until (mutex, end_time))
                         ; /* do nothing */
                 } finally {

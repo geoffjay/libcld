@@ -23,6 +23,7 @@ Makefile
 Makefile.in
 missing
 stamp-h1
+.version
 
 # Files generated from valac, to add individual ones back use !file.c/.h
 cld/*.c

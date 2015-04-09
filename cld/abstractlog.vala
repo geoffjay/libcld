@@ -67,6 +67,11 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     public virtual Gee.Map<string, int>? fifos { get; set; }
 
     /**
+     * {@inheritDoc}
+     */
+    public virtual string data_source { get; set; }
+
+    /**
      * A double ended queue for raw data.
      */
     protected virtual Gee.Deque<float?> raw_queue { get; set; }
@@ -123,6 +128,16 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public virtual void connect_data_source () {
+        var mux = get_object_from_uri (data_source);
+        message ("Connecting to data source `%s' from `%s'",
+                (mux as Cld.Multiplexer).fname, mux.id);
+        fifos.set ((mux as Cld.Multiplexer).fname, -1);
+    }
+
+    /**
      * Write a single entry to the log
      */
     protected abstract void log_entry_write (Cld.LogEntry entry);
@@ -142,11 +157,11 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
         int bufsz = 1048576;
         int total = 0;
 
-	    Posix.fcntl (fd, Posix.F_SETFL, Posix.O_NONBLOCK);
+	    //Posix.fcntl (fd, Posix.F_SETFL, Posix.O_NONBLOCK);
 
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_fifo_watch",  () => {
 
-            while (active) {
+            while (true) {
                 uint8 *data = GLib.malloc (sizeof (float));
                 float *result = GLib.malloc (sizeof (float));
                 uint8[] buf = new uint8[bufsz];
@@ -172,7 +187,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                     message ("ret: %d", ret);
                 } else if ((Posix.FD_ISSET (fd, rdset)) == 1) {
                     ret = (int)Posix.read (fd, buf, bufsz);
-                    message ("ret: %d", ret);
+                    //message ("ret: %d", ret);
                     if (ret == -1) {
                         GLib.error ("Posix.errno = %d", Posix.errno);
                     }
@@ -224,13 +239,13 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_channel_watch", () => {
             Mutex mutex = new Mutex ();
             Cond cond = new Cond ();
-            int64 end_time;
+            int64 end_time = start_time_mono;
 
             while (active) {
                 Cld.LogEntry entry = new Cld.LogEntry ();
                 entry.data = new double [nchans];
                 entry.timestamp = new GLib.DateTime.now_local ();
-                entry.time_us = entry.timestamp.difference (start_time);
+                entry.time_us = end_time - start_time_mono;
 
                 int i = 0;
 
@@ -271,6 +286,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
         float datum = 0;
         int total = 0;
         int nscans = 0;
+        int64 time64 = 0;
 
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_process_raw", () => {
 
@@ -293,6 +309,8 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                                  */
                                 timestamp = timestamp.add_seconds (1 / rate);
                                 entry.timestamp = timestamp;
+                                time64 += (int64)(1e6 / rate);
+                                entry.time_us = time64;
 
                                 for (int j = 0; j < nchans; j++) {
                                         datum = raw_queue.poll_tail ();
@@ -310,7 +328,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                         }
                     }
                 }
-                Thread.usleep (10000);
+                //Thread.usleep (10000);
             }
 
             Idle.add ((owned) callback);
@@ -353,5 +371,12 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
             return 0;
         });
         yield;
+    }
+
+    /* Locks the entry queue while offering a new entry */
+    protected void offer_entry (Cld.LogEntry entry) {
+        lock (entry_queue) {
+            entry_queue.offer_head (entry);
+        }
     }
 }

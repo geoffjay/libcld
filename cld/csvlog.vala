@@ -33,9 +33,20 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
     private FileStream file_stream;
 
+    /**
+     * A file descriptor for the FIFO
+     */
+    private int fd = -1;
+
+    /* Signal emits when a new row of data is available */
+    private signal void new_row_available ();
+
+    private ulong new_row_available_handler;
+    private Gee.Map<Cld.Channel, ulong>? new_value_handlers;
 
     /* constructor */
     construct {
+        new_value_handlers = new Gee.TreeMap<Cld.Channel, ulong> ();
     }
 
     public CsvLog () {
@@ -87,6 +98,9 @@ public class Cld.CsvLog : Cld.AbstractLog {
                             value = iter->get_content ();
                             time_stamp = TimeStampFlag.parse (value);
                             break;
+                        case "data-source":
+                            data_source = iter->get_content ();
+                            break;
                         default:
                             break;
                     }
@@ -134,7 +148,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
                                 iter->set_content (file);
                                 break;
                             case "rate":
-                                message ("rate %.3f", rate);
                                 iter->set_content (rate.to_string ());
                                 break;
                             case "format":
@@ -343,63 +356,143 @@ public class Cld.CsvLog : Cld.AbstractLog {
      */
     public override void start () {
         start_time = new DateTime.now_local ();
+        int64 time64 = 0;
+        int datachans = 0;
+        int rowcnt = 0;
+        ulong handler;
+
         file_open ();
         write_header ();
 
         /* Count the number of channels */
         var columns = get_children (typeof (Cld.Column));
+
         nchans = columns.size;
-
         active = true;
-        if (fifos.size != 0) {
-            /* Open the FIFO data buffers. */
-            foreach (string fname in fifos.keys) {
-                open_fifo.begin (fname, (obj, res) => {
-                    try {
-                        int fd = open_fifo.end (res);
-                        debug ("got a writer for %s", fname);
-
-                        /* Background fifo watch queues fills the entry queue */
-                        bg_fifo_watch.begin (fd, (obj, res) => {
-                            try {
-                                bg_fifo_watch.end (res);
-                                debug ("Log fifo watch async ended");
-                            } catch (ThreadError e) {
-                                string msg = e.message;
-                                error (@"Thread error: $msg");
-                            }
-                        });
-
-                        bg_raw_process.begin ((obj, res) => {
-                            try {
-                                bg_raw_process.end (res);
-                                debug ("Raw data queue processing async ended");
-                            } catch (ThreadError e) {
-                                string msg = e.message;
-                                error (@"Thread error: $msg");
-                            }
-                        });
-                    } catch (ThreadError e) {
-                        string msg = e.message;
-                        error (@"Thread error: $msg");
-                    }
-                });
-            }
-        } else {
+        if (data_source == "channel" || data_source == null) {
             /* Background channel watch fills the entry queue */
             bg_channel_watch.begin (() => {
                 try {
-                    debug ("Channel watch async ended");
+                    message ("Channel watch async ended");
                 } catch (ThreadError e) {
                     string msg = e.message;
                     error (@"Thread error: $msg");
                 }
             });
+        } else {
+
+            /* XXX FIXME Not using FIFOs for IPC here. Will us 0MQ socket later */
+            /* Open the FIFO data buffers. */
+/*
+ *            foreach (string fname in fifos.keys) {
+ *                if (Posix.access (fname, Posix.F_OK) == -1) {
+ *                    int res = Posix.mkfifo (fname, 0777);
+ *                    if (res != 0) {
+ *                        error ("Context could not create fifo %s\n", fname);
+ *                    }
+ *                }
+ *                open_fifo.begin (fname, (obj, res) => {
+ *                    try {
+ *                        fd = open_fifo.end (res);
+ *                        message ("Got a writer for %s", fname);
+ *
+ *                        [> Background fifo watch queues fills the entry queue <]
+ *                        bg_fifo_watch.begin (fd, (obj, res) => {
+ *                            try {
+ *                                bg_fifo_watch.end (res);
+ *                                message ("Log fifo watch async ended");
+ *                            } catch (ThreadError e) {
+ *                                string msg = e.message;
+ *                                error (@"Thread error: $msg");
+ *                            }
+ *                        });
+ *
+ *                        bg_raw_process.begin ((obj, res) => {
+ *                            try {
+ *                                bg_raw_process.end (res);
+ *                                message ("Raw data queue processing async ended");
+ *                            } catch (ThreadError e) {
+ *                                string msg = e.message;
+ *                                error (@"Thread error: $msg");
+ *                            }
+ *                        });
+ *                    } catch (ThreadError e) {
+ *                        string msg = e.message;
+ *                        error (@"Thread error: $msg");
+ *                    }
+ *                });
+ *            }
+ */
+            /**
+             * Write data to the log entry queue each time a new row of data
+             * is available (when all of the values have new data).
+             **/
+
+             /* Count the primary data channels (ie. excluding math channels) */
+            foreach (var column in objects.values) {
+                if (column is Cld.Column) {
+                    var channel = (column as Cld.Column).channel;
+                    if (!(channel is Cld.MathChannel)) {
+                        datachans++;
+                        /* Increment row counter when a new value occurs */
+                        if (channel is Cld.ScalableChannel) {
+                            handler = (channel as Cld.ScalableChannel).
+                                             new_value.connect ((id, value) => {
+                                rowcnt++;
+                                if (rowcnt == datachans) {
+                                    new_row_available ();
+                                    rowcnt = 0;
+                                }
+                            });
+                            new_value_handlers.set (channel as ScalableChannel, handler);
+
+                        } else if (channel is Cld.DChannel) {
+                            handler = (channel as Cld.DChannel).
+                                             new_value.connect ((id, value) => {
+                                rowcnt++;
+                                if (rowcnt == datachans) {
+                                    new_row_available ();
+                                    rowcnt = 0;
+                                }
+                            });
+                            new_value_handlers.set (channel as Cld.DChannel, handler);
+                        }
+                    }
+                }
+            }
+
+            new_row_available_handler = new_row_available.connect (() => {
+                Cld.LogEntry entry = new Cld.LogEntry ();
+                entry.data = new double [nchans];
+                /**
+                 * The timestamp is artificially generated from
+                 * the rate parameter which is assumed to be
+                 * correct.
+                 */
+                entry.timestamp = start_time.add_seconds (1 / rate);//creates an incremented copy
+                time64 += (int64)(1e6 / rate);
+                entry.time_us = time64;
+
+                int i = 0;
+
+                foreach (var column in objects.values) {
+                    if (column is Cld.Column) {
+                        entry.data [i++] = (column as Cld.Column).channel_value;
+                    }
+                }
+
+                offer_entry (entry); //Work around because entry_queue is not lockable from here
+                /*
+                 *lock (entry_queue) {
+                 *    entry_queue.offer_head (entry);
+                 *}
+                 */
+            });
         }
 
         bg_entry_write.begin (() => {
             try {
-                debug ("Log entry queue write async ended");
+                message ("Log entry queue write async ended");
             } catch (ThreadError e) {
                 string msg = e.message;
                 error (@"Thread error: $msg");
@@ -409,16 +502,16 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
     private async int open_fifo (string fname) {
         SourceFunc callback = open_fifo.callback;
-        int fd = -1;
 
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("open_fifo_%s".printf (fname), () => {
-            debug ("%s is is waiting for a writer to FIFO %s",this.id, fname);
-            fd = Posix.open (fname, Posix.O_RDONLY);
+            message ("%s is is waiting for a writer to FIFO %s",this.id, fname);
+            if (fd == -1)
+                fd = Posix.open (fname, Posix.O_RDONLY);
             fifos.set (fname, fd);
             if (fd == -1) {
-                debug ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
+                message ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
             } else {
-                debug ("Sqlite log is opening FIFO %s fd: %d", fname, fd);
+                message ("CSV log is opening FIFO %s fd: %d", fname, fd);
             }
 
             Idle.add ((owned) callback);
@@ -434,7 +527,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
      * {@inheritDoc}
      */
     public override void process_entry_queue () {
-        while (entry_queue.size > 0) {
+        for (int i = 0; i < entry_queue.size; i++) {
             log_entry_write (entry_queue.poll_tail ());
         }
     }
@@ -443,10 +536,33 @@ public class Cld.CsvLog : Cld.AbstractLog {
      * {@inheritDoc}
      */
     public override void stop () {
+        disconnect (new_row_available_handler);
+        foreach (var entry in new_value_handlers.entries) {
+            var handler = entry.value;
+            var channel = entry.key;
+            if (channel is Cld.ScalableChannel) {
+                (channel as Cld.ScalableChannel).disconnect (handler);
+            } else if (channel is Cld.DChannel) {
+                (channel as Cld.DChannel).disconnect (handler);
+            }
+        }
+
         if (active) {
-            active = false;
+            /* Wait for the queue to be empty */
+            GLib.Timeout.add (100, deactivate_cb);
         }
         file_close ();
+    }
+
+    private bool deactivate_cb () {
+        if (entry_queue.size == 0) {
+            active = false;
+
+            return false;
+        } else {
+
+            return true;
+        }
     }
 
     /**

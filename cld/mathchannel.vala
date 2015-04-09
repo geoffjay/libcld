@@ -66,6 +66,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
             str = str.replace ("[-", "_n");
             str = str.replace ("[", "_");
             str = str.replace ("]", "");
+            str = str.replace ("\n", "");
             /* check if expression is parseable */
             if ( null != ( evaluator = Evaluator.create (str))) {
 

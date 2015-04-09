@@ -328,10 +328,6 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
                 }
                 GLib.free (value);
                 GLib.free (data);
-                double num = (1000000 * (double)(total - total_old) / (double)(GLib.get_monotonic_time () - t));
-                if ((num < (32000 / update_stride) && (num != 0))) {
-                    message ("too slow %.3f", num);
-                }
             }
 
             Idle.add ((owned) callback);

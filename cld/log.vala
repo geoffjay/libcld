@@ -133,6 +133,13 @@ public interface Cld.Log : Cld.Object {
     public abstract Gee.Map<string, int>? fifos { get; set; }
 
     /**
+     * The source of the channel value information.
+     * fifo: The data comes from a named pipe.
+     * channel: The data comes from reading the value directly from the channel
+     */
+    public abstract string data_source { get; set; }
+
+    /**
      * Request the uri of an IPC (eg. named pipe, 0MQ socket)
      *
      **/
@@ -142,6 +149,11 @@ public interface Cld.Log : Cld.Object {
      * Connect the columns to their corresponding channel signals.
      */
     public abstract void connect_signals ();
+
+    /**
+     * Connect to a multiplexer for streamin acquisition.
+     */
+    public abstract void connect_data_source ();
 
     /**
      * Start the log file output as an async method.

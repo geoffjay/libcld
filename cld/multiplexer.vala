@@ -49,6 +49,8 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
     /* A vector of the current binary data values of the channels */
     private float [] data_register;
 
+    private Cld.AIChannel [] channel_array;
+
     /**
      * A signal that starts streaming tasks concurrently.
      */
@@ -103,6 +105,16 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
         }
 
         data_register = new float [n];
+        channel_array = new Cld.AIChannel [n];
+
+        int i = 0;
+        foreach (var task in tasks.values) {
+            foreach (var channel in (task as Cld.ComediTask).channels.values) {
+                if (channel is Cld.AIChannel) {
+                    channel_array [i++] = channel as Cld.AIChannel;
+                }
+            }
+        }
     }
 
     /**
@@ -229,7 +241,7 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
         Cld.ComediDevice[] devices;     // the Comedi devices used by these tasks
         Cld.ComediTask[] tasks;
         int[] nchans;                   // the number of channels in each task
-        int nchan = 0;                      // the total number of channels in this multiplexer
+        int nchan = 0;                  // the total number of channels in this multiplexer
         int[] subdevices;               // the subdevice numbers for these devices
         int[] buffersizes;              // the data buffer sizes of each subdevice
         int[] buffer_contents;
@@ -260,10 +272,12 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
             i++;
         }
 
-        GLib.Thread<int> thread = new GLib.Thread<int>.try ("%s_queue_data",  () => {
+        GLib.Thread<int> thread = new GLib.Thread<int>.try ("multiplexer_queue_data",  () => {
             while (true) {
                 float *value = GLib.malloc (sizeof (float));
                 uint8 *data  = GLib.malloc (sizeof (float));
+                int64 t = GLib.get_monotonic_time ();
+                int total_old = total;
 
                 /* Determine the minimum integral size data required for multiplexing */
                 nscan = int.MAX;
@@ -299,15 +313,25 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
                             raw_index++;
                             total++;
                             if ((total % (nchan * update_stride)) == 0) {
-                                update_channels ();
+                                for (int p = 0; p < channel_array.length; p++) {
+                                    channel_array [p].add_raw_value
+                                                   ((double) data_register [p]);
+                                }
                             }
+                            /*
+                             *if ((total % (nchan * 200)) == 0) {
+                             *    message ("multiplexer: %d %d", Linux.gettid (), total/(nchan * 200));
+                             *}
+                             */
                         }
                     }
                 }
                 GLib.free (value);
                 GLib.free (data);
-
-                Thread.usleep (5000);
+                double num = (1000000 * (double)(total - total_old) / (double)(GLib.get_monotonic_time () - t));
+                if ((num < (32000 / update_stride) && (num != 0))) {
+                    message ("too slow %.3f", num);
+                }
             }
 
             Idle.add ((owned) callback);
@@ -315,34 +339,5 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
         });
 
         yield;
-    }
-
-    /**
-     * Update the channel values
-     */
-    private bool update_channels () {
-
-        uint maxdata;
-        Comedi.Range range;
-        int i = 0;
-        GLib.DateTime timestamp = new DateTime.now_local ();
-
-        var tasks = get_object_map (typeof (Cld.ComediTask));
-
-        lock (data_register) {
-            foreach (var task in tasks.values) {
-                var device = (task as Cld.ComediTask).device;
-                foreach (var channel in (task as Cld.ComediTask).channels.values) {
-                    (channel as Cld.Channel).timestamp = timestamp;
-                    /* Analog Input */
-                    if (channel is Cld.AIChannel) {
-                        (channel as Cld.AIChannel).add_raw_value (
-                                                    (double) data_register [i++]);
-                    }
-                }
-            }
-        }
-
-        return true;
     }
 }

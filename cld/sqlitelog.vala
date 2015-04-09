@@ -88,13 +88,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public int backup_interval_ms { get; set; }
 
     /**
-     * The source of the channel value information.
-     * fifo: The data comes from a named pipe.
-     * channel: The data comes from reading the value directly from the channel
-     */
-    public string data_source;
-
-    /**
      * The name of the current Log table.
      */
     public string experiment_name {
@@ -329,13 +322,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         if (_objects != null) {
             _objects.clear ();
         }
-    }
-
-    public void connect_data_source () {
-        var mux = get_object_from_uri (data_source);
-        message ("Connecting to data source `%s' from `%s'",
-                (mux as Cld.Multiplexer).fname, mux.id);
-        fifos.set ((mux as Cld.Multiplexer).fname, -1);
     }
 
     /**

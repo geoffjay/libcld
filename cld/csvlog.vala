@@ -41,8 +41,12 @@ public class Cld.CsvLog : Cld.AbstractLog {
     /* Signal emits when a new row of data is available */
     private signal void new_row_available ();
 
+    private ulong new_row_available_handler;
+    private Gee.Map<Cld.Channel, ulong>? new_value_handlers;
+
     /* constructor */
     construct {
+        new_value_handlers = new Gee.TreeMap<Cld.Channel, ulong> ();
     }
 
     public CsvLog () {
@@ -144,7 +148,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
                                 iter->set_content (file);
                                 break;
                             case "rate":
-                                message ("rate %.3f", rate);
                                 iter->set_content (rate.to_string ());
                                 break;
                             case "format":
@@ -353,6 +356,11 @@ public class Cld.CsvLog : Cld.AbstractLog {
      */
     public override void start () {
         start_time = new DateTime.now_local ();
+        int64 time64 = 0;
+        int datachans = 0;
+        int rowcnt = 0;
+        ulong handler;
+
         file_open ();
         write_header ();
 
@@ -421,8 +429,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
              **/
 
              /* Count the primary data channels (ie. excluding math channels) */
-            int datachans = 0;
-            int rowcnt = 0;
             foreach (var column in objects.values) {
                 if (column is Cld.Column) {
                     var channel = (column as Cld.Column).channel;
@@ -430,28 +436,32 @@ public class Cld.CsvLog : Cld.AbstractLog {
                         datachans++;
                         /* Increment row counter when a new value occurs */
                         if (channel is Cld.ScalableChannel) {
-                            (channel as Cld.ScalableChannel).new_value.connect ((id, value) => {
+                            handler = (channel as Cld.ScalableChannel).
+                                             new_value.connect ((id, value) => {
                                 rowcnt++;
                                 if (rowcnt == datachans) {
                                     new_row_available ();
                                     rowcnt = 0;
                                 }
                             });
+                            new_value_handlers.set (channel as ScalableChannel, handler);
+
                         } else if (channel is Cld.DChannel) {
-                            (channel as Cld.DChannel).new_value.connect ((id, value) => {
+                            handler = (channel as Cld.DChannel).
+                                             new_value.connect ((id, value) => {
                                 rowcnt++;
                                 if (rowcnt == datachans) {
                                     new_row_available ();
                                     rowcnt = 0;
                                 }
                             });
+                            new_value_handlers.set (channel as Cld.DChannel, handler);
                         }
                     }
                 }
             }
 
-            int64 time64 = 0;
-            new_row_available.connect (() => {
+            new_row_available_handler = new_row_available.connect (() => {
                 Cld.LogEntry entry = new Cld.LogEntry ();
                 entry.data = new double [nchans];
                 /**
@@ -526,10 +536,33 @@ public class Cld.CsvLog : Cld.AbstractLog {
      * {@inheritDoc}
      */
     public override void stop () {
+        disconnect (new_row_available_handler);
+        foreach (var entry in new_value_handlers.entries) {
+            var handler = entry.value;
+            var channel = entry.key;
+            if (channel is Cld.ScalableChannel) {
+                (channel as Cld.ScalableChannel).disconnect (handler);
+            } else if (channel is Cld.DChannel) {
+                (channel as Cld.DChannel).disconnect (handler);
+            }
+        }
+
         if (active) {
-            active = false;
+            /* Wait for the queue to be empty */
+            GLib.Timeout.add (100, deactivate_cb);
         }
         file_close ();
+    }
+
+    private bool deactivate_cb () {
+        if (entry_queue.size == 0) {
+            active = false;
+
+            return false;
+        } else {
+
+            return true;
+        }
     }
 
     /**

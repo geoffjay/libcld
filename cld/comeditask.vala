@@ -475,7 +475,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
                  * enables a concurent start of multiple tasks.
                  *
                  */
-                debug ("Asynchronous acquisition started for ComediTask %s @ %lld", uri, GLib.get_monotonic_time ());
+                //debug ("Asynchronous acquisition started for ComediTask %s @ %lld", uri, GLib.get_monotonic_time ());
                 ret = (device as ComediDevice).dev.command (cmd);
 
                 debug ("test ret = %d\n", ret);
@@ -486,6 +486,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
                 int count = 0;
                 int front = 0;
                 int back = 0;
+                int nchan = channels.size;
 
                 var size = (device as ComediDevice).dev.get_buffer_size (subdevice);
 
@@ -518,7 +519,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
                                 double meas = Comedi.to_phys (
                                                 buf [i], crange [index++], maxdata);
                                 //stdout.printf ("%6.3f ", meas);
-                                if (index >= channels.size) {
+                                if (index >= nchan) {
                                     index = 0;
                                     //stdout.printf ("\n");
                                 }
@@ -529,7 +530,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
                                     queue.poll_tail ();
                                 }
                             }
-//if ((total % 32768) == 0) { stdout.printf ("%d: total from %s %d  QSIZE: %d\n",Linux.gettid (), uri, total, queue.size); }
+                           // if ((total % 640) == 0) { stdout.printf ("%d: total from %s %d  QSIZE: %d\n",Linux.gettid (), uri, total, queue.size); }
                         }
                     }
                 }
@@ -578,12 +579,12 @@ public class Cld.ComediTask : Cld.AbstractTask {
     }
 
     private void dump_cmd () {
-        debug ("subdevice:       %u", cmd.subdev);
-        debug ("start:      %-8s %u", cmd_src (cmd.start_src), cmd.start_arg);
-        debug ("scan_begin: %-8s %u", cmd_src (cmd.scan_begin_src), cmd.scan_begin_arg);
-        debug ("convert:    %-8s %u", cmd_src (cmd.convert_src), cmd.convert_arg);
-        debug ("scan_end:   %-8s %u", cmd_src (cmd.scan_end_src), cmd.scan_end_arg);
-        debug ("stop:       %-8s %u", cmd_src (cmd.stop_src), cmd.stop_arg);
+        GLib.message ("subdevice:       %u", cmd.subdev);
+        GLib.message ("start:      %-8s %u", cmd_src (cmd.start_src), cmd.start_arg);
+        GLib.message ("scan_begin: %-8s %u", cmd_src (cmd.scan_begin_src), cmd.scan_begin_arg);
+        GLib.message ("convert:    %-8s %u", cmd_src (cmd.convert_src), cmd.convert_arg);
+        GLib.message ("scan_end:   %-8s %u", cmd_src (cmd.scan_end_src), cmd.scan_end_arg);
+        GLib.message ("stop:       %-8s %u", cmd_src (cmd.stop_src), cmd.stop_arg);
     }
 
     private void print_datum (uint raw, int channel_index, bool is_physical) {

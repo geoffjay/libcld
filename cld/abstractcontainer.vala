@@ -346,8 +346,8 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
                     foreach (var taskref in (object as Cld.Multiplexer).taskrefs) {
                         (object as Cld.Container).add_ref (taskref);
                     }
-                } else if (type.is_a (typeof (Cld.SqliteLog))) {
-                    (object as Cld.Container).add_ref ((object as Cld.SqliteLog).data_source);
+                } else if (type.is_a (typeof (Cld.Log))) {
+                    (object as Cld.Container).add_ref ((object as Cld.Log).data_source);
                 }
             }
         }

@@ -276,16 +276,16 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
     /**
      * {@inheritDoc}
      */
-    public virtual Cld.Object? get_object_from_uri (string uri) {
+    public virtual Cld.Object? get_object_from_uri (string requested_uri) {
         Cld.Object? result = null;
         Cld.Container container = this;
         string [] tokens;
 
-        tokens = uri.split ("/");
-        foreach (string token in tokens) {
-            if ((token != "ctr0") && (token != "")) {
+        tokens = requested_uri.split ("/");
+        for (int i = 0; i < tokens.length; i++) {
+            if (tokens [i] != "") {
                 foreach (var object in container.objects.values) {
-                    if ((object as Cld.Object).id == token) {
+                    if ((object as Cld.Object).id == tokens [i]) {
                         if (object is Container) {
                             container = object as Container;
                         }
@@ -293,6 +293,10 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
                     }
                 }
             }
+        }
+        if (result.uri != requested_uri) {
+            result = null;
+            message ("Object with uri %s does not exist", requested_uri);
         }
 
         return result;

@@ -62,11 +62,7 @@ public class Cld.Context : Cld.AbstractContainer {
                                (reference as Cld.Object).uri);
 
             if ((reference != null)) {
-                try {
-                    (self as Cld.Container).add (reference);
-                } catch (GLib.Error e) {
-                    critical (e.message);
-                }
+                (self as Cld.Container).add (reference);
             }
         }
         debug ("Generate references finished");

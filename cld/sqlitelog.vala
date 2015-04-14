@@ -358,6 +358,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             } else {
                 is_open = true;
             }
+            db.busy_timeout (1000);
         }
     }
 
@@ -501,9 +502,24 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public override void start () {
         /* Count the number of channels */
         var columns = get_children (typeof (Cld.Column));
-
+        database_open ();
         nchans = columns.size;
         active = true;
+
+        start_time = new DateTime.now_local ();
+        create_tables ();
+        _experiment_name = "experiment_%s".printf (
+                start_time.to_string ().replace ("-", "_").replace (":", "_")
+            );
+        update_experiment_table ();
+        update_channel_table ();
+        add_log_table ();
+
+        if (backup_file != null || backup_path != null)
+            GLib.Timeout.add_full (GLib.Priority.DEFAULT_IDLE,
+                                   backup_interval_ms,
+                                   backup_cb);
+
         if (data_source == "channel" || data_source == null) {
             /* Background channel watch fills the entry queue */
             bg_channel_watch.begin (() => {
@@ -556,7 +572,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             }
         }
 
-
         bg_entry_write.begin (() => {
             try {
                 message ("Log entry queue write async ended");
@@ -565,22 +580,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 error (@"Thread error: $msg");
             }
         });
-
-        database_open ();
-        create_tables ();
-        start_time = new DateTime.now_local ();
-        _experiment_name = "experiment_%s".printf (
-                start_time.to_string ().replace ("-", "_").replace (":", "_")
-            );
-        update_experiment_table ();
-        update_channel_table ();
-        add_log_table ();
-
-        if (backup_file != null || backup_path != null)
-            GLib.Timeout.add_full (GLib.Priority.DEFAULT_IDLE,
-                                   backup_interval_ms,
-                                   backup_cb);
-
     }
 
     /**
@@ -827,7 +826,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         if (ec != Sqlite.OK) {
             stderr.printf ("Error: %s\n", errmsg);
         }
-
         foreach (var column in objects.values) {
             if (column is Cld.Column) {
                 query = "ALTER TABLE %s ADD COLUMN %s REAL;".printf (_experiment_name,
@@ -838,7 +836,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 }
             }
         }
-
         query = """
             INSERT INTO %s
             (
@@ -874,7 +871,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
     public override void log_entry_write (Cld.LogEntry entry) {
         parameter_index = log_stmt.bind_parameter_index ("$TIME");
-        log_stmt.bind_text (parameter_index, entry.time_as_string);
+        if (parameter_index == 0) {
+            GLib.message ("bind parameter returned 0");
+        }
+        ec = log_stmt.bind_text (parameter_index, entry.time_as_string);
+        if (ec != Sqlite.OK) {
+            stderr.printf ("Error: %d: %s\n", db.errcode (), db.errmsg ());
+        }
 
         for (int i = 0; i < nchans; i++) {
             parameter_index = log_stmt.bind_parameter_index ("$VAL%d".printf (i));
@@ -1208,15 +1211,18 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             while (ret = stmt.step () == Sqlite.ROW) {
                 line = "%s\t".printf (stmt.column_text (ExperimentDataColumns.TIME));
                 for (int column = 0; column < columns - 1; column++) {
-                    //line += "%f%c".printf (stmt.column_double (column +
-                      //                      ExperimentDataColumns.DATA0), sep);
+                    if (data_source == "channel") {
+                        line += "%f%c".printf (stmt.column_double (column +
+                                            ExperimentDataColumns.DATA0), sep);
+                    } else {
 
-                    double value = stmt.column_double (column +
-                                            ExperimentDataColumns.DATA0);
-                    chan_ary [column].add_raw_value (value);
-                    value = chan_ary [column].scaled_value;
+                        double value = stmt.column_double (column +
+                                                    ExperimentDataColumns.DATA0);
+                        chan_ary [column].add_raw_value (value);
+                        value = chan_ary [column].scaled_value;
 
-                    line += "%f%c".printf (value, sep);
+                        line += "%f%c".printf (value, sep);
+                    }
                 }
                 line += "\n";
                 if (count == 0) {

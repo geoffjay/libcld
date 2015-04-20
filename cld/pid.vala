@@ -832,8 +832,8 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
      * @param node XML tree node containing configuration for a PID object.
      */
     public Pid2.from_xml_node (Xml.Node *node) {
-
         string value;
+        this.node = node;
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -883,7 +883,103 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
                 }
             }
         }
+
+        connect_notify ();
     }
+
+    /**
+     * Connect all the notify signals that should require the node to update
+     */
+    private void connect_notify () {
+        notify["sp"].connect ((s, p) => {
+            message ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["dt"].connect ((s, p) => {
+            message ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["kp"].connect ((s, p) => {
+            message ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["ki"].connect ((s, p) => {
+            message ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["kd"].connect ((s, p) => {
+            message ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        notify["desc"].connect ((s, p) => {
+            message ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
+
+        /*
+         *notify["sp-chref"].connect ((s, p) => {
+         *    message ("Property %s changed for %s", p.get_name (), uri);
+         *    update_node ();
+         *});
+         */
+
+        /*
+         *notify["alias"].connect ((s, p) => {
+         *    message ("Property %s changed for %s", p.get_name (), uri);
+         *    update_node ();
+         *});
+         */
+    }
+
+    /**
+     * Update the XML Node for this object.
+     */
+    private void update_node () {
+        if (node->type == Xml.ElementType.ELEMENT_NODE &&
+            node->type != Xml.ElementType.COMMENT_NODE) {
+            /* iterate through node children */
+
+            for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
+                if (iter->name == "property") {
+                    switch (iter->get_prop ("name")) {
+                        case "sp":
+                            iter->set_content (sp.to_string ());
+                            break;
+                        case "dt":
+                            iter->set_content (dt.to_string ());
+                            break;
+                        case "kp":
+                            iter->set_content (kp.to_string ());
+                            message ("Updating kp to %.3f", kp);
+                            break;
+                        case "ki":
+                            iter->set_content (ki.to_string ());
+                            break;
+                        case "kd":
+                            iter->set_content (kd.to_string ());
+                            break;
+                        case "desc":
+                            iter->set_content (desc);
+                            break;
+                        case "sp_chref":
+                            iter->set_content (sp_chref);
+                            break;
+                        case "alias":
+                            iter->set_content (alias);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
 
     /**
      * Connect the setpoint channel if it exists.
@@ -987,16 +1083,17 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
         i_err += p_err * dt / 1000;
         d_err = 1000 * (current_value - previous_value) / dt;
 
+        var val = (kp * p_err) + (ki * i_err) + (kd * d_err);
         lock (mv) {
             /* Anti-windup technique. See http://www.controlguru.com/2008/021008.html */
-            if ((mv.channel as AOChannel).scaled_value > limit_high) {
+            if (val >= limit_high) {
                 (mv.channel as AOChannel).raw_value = limit_high;
                 if (ki != 0) {
                         i_err = ((mv.channel as AOChannel).scaled_value - (kp * p_err) - (kd * d_err)) / ki;
                 } else {
                     i_err = 0;
                 }
-            } else if ((mv.channel as AOChannel).scaled_value < limit_low) {
+            } else if (val <= limit_low) {
                 (mv.channel as AOChannel).raw_value = limit_low;
                 if (ki != 0) {
                         i_err = ((mv.channel as AOChannel).scaled_value - (kp * p_err) - (kd * d_err)) / ki;
@@ -1004,19 +1101,23 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
                     i_err = 0;
                 }
             }
-//        message ("SP: %.2f, MV: %.2f, PV: %.2f, PVPR: %.2f, PVPPR: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
-//               sp, mv.channel.scaled_value, current_value, previous_value, past_previous_value, p_err, i_err, d_err);
 
-
+            val = (kp * p_err) + (ki * i_err) + (kd * d_err);
 
             /* Set the output */
-            var val = (kp * p_err) + (ki * i_err) + (kd * d_err);
-            if (val > limit_high) {
-                val = limit_high;
-            } else if (val < limit_low) {
-                val = limit_low;
-            }
+                        /*
+             *if (val > limit_high) {
+             *    val = limit_high;
+             *} else if (val < limit_low) {
+             *    val = limit_low;
+             *}
+             */
             (mv.channel as AOChannel).raw_value = val;
+            /*
+             *message ("SP: %.2f, MV: %.2f, PV: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
+             *   sp, mv.channel.scaled_value, current_value, p_err, i_err, d_err);
+             */
+
         }
 
         /* XXX Not sure whether or not to raise an output event here, or simple

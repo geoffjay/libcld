@@ -295,6 +295,11 @@ public class Cld.ComediTask : Cld.AbstractTask {
                 set_insn_list ();
                 break;
             case "write":
+                foreach (var channel in objects.values) {
+                    if (channel is Cld.AOChannel) {
+                        (channel as Cld.AOChannel).raw_value = 0;
+                    }
+                }
                 // no action required for now.
                 break;
             default:
@@ -725,14 +730,20 @@ public class Cld.ComediTask : Cld.AbstractTask {
             /*XXX Consider getting rid of Channel timestamps. They are not needed if using FIFOs. */
             (channel as Cld.Channel).timestamp = timestamp;
             if (channel is Cld.AOChannel) {
-                val = (channel as Cld.AOChannel).scaled_value;
                 range = (device as Cld.ComediDevice).dev.get_range (
                         (channel as Cld.Channel).subdevnum, (channel as Cld.AOChannel).num,
                         (channel as Cld.AOChannel).range);
 
                 maxdata = (device as Cld.ComediDevice).dev.get_maxdata ((channel as Cld.Channel).subdevnum, (channel as Cld.AOChannel).num);
+                val = (channel as Cld.AOChannel).scaled_value;
                 data = (uint)((val / 100.0) * maxdata);
-                //debug ("%s scaled_value: %.3f, data: %u", (channel as AOChannel).id, (channel as AOChannel).scaled_value, data);
+                /*
+                 *message ("%s scaled_value: %.3f raw_value: %.3f data: %u",
+                 *        (channel as AOChannel).id,
+                 *        (channel as AOChannel).scaled_value,
+                 *        (channel as AOChannel).raw_value,
+                 *        data);
+                 */
                 (device as Cld.ComediDevice).dev.data_write (
                     (channel as Cld.Channel).subdevnum, (channel as Cld.AOChannel).num,
                     (channel as Cld.AOChannel).range, Comedi.AnalogReference.GROUND, data);

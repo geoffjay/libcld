@@ -570,11 +570,19 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
      */
     public double kd { get; set; }
 
+    private double _sp;
+
     /**
      * Desired value that the PID controller works to achieve through process
      * changes to the measured variable.
      */
-    public double sp { get; set; }
+    public double sp {
+        get { return _sp; }
+        set {
+            _sp = value;
+            calculate_preload_bias ();
+            }
+    }
 
     /**
      * Set point channel (so_channel) reference string.
@@ -1057,7 +1065,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
         p_err = sp - previous_value;
 
         if (ki != 0) {
-                i_err = ((mv.channel as AOChannel).scaled_value - (kp * p_err) - (kd * d_err)) / ki;
+                i_err = ((mv.channel as AOChannel).raw_value - (kp * p_err) - (kd * d_err)) / ki;
         } else {
             i_err = 0;
         }
@@ -1089,14 +1097,14 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
             if (val >= limit_high) {
                 (mv.channel as AOChannel).raw_value = limit_high;
                 if (ki != 0) {
-                        i_err = ((mv.channel as AOChannel).scaled_value - (kp * p_err) - (kd * d_err)) / ki;
+                        i_err = ((mv.channel as AOChannel).raw_value - (kp * p_err) - (kd * d_err)) / ki;
                 } else {
                     i_err = 0;
                 }
             } else if (val <= limit_low) {
                 (mv.channel as AOChannel).raw_value = limit_low;
                 if (ki != 0) {
-                        i_err = ((mv.channel as AOChannel).scaled_value - (kp * p_err) - (kd * d_err)) / ki;
+                        i_err = ((mv.channel as AOChannel).raw_value - (kp * p_err) - (kd * d_err)) / ki;
                 } else {
                     i_err = 0;
                 }
@@ -1114,10 +1122,9 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
              */
             (mv.channel as AOChannel).raw_value = val;
             /*
-             *message ("SP: %.2f, MV: %.2f, PV: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
-             *   sp, mv.channel.scaled_value, current_value, p_err, i_err, d_err);
+             *message ("SP: %.2f, MVs: %.2f, MVr: %.3f PV: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
+             *   sp, mv.channel.scaled_value, val, current_value, p_err, i_err, d_err);
              */
-
         }
 
         /* XXX Not sure whether or not to raise an output event here, or simple

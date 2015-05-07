@@ -63,11 +63,6 @@ public interface Cld.Channel : Cld.Container {
     public abstract DateTime timestamp { get; set; }
 
     /**
-     * A name that identifies this. It is used by MathChannel.
-     */
-    public abstract string alias { get; set; }
-
-    /**
      * Raised when the channel has been assigned a new value.
      *
      * FIXME: This should replace non-variant equivalents.
@@ -155,4 +150,10 @@ public interface Cld.ScalableChannel : Cld.AbstractChannel, Cld.Channel {
      * Raised when a new value has been calculated.
      */
     public abstract signal void new_value (string id, double value);
+
+    /**
+     * {@inheritDoc}
+     *
+     */
+    public abstract void set_object_property (string name, Cld.Object object);
 }

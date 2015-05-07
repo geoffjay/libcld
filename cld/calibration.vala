@@ -49,7 +49,7 @@ public class Cld.Calibration : Cld.AbstractContainer {
         /* set defaults */
         units = "Volts";
         id = "cal0";
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
         /* set defaults */
         try {
             add (new Cld.Coefficient.with_data ("cft0", 0, 0.0));
@@ -64,12 +64,12 @@ public class Cld.Calibration : Cld.AbstractContainer {
         /* instantiate object */
         this.units = units;
         id = "cal0";
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
         connect_signals ();
     }
 
     public Calibration.from_xml_node (Xml.Node *node) {
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
         this.node = node;
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
@@ -105,8 +105,8 @@ public class Cld.Calibration : Cld.AbstractContainer {
     }
 
     ~Calibration () {
-        if (_objects != null)
-            _objects.clear ();
+        if (objects != null)
+            objects.clear ();
     }
 
     /**

@@ -177,12 +177,14 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Calibration Reference", blurb="The URI of the calibration")]
     public virtual string calref { get; set; }
 
     /**
      * {@inheritDoc}
      */
     private Cld.Calibration _calibration = null;
+    [Description(nick="Calibration", blurb="The calibration used to generate a scaled value")]
     public virtual Calibration calibration {
         get {
             if (_calibration == null) {
@@ -417,6 +419,23 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    public override void set_object_property (string name, Cld.Object object) {
+        switch (name) {
+            case "calibration":
+                if (object is Cld.Calibration) {
+                    calibration = object as Cld.Calibration;
+                    calref = (object as Cld.Calibration).uri;
+                    message ("Calibration for %s changed to %s", uri, calibration.uri);
+                }
+                break;
+            default:
+                break;
         }
     }
 

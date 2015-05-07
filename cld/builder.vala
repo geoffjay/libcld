@@ -28,9 +28,16 @@ internal class Cld.Builder : GLib.Object {
 
     private Cld.Container container;
 
-    public Gee.Map<string, Cld.Object> objects {
-        get { return container.objects; }
-    }
+/*
+ *    public Gee.Map<string, Cld.Object> objects {
+ *        get {
+ *            unowned Gee.Map<string, Cld.Object> objs = container.get_objects ();
+ *
+ *            return objs;
+ *            }
+ *    }
+ */
+    public Gee.Map<string, Cld.Object> objects;
 
     construct {
         container = new Cld.RootContainer ();
@@ -46,6 +53,12 @@ internal class Cld.Builder : GLib.Object {
     public Builder.from_xml_config (Cld.XmlConfig xml) {
         this.xml = xml;
         build_object_map (container, 0);
+    }
+
+    public Gee.Map<string, Cld.Object> get_objects () {
+        objects = container.get_objects ();
+
+        return objects;
     }
 
     /**

@@ -530,10 +530,6 @@ public class Cld.ParkerModule : AbstractModule {
             return NONE;
         }
     }
-    /**
-     * Property backing fields.
-     */
-    private Gee.Map<string, Object> _objects;
 
     private string received = "";
     private uint status1 = 0x0000;

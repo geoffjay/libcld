@@ -25,7 +25,7 @@ public interface Cld.Task : Cld.Object {
    /**
     * Indicates the current status of the task.
     */
-    public abstract bool active { get; set; }
+    public abstract bool active { get; protected set; }
 
     /**
      * Launch the task.

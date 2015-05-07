@@ -25,7 +25,7 @@ public class Cld.AutomationController : Cld.AbstractController {
      * Default construction
      */
     construct {
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
     }
 
     public AutomationController () {}

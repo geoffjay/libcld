@@ -24,11 +24,10 @@ internal class Cld.RootContainer : Cld.AbstractContainer {
     /* Avoid the need to include /ctr uri lookup strings */
     public override string uri {
         get { return ""; }
-        set { _uri = value; }
     }
 
     internal RootContainer () {
         debug ("Construction");
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
     }
 }

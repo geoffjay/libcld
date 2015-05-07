@@ -26,21 +26,25 @@ public abstract class Cld.AbstractChannel : Cld.AbstractContainer, Cld.Channel {
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Number", blurb="The indexed value of the channel")]
     public virtual int num { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Subdevice", blurb="The sudevice used by this channel")]
     public virtual int subdevnum { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Device Reference", blurb="The uri of the device used by this channel")]
     public virtual string devref { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Device", blurb="The device used by this channel")]
     public virtual Cld.Device device {
         get {
             var devices = get_children (typeof (Cld.Device));
@@ -62,11 +66,15 @@ public abstract class Cld.AbstractChannel : Cld.AbstractContainer, Cld.Channel {
     /**
      * {@inheritDoc}
      */
+
+    [Description(nick="Tag", blurb="The name used to identify this channel")]
     public virtual string tag { get; set; }
 
     /**
      * {@inheritDoc}
      */
+
+    [Description(nick="Description", blurb="A description of the channel")]
     public virtual string desc { get; set; }
 
     /**

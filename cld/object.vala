@@ -31,7 +31,7 @@ public interface Cld.Object : GLib.Object {
     /**
      * The tree path to the object.
      */
-    public abstract string uri { get; set; }
+    public abstract string uri { get; }
 
     /**
      * A weak reference to the parent object.
@@ -42,6 +42,13 @@ public interface Cld.Object : GLib.Object {
      * An alternative identifier for the object.
      */
     public abstract string alias { get; set; }
+
+    /**
+     * Set the uri
+     *
+     * @param uri the uri of this
+     */
+    public abstract void set_uri (string uri);
 
     /**
      * Converts the contents into an output string.
@@ -82,4 +89,20 @@ public interface Cld.Object : GLib.Object {
      * Prints the contents to the stream given.
      */
     public abstract void print (FileStream f);
+
+    /**
+     * Get the nickname of the object
+     *
+     * @return the nickname of this class
+     */
+    public abstract string get_nickname ();
+
+    /**
+     * Set a property that is a Cld.Object
+     *
+     * @param name The ParamSpec as returned by GLib.ParamSpec.get_name ().
+     * @param value The property value to be set.
+     *
+     */
+    public abstract void set_object_property (string name, Cld.Object object);
 }

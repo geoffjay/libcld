@@ -22,11 +22,6 @@
 public class Cld.CsvLog : Cld.AbstractLog {
 
     /**
-     * Property backing fields.
-     */
-    private Gee.Map<string, Object> _objects;
-
-    /**
      * Determines whether the file is renamed on open using the format string.
      */
     public Log.TimeStampFlag time_stamp { get; set; }
@@ -113,6 +108,12 @@ public class Cld.CsvLog : Cld.AbstractLog {
                 }
             }
         }
+
+        if (!path.has_suffix ("/")) {
+            path = "%s%s".printf (path, "/");
+        }
+        gfile = GLib.File.new_for_path (path + file);
+
         connect_signals ();
     }
 
@@ -166,8 +167,8 @@ public class Cld.CsvLog : Cld.AbstractLog {
     }
 
     ~CsvLog () {
-        if (_objects != null)
-            _objects.clear ();
+        if (get_objects() != null)
+            get_objects().clear ();
     }
 
     /**
@@ -305,7 +306,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
         string units = "[us]";
         string cals = "Channel Calibrations:\n\n";
 
-        foreach (var object in objects.values) {
+        foreach (var object in get_objects().values) {
             debug ("Found object [%s]", object.id);
             if (object is Column) {
                 var channel = ((object as Column).channel as Channel);
@@ -316,7 +317,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
                     var calibration = (channel as ScalableChannel).calibration;
                     cals += "%s:\ty = ".printf (channel.uri);
 
-                    foreach (var coefficient in (calibration as Container).objects.values) {
+                    foreach (var coefficient in (calibration as Container).get_objects().values) {
                         cals += "%.3f * x^%d + ".printf (
                                 (coefficient as Coefficient).value,
                                 (coefficient as Coefficient).n
@@ -348,7 +349,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
         line = "%lld\t".printf (entry.time_us);
 
         int i = 0;
-        foreach (var object in objects.values) {
+        foreach (var object in get_objects().values) {
             if (object is Cld.Column) {
                 //var datum = entry.data.get ((object as Cld.Column).chref);
                 var datum = entry.data [i];
@@ -440,7 +441,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
              **/
 
              /* Count the primary data channels (ie. excluding math channels) */
-            foreach (var column in objects.values) {
+            foreach (var column in get_objects().values) {
                 if (column is Cld.Column) {
                     var channel = (column as Cld.Column).channel;
                     if (!(channel is Cld.MathChannel)) {
@@ -486,7 +487,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
                 int i = 0;
 
-                foreach (var column in objects.values) {
+                foreach (var column in get_objects().values) {
                     if (column is Cld.Column) {
                         entry.data [i++] = (column as Cld.Column).channel_value;
                     }

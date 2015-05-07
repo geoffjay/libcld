@@ -28,12 +28,12 @@ public class Cld.Daq : Cld.AbstractContainer {
 
     public Daq () {
         rate = 10.0;    /* Hz */
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
     }
 
     public Daq.with_rate (double rate) {
         this.rate = rate;
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
     }
 
     /**
@@ -42,7 +42,7 @@ public class Cld.Daq : Cld.AbstractContainer {
     public Daq.from_xml_node (Xml.Node *node) {
         string value;
 
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -73,8 +73,8 @@ public class Cld.Daq : Cld.AbstractContainer {
     }
 
     ~Daq () {
-        if (_objects != null)
-            _objects.clear ();
+        if (objects != null)
+            objects.clear ();
     }
 
 //    /**

@@ -67,6 +67,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
         set {
             objects.unset_all (get_children (typeof (Cld.ScalableChannel)));
             objects.set (value.id, value);
+            _channel = value;
         }
     }
 
@@ -88,10 +89,9 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
     construct {
         j = 0;
     }
+
     public DataSeries () {
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
-
-
+        objects = new Gee.TreeMap<string, Cld.Object> ();
     }
 
     /**
@@ -102,7 +102,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
     public DataSeries.from_xml_node (Xml.Node *node) {
         string value;
         this.node = node;
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -152,6 +152,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
         buffer = new double[length];
         for (int i = 0; i < length; i++) {
             buffer[i] = 0.0;
+
         }
     }
 
@@ -256,6 +257,22 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
                     }
                 });
             }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override void set_object_property (string name, Cld.Object object) {
+        switch (name) {
+            case "channel":
+                if (object is Cld.ScalableChannel) {
+                    channel = object as Cld.ScalableChannel;
+                    chref = channel.uri;
+                }
+                break;
+            default:
+                break;
         }
     }
 }

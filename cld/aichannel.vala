@@ -32,12 +32,14 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Calibration Reference", blurb="The URI of the calibration")]
     public virtual string calref { get; set; }
 
     /**
      * {@inheritDoc}
      */
     private Cld.Calibration _calibration = null;
+    [Description(nick="Calibration", blurb="The calibration used to generate a scaled value")]
     public virtual Cld.Calibration calibration {
         get {
             if (_calibration == null) {
@@ -65,6 +67,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Range", blurb="The range that the device uses")]
     public virtual int range { get; set; }
 
     /**
@@ -377,5 +380,22 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
         for (int i = 0; i < l.length; i++)
             list [i] = l [i];
         ssdev_value = Gsl.Stats.sd (list, 1, list.length);
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    public override void set_object_property (string name, Cld.Object object) {
+        switch (name) {
+            case "calibration":
+                if (object is Cld.Calibration) {
+                    calibration = object as Cld.Calibration;
+                    calref = (object as Cld.Calibration).uri;
+                    message ("Calibration for %s changed to %s", uri, calibration.uri);
+                }
+                break;
+            default:
+                break;
+        }
     }
 }

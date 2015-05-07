@@ -108,7 +108,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
      * A list of FIFOs for inter-process data transfer.
      * The data are paired a pipe name and file descriptor.
      */
-    public Gee.Map<string, int>? fifos { get; set; }
+    public Gee.Map<string, int>? fifos { get; private set; }
 
     /**
      * The size of the internal data buffer

@@ -32,7 +32,7 @@ public class Cld.LogController : Cld.AbstractController {
      * Default construction
      */
     public LogController () {
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
     }
 
     /**
@@ -41,7 +41,7 @@ public class Cld.LogController : Cld.AbstractController {
     public LogController.from_xml_node (Xml.Node *node) {
         string val;
 
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {

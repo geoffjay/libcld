@@ -94,12 +94,17 @@ public interface Cld.Log : Cld.Object {
     /**
      * File system path to write the log file or database file to.
      */
-    public abstract string path { get; set; }
+    protected abstract string path { get; set; }
 
     /**
      * Base file name to use for the log file or database file.
      */
-    public abstract string file { get; set; }
+    protected abstract string file { get; set; }
+
+    /**
+     * The log file
+     */
+    public abstract GLib.File gfile { get; set; }
 
     /**
      * The log file rate in Hz.

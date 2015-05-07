@@ -22,19 +22,28 @@
  * Contains common code shared by all container implementations.
  */
 public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container {
+
+    /**
+     * The map collection of the objects that belong to the container.
+     */
+    protected Gee.Map<string, Cld.Object> objects;
+
     /**
      * Property backing fields.
      */
-    protected Gee.Map<string, Cld.Object> _objects;
+    //protected Gee.Map<string, Cld.Object> _objects;
+
     protected Gee.List<Cld.AbstractContainer.Reference>? _ref_list = null;
 
     /**
      * {@inheritDoc}
      */
-    public virtual Gee.Map<string, Cld.Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
+    /*
+     *internal virtual Gee.Map<string, Cld.Object> objects {
+     *    get { return (_objects); }
+     *    set { update_objects (value); }
+     *}
+     */
 
     /**
      * {@inheritDoc}
@@ -58,7 +67,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
     }
 
     construct {
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
         _ref_list = new Gee.ArrayList<Cld.AbstractContainer.Reference> ();
     }
 
@@ -99,8 +108,16 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
     /**
      * {@inheritDoc}
      */
+    public virtual Gee.Map<string, Cld.Object> get_objects () {
+
+        return objects;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public virtual void update_objects (Gee.Map<string, Cld.Object> val) {
-        _objects = val;
+        objects = val;
     }
 
     /**
@@ -289,7 +306,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         tokens = requested_uri.split ("/");
         for (int i = 0; i < tokens.length; i++) {
             if (tokens [i] != "") {
-                foreach (var object in container.objects.values) {
+                foreach (var object in container.get_objects ().values) {
                     if ((object as Cld.Object).id == tokens [i]) {
                         if (object is Container) {
                             container = object as Container;

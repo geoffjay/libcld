@@ -38,7 +38,7 @@ public class Cld.Context : Cld.AbstractContainer {
      */
     public Context.from_config (Cld.XmlConfig xml) {
         var builder = new Cld.Builder.from_xml_config (xml);
-        objects = builder.objects;
+        objects = builder.get_objects ();
 
         debug (to_string_recursive ());
 

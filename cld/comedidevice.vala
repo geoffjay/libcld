@@ -24,7 +24,6 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
     private bool _is_open;
     public bool is_open {
         get { return _is_open; }
-        set { _is_open = value; }
     }
 
     /**
@@ -36,7 +35,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * Default construction
      */
     public ComediDevice () {
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
         id = "dev0";
         hw_type = HardwareType.INPUT;
         driver = DeviceType.COMEDI;
@@ -47,7 +46,7 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
      * Construction using an xml node
      */
     public ComediDevice.from_xml_node (Xml.Node *node) {
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
@@ -102,6 +101,10 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
                 }
             }
         }
+    }
+
+    public void set_is_open (bool state) {
+        _is_open = state;
     }
 
     private Cld.Object? node_to_channel (Xml.Node *node) {

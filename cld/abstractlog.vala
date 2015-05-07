@@ -29,12 +29,17 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     /**
      * {@inheritDoc}
      */
-    public virtual string path { get; set; }
+    protected virtual string path { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public virtual string file { get; set; }
+    protected virtual string file { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual GLib.File gfile { get; set; }
 
     /**
      * {@inheritDoc}
@@ -95,6 +100,10 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
         fifos = new Gee.TreeMap<string, int> ();
         raw_queue = new Gee.LinkedList<float?> ();
         entry_queue = new Gee.LinkedList<Cld.LogEntry> ();
+        notify["gfile"].connect ((sender, property) => {
+            file = gfile.get_basename ();
+            path = gfile.get_parent ().get_path ();
+        });
     }
 
     /**

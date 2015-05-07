@@ -249,6 +249,12 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 }
             }
         }
+
+        if (!path.has_suffix ("/")) {
+            path = "%s%s".printf (path, "/");
+        }
+        gfile = GLib.File.new_for_path (path + file);
+
         connect_signals ();
     }
 
@@ -258,7 +264,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         ObjectClass ocl = (ObjectClass)type.class_ref ();
 
         foreach (ParamSpec spec in ocl.list_properties ()) {
-            message ("spec name: %s", spec.get_name ());
             notify[spec.get_name ()].connect ((s, p) => {
             update_node ();
             });
@@ -319,8 +324,8 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * Destructor
      */
     ~SqliteLog () {
-        if (_objects != null) {
-            _objects.clear ();
+        if (objects != null) {
+            objects.clear ();
         }
     }
 

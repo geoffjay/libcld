@@ -36,7 +36,7 @@ public interface Cld.Object : GLib.Object {
     /**
      * A weak reference to the parent object.
      */
-    public abstract Cld.Object parent { get; set; }
+    public abstract Cld.Container? parent { get; }
 
     /**
      * An alternative identifier for the object.
@@ -105,4 +105,11 @@ public interface Cld.Object : GLib.Object {
      *
      */
     public abstract void set_object_property (string name, Cld.Object object);
+
+    /**
+     * Set the object parent to the given container.
+     *
+     * @param parent the parent to assign.
+     */
+    internal abstract void set_parent (Cld.Container parent);
 }

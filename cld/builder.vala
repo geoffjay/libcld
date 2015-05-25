@@ -42,7 +42,6 @@ internal class Cld.Builder : GLib.Object {
     construct {
         container = new Cld.RootContainer ();
         container.id = "root";
-        container.parent = null;
     }
 
     public Builder.from_file (string filename) {
@@ -94,9 +93,6 @@ internal class Cld.Builder : GLib.Object {
                         /* Recursively add objects */
                         if (object is Cld.Container)
                             build_object_map (object as Cld.Container, level + 1);
-
-                        /* assign container as parent */
-                        object.parent = ctr;
 
                         /* No point adding an object type that isn't recognized */
                         if (object != null) {

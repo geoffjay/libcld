@@ -66,7 +66,6 @@ public class Cld.AcquisitionController : Cld.AbstractController {
                         case "device":
                             if (iter->get_prop ("driver") == "comedi") {
                                 var dev = new Cld.ComediDevice.from_xml_node (iter);
-                                dev.parent = this;
                                 (dev as Cld.ComediDevice).open ();
                                 try {
                                     add (dev);
@@ -77,7 +76,6 @@ public class Cld.AcquisitionController : Cld.AbstractController {
                             break;
                         case "multiplexer":
                             var mux = new Cld.Multiplexer.from_xml_node (iter);
-                            mux.parent = this;
                             try {
                                 add (mux);
                             } catch (Cld.Error.KEY_EXISTS e) {

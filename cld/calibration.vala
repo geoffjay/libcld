@@ -91,7 +91,6 @@ public class Cld.Calibration : Cld.AbstractContainer {
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "coefficient") {
                         var coeff = new Cld.Coefficient.from_xml_node (iter);
-                        coeff.parent = this;
                         try {
                             add (coeff);
                         } catch (Cld.Error e) {

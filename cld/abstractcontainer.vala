@@ -86,6 +86,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         }
 
         objects.set (object.id, object);
+        object.set_parent (this as Cld.Container);
         object_added (object.id);
     }
 
@@ -250,7 +251,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
             string line = "%s[%s: %s]".printf (indent,
                                                object.get_type ().name (),
                                                object.id);
-            string parent = (object.parent == null) ? "" : object.parent.id;
+            string parent = (object.parent == null) ? "" : object.parent.uri;
             stdout.printf ("%-40s parent: %-14s uri: %s\n", line, parent, object.uri);
             if ((object is Cld.Container)) {// && (!(this.uri.contains (object.uri)))) {
                     (object as Cld.Container).print_objects (depth + 1);

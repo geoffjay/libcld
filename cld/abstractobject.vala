@@ -53,10 +53,9 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
     /**
      * {@inheritDoc}
      */
-    protected Cld.Object _parent;
-    public virtual Cld.Object parent {
+    protected Cld.Container _parent;
+    public virtual Cld.Container? parent {
         get { return _parent; }
-        set { _parent = value; }
     }
 
     /**
@@ -173,7 +172,6 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
     }
 
     /**
-     *
      * {@inheritDoc}
      */
     public virtual string get_nickname () {
@@ -227,5 +225,14 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
      */
     public virtual void set_object_property (string name, Cld.Object object) {
         //set_property (name, value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    internal void set_parent (Cld.Container parent) {
+        if (this.parent == null) {
+            _parent = parent;
+        }
     }
 }

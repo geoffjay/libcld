@@ -79,7 +79,6 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
                     switch (iter->get_prop ("type")) {
                         case "task":
                             var task = new Cld.ComediTask.from_xml_node (iter);
-                            task.parent = this;
                             try {
                                 add (task as Cld.Object);
                             } catch (GLib.Error e) {
@@ -88,7 +87,6 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
                             break;
                         case "channel":
                             var channel = node_to_channel (iter);
-                            channel.parent = this;
                             try {
                                 add (channel as Cld.Object);
                             } catch (GLib.Error e) {

@@ -226,13 +226,11 @@ public class Cld.Control : Cld.AbstractContainer {
                     switch (type) {
                         case "pid":
                             var pid = new Cld.Pid.from_xml_node (iter);
-                            pid.parent = this;
-                            objects.set (pid.id, pid);
+                            add (pid);
                             break;
                         case "pid-2":
                             var pid = new Cld.Pid2.from_xml_node (iter);
-                            pid.parent = this;
-                            objects.set (pid.id, pid);
+                            add (pid);
                             break;
                         default:
                             break;

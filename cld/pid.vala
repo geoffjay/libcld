@@ -316,7 +316,6 @@ public class Cld.Pid : AbstractContainer {
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "process_value") {
                         var pv = new ProcessValue.from_xml_node (iter);
-                        pv.parent = this;
                         add (pv);
                     }
                 }
@@ -892,7 +891,6 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "process_value2") {
                         var pv = new ProcessValue2.from_xml_node (iter);
-                        pv.parent = this;
                         add (pv);
                     }
                 }

@@ -243,7 +243,6 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "column") {
                         var column = new Column.from_xml_node (iter);
-                        column.parent = this;
                         add (column);
                     }
                 }

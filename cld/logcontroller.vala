@@ -52,7 +52,6 @@ public class Cld.LogController : Cld.AbstractController {
                     switch (iter->get_prop ("type")) {
                         case "log":
                             var log = node_to_log (iter);
-                            log.parent = this;
                             try {
                                 add (log);
                             } catch (Cld.Error.KEY_EXISTS e) {

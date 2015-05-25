@@ -18,6 +18,8 @@ tests_SOURCES = \
 	testdevice.vala \
 	testdichannel.vala \
 	testdochannel.vala \
+	testdummycontainer.vala \
+	testdummyobject.vala \
 	testfilter.vala \
 	testflowsensor.vala \
 	testmain.vala \

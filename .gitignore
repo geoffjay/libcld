@@ -73,3 +73,4 @@ tests/.deps/
 tests/.libs/
 tests/tests
 tests/*.stamp
+tests/tests_vala.stamp-t

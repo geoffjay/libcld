@@ -22,17 +22,9 @@ public abstract class ObjectTests : Cld.TestCase {
 
     public ObjectTests (string name) {
         base (name);
-        add_test ("[Object] selected functions", test_selected_functions);
     }
 
     protected Cld.Object test_object;
-
-    public void test_selected_functions () {
-        var test = test_object as Cld.Object;
-
-        // Check the object exists
-        assert (test != null);
-    }
 
     // To add other test methods just perform tasks and assert on the expected
     // values that should have resulted

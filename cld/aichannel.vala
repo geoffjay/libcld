@@ -240,49 +240,86 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
      */
     private void connect_signals () {
         notify["tag"].connect ((s, p) => {
-            //debug ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
+            debug ("Property %s changed for %s", p.get_name (), uri);
+            try {
+                update_node ();
+            } catch (Cld.Error e) {
+                message ("An XML node has not been set for %s", uri);
+            }
         });
 
         notify["desc"].connect ((s, p) => {
-            //debug ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
+            debug ("Property %s changed for %s", p.get_name (), uri);
+            try {
+                update_node ();
+            } catch (Cld.Error e) {
+                message ("An XML node has not been set for %s", uri);
+            }
         });
 
         notify["num"].connect ((s, p) => {
-            //debug ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
+            debug ("Property %s changed for %s", p.get_name (), uri);
+            try {
+                update_node ();
+            } catch (Cld.Error e) {
+                message ("An XML node has not been set for %s", uri);
+            }
         });
 
         notify["subdevnum"].connect ((s, p) => {
-            //debug ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
-            update_node ();
+            debug ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
+            try {
+                update_node ();
+            } catch (Cld.Error e) {
+                message ("An XML node has not been set for %s", uri);
+            }
         });
         notify["raw-value-list-size"].connect ((s, p) => {
-            //debug ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
+            debug ("Property %s changed for %s", p.get_name (), uri);
+            try {
+                update_node ();
+            } catch (Cld.Error e) {
+                message ("An XML node has not been set for %s", uri);
+            }
         });
 
         notify["calref"].connect ((s, p) => {
-            //debug ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
+            debug ("Property %s changed for %s", p.get_name (), uri);
+            try {
+                update_node ();
+            } catch (Cld.Error e) {
+                message ("An XML node has not been set for %s", uri);
+            }
         });
 
         notify["range"].connect ((s, p) => {
-            //debug ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
+            debug ("Property %s changed for %s", p.get_name (), uri);
+            try {
+                update_node ();
+            } catch (Cld.Error e) {
+                message ("An XML node has not been set for %s", uri);
+            }
         });
 
         notify["alias"].connect ((s, p) => {
-            //debug ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
+            debug ("Property %s changed for %s", p.get_name (), uri);
+            try {
+                update_node ();
+            } catch (Cld.Error e) {
+                message ("An XML node has not been set for %s", uri);
+            }
         });
     }
 
     /**
      * Update the XML Node for this object.
      */
-    private void update_node () {
+    private void update_node () throws Cld.Error {
+        if (node == null) {
+            throw new Cld.Error.NULL_REF ("A node has not been set for %s", id);
+            return;
+        }
+
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             /* iterate through node children */

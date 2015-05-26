@@ -69,6 +69,7 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Raw Value", blurb="The non-scaled value")]
     public virtual double raw_value {
         get { return _raw_value; }
         set {
@@ -80,6 +81,7 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Scaled Value", blurb="The value with scaling applied")]
     public virtual double scaled_value {
         get { return _scaled_value; }
         private set {
@@ -91,11 +93,13 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Average Value", blurb="The average of the scaled value")]
     public virtual double avg_value { get; private set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Standard Deviation", blurb="The sample standard deviation of the scaled value")]
     public virtual double ssdev_value { get; private set; }
 
     /**
@@ -106,7 +110,7 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
     /* default constructor */
     public AOChannel () {
         /* set defaults */
-        this.num = 0;
+        set_num (0);
         this.devref = "dev0";
         this.tag = "CH0";
         this.desc = "Output Channel";
@@ -137,7 +141,7 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
                             break;
                         case "num":
                             val = iter->get_content ();
-                            num = int.parse (val);
+                            set_num (int.parse (val));
                             break;
                         case "subdevnum":
                             val = iter->get_content ();

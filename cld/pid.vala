@@ -547,11 +547,13 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
     /**
      * Timestep in milliseconds to use with the thread execution.
      */
+    [Description(nick="Time Step", blurb="(milliseconds)")]
     public int dt { get; set; }
 
     /**
      * Proportional gain: Larger values typically mean faster response.
      */
+    [Description(nick="Kp", blurb="")]
     public double kp { get; set; }
 
     private double _ki;
@@ -559,6 +561,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
      * Integral gain: Larger values imply that steady state errors are
      * eliminated faster but can trade off with a larger overshoot.
      */
+    [Description(nick="Ki", blurb="")]
     public double ki {
         get { return _ki; }
         set { _ki = (value == 0.0) ? 0.00000 : value; }
@@ -567,6 +570,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
     /**
      * Derivitive gain: Larger values decrease overshoot.
      */
+    [Description(nick="Kd", blurb="")]
     public double kd { get; set; }
 
     private double _sp;
@@ -575,6 +579,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
      * Desired value that the PID controller works to achieve through process
      * changes to the measured variable.
      */
+    [Description(nick="Set Point", blurb="")]
     public double sp {
         get { return _sp; }
         set {
@@ -586,12 +591,14 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
     /**
      * Set point channel (so_channel) reference string.
      **/
+    [Description(nick="Set Point Reference", blurb="")]
     public string sp_chref { get; set; }
 
     /**
      * A channel that alters the setpoint value (sp) thus a time varying signal
      * can be the set point value.
      **/
+    [Description(nick="Set Point Channel", blurb="")]
     public weak ScalableChannel? sp_channel {
         get {
             var channels = get_children (typeof (Cld.ScalableChannel));
@@ -616,20 +623,24 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
     /**
      * Whether or not the loop is currently running.
      */
+    [Description(nick="Running", blurb="")]
     public bool running { get; set; default = false; }
 
     /**
      * A description of the PID control.
      */
+    [Description(nick="Description", blurb="")]
     public string desc { get; set; default = "PID Control"; }
 
     /**
      * The output variable high limit cutoff value ID.
      */
+    [Description(nick="Limit High", blurb="")]
     public double limit_high { get; set; default = 100; }
     /**
      * The output variable low limit cutoff value ID.
      */
+    [Description(nick="Limit Low", blurb="")]
     public double limit_low { get; set; default = 0; }
 
 
@@ -664,6 +675,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
      * might be unecessary to store them in a map. Possible future change.
      */
     private Gee.Map<string, Object>? _process_values = null;
+    [Description(nick="Process Values", blurb="")]
     public Gee.Map<string, Object> process_values {
         get {
             if (_process_values.size == 0) {
@@ -679,6 +691,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
      * A DataSeries is used to store the current and two previous values of input.
      */
     private DataSeries? _pv = null;
+    [Description(nick="Process Variable", blurb="")]
     public DataSeries pv {
         get {
             if (_pv == null) {
@@ -696,6 +709,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
     }
 
     private DataSeries? _mv = null;
+    [Description(nick="Manipulated Variable", blurb="")]
     public DataSeries mv {
         get {
             if (_mv == null) {

@@ -40,7 +40,7 @@ public class Cld.DOChannel : Cld.AbstractChannel, Cld.DChannel, Cld.OChannel {
     /* default constructor */
     public DOChannel () {
         /* set defaults */
-        this.num = 0;
+        set_num (0);
         this.devref = "dev0";
         this.tag = "CH0";
         this.desc = "Output Channel";
@@ -69,7 +69,7 @@ public class Cld.DOChannel : Cld.AbstractChannel, Cld.DChannel, Cld.OChannel {
                             break;
                         case "num":
                             value = iter->get_content ();
-                            num = int.parse (value);
+                            set_num (int.parse (value));
                             break;
                         case "subdevnum":
                             value = iter->get_content ();

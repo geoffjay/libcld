@@ -28,7 +28,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
     /**
      * The sub device reference name.
      */
-    public string devref { get; set; default = null; }
+    protected string devref = null;
 
     /**
      * The referenced device.
@@ -83,26 +83,12 @@ public class Cld.ComediTask : Cld.AbstractTask {
     /**
      * A list of channel references.
      */
-    public Gee.List<string>? chrefs { get; set; }
+    protected Gee.List<string>? chrefs;
 
     /**
      * The channels that this task uses.
      */
-    public Gee.Map<string, Cld.Object>? channels {
-        get {
-            lock (_channels) {
-                _channels = get_children (typeof (Cld.Channel))
-                                            as Gee.TreeMap<string, Cld.Object>;
-            }
-
-            return _channels;
-        }
-        set {
-            /* remove all first */
-            objects.unset_all (get_children (typeof (Cld.Channel)));
-            objects.set_all (value);
-        }
-    }
+    protected Gee.Map<string, Cld.Object>? channels;
 
     /**
      * A list of FIFOs for inter-process data transfer.
@@ -162,7 +148,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
         chrefs = new Gee.ArrayList<string> ();
         channels = new Gee.TreeMap<string, Cld.Object> ();
         fifos = new Gee.TreeMap<string, int> ();
-        active = false;
+        set_active (false);
         queue = new Gee.LinkedList<float?> ();
     }
 
@@ -224,6 +210,31 @@ public class Cld.ComediTask : Cld.AbstractTask {
         }
     }
 
+    public Gee.Map<string, Cld.Object>? get_channels () {
+        lock (_channels) {
+            _channels = get_children (typeof (Cld.Channel))
+                                            as Gee.TreeMap<string, Cld.Object>;
+        }
+
+        return _channels;
+    }
+
+    public void set_channels (Gee.Map<string, Cld.Object> value) {
+        /* remove all first */
+        objects.unset_all (get_children (typeof (Cld.Channel)));
+        objects.set_all (value);
+    }
+
+    public Gee.List<string> get_chrefs () {
+
+        return chrefs;
+    }
+
+    public string get_devref () {
+
+        return devref;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -262,7 +273,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
      */
     public override void stop () {
         if (active) {
-            active = false;
+            set_active (false);
             if (exec_type == "polling") {
                 thread.join ();
             } else if (exec_type == "streaming" && (device is Cld.ComediDevice)) {
@@ -308,18 +319,18 @@ public class Cld.ComediTask : Cld.AbstractTask {
         // Instantiate and launch the thread.
         if (!GLib.Thread.supported ()) {
             stderr.printf ("Cannot run polling without thread support.\n");
-            active = false;
+            set_active (false);
             return;
         }
 
         if (!active) {
             task_thread = new Thread (this);
             try {
-                active = true;
+                set_active (true);
                 thread = GLib.Thread.create<void *> (task_thread.run, true);
             } catch (ThreadError e) {
                 stderr.printf ("%s\n", e.message);
-                active = false;
+                set_active (false);
                 return;
             }
         }
@@ -468,7 +479,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
         device_fd = (device as Cld.ComediDevice).dev.fileno ();
         Posix.fcntl (device_fd, Posix.F_SETFL, Posix.O_NONBLOCK);
 
-        active = true;
+        set_active (true);
 
         /* Prepare to launch the thread when the do_cmd signal gets emitted */
         do_cmd.connect (() => {
@@ -866,11 +877,11 @@ public class Cld.ComediPollingTask : Cld.ComediTask {
      */
     public override void stop () {
         /* Stop task */
-        active = false;
+        set_active (false);
     }
 
     private async void task () {
-        active = true;
+        set_active (true);
         while (active) {
             debug ("Task `%s' running", id);
             switch (direction) {
@@ -1028,11 +1039,11 @@ public class Cld.ComediStreamingTask : Cld.ComediTask {
      */
     public override void stop () {
         /* Stop task */
-        active = false;
+        set_active (false);
     }
 
     private async void task () throws ThreadError {
-        active = true;
+        set_active (true);
         while (active) {
             debug ("Task `%s' running", id);
             yield nap (1000);

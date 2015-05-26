@@ -27,6 +27,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
     /**
      * The number of elements in the series
      */
+    [Description(nick="Length", blurb="The number of elements in the series")]
     public int length { get; set; default = 3; }
 
     /**
@@ -34,9 +35,11 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
      * property will affect the number of points that are used in the calculation
      * of the mean value, for example.
      */
+    [Description(nick="Stride", blurb="The step size from one sample to the next")]
     public int stride { get; set; default = 1; }
 
     private double _mean_value;
+    [Description(nick="Mean", blurb="The average value of the series")]
     public double mean_value {
         get {
             _mean_value = Gsl.Stats.mean (buffer, stride, buffer.length);
@@ -47,6 +50,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
     /**
      * The reference id of the scalable channel that is buffered.
      */
+    [Description(nick="Channel Reference", blurb="The URI of the referenced channel")]
     public string chref { get; set; }
 
     private weak Cld.ScalableChannel? _channel = null;
@@ -54,6 +58,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
     /**
      * The channel that is buffered
      */
+    [Description(nick="Channel", blurb="The referenced channel")]
     public Cld.ScalableChannel channel {
         get {
             if (_channel == null) {
@@ -132,7 +137,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
                                 Cld.Object object = new VChannel ();
                                 (object as VChannel).id = "vc-%s-%d".printf (this.id, taps[i]);
                                 (object as VChannel).tag = "%s[%d]".printf (this.id, taps[i]);
-                                (object as VChannel).num = taps[i];
+                                (object as VChannel).set_num (taps[i]);
                                 try {
                                     add (object);
                                 } catch (Cld.Error.KEY_EXISTS e) {

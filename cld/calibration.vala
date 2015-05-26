@@ -42,6 +42,7 @@ public class Cld.Calibration : Cld.AbstractContainer {
         }
     }
 
+    [Description(nick="Units", blurb="")]
     public string units { get; set; }
 
     /* constructor */

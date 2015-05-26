@@ -149,7 +149,7 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
 
     public VChannel () {
         /* set defaults */
-        this.num = 0;
+        set_num (0);
         this.devref = "dev0";
         this.tag = "CH0";
         this.desc = "Output Channel";
@@ -179,7 +179,7 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
                             break;
                         case "num":
                             value = iter->get_content ();
-                            num = int.parse (value);
+                            set_num (int.parse (value));
                             break;
                         case "calref":
                             calref = iter->get_content ();

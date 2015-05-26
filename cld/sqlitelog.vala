@@ -70,26 +70,31 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * Determines whether the file is renamed on open using the format string.
      */
+    [Description(nick="Time Stamp", blurb="")]
     public Log.TimeStampFlag time_stamp { get; set; }
 
     /**
      * File path to backup location.
      */
+    [Description(nick="Backup Path", blurb="")]
     public string backup_path { get; set; }
 
     /**
      * Backup file name.
      */
+    [Description(nick="Backup Filename", blurb="")]
     public string backup_file { get; set; }
 
     /**
      * The interval at which the database will be automatically backed up.
      */
+    [Description(nick="Backup Interval", blurb="(milliseconds)")]
     public int backup_interval_ms { get; set; }
 
     /**
      * The name of the current Log table.
      */
+    [Description(nick="Rate", blurb="")]
     public string experiment_name {
         get { return _experiment_name; }
     }

@@ -32,8 +32,9 @@ public class Cld.ProcessValue : Cld.AbstractContainer {
      * value represents, input is a process measurement, output is a
      * manipulated variable.
      */
-    private int _chtype;
-    public int chtype {
+    private Cld.ProcessValue.Type _chtype;
+    [Description(nick="Channel Type", blurb="")]
+    public Cld.ProcessValue.Type chtype {
         get {
             if (channel is Cld.IChannel)
                 _chtype = Type.INPUT;
@@ -48,6 +49,7 @@ public class Cld.ProcessValue : Cld.AbstractContainer {
     /**
      * Referenced channel to use.
      */
+    [Description(nick="Channel", blurb="")]
     public weak Cld.Channel channel {
         get {
             var channels = get_children (typeof (Cld.Channel));
@@ -115,19 +117,22 @@ public class Cld.ProcessValue2 : Cld.AbstractContainer {
      * value represents, input is a process measurement, output is a
      * manipulated variable.
      */
-    private int _chtype;
-    public int chtype {
+    private Cld.ProcessValue2.Type _chtype;
+    [Description(nick="Channel Type", blurb="")]
+    public Cld.ProcessValue2.Type chtype {
         get { return _chtype; }
     }
 
     /**
      * ID reference of the dataseries associated with this process value.
      */
+    [Description(nick="Reference", blurb="")]
     public string dsref { get; set; }
 
     /**
      * Referenced dataseries to use.
      */
+    [Description(nick="Data Series", blurb="")]
     public weak Cld.DataSeries dataseries {
         get {
             var dschildren = get_children (typeof (Cld.DataSeries));

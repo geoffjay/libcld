@@ -24,76 +24,91 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Name", blurb="")]
     public virtual string name { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Path", blurb="")]
     protected virtual string path { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Filename", blurb="")]
     protected virtual string file { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="File", blurb="")]
     public virtual GLib.File gfile { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Rate", blurb="")]
     public virtual double rate { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Time interval", blurb="")]
     public virtual int dt { get { return (int)(1e3 / rate); } }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Active", blurb="")]
     public virtual bool active { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Open", blurb="")]
     public virtual bool is_open { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Date Format", blurb="")]
     public virtual string date_format { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="fifos", blurb="A list of FIFO file descriptors")]
     public virtual Gee.Map<string, int>? fifos { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Data Source", blurb="")]
     public virtual string data_source { get; set; }
 
     /**
      * A double ended queue for raw data.
      */
+    [Description(nick="Raw Queue", blurb="")]
     protected virtual Gee.Deque<float?> raw_queue { get; set; }
 
     /**
      * DateTime data to use for time stamping log file.
      */
+    [Description(nick="Start Time", blurb="")]
     protected DateTime start_time;
 
     /**
      * A double ended queue for LogEntries.
      */
+    [Description(nick="Entry Queue", blurb="")]
     protected virtual Gee.Deque<Cld.LogEntry> entry_queue { get; set; }
 
     /**
      * The total number of channels in this log.
      */
+    [Description(nick="Number of Channels", blurb="")]
     protected int nchans { get; set; }
 
     construct {

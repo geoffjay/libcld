@@ -73,6 +73,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Raw Value", blurb="The non-scaled value")]
     public virtual double raw_value {
         get { return _raw_value[0]; }
         set {
@@ -87,6 +88,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Average Value", blurb="The average of the scaled value")]
     public virtual double avg_value {
         get { return _avg_value[0]; }
         private set {
@@ -99,11 +101,13 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Standard Deviation", blurb="The sample standard deviation of the scaled value")]
     public virtual double ssdev_value { get; private set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Scaled Value", blurb="The value with scaling applied")]
     public virtual double scaled_value {
         get { return _scaled_value[0]; }
         private set {
@@ -150,6 +154,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
      * XXX if value != current the list should be resized to reflect the change
      */
     private int _raw_value_list_size = 1;
+    [Description(nick="Samples", blurb="The number of samples to be averaged")]
     public int raw_value_list_size {
         get { return _raw_value_list_size; }
         set {
@@ -167,7 +172,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
      */
     public AIChannel () {
         /* set defaults */
-        this.num = 0;
+        set_num (0);;
         this.devref = "dev0";
         this.tag = "CH0";
         this.desc = "Input Channel";
@@ -199,7 +204,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
                             break;
                         case "num":
                             val = iter->get_content ();
-                            num = int.parse (val);
+                            set_num (int.parse (val));
                             break;
                         case "subdevnum":
                             val = iter->get_content ();

@@ -140,7 +140,7 @@ public class Cld.AcquisitionController : Cld.AbstractController {
 
             foreach (var task in tasks.values) {
                 if (((task as Cld.ComediTask).exec_type == "streaming") &&
-                        ((task as Cld.ComediTask).chrefs.contains (uri))) {
+                        ((task as Cld.ComediTask).get_chrefs ().contains (uri))) {
                     (task as Cld.ComediTask).fifos.set (fname, -1);
                 }
             }

@@ -26,7 +26,8 @@ public abstract class Cld.AbstractTask : Cld.AbstractContainer, Cld.Task {
     /**
      * {@inheritDoc}
      **/
-     public virtual bool active { get; protected set; }
+     private bool _active;
+     public virtual bool active { get { return _active; }}
 
     /**
      * {@inheritDoc}
@@ -37,4 +38,11 @@ public abstract class Cld.AbstractTask : Cld.AbstractContainer, Cld.Task {
      * {@inheritDoc}
      **/
     public abstract void stop ();
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual void set_active (bool value) {
+        _active = value;
+    }
 }

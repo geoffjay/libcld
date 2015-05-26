@@ -26,8 +26,11 @@ public abstract class Cld.AbstractChannel : Cld.AbstractContainer, Cld.Channel {
     /**
      * {@inheritDoc}
      */
+    protected int _num;
     [Description(nick="Number", blurb="The indexed value of the channel")]
-    public virtual int num { get; set; }
+    public virtual int num {
+        get { return _num; }
+    }
 
     /**
      * {@inheritDoc}
@@ -73,12 +76,19 @@ public abstract class Cld.AbstractChannel : Cld.AbstractContainer, Cld.Channel {
     /**
      * {@inheritDoc}
      */
-
     [Description(nick="Description", blurb="A description of the channel")]
     public virtual string desc { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Time Stamp", blurb="A timestamp for the data")]
     public virtual DateTime timestamp { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    internal virtual void set_num (int value) {
+        _num = value;
+    }
 }

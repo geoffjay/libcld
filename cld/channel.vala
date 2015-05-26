@@ -24,7 +24,7 @@ public interface Cld.Channel : Cld.Container {
     /**
      * The channel number, which sometimes refers to its hardware pin number.
      */
-    public abstract int num { get; set; }
+    public abstract int num { get; }
 
     /**
      * The subdevice number; an integer reference as used by Comedi devices.
@@ -68,6 +68,11 @@ public interface Cld.Channel : Cld.Container {
      * FIXME: This should replace non-variant equivalents.
      */
     public abstract signal void __new_value (string id, GLib.Variant value);
+
+    /**
+     * @param value The num value of the channel
+     */
+    public abstract void set_num (int value);
 }
 
 /**

@@ -25,7 +25,7 @@ public interface Cld.Task : Cld.Object {
    /**
     * Indicates the current status of the task.
     */
-    public abstract bool active { get; protected set; }
+    public abstract bool active { get; }
 
     /**
      * Launch the task.
@@ -51,6 +51,13 @@ public interface Cld.Task : Cld.Object {
         }, priority);
         yield;
     }
+
+    /**
+     * Changes the value of the active property
+     *
+     * @param value The value that the active property is set to
+     */
+    protected abstract void set_active (bool value);
 }
 
 public interface Cld.PollingTask : Cld.AbstractTask, Cld.Task {

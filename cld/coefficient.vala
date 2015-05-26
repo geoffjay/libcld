@@ -21,8 +21,11 @@
  */
 public class Cld.Coefficient : Cld.AbstractObject {
 
+
+    [Description(nick="n", blurb="")]
     public int n { get; set; }
 
+    [Description(nick="Value", blurb="")]
     public double value { get; set; }
 
     public Coefficient () {

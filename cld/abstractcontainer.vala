@@ -28,26 +28,12 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      */
     protected Gee.Map<string, Cld.Object> objects;
 
-    /**
-     * Property backing fields.
-     */
-    //protected Gee.Map<string, Cld.Object> _objects;
-
     protected Gee.List<Cld.AbstractContainer.Reference>? _ref_list = null;
 
     /**
      * {@inheritDoc}
      */
-    /*
-     *internal virtual Gee.Map<string, Cld.Object> objects {
-     *    get { return (_objects); }
-     *    set { update_objects (value); }
-     *}
-     */
-
-    /**
-     * {@inheritDoc}
-     */
+    [Description(nick="Reference List", blurb="A list of references to other Cld objects")]
     public virtual Gee.List<Cld.AbstractContainer.Reference>? ref_list {
         get {
             return _ref_list;
@@ -251,7 +237,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
             string line = "%s[%s: %s]".printf (indent,
                                                object.get_type ().name (),
                                                object.id);
-            string parent = (object.parent == null) ? "" : object.parent.uri;
+            string parent = (object.get_parent () == null) ? "" : object.get_parent ().uri;
             stdout.printf ("%-40s parent: %-14s uri: %s\n", line, parent, object.uri);
             if ((object is Cld.Container)) {// && (!(this.uri.contains (object.uri)))) {
                     (object as Cld.Container).print_objects (depth + 1);
@@ -352,8 +338,8 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
                 } else if (type.is_a (typeof (Cld.Column))) {
                     (object as Cld.Container).add_ref ((object as Cld.Column).chref);
                 } else if (type.is_a (typeof (Cld.ComediTask))) {
-                    (object as Cld.Container).add_ref ((object as Cld.ComediTask).devref);
-                    foreach (var chref in (object as Cld.ComediTask).chrefs) {
+                    (object as Cld.Container).add_ref ((object as Cld.ComediTask).get_devref ());
+                    foreach (var chref in (object as Cld.ComediTask).get_chrefs ()) {
                         (object as Cld.Container).add_ref (chref);
                     }
                 } else if (type.is_a (typeof (Cld.Sensor))) {

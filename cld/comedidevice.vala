@@ -22,6 +22,7 @@ using Cld;
 public class Cld.ComediDevice : Cld.AbstractDevice {
 
     private bool _is_open;
+    [Description(nick="Open", blurb="The state of the Comedi device")]
     public bool is_open {
         get { return _is_open; }
     }

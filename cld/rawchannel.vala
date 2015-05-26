@@ -65,7 +65,7 @@ public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
      * Default construction.
      */
     public RawChannel () {
-        this.num = 0;
+        set_num (0);
         this.devref = "/daqctl0/dev0";
         this.tag = "RAW0";
         this.desc = "Raw Channel";
@@ -113,7 +113,7 @@ public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
                         break;
                     case "num":
                         var val = iter->get_content ();
-                        num = int.parse (val);
+                        set_num (int.parse (val));
                         break;
                     case "alias":
                         alias = iter->get_content ();

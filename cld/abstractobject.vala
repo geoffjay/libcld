@@ -53,20 +53,17 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
     /**
      * {@inheritDoc}
      */
-    protected Cld.Container _parent;
-    public virtual Cld.Container? parent {
-        get { return _parent; }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     protected string _alias;
     [Description(nick="Alias", blurb="An alternative identifier for the object")]
     public virtual string alias {
         get { return _alias; }
         set { _alias = value; }
     }
+
+    /**
+     * The parent object og this
+     */
+    protected Cld.Container? parent;
 
     /**
      * The XML Node that corresponds to this.
@@ -230,9 +227,25 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
     /**
      * {@inheritDoc}
      */
-    internal void set_parent (Cld.Container parent) {
+    internal virtual void set_parent (Cld.Container parent) {
         if (this.parent == null) {
-            _parent = parent;
+            this.parent = parent;
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual Cld.Object get_parent () {
+
+        return this.parent;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual string get_parent_uri () {
+
+        return parent.uri;
     }
 }

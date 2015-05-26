@@ -34,11 +34,6 @@ public interface Cld.Object : GLib.Object {
     public abstract string uri { get; }
 
     /**
-     * A weak reference to the parent object.
-     */
-    public abstract Cld.Container? parent { get; }
-
-    /**
      * An alternative identifier for the object.
      */
     public abstract string alias { get; set; }
@@ -112,4 +107,18 @@ public interface Cld.Object : GLib.Object {
      * @param parent the parent to assign.
      */
     internal abstract void set_parent (Cld.Container parent);
+
+    /**
+     * Get the parent object
+     *
+     * @return The parent of this
+     */
+    internal abstract Cld.Object get_parent ();
+
+    /**
+     * Get the parent of this object.
+     *
+     * @return The URI of the parent of this
+     */
+    public abstract string get_parent_uri ();
 }

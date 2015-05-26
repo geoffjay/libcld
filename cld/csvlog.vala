@@ -24,6 +24,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
     /**
      * Determines whether the file is renamed on open using the format string.
      */
+    [Description(nick="Time Stamp", blurb="")]
     public Log.TimeStampFlag time_stamp { get; set; }
 
     private FileStream file_stream;

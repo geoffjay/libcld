@@ -50,6 +50,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
     /**
      * A list of channel references.
      */
+    [Description(nick="Data References", blurb="A list of channel references")]
     public Gee.List<string>? drefs { get; set; }
 
     /**
@@ -58,6 +59,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
      * where ds00[-10] is the 11th element counter clockwisein the DataSeries
      * circular buffer. "[" and "]" only apply to DataSeries.
      */
+    [Description(nick="Expression", blurb="An algebraic expression")]
     public override string? expression {
         get { return _expression; }
         set {
@@ -155,6 +157,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
     /**
      * Calculate value if expression exists or placeholder for dummy channel.
      */
+    [Description(nick="Raw Value", blurb="The non-scaled value")]
     public double raw_value {
         get { return _raw_value; }
         set {
@@ -166,6 +169,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Scaled Value", blurb="The value with scaling applied")]
     public virtual double scaled_value {
         get { return _scaled_value; }
         private set {
@@ -216,7 +220,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
 
     public MathChannel () {
         /* set defaults */
-        this.num = 0;
+        set_num (0);;
         this.devref = "dev0";
         this.tag = "CH0";
         this.desc = "Output Channel";
@@ -247,7 +251,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
                             break;
                         case "num":
                             value = iter->get_content ();
-                            num = int.parse (value);
+                            set_num (int.parse (value));
                             break;
                         case "calref":
                             calref = iter->get_content ();

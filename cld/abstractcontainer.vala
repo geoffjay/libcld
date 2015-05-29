@@ -315,7 +315,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      * {@inheritDoc}
      */
     public virtual void generate_ref_list () {
-        debug ("Generating reference list...");
+       debug ("Generating reference list for %s", uri);
 
         if (objects == null)
             return;
@@ -376,7 +376,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
     public virtual void print_ref_list () {
         var list = get_descendant_ref_list ();
         foreach (var entry in list.read_only_view) {
-            stdout.printf ("%-30s %s", (entry
+            stdout.printf ("%-30s %s\n", (entry
                 as Cld.AbstractContainer.Reference).self_uri,
                 (entry as Cld.AbstractContainer.Reference).reference_uri);
         }

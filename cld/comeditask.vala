@@ -22,7 +22,7 @@
 public class Cld.ComediTask : Cld.AbstractTask {
 
     /* Property backing fields. */
-    private Gee.Map<string, Cld.Object>? _channels = null;
+    protected Gee.Map<string, Cld.Object>? _channels = null;
     private Cld.Device _device = null;
 
     /**
@@ -146,7 +146,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
      */
     construct {
         chrefs = new Gee.ArrayList<string> ();
-        channels = new Gee.TreeMap<string, Cld.Object> ();
+        _channels = new Gee.TreeMap<string, Cld.Object> ();
         fifos = new Gee.TreeMap<string, int> ();
         set_active (false);
         queue = new Gee.LinkedList<float?> ();
@@ -247,6 +247,9 @@ public class Cld.ComediTask : Cld.AbstractTask {
         /* Select execution type */
         switch (exec_type) {
             case "streaming":
+                message (">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> channels %d", get_channels ().size);
+                foreach (var channel in _channels.values)
+                    message ("%s", channel.uri);
                 do_async ();
                 break;
             case "polling":
@@ -291,7 +294,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
      * Adds a channel to the task's list of channels.
      */
     public void add_channel (Object channel) {
-        channels.set (channel.id, channel);
+        _channels.set (channel.id, channel);
     }
 
     /**
@@ -354,9 +357,13 @@ public class Cld.ComediTask : Cld.AbstractTask {
      * Asynchronous acquisition
      */
     private void do_async () {
+        if (device == null) {
+            error ("Task %s has no reference to a device.", id);
+        }
+
         Comedi.loglevel (4);
-        chanlist = new uint[channels.size];
-        channel_array = new Cld.AIChannel[channels.size];
+        chanlist = new uint[_channels.size];
+        channel_array = new Cld.AIChannel[_channels.size];
 
         debug ("device: %s\n", device.id);
         //(device as ComediDevice).dev.set_max_buffer_size (subdevice, 1048576);
@@ -365,8 +372,8 @@ public class Cld.ComediTask : Cld.AbstractTask {
         scan_period_nanosec = (uint)interval_ns;
 
         /* Make chanlist sequential and without gaps. XXX Need this for Advantech 1710. */
-        foreach (var channel in channels.values) {
-            if ((channel as Channel).num >= channels.size) {
+        foreach (var channel in _channels.values) {
+            if ((channel as Channel).num >= _channels.size) {
                 error ("Channel list must be sequential and with no gaps.");
                 return;
             }
@@ -378,7 +385,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
             channel_array[(channel as AIChannel).num] = channel as Cld.AIChannel;
         }
 
-        for (int i = 0; i < channels.size; i++) {
+        for (int i = 0; i < _channels.size; i++) {
             var channel = channel_array[i];
             //stdout.printf ("i: %d, num: %d\n", i, (channel as Channel).num);
         }
@@ -390,7 +397,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
          * that's bad.
          */
         ret = (device as ComediDevice).dev.get_cmd_generic_timed (subdevice,
-                    out cmd, channels.size, scan_period_nanosec);
+                    out cmd, _channels.size, scan_period_nanosec);
 
         if (ret < 0) {
             debug ("comedi_get_cmd_generic_timed failed");
@@ -405,7 +412,8 @@ public class Cld.ComediTask : Cld.AbstractTask {
 
     private void prepare_cmd () {
         uint convert_nanosec = (uint)(resolution_ns * (GLib.Math.round ((double)scan_period_nanosec /
-                               ((double)(channels.size * resolution_ns)))));
+                               ((double)(_channels.size * resolution_ns)))));
+
         cmd.subdev = subdevice;
         cmd.flags = 0;//TriggerFlag.WAKE_EOS;
         cmd.start_src = Comedi.TriggerSource.NOW;
@@ -415,11 +423,11 @@ public class Cld.ComediTask : Cld.AbstractTask {
     	cmd.convert_src = Comedi.TriggerSource.TIMER;
 	    cmd.convert_arg = convert_nanosec;
         cmd.scan_end_src = Comedi.TriggerSource.COUNT;
-        cmd.scan_end_arg = channels.size;
+        cmd.scan_end_arg = _channels.size;
         cmd.stop_src = Comedi.TriggerSource.NONE;//COUNT;
         cmd.stop_arg = 0;
         cmd.chanlist = chanlist;
-        cmd.chanlist_len = channels.size;
+        cmd.chanlist_len = _channels.size;
     }
 
     private void test_cmd () {
@@ -460,10 +468,10 @@ public class Cld.ComediTask : Cld.AbstractTask {
         int subdev_flags = (device as Cld.ComediDevice).dev.get_subdevice_flags (subdevice);
         SourceFunc callback = do_select.callback;
         uint maxdata = (device as Cld.ComediDevice).dev.get_maxdata (0, 0);
-        Comedi.Range [] crange = new Comedi.Range [channels.size];
+        Comedi.Range [] crange = new Comedi.Range [_channels.size];
 
         int index = 0;
-        foreach (var channel in channels.values) {
+        foreach (var channel in _channels.values) {
             crange [index++] = (device as Cld.ComediDevice).dev.get_range (
                                         (channel as Cld.AIChannel).subdevnum,
                                         (channel as Cld.AIChannel).num,
@@ -502,7 +510,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
                 int count = 0;
                 int front = 0;
                 int back = 0;
-                int nchan = channels.size;
+                int nchan = _channels.size;
 
                 var size = (device as ComediDevice).dev.get_buffer_size (subdevice);
 
@@ -625,12 +633,12 @@ public class Cld.ComediTask : Cld.AbstractTask {
      * from a list of channels.
      */
     private void set_insn_list () {
-        Comedi.Instruction[] instructions = new Comedi.Instruction[channels.size];
+        Comedi.Instruction[] instructions = new Comedi.Instruction[_channels.size];
         int n = 0;
 
-        instruction_list.n_insns = channels.size;
+        instruction_list.n_insns = _channels.size;
 
-        foreach (var channel in channels.values) {
+        foreach (var channel in _channels.values) {
             instructions[n] = Comedi.Instruction ();
             instructions[n].insn = Comedi.InstructionAttribute.READ;
             instructions[n].data = new uint[NSAMPLES];
@@ -690,7 +698,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
         if (ret < 0)
             Comedi.perror ("do_insnlist failed:");
 
-        foreach (var channel in channels.values) {
+        foreach (var channel in _channels.values) {
             /*XXX Consider getting rid of Channel timestamps. They are nod needed if using FIFOs. */
             (channel as Cld.Channel).timestamp = timestamp;
             maxdata = (device as Cld.ComediDevice).dev.get_maxdata (
@@ -736,7 +744,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
         /*XXX Consider getting rid of Channel timestamps. They are nod needed if using FIFOs. */
         GLib.DateTime timestamp = new DateTime.now_local ();
 
-        foreach (var channel in channels.values) {
+        foreach (var channel in _channels.values) {
 
             /*XXX Consider getting rid of Channel timestamps. They are not needed if using FIFOs. */
             (channel as Cld.Channel).timestamp = timestamp;
@@ -780,7 +788,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
             entry = new Cld.LogEntry ();
             string mess = "%s\t".printf (entry.time_as_string);
 
-            foreach (var channel in channels.values) {
+            foreach (var channel in _channels.values) {
                 var type = channel.get_type ();
                 if (type.is_a (typeof (Cld.ScalableChannel))) {
                         mess += "%s %.6f\t".printf (channel.uri, (channel as Cld.ScalableChannel).scaled_value);
@@ -903,12 +911,12 @@ public class Cld.ComediPollingTask : Cld.ComediTask {
      * from a list of channels.
      */
     private void set_insn_list () {
-        Comedi.Instruction[] insns = new Comedi.Instruction[channels.size];
+        Comedi.Instruction[] insns = new Comedi.Instruction[_channels.size];
         int n = 0;
 
-        instruction_list.n_insns = channels.size;
+        instruction_list.n_insns = _channels.size;
 
-        foreach (var channel in channels.values) {
+        foreach (var channel in _channels.values) {
             insns[n] = Comedi.Instruction ();
             insns[n].insn = Comedi.InstructionAttribute.READ;
             insns[n].data = new uint[NSAMPLES];
@@ -947,7 +955,7 @@ public class Cld.ComediPollingTask : Cld.ComediTask {
         ret = (device as Cld.ComediDevice).dev.do_insnlist (instruction_list);
         if (ret < 0) Comedi.perror ("do_insnlist failed:");
 
-        foreach (var channel in channels.values) {
+        foreach (var channel in _channels.values) {
             (channel as Cld.Channel).timestamp = timestamp;
             maxdata = (device as Cld.ComediDevice).dev.get_maxdata (
                         (channel as Cld.Channel).subdevnum,
@@ -982,7 +990,7 @@ public class Cld.ComediPollingTask : Cld.ComediTask {
         /* XXX Consider getting rid of timestamps, not needed using FIFOs */
         GLib.DateTime timestamp = new DateTime.now_local ();
 
-        foreach (var channel in channels.values) {
+        foreach (var channel in _channels.values) {
             (channel as Cld.Channel).timestamp = timestamp;
             if (channel is Cld.AOChannel) {
                 val = (channel as Cld.AOChannel).scaled_value;

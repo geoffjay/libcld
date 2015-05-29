@@ -215,23 +215,36 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
 
         base.run ();
 
-        stdout.printf ("\nPrinting reference table..\n\n");
-        context.print_ref_list ();
-        stdout.printf ("\n Finished.\n\n");
+        /*
+         *stdout.printf ("\nPrinting reference table..\n\n");
+         *context.print_ref_list ();
+         *stdout.printf ("\n Finished.\n\n");
+         */
 
-        var device = context.get_object ("dev0") as Cld.ComediDevice;
-        (device as Cld.ComediDevice).open ();
-        var info = device.info ();
-        stdout.printf ("Comedi.Device information:\n%s\n", info.to_string ());
+        /*
+         *var device = context.get_object ("dev0") as Cld.ComediDevice;
+         *(device as Cld.ComediDevice).open ();
+         *var info = device.info ();
+         *stdout.printf ("Comedi.Device information:\n%s\n", info.to_string ());
+         *GLib.message ("%s", context.get_object ("tk0").to_string ());
+         */
+
+        //GLib.message ("%s", context.to_string_recursive ());
+
+
 
         GLib.Timeout.add_seconds (2, start_acq_cb);
-        GLib.Timeout.add_seconds (5, start_log_cb);
+        /*
+         *GLib.Timeout.add_seconds (5, start_log_cb);
+         */
         chan = context.get_object ("ai00") as Cld.AIChannel;
         (chan as Cld.ScalableChannel).new_value.connect ((id, value) => {
             stdout.printf ("ai00: %8.3f\n", chan.scaled_value);
         });
 
-        GLib.Timeout.add_seconds (15, stop_log_cb);
+        /*
+         *GLib.Timeout.add_seconds (15, stop_log_cb);
+         */
         GLib.Timeout.add_seconds (20, stop_acq_cb);
         GLib.Timeout.add_seconds (25, quit_cb);
 
@@ -270,6 +283,9 @@ class Cld.AsyncAcquisitionExample : Cld.Example {
     }
 
     public bool quit_cb () {
+        var task = context.get_object ("tk0") as Cld.ComediTask;
+        var channels = task.get_channels ();
+        message ("channels size: %d", channels.size);
         loop.quit ();
         return false;
     }

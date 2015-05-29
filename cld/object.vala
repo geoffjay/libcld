@@ -106,14 +106,14 @@ public interface Cld.Object : GLib.Object {
      *
      * @param parent the parent to assign.
      */
-    internal abstract void set_parent (Cld.Container parent);
+    public abstract void set_parent (Cld.Container parent);
 
     /**
      * Get the parent object
      *
      * @return The parent of this
      */
-    internal abstract Cld.Object get_parent ();
+    public abstract Cld.Object get_parent ();
 
     /**
      * Get the parent of this object.

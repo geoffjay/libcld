@@ -94,7 +94,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * The name of the current Log table.
      */
-    [Description(nick="Rate", blurb="")]
+    [Description(nick="Experiment Name", blurb="Name of the current log table")]
     public string experiment_name {
         get { return _experiment_name; }
     }
@@ -272,6 +272,12 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             update_node ();
             });
         }
+
+        notify["gfile"].connect ((s,p) => {
+            message ("gfile changed path: %s file: %s", path, file);
+            path = gfile.get_parent ().get_path ();
+            file = gfile.get_basename ();
+        });
     }
 
     private void update_node () {
@@ -289,9 +295,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                                 break;
                             case "path":
                                 iter->set_content (path);
+                                //iter->set_content (gfile.get_parent ().get_path ());
+            message ("path changed path: %s file: %s", path, file);
                                 break;
                             case "file":
                                 iter->set_content (file);
+                                //iter->set_content (gfile.get_basename ());
+            message ("file changed path: %s file: %s", path, file);
                                 break;
                             case "rate":
                                 iter->set_content (rate.to_string ());
@@ -337,14 +347,17 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * Open the database file for logging.
      */
     public void database_open () throws Cld.FileError {
-        string db_filename;
-
-        if (!path.has_suffix ("/")) {
-            path = "%s%s".printf (path, "/");
-        }
-
-        db_filename = "%s%s".printf (path, file);
-
+/*
+ *        string db_filename;
+ *
+ *        if (!path.has_suffix ("/")) {
+ *            path = "%s%s".printf (path, "/");
+ *        }
+ *
+ *        db_filename = "%s%s".printf (path, file);
+ *
+ */
+        string db_filename = gfile.get_path ();
         /* Create the file if it doesn't exist already */
         if (!(Posix.access (db_filename, Posix.F_OK) == 0)) {
             FileStream.open (db_filename, "a+");

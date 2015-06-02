@@ -247,7 +247,6 @@ public class Cld.ComediTask : Cld.AbstractTask {
         /* Select execution type */
         switch (exec_type) {
             case "streaming":
-                message (">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> channels %d", get_channels ().size);
                 foreach (var channel in _channels.values)
                     message ("%s", channel.uri);
                 do_async ();
@@ -685,22 +684,14 @@ public class Cld.ComediTask : Cld.AbstractTask {
         int ret, i = 0, j;
         double meas;
 
-        /**
-         * XXX Consider getting rid of Channel timestamps, they are not needed
-         *     if using FIFOs
-         */
-        GLib.DateTime timestamp = new DateTime.now_local ();
         /* Set the OOR behavior */
         Comedi.set_global_oor_behavior (Comedi.OorBehavior.NUMBER);
 
-        //debug ("\t\t\t\texecute_instruction_list (), get_seconds (): %.3f", timestamp.get_seconds ());
         ret = (device as Cld.ComediDevice).dev.do_insnlist (instruction_list);
         if (ret < 0)
             Comedi.perror ("do_insnlist failed:");
 
         foreach (var channel in _channels.values) {
-            /*XXX Consider getting rid of Channel timestamps. They are nod needed if using FIFOs. */
-            (channel as Cld.Channel).timestamp = timestamp;
             maxdata = (device as Cld.ComediDevice).dev.get_maxdata (
                         (channel as Cld.Channel).subdevnum, (channel as Cld.Channel).num);
 
@@ -741,13 +732,9 @@ public class Cld.ComediTask : Cld.AbstractTask {
         Comedi.Range range;
         uint maxdata,  data;
         double val;
-        /*XXX Consider getting rid of Channel timestamps. They are nod needed if using FIFOs. */
-        GLib.DateTime timestamp = new DateTime.now_local ();
 
         foreach (var channel in _channels.values) {
 
-            /*XXX Consider getting rid of Channel timestamps. They are not needed if using FIFOs. */
-            (channel as Cld.Channel).timestamp = timestamp;
             if (channel is Cld.AOChannel) {
                 range = (device as Cld.ComediDevice).dev.get_range (
                         (channel as Cld.Channel).subdevnum, (channel as Cld.AOChannel).num,
@@ -781,33 +768,6 @@ public class Cld.ComediTask : Cld.AbstractTask {
     }
 
     /**
-     * Write the data to fifos using the LogEntry class as a convenience for timestamping.
-     */
-    protected void write_fifos () {
-        foreach (int fd in fifos.values) {
-            entry = new Cld.LogEntry ();
-            string mess = "%s\t".printf (entry.time_as_string);
-
-            foreach (var channel in _channels.values) {
-                var type = channel.get_type ();
-                if (type.is_a (typeof (Cld.ScalableChannel))) {
-                        mess += "%s %.6f\t".printf (channel.uri, (channel as Cld.ScalableChannel).scaled_value);
-                } else if (type.is_a (typeof (Cld.DChannel))) {
-                    if ((channel as DChannel).state) {
-                        mess += "%s %.1f\t".printf (channel.uri, 1.0);
-                    } else {
-                        mess += "%s %.1f\t".printf (channel.uri, 0.0);
-                    }
-                }
-            }
-
-            mess += "\n";
-            /* Write message to fifo. */
-            ssize_t w = Posix.write (fd, mess, mess.length);
-        }
-    }
-
-    /**
      * A thread that is used to implement a polling task.
      */
     public class Thread {
@@ -832,7 +792,6 @@ public class Cld.ComediTask : Cld.AbstractTask {
             while (task.active) {
                 lock (task) {
                     task.trigger_device ();
-                    //task.write_fifos ();
                 }
 
                 //GLib.debug ("--- %d ---", this.interval_ms);
@@ -946,9 +905,6 @@ public class Cld.ComediPollingTask : Cld.ComediTask {
         int ret, i = 0, j;
         double meas;
 
-        /* XXX Consider getting rid of timestamps, not needed using FIFOs */
-        GLib.DateTime timestamp = new DateTime.now_local ();
-
         /* Set the OOR behavior */
         Comedi.set_global_oor_behavior (Comedi.OorBehavior.NUMBER);
 
@@ -956,7 +912,6 @@ public class Cld.ComediPollingTask : Cld.ComediTask {
         if (ret < 0) Comedi.perror ("do_insnlist failed:");
 
         foreach (var channel in _channels.values) {
-            (channel as Cld.Channel).timestamp = timestamp;
             maxdata = (device as Cld.ComediDevice).dev.get_maxdata (
                         (channel as Cld.Channel).subdevnum,
                         (channel as Cld.Channel).num);
@@ -987,11 +942,8 @@ public class Cld.ComediPollingTask : Cld.ComediTask {
         uint maxdata, data;
         double val;
 
-        /* XXX Consider getting rid of timestamps, not needed using FIFOs */
-        GLib.DateTime timestamp = new DateTime.now_local ();
 
         foreach (var channel in _channels.values) {
-            (channel as Cld.Channel).timestamp = timestamp;
             if (channel is Cld.AOChannel) {
                 val = (channel as Cld.AOChannel).scaled_value;
                 range = (device as Cld.ComediDevice).dev.get_range (

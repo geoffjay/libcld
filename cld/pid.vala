@@ -926,27 +926,27 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
         });
 
         notify["dt"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["kp"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["ki"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["kd"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["desc"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
@@ -980,7 +980,6 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
                             break;
                         case "kp":
                             iter->set_content (kp.to_string ());
-                            message ("Updating kp to %.3f", kp);
                             break;
                         case "ki":
                             iter->set_content (ki.to_string ());

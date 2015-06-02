@@ -114,7 +114,7 @@ public class Cld.Calibration : Cld.AbstractContainer {
      */
     private void connect_signals () {
         notify["units"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
     }

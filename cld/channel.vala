@@ -38,13 +38,15 @@ public interface Cld.Channel : Cld.Container {
      * backwards approach and should be replaced with a Device containing a list
      * of channels.
      */
-    public abstract string devref { get; set; }
+    /*
+     *public abstract string devref { get; set; }
+     */
 
     /**
      * A reference to the device that the channel belongs to, same comments
      * apply here as they did to the devref.
      */
-    public abstract weak Device device { get; set; }
+    //public abstract weak Device device { get; set; }
 
     /**
      * String name of the channel, could be considered to be the channel's
@@ -56,11 +58,6 @@ public interface Cld.Channel : Cld.Container {
      * Description of the channel's purpose.
      */
     public abstract string desc { get; set; }
-
-    /**
-     * A Timestamp to that should be updated when the value or state changes.
-     */
-    public abstract DateTime timestamp { get; set; }
 
     /**
      * Raised when the channel has been assigned a new value.

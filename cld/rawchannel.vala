@@ -66,7 +66,7 @@ public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
      */
     public RawChannel () {
         set_num (0);
-        this.devref = "/daqctl0/dev0";
+        //this.devref = "/daqctl0/dev0";
         this.tag = "RAW0";
         this.desc = "Raw Channel";
 
@@ -99,7 +99,7 @@ public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
 
         /* Read in the attributes */
         id = node->get_prop ("id");
-        devref = node->get_prop ("ref");
+        //devref = node->get_prop ("ref");
 
         /* Read in the property/class element nodes */
         for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {

@@ -24,67 +24,62 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     /**
      * {@inheritDoc}
      */
-    [Description(nick="Name", blurb="")]
+    [Description(nick="Name", blurb="Descriptive name for the log")]
     public virtual string name { get; set; }
 
     /**
      * {@inheritDoc}
      */
     [Description(nick="Path", blurb="")]
-    protected virtual string path { get; set; }
+    //protected virtual string path { get; set; }
+    protected string path;
 
     /**
      * {@inheritDoc}
      */
     [Description(nick="Filename", blurb="")]
-    protected virtual string file { get; set; }
+   // protected virtual string file { get; set; }
+    protected string file;
 
     /**
      * {@inheritDoc}
      */
-    [Description(nick="File", blurb="")]
+    [Description(nick="File", blurb="Data log file")]
     public virtual GLib.File gfile { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    [Description(nick="Rate", blurb="")]
+    [Description(nick="Rate", blurb="Log file rate in Hz")]
     public virtual double rate { get; set; }
-
     /**
      * {@inheritDoc}
      */
-    [Description(nick="Time interval", blurb="")]
-    public virtual int dt { get { return (int)(1e3 / rate); } }
-
-    /**
-     * {@inheritDoc}
-     */
-    [Description(nick="Active", blurb="")]
+    [Description(nick="Active", blurb="Whether or not the log file is currently active")]
     public virtual bool active { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    [Description(nick="Open", blurb="")]
+    [Description(nick="Open", blurb="Flag to check whether the file is open or not")]
     public virtual bool is_open { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    [Description(nick="Date Format", blurb="")]
+    [Description(nick="Date Format", blurb="Date/Time format to use when renaming the file or database table")]
     public virtual string date_format { get; set; }
 
     /**
      * {@inheritDoc}
      */
     [Description(nick="fifos", blurb="A list of FIFO file descriptors")]
-    public virtual Gee.Map<string, int>? fifos { get; set; }
+    protected virtual Gee.Map<string, int>? fifos { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    [Description(nick="Data Source", blurb="")]
+    [Description(nick="Data Source", blurb="Either 'channel' or a path to a multiplexer FIFO")]
     public virtual string data_source { get; set; }
 
     /**
@@ -102,11 +97,11 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     /**
      * A double ended queue for LogEntries.
      */
-    [Description(nick="Entry Queue", blurb="")]
+    [Description(nick="Entry Queue", blurb="Double ended queue for log entries")]
     protected virtual Gee.Deque<Cld.LogEntry> entry_queue { get; set; }
 
     /**
-     * The total number of channels in this log.
+"     * The total number of channels in this log.
      */
     [Description(nick="Number of Channels", blurb="")]
     protected int nchans { get; set; }

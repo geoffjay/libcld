@@ -111,7 +111,7 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
     public AOChannel () {
         /* set defaults */
         set_num (0);
-        this.devref = "dev0";
+        //this.devref = "dev0";
         this.tag = "CH0";
         this.desc = "Output Channel";
 
@@ -126,7 +126,7 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
-            devref = node->get_prop ("ref");
+            //devref = node->get_prop ("ref");
             /* iterate through node children */
             for (Xml.Node *iter = node->children;
                  iter != null;
@@ -173,37 +173,37 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
      */
     private void connect_signals () {
         notify["tag"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["desc"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["num"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["subdevnum"].connect ((s, p) => {
-            message ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
+            //message ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
             update_node ();
         });
 
         notify["calref"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["range"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["alias"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //message ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
     }
@@ -232,7 +232,7 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
                             break;
                         case "subdevnum":
                             iter->set_content (subdevnum.to_string ());
-                            message ("Writing %s to XML node for subdevnum", subdevnum.to_string ());
+                            //message ("Writing %s to XML node for subdevnum", subdevnum.to_string ());
                             break;
                         case "calref":
                             iter->set_content (calref);
@@ -260,7 +260,7 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
                 if (object is Cld.Calibration) {
                     calibration = object as Cld.Calibration;
                     calref = (object as Cld.Calibration).uri;
-                    message ("Calibration for %s changed to %s", uri, calibration.uri);
+                    //message ("Calibration for %s changed to %s", uri, calibration.uri);
                 }
                 break;
             default:

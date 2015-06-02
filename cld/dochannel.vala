@@ -41,7 +41,7 @@ public class Cld.DOChannel : Cld.AbstractChannel, Cld.DChannel, Cld.OChannel {
     public DOChannel () {
         /* set defaults */
         set_num (0);
-        this.devref = "dev0";
+        //this.devref = "dev0";
         this.tag = "CH0";
         this.desc = "Output Channel";
         state = false;
@@ -54,7 +54,7 @@ public class Cld.DOChannel : Cld.AbstractChannel, Cld.DChannel, Cld.OChannel {
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
-            devref = node->get_prop ("ref");
+            //devref = node->get_prop ("ref");
             /* iterate through node children */
             for (Xml.Node *iter = node->children;
                  iter != null;

@@ -41,30 +41,34 @@ public abstract class Cld.AbstractChannel : Cld.AbstractContainer, Cld.Channel {
     /**
      * {@inheritDoc}
      */
-    [Description(nick="Device Reference", blurb="The uri of the device used by this channel")]
-    public virtual string devref { get; set; }
+    /*
+     *[Description(nick="Device Reference", blurb="The uri of the device used by this channel")]
+     *public virtual string devref { get; set; }
+     */
 
     /**
      * {@inheritDoc}
      */
-    [Description(nick="Device", blurb="The device used by this channel")]
-    public virtual Cld.Device device {
-        get {
-            var devices = get_children (typeof (Cld.Device));
-            foreach (var dev in devices.values) {
-
-                /* this should only happen once */
-                return dev as Cld.Device;
-            }
-
-            return null;
-        }
-        set {
-            /* remove all first */
-            objects.unset_all (get_children (typeof (Cld.Device)));
-            objects.set (value.id, value);
-        }
-    }
+/*
+ *    [Description(nick="Device", blurb="The device used by this channel")]
+ *    public virtual Cld.Device device {
+ *        get {
+ *            var devices = get_children (typeof (Cld.Device));
+ *            foreach (var dev in devices.values) {
+ *
+ *                [> this should only happen once <]
+ *                return dev as Cld.Device;
+ *            }
+ *
+ *            return null;
+ *        }
+ *        set {
+ *            [> remove all first <]
+ *            objects.unset_all (get_children (typeof (Cld.Device)));
+ *            objects.set (value.id, value);
+ *        }
+ *    }
+ */
 
     /**
      * {@inheritDoc}
@@ -78,12 +82,6 @@ public abstract class Cld.AbstractChannel : Cld.AbstractContainer, Cld.Channel {
      */
     [Description(nick="Description", blurb="A description of the channel")]
     public virtual string desc { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    [Description(nick="Time Stamp", blurb="A timestamp for the data")]
-    public virtual DateTime timestamp { get; set; }
 
     /**
      * {@inheritDoc}

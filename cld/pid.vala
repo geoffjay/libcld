@@ -553,7 +553,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
     /**
      * Proportional gain: Larger values typically mean faster response.
      */
-    [Description(nick="Kp", blurb="")]
+    [Description(nick="Kp", blurb="Proportional Gain")]
     public double kp { get; set; }
 
     private double _ki;
@@ -561,7 +561,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
      * Integral gain: Larger values imply that steady state errors are
      * eliminated faster but can trade off with a larger overshoot.
      */
-    [Description(nick="Ki", blurb="")]
+    [Description(nick="Ki", blurb="Integral Gain")]
     public double ki {
         get { return _ki; }
         set { _ki = (value == 0.0) ? 0.00000 : value; }
@@ -570,7 +570,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
     /**
      * Derivitive gain: Larger values decrease overshoot.
      */
-    [Description(nick="Kd", blurb="")]
+    [Description(nick="Kd", blurb="Derivitive Gain")]
     public double kd { get; set; }
 
     private double _sp;
@@ -579,7 +579,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
      * Desired value that the PID controller works to achieve through process
      * changes to the measured variable.
      */
-    [Description(nick="Set Point", blurb="")]
+    [Description(nick="Set Point", blurb="The desired output value")]
     public double sp {
         get { return _sp; }
         set {
@@ -592,13 +592,13 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
      * Set point channel (so_channel) reference string.
      **/
     [Description(nick="Set Point Reference", blurb="")]
-    public string sp_chref { get; set; }
+    public string sp_chref;
 
     /**
      * A channel that alters the setpoint value (sp) thus a time varying signal
      * can be the set point value.
      **/
-    [Description(nick="Set Point Channel", blurb="")]
+    [Description(nick="Set Point Channel", blurb="The set point is controlled by the scaled value of this")]
     public weak ScalableChannel? sp_channel {
         get {
             var channels = get_children (typeof (Cld.ScalableChannel));
@@ -624,23 +624,23 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
      * Whether or not the loop is currently running.
      */
     [Description(nick="Running", blurb="")]
-    public bool running { get; set; default = false; }
+    public bool running = false;
 
     /**
      * A description of the PID control.
      */
-    [Description(nick="Description", blurb="")]
+    [Description(nick="Description", blurb="A short description")]
     public string desc { get; set; default = "PID Control"; }
 
     /**
      * The output variable high limit cutoff value ID.
      */
-    [Description(nick="Limit High", blurb="")]
+    [Description(nick="Limit High", blurb="The upper limit of the output variable")]
     public double limit_high { get; set; default = 100; }
     /**
      * The output variable low limit cutoff value ID.
      */
-    [Description(nick="Limit Low", blurb="")]
+    [Description(nick="Limit Low", blurb="The lower limit of the output variable")]
     public double limit_low { get; set; default = 0; }
 
 

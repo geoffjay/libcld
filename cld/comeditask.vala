@@ -33,6 +33,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
     /**
      * The referenced device.
      */
+    [Description(nick="Device", blurb="The referenced device")]
     public Cld.Device device {
         get {
             if (_device == null) {
@@ -50,27 +51,32 @@ public class Cld.ComediTask : Cld.AbstractTask {
     /**
      * Comedi subdevice number.
      */
+    [Description(nick="Subdevice", blurb="The number of subdevice of the device")]
     public int subdevice { get; set; }
 
     /**
      * Execution type.
      */
+    [Description(nick="Execution Type", blurb="The method of aquisition or triggering")]
     public string exec_type { get; set; }
 
     /**
      * Input or output.
      */
+    [Description(nick="Direction", blurb="input or output")]
     public string direction { get; set; }
 
     /**
      * Use this for polling tasks.
      */
+    [Description(nick="Interval (ms)", blurb="The polling interval in milliseconds")]
     public int interval_ms { get; set; }
 
     /**
      * Sampling interval in nanoseconds for a single channel. This is the
      * inverse of the scan rate. Use this for asynchronous.
      */
+    [Description(nick="Interval (ns)", blurb="The streaming acquisition scan interval in nanoseconds")]
     public int64 interval_ns { get; set; }
 
     /**
@@ -78,6 +84,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
      * channels (ie. the inverse of the sampling frequency) This parameter may
      * need to be adjusted to get streaming acquisition to work properly.
      */
+    [Description(nick="Resolution (ns)", blurb="The resolution of streaming acquisition scan interval in nanoseconds")]
     public int resolution_ns { get; set; default = 100; }
 
     /**
@@ -94,12 +101,15 @@ public class Cld.ComediTask : Cld.AbstractTask {
      * A list of FIFOs for inter-process data transfer.
      * The data are paired a pipe name and file descriptor.
      */
-    public Gee.Map<string, int>? fifos { get; private set; }
+    [Description(nick="fifos", blurb="A list of FIFO file descriptors")]
+    public Gee.Map<string, int>? fifos;
+    //public Gee.Map<string, int>? fifos { get; private set; }
 
     /**
      * The size of the internal data buffer
      */
-    public uint qsize { get; set; default = 65536; }
+    //public uint qsize { get; set; default = 65536; }
+    public uint qsize = 65536;
 
     private Comedi.InstructionList instruction_list;
     protected const int NSAMPLES = 10;

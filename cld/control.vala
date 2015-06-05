@@ -127,12 +127,12 @@ public class Cld.ProcessValue2 : Cld.AbstractContainer {
      * ID reference of the dataseries associated with this process value.
      */
     [Description(nick="Reference", blurb="")]
-    public string dsref { get; set; }
+    public string dsref;
 
     /**
      * Referenced dataseries to use.
      */
-    [Description(nick="Data Series", blurb="")]
+    [Description(nick="Data Series", blurb="The referenced dataseries")]
     public weak Cld.DataSeries dataseries {
         get {
             var dschildren = get_children (typeof (Cld.DataSeries));

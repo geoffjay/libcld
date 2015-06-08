@@ -77,13 +77,16 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * File path to backup location.
      */
     [Description(nick="Backup Path", blurb="")]
-    public string backup_path { get; set; }
+    public string backup_path;
 
     /**
      * Backup file name.
      */
     [Description(nick="Backup Filename", blurb="")]
-    public string backup_file { get; set; }
+    public string backup_file;
+
+    [Description(nick="Backup File", blurb="Backup database file")]
+    public GLib.File gbackup { get; set; }
 
     /**
      * The interval at which the database will be automatically backed up.
@@ -259,6 +262,11 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         }
         gfile = GLib.File.new_for_path (path + file);
 
+        if (!backup_path.has_suffix ("/")) {
+            backup_path = "%s%s".printf (backup_path, "/");
+        }
+        gbackup = GLib.File.new_for_path (backup_path + backup_file);
+
         connect_signals ();
     }
 
@@ -274,9 +282,23 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         }
 
         notify["gfile"].connect ((s,p) => {
-            message ("gfile changed path: %s file: %s", path, file);
             path = gfile.get_parent ().get_path ();
+            path = gfile.get_parent ().get_path ();
+            if (!path.has_suffix ("/")) {
+                path = "%s%s".printf (path, "/");
+            }
+
             file = gfile.get_basename ();
+        });
+
+        notify["gbackup"].connect ((s,p) => {
+            backup_path = gbackup.get_parent ().get_path ();
+            backup_path = gbackup.get_parent ().get_path ();
+            if (!backup_path.has_suffix ("/")) {
+                backup_path = "%s%s".printf (backup_path, "/");
+            }
+
+            backup_file = gbackup.get_basename ();
         });
     }
 
@@ -295,13 +317,9 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                                 break;
                             case "path":
                                 iter->set_content (path);
-                                //iter->set_content (gfile.get_parent ().get_path ());
-            message ("path changed path: %s file: %s", path, file);
                                 break;
                             case "file":
                                 iter->set_content (file);
-                                //iter->set_content (gfile.get_basename ());
-            message ("file changed path: %s file: %s", path, file);
                                 break;
                             case "rate":
                                 iter->set_content (rate.to_string ());

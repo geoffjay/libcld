@@ -31,14 +31,12 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
      * {@inheritDoc}
      */
     [Description(nick="Path", blurb="")]
-    //protected virtual string path { get; set; }
     protected string path;
 
     /**
      * {@inheritDoc}
      */
     [Description(nick="Filename", blurb="")]
-   // protected virtual string file { get; set; }
     protected string file;
 
     /**

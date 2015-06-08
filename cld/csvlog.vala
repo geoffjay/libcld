@@ -127,6 +127,18 @@ public class Cld.CsvLog : Cld.AbstractLog {
             update_node ();
             });
         }
+
+        notify["gfile"].connect ((s,p) => {
+            message ("gfile will change from path: %s file: %s", path, file);
+            path = gfile.get_parent ().get_path ();
+            if (!path.has_suffix ("/")) {
+                path = "%s%s".printf (path, "/");
+            }
+
+            file = gfile.get_basename ();
+            message ("gfile changed path: %s file: %s", path, file);
+        });
+
     }
 
     private void update_node () {
@@ -191,6 +203,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
      * @return On successful open true, false otherwise.
      */
     public bool file_open () {
+message (">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> path");
         string filename;
         string temp;
         string tempname;
@@ -204,25 +217,41 @@ public class Cld.CsvLog : Cld.AbstractLog {
             temp = file;
         }
 
-        /* original implementation checked for the existence of requested
-         * file and posted error message if it is, reimplement that later */
         if (path.has_suffix ("/"))
             filename = "%s%s".printf (path, temp);
         else
             filename = "%s/%s".printf (path, temp);
 
-        /* open the file */
-        debug ("Opening file: %s", filename);
-        file_stream = FileStream.open (filename, "w+");
+        /* Create the file if it doesn't exist already */
+        if (!(Posix.access (filename, Posix.F_OK) == 0)) {
 
-        if (file_stream == null) {
-            is_open = false;
-        } else {
-            is_open = true;
-            /* add the header */
-            file_stream.printf ("Log file: %s created at %s\n\n",
-                                name, start_time.format ("%F %T"));
+message ("filename: %s is_open: %s", filename, is_open.to_string ());
+            FileStream.open (filename, "a+");
         }
+
+        if (!(Posix.access (filename, Posix.W_OK) == 0) &&
+           !(Posix.access (filename, Posix.R_OK) == 0)) {
+            throw new Cld.FileError.ACCESS (
+                    "Can't open log file %s", filename
+                );
+            is_open = false;
+
+            return is_open;
+        } else {
+            /* open the file */
+            debug ("Opening file: %s", filename);
+            file_stream = FileStream.open (filename, "w+");
+
+            if (file_stream == null) {
+                is_open = false;
+            } else {
+                is_open = true;
+                /* add the header */
+                file_stream.printf ("Log file: %s created at %s\n\n",
+                                    name, start_time.format ("%F %T"));
+            }
+        }
+
 
         return is_open;
     }
@@ -372,8 +401,10 @@ public class Cld.CsvLog : Cld.AbstractLog {
         int datachans = 0;
         int rowcnt = 0;
         ulong handler;
-
+message ("1111111");
         file_open ();
+
+message ("2222222");
         write_header ();
 
         /* Count the number of channels */

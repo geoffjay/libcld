@@ -258,7 +258,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
         switch (exec_type) {
             case "streaming":
                 foreach (var channel in _channels.values)
-                    message ("%s", channel.uri);
+                    debug ("%s", channel.uri);
                 do_async ();
                 break;
             case "polling":
@@ -642,12 +642,12 @@ public class Cld.ComediTask : Cld.AbstractTask {
      * from a list of channels.
      */
     private void set_insn_list () {
-        Comedi.Instruction[] instructions = new Comedi.Instruction[_channels.size];
+        Comedi.Instruction[] instructions = new Comedi.Instruction[get_channels ().size];
         int n = 0;
 
-        instruction_list.n_insns = _channels.size;
+        instruction_list.n_insns = get_channels ().size;
 
-        foreach (var channel in _channels.values) {
+        foreach (var channel in get_channels ().values) {
             instructions[n] = Comedi.Instruction ();
             instructions[n].insn = Comedi.InstructionAttribute.READ;
             instructions[n].data = new uint[NSAMPLES];
@@ -701,7 +701,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
         if (ret < 0)
             Comedi.perror ("do_insnlist failed:");
 
-        foreach (var channel in _channels.values) {
+        foreach (var channel in get_channels ().values) {
             maxdata = (device as Cld.ComediDevice).dev.get_maxdata (
                         (channel as Cld.Channel).subdevnum, (channel as Cld.Channel).num);
 
@@ -880,12 +880,12 @@ public class Cld.ComediPollingTask : Cld.ComediTask {
      * from a list of channels.
      */
     private void set_insn_list () {
-        Comedi.Instruction[] insns = new Comedi.Instruction[_channels.size];
+        Comedi.Instruction[] insns = new Comedi.Instruction[get_channels ().size];
         int n = 0;
 
-        instruction_list.n_insns = _channels.size;
+        instruction_list.n_insns = get_channels ().size;
 
-        foreach (var channel in _channels.values) {
+        foreach (var channel in get_channels ().values) {
             insns[n] = Comedi.Instruction ();
             insns[n].insn = Comedi.InstructionAttribute.READ;
             insns[n].data = new uint[NSAMPLES];
@@ -921,7 +921,7 @@ public class Cld.ComediPollingTask : Cld.ComediTask {
         ret = (device as Cld.ComediDevice).dev.do_insnlist (instruction_list);
         if (ret < 0) Comedi.perror ("do_insnlist failed:");
 
-        foreach (var channel in _channels.values) {
+        foreach (var channel in get_channels ().values) {
             maxdata = (device as Cld.ComediDevice).dev.get_maxdata (
                         (channel as Cld.Channel).subdevnum,
                         (channel as Cld.Channel).num);
@@ -953,7 +953,7 @@ public class Cld.ComediPollingTask : Cld.ComediTask {
         double val;
 
 
-        foreach (var channel in _channels.values) {
+        foreach (var channel in get_channels ().values) {
             if (channel is Cld.AOChannel) {
                 val = (channel as Cld.AOChannel).scaled_value;
                 range = (device as Cld.ComediDevice).dev.get_range (

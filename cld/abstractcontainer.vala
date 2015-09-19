@@ -322,7 +322,8 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
                         foreach (var dref in (object as Cld.MathChannel).drefs) {
                             (object as Cld.Container).add_ref (dref);
                         }
-                    } else if (type.is_a (typeof (Cld.ScalableChannel))) {
+                    }
+                    if (type.is_a (typeof (Cld.ScalableChannel))) {
                         (object as Cld.Container).add_ref ((object as Cld.ScalableChannel).calref);
                     }
                 } else if (type.is_a (typeof (Cld.Column))) {

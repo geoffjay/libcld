@@ -610,6 +610,11 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
     }
 
     /**
+     * Whether or not hte set point channel is connected
+     */
+    public bool sp_channel_connected { get; set; default = false; }
+
+    /**
      * Whether or not the loop is currently running.
      */
     public bool running { get; set; default = false; }
@@ -719,6 +724,8 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
             return mv.id;
         }
     }
+
+    public ulong sp_channel_handler_id { get; set; default = 0; }
 
     /**
      * Available parameters provided by this control object.
@@ -900,8 +907,10 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
      */
     private void connect_notify () {
         notify["sp"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
+            if (!sp_channel_connected) {
+                message ("Property %s changed for %s", p.get_name (), uri);
+                update_node ();
+            }
         });
 
         notify["dt"].connect ((s, p) => {
@@ -929,19 +938,15 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
             update_node ();
         });
 
-        /*
-         *notify["sp-chref"].connect ((s, p) => {
-         *    message ("Property %s changed for %s", p.get_name (), uri);
-         *    update_node ();
-         *});
-         */
+        notify["sp-chref"].connect ((s, p) => {
+            message ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
 
-        /*
-         *notify["alias"].connect ((s, p) => {
-         *    message ("Property %s changed for %s", p.get_name (), uri);
-         *    update_node ();
-         *});
-         */
+        notify["alias"].connect ((s, p) => {
+            message ("Property %s changed for %s", p.get_name (), uri);
+            update_node ();
+        });
     }
 
     /**
@@ -990,14 +995,32 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
 
 
     /**
-     * Connect the setpoint channel if it exists.
+     * {@inheritDoc}
      */
     public void connect_signals () {
+        connect_sp_channel ();
+    }
+
+    public void connect_sp_channel () {
         if (sp_channel != null) {
-            (sp_channel as ScalableChannel).new_value.connect ((id, scaled_value) => {
-               sp = scaled_value;
+            if (sp_channel_handler_id != 0)
+                disconnect_sp_channel ();
+
+            sp_channel_handler_id = (sp_channel as ScalableChannel).
+                                    new_value.connect ((id, scaled_value) => {
+
+                sp = scaled_value;
             });
+            sp_channel_connected = true;
         }
+    }
+
+    /**
+     * Disconnect the set point channel
+     */
+    public void disconnect_sp_channel () {
+        (sp_channel as ScalableChannel).disconnect (sp_channel_handler_id);
+        sp_channel_connected = false;
     }
 
     /**

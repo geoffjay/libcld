@@ -81,6 +81,9 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
                 /* nullify reference to signify we do not have experession */
                 _expression = null;
             }
+
+            /* XXX FIXME disconnect signal that ar already connected */
+            connect_signals ();
         }
     }
 
@@ -108,17 +111,18 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
                     }
                 }
             _calculated_value = evaluator.evaluate (variable_names, variable_vals);
-            new_value (id, _calculated_value);
+            raw_value = _calculated_value;
 
             return _calculated_value;
             } else {
+                message ("expression must be null");
+                raw_value = 0.0;
 
                 return 0.0;
             }
         }
         private set {
             _calculated_value = value;
-            new_value (id, value);
         }
     }
 
@@ -134,13 +138,13 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
     }
 
     /**
-     * Returns the calculated value. XXX This is not consistent with other channel types
-     * and a work around to get the math channel to respond like the others in a particular context.
+     * {@inheritDoc}
      */
     public virtual double scaled_value {
-        get { return calculated_value; }
+        get { return _scaled_value; }
         private set {
             _scaled_value = value;
+            new_value (id, value);
         }
     }
 

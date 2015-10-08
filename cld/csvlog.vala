@@ -203,7 +203,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
      * @return On successful open true, false otherwise.
      */
     public bool file_open () {
-message (">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> path");
         string filename;
         string temp;
         string tempname;
@@ -224,8 +223,6 @@ message (">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> path");
 
         /* Create the file if it doesn't exist already */
         if (!(Posix.access (filename, Posix.F_OK) == 0)) {
-
-message ("filename: %s is_open: %s", filename, is_open.to_string ());
             FileStream.open (filename, "a+");
         }
 
@@ -251,7 +248,6 @@ message ("filename: %s is_open: %s", filename, is_open.to_string ());
                                     name, start_time.format ("%F %T"));
             }
         }
-
 
         return is_open;
     }
@@ -298,23 +294,16 @@ message ("filename: %s is_open: %s", filename, is_open.to_string ());
         } else {
             src = file;
         }
-/*
- *        dest = "%s%s-%s.%s".printf (path, dest_name, time.format (date_format), dest_ext);
- *
- *        if (path.has_suffix ("/"))
- *            src = "%s%s".printf (path, src);
- */
+
         if (!path.has_suffix ("/"))
             path = path + "/";
 
-            src = "%s/%s".printf (path, src);
+        src = "%s/%s".printf (path, src);
 
-            if (time_stamp == TimeStampFlag.OPEN)
-                dest = src;
+        if (time_stamp == TimeStampFlag.OPEN)
+            dest = src;
         else
-            /*src = "%s/%s".printf (path, src);*/
             dest = "%s%s-%s.%s".printf (path, dest_name, time.format (date_format), dest_ext);
-
 
         /* rename the file */
         if (FileUtils.rename (src, dest) < 0)
@@ -401,10 +390,8 @@ message ("filename: %s is_open: %s", filename, is_open.to_string ());
         int datachans = 0;
         int rowcnt = 0;
         ulong handler;
-message ("1111111");
         file_open ();
 
-message ("2222222");
         write_header ();
 
         /* Count the number of channels */

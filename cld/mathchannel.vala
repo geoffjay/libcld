@@ -61,39 +61,47 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
     public override string? expression {
         get { return _expression; }
         set {
-            string str = value;
-            /* Replacement of characters to make expression matheval compatible.*/
-            str = str.replace ("[-", "_n");
-            str = str.replace ("[", "_");
-            str = str.replace ("]", "");
-            str = str.replace ("\n", "");
-            /* check if expression is parseable */
-            if ( null != ( evaluator = Evaluator.create (str))) {
+            lock (variable_names) {
+                lock (variable_vals) {
+                    string str = value;
+                    /* Replacement of characters to make expression matheval compatible.*/
+                    str = str.replace ("[-", "_n");
+                    str = str.replace ("[", "_");
+                    str = str.replace ("]", "");
+                    str = str.replace ("\n", "");
+                    /* check if expression is parseable */
+                    if ( null != ( evaluator = Evaluator.create (str))) {
 
-                /* retain reference to signify we have good expression */
-                _expression = str;
+                        /* retain reference to signify we have good expression */
+                        _expression = str;
 
-                /* generate variable list for this new expression */
-                evaluator.get_variables (out _variable_names);
-                variable_vals = new double [_variable_names.length];
+                        /* generate variable list for this new expression */
+                        evaluator.get_variables (out _variable_names);
+                        variable_vals = new double [_variable_names.length];
 
-            } else {
-                /* nullify reference to signify we do not have experession */
-                _expression = null;
+                    } else {
+                        /* nullify reference to signify we do not have experession */
+                        _expression = null;
+                    }
+
+                    /* XXX FIXME disconnect signal that ar already connected */
+                    connect_signals ();
+                }
             }
-
-            /* XXX FIXME disconnect signal that ar already connected */
-            connect_signals ();
         }
     }
 
-    public double calculated_value {
-        get {
-            if (_expression != null) {
-                /* Resample variables and return value */
+    private void locked_calculate () {
+        /* Resample variables and return value */
+        /*
+         *lock (variable_names) {
+         *    lock (variable_vals) {
+         */
                 for (int i = 0; i < _variable_names.length; i++ ) {
+                    assert (objects != null);
                     foreach (var object in objects.values) {
-                        if (object is Cld.DataSeries || object is Cld.ScalableChannel) {
+                        /*assert (object != null);*/
+                        if ((object is Cld.DataSeries || object is Cld.ScalableChannel) && (object != null)) {
                             if (_variable_names [i].contains (object.alias)) {
                                 if (object is Cld.DataSeries) {
                                     int n;
@@ -110,10 +118,28 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
                         }
                     }
                 }
-            _calculated_value = evaluator.evaluate (variable_names, variable_vals);
-            raw_value = _calculated_value;
+        /*
+         *    }
+         *}
+         */
+    }
 
-            return _calculated_value;
+    [Description(nick="Calculated Value", blurb="The calculated value of the expression")]
+    public double calculated_value {
+                        /*}*/
+        get {
+            if (_expression != null) {
+                GLib.Func func = this.locked_calculate;
+
+                lock (variable_names) {
+                    lock (variable_vals) {
+                        locked_map_op (func);
+                        _calculated_value = evaluator.evaluate (variable_names, variable_vals);
+                    }
+                }
+                raw_value = _calculated_value;
+
+                return _calculated_value;
             } else {
                 message ("expression must be null");
                 raw_value = 0.0;
@@ -156,20 +182,27 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
     /**
      * {@inheritDoc}
      */
+    private Cld.Calibration _calibration = null;
     public virtual Calibration calibration {
         get {
-            var calibrations = get_children (typeof (Cld.Calibration));
-            foreach (var cal in calibrations.values) {
+            if (_calibration == null) {
+                Gee.Map<string, Cld.Object> calibrations = get_children (typeof (Cld.Calibration));
+                foreach (var cal in calibrations.values) {
 
-                /* this should only happen once */
-                return cal as Cld.Calibration;
+                    /* this should only happen once */
+                    message ("this should only happen once");
+                    /*return cal as Cld.Calibration;*/
+                    _calibration  = cal as Cld.Calibration;
+                }
             }
 
-            return null;
+            return _calibration;
+            /*return null;*/
         }
         set {
             objects.unset_all (get_children (typeof (Cld.Calibration))) ;
             objects.set (value.id, value);
+            _calibration = null;
         }
     }
 

@@ -90,6 +90,12 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         }
     }
 
+    protected void locked_map_op (GLib.Func func) {
+        lock (objects) {
+            func (null);
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -189,7 +195,6 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
 
         return map;
     }
-
 
     /**
      * {@inheritDoc}

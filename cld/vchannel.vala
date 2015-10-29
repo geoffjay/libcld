@@ -53,6 +53,7 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
      */
     [Deprecated (since="0.2")]
     public virtual string? expression {
+    /*public string? expression {*/
         get { return _expression; }
         set {
             /* check if expression is parseable */

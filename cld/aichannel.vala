@@ -37,21 +37,30 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
     /**
      * {@inheritDoc}
      */
+    private Cld.Calibration _calibration = null;
     public virtual Cld.Calibration calibration {
         get {
-            var calibrations = get_children (typeof (Cld.Calibration));
-            foreach (var cal in calibrations.values) {
+            if (_calibration == null) {
+                var calibrations = get_children (typeof (Cld.Calibration));
+                foreach (var cal in calibrations.values) {
 
-                /* this should only happen once */
-                return cal as Cld.Calibration;
+                    /* this should only happen once */
+                    message ("this should only happen once");
+                    /*return cal as Cld.Calibration;*/
+                    _calibration  = cal as Cld.Calibration;
+                }
             }
-            return null;
+
+            return _calibration;
+            /*return null;*/
         }
         set {
-            objects.unset_all (get_children (typeof (Cld.Calibration)));
+            objects.unset_all (get_children (typeof (Cld.Calibration))) ;
             objects.set (value.id, value);
+            _calibration = null;
         }
     }
+
 
     /**
      * {@inheritDoc}

@@ -268,12 +268,23 @@ public class Cld.CsvLog : Cld.AbstractLog {
         } else {
             src = file;
         }
-        dest = "%s%s-%s.%s".printf (path, dest_name, time.format (date_format), dest_ext);
+/*
+ *        dest = "%s%s-%s.%s".printf (path, dest_name, time.format (date_format), dest_ext);
+ *
+ *        if (path.has_suffix ("/"))
+ *            src = "%s%s".printf (path, src);
+ */
+        if (!path.has_suffix ("/"))
+            path = path + "/";
 
-        if (path.has_suffix ("/"))
-            src = "%s%s".printf (path, src);
-        else
             src = "%s/%s".printf (path, src);
+
+            if (time_stamp == TimeStampFlag.OPEN)
+                dest = src;
+        else
+            /*src = "%s/%s".printf (path, src);*/
+            dest = "%s%s-%s.%s".printf (path, dest_name, time.format (date_format), dest_ext);
+
 
         /* rename the file */
         if (FileUtils.rename (src, dest) < 0)

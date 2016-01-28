@@ -399,7 +399,8 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
 //            }
 //        }
         if (expression != null) {
-            for (int i = 0; i < variable_names.length; i++) {
+            //for (int i = 0; i < variable_names.length; i++) {
+            for (int i = 0; i < 1; i++) {
                 var name  = variable_names [i];
                 var obj = get_object_from_alias (name);
                 if (obj != null) {

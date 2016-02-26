@@ -53,6 +53,8 @@ public class Cld.FlowSensor : Cld.AbstractSensor {
         get { return _xsd; }
     }
 
+
+
     public double value {
         get {
             double tmp = -1.0;
@@ -68,7 +70,8 @@ public class Cld.FlowSensor : Cld.AbstractSensor {
      */
     public FlowSensor () {
         id = "fs0";
-        threshold_sp = 100.0;
+        threshold_sp = double.NAN;
+        threshold_alarm_state = false;
 
         connect_signals ();
     }
@@ -112,6 +115,10 @@ public class Cld.FlowSensor : Cld.AbstractSensor {
                         var val = iter->get_content ();
                         threshold_sp = double.parse (val);
                         break;
+                    case "threshold-tolerance":
+                        var val = iter->get_content ();
+                        threshold_tolerance = double.parse (val);
+                        break;
                     default:
                         break;
                 }
@@ -136,10 +143,15 @@ public class Cld.FlowSensor : Cld.AbstractSensor {
         }
 
         var channel = (channel_ref != null) ? get_object_from_uri (channel_ref) as Cld.ScalableChannel : null;
-        if (channel != null) {
+        if ((channel != null) && (threshold_sp != double.NAN)) {
             channel.new_value.connect ((id, value) => {
-                if (Math.fabs (value - threshold_sp) < (0.05 * threshold_sp)) {
-                    threshold_alarm (id, value);
+                if ((Math.fabs (value - threshold_sp)) < (threshold_tolerance * threshold_sp)) {
+                    if (threshold_alarm_state == false) {
+                        threshold_alarm (id, value);
+                    }
+                    threshold_alarm_state = true;
+                } else {
+                    threshold_alarm_state = false;
                 }
             });
         }

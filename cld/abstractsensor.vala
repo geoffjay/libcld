@@ -50,6 +50,16 @@ public abstract class Cld.AbstractSensor : Cld.AbstractContainer, Cld.Sensor, Cl
 
     /**
      * {@inheritDoc}
+     **/
+    public virtual bool threshold_alarm_state { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual double threshold_tolerance { get; set; }
+
+    /**
+     * {@inheritDoc}
      */
     public virtual double sensitivity { get; set; }
 

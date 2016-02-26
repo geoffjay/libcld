@@ -37,6 +37,16 @@ public interface Cld.Sensor : Cld.Container {
     public abstract double threshold_sp { get; set; }
 
     /**
+     * Indicates the value is within the specified tolerance of the set point
+     **/
+    public abstract bool threshold_alarm_state { get; set; }
+
+    /**
+     * The fractional tolerance setting the upper and lower limit on the alarm state
+     */
+    public abstract double threshold_tolerance { get; set; }
+
+    /**
      * XXX A lot of these properties will just be placeholders until an actual
      *     use for them is found.
      */

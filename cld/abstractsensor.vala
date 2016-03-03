@@ -21,7 +21,7 @@
  *
  * Contains common code shared by all sensor implementations.
  */
-public abstract class Cld.AbstractSensor : Cld.AbstractContainer, Cld.Sensor, Cld.Buildable {
+public abstract class Cld.AbstractSensor : Cld.AbstractContainer, Cld.Sensor, Cld.Buildable, Cld.Connector {
 
     /**
      * {@inheritDoc}
@@ -37,6 +37,11 @@ public abstract class Cld.AbstractSensor : Cld.AbstractContainer, Cld.Sensor, Cl
      * {@inheritDoc}
      */
     public virtual string channel_ref { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual Cld.Channel channel { get; set; }
 
     /**
      * {@inheritDoc}
@@ -77,4 +82,9 @@ public abstract class Cld.AbstractSensor : Cld.AbstractContainer, Cld.Sensor, Cl
      * {@inheritDoc}
      */
     public abstract void build_from_node (Xml.Node *node) throws GLib.Error;
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract void connect_signals ();
 }

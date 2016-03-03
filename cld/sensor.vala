@@ -27,6 +27,11 @@ public interface Cld.Sensor : Cld.Container {
     public abstract string channel_ref { get; set; }
 
     /**
+     * The measurement channel for this sensor
+     */
+    public abstract Cld.Channel channel { get; set; }
+
+    /**
      * FIXME: Add an appropriate comment
      */
     public abstract double value { get; set; }

@@ -150,14 +150,12 @@ dist_vapi_DATA = \
 	$(NULL)
 
 if HAVE_INTROSPECTION
-#girdir = @INTROSPECTION_GIRDIR@
-girdir = /home/stroy/usr/share/gir-1.0
+girdir = @INTROSPECTION_GIRDIR@
 gir_DATA = \
 	Cld-0.3.gir \
 	$(NULL)
 
-#typelibdir = @INTROSPECTION_TYPELIBDIR@
-typelibdir = /home/stroy/usr/lib/girepository-1.0
+typelibdir = @INTROSPECTION_TYPELIBDIR@
 typelib_DATA = \
 	Cld-0.3.typelib \
 	$(NULL)

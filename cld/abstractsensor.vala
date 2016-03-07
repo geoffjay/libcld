@@ -21,7 +21,7 @@
  *
  * Contains common code shared by all sensor implementations.
  */
-public abstract class Cld.AbstractSensor : Cld.AbstractContainer, Cld.Sensor, Cld.Buildable {
+public abstract class Cld.AbstractSensor : Cld.AbstractContainer, Cld.Sensor, Cld.Buildable, Cld.Connector {
 
     /**
      * {@inheritDoc}
@@ -41,12 +41,27 @@ public abstract class Cld.AbstractSensor : Cld.AbstractContainer, Cld.Sensor, Cl
     /**
      * {@inheritDoc}
      */
+    public virtual Cld.Channel channel { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
     public virtual double value { get; set; }
 
     /**
      * {@inheritDoc}
      */
     public virtual double threshold_sp { get; set; }
+
+    /**
+     * {@inheritDoc}
+     **/
+    public virtual bool threshold_alarm_state { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual double threshold_tolerance { get; set; }
 
     /**
      * {@inheritDoc}
@@ -67,4 +82,9 @@ public abstract class Cld.AbstractSensor : Cld.AbstractContainer, Cld.Sensor, Cl
      * {@inheritDoc}
      */
     public abstract void build_from_node (Xml.Node *node) throws GLib.Error;
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract void connect_signals ();
 }

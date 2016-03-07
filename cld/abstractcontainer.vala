@@ -339,8 +339,9 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
                         (object as Cld.Container).add_ref (chref);
                     }
                 } else if (type.is_a (typeof (Cld.Sensor))) {
-                    if (type.is_a (typeof (Cld.FlowSensor)))
+                    if (type.is_a (typeof (Cld.FlowSensor))) {
                         (object as Cld.Container).add_ref ((object as Cld.FlowSensor).channel_ref);
+                    }
                 } else if (type.is_a (typeof (Cld.DataSeries))) {
                     (object as Cld.Container).add_ref ((object as Cld.DataSeries).chref);
                 } else if (type.is_a (typeof (Cld.Module))) {

@@ -211,14 +211,14 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
     private async int open_fifo () {
         SourceFunc callback = open_fifo.callback;
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("open_fifo", () => {
-            GLib.message ("Multiplexer `%s' waiting for a reader to FIFO `%s'",
+            GLib.debug ("Multiplexer `%s' waiting for a reader to FIFO `%s'",
                    id, fname);
             fd = Posix.open (fname, Posix.O_WRONLY);
             if (fd == -1) {
                 critical ("%s Posix.open error: %d: %s",
                           fname, Posix.errno, Posix.strerror (Posix.errno));
             } else {
-                GLib.message ("Acquisition controller opening FIFO `%s' fd: %d",
+                GLib.debug ("Acquisition controller opening FIFO `%s' fd: %d",
                        fname, fd);
             }
 
@@ -323,7 +323,7 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
                             }
                             /*
                              *if ((total % (nchan * 200)) == 0) {
-                             *    message ("multiplexer: %d %d", Linux.gettid (), total/(nchan * 200));
+                             *    debug ("multiplexer: %d %d", Linux.gettid (), total/(nchan * 200));
                              *}
                              */
                         }

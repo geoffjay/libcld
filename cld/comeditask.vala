@@ -612,12 +612,12 @@ public class Cld.ComediTask : Cld.AbstractTask {
     }
 
     private void dump_cmd () {
-        GLib.message ("subdevice:       %u", cmd.subdev);
-        GLib.message ("start:      %-8s %u", cmd_src (cmd.start_src), cmd.start_arg);
-        GLib.message ("scan_begin: %-8s %u", cmd_src (cmd.scan_begin_src), cmd.scan_begin_arg);
-        GLib.message ("convert:    %-8s %u", cmd_src (cmd.convert_src), cmd.convert_arg);
-        GLib.message ("scan_end:   %-8s %u", cmd_src (cmd.scan_end_src), cmd.scan_end_arg);
-        GLib.message ("stop:       %-8s %u", cmd_src (cmd.stop_src), cmd.stop_arg);
+        GLib.debug ("subdevice:       %u", cmd.subdev);
+        GLib.debug ("start:      %-8s %u", cmd_src (cmd.start_src), cmd.start_arg);
+        GLib.debug ("scan_begin: %-8s %u", cmd_src (cmd.scan_begin_src), cmd.scan_begin_arg);
+        GLib.debug ("convert:    %-8s %u", cmd_src (cmd.convert_src), cmd.convert_arg);
+        GLib.debug ("scan_end:   %-8s %u", cmd_src (cmd.scan_end_src), cmd.scan_end_arg);
+        GLib.debug ("stop:       %-8s %u", cmd_src (cmd.stop_src), cmd.stop_arg);
     }
 
     private void print_datum (uint raw, int channel_index, bool is_physical) {
@@ -754,7 +754,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
                 val = (channel as Cld.AOChannel).scaled_value;
                 data = (uint)((val / 100.0) * maxdata);
                 /*
-                 *message ("%s scaled_value: %.3f raw_value: %.3f data: %u",
+                 *debug ("%s scaled_value: %.3f raw_value: %.3f data: %u",
                  *        (channel as AOChannel).id,
                  *        (channel as AOChannel).scaled_value,
                  *        (channel as AOChannel).raw_value,

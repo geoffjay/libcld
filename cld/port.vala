@@ -70,7 +70,7 @@ public interface Cld.Port : Cld.Object {
                     return NONE;
                 }
             } catch (RegexError e) {
-                message ("Error %s", e.message);
+                warning ("Error %s", e.message);
             }
 
             /* XXX need to return something */

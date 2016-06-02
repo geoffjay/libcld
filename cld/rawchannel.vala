@@ -131,22 +131,22 @@ public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
      */
     private void connect_signals () {
         notify["tag"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["desc"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["num"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["alias"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
     }

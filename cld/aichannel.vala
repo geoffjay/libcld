@@ -47,7 +47,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
                 foreach (var cal in calibrations.values) {
 
                     /* this should only happen once */
-                    message ("this should only happen once");
+                    debug ("this should only happen once");
                     /*return cal as Cld.Calibration;*/
                     _calibration  = cal as Cld.Calibration;
                 }
@@ -240,41 +240,41 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
      */
     private void connect_signals () {
         notify["tag"].connect ((s, p) => {
-            //message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["desc"].connect ((s, p) => {
-            //message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["num"].connect ((s, p) => {
-            //message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["subdevnum"].connect ((s, p) => {
-            //message ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
+            //debug ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
             update_node ();
         });
         notify["raw-value-list-size"].connect ((s, p) => {
-            //message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["calref"].connect ((s, p) => {
-            //message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["range"].connect ((s, p) => {
-            //message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["alias"].connect ((s, p) => {
-            //message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
     }
@@ -396,7 +396,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
                 if (object is Cld.Calibration) {
                     calibration = object as Cld.Calibration;
                     calref = (object as Cld.Calibration).uri;
-                    //message ("Calibration for %s changed to %s", uri, calibration.uri);
+                    //debug ("Calibration for %s changed to %s", uri, calibration.uri);
                 }
                 break;
             default:

@@ -65,7 +65,7 @@ public class Cld.ModbusPort : AbstractPort {
      */
     public ModbusPort () {
         this.settings_changed.connect (update_settings);
-        message ("also done");
+        debug ("also done");
     }
 
     /**
@@ -138,7 +138,7 @@ public class Cld.ModbusPort : AbstractPort {
         if (connected) {
             ctx.close ();
             _connected = false;
-            message ("Closed Modbus port.");
+            debug ("Closed Modbus port.");
             }
     }
 

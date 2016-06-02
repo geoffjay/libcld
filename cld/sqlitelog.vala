@@ -459,7 +459,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         DateTime created_time = new DateTime.now_local ();
 
         /* Open the file */
-        message ("filename: %s ", filename);
+        debug ("filename: %s ", filename);
         file_stream = FileStream.open (filename, "w+");
         if (file_stream == null) {
            success = false;
@@ -564,7 +564,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             /* Background channel watch fills the entry queue */
             bg_channel_watch.begin (() => {
                 try {
-                    message ("Channel watch async ended");
+                    debug ("Channel watch async ended");
                 } catch (ThreadError e) {
                     string msg = e.message;
                     error (@"Thread error: $msg");
@@ -582,13 +582,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 open_fifo.begin (fname, (obj, res) => {
                     try {
                         fd = open_fifo.end (res);
-                        message ("Got a writer for %s", fname);
+                        debug ("Got a writer for %s", fname);
 
                         /* Background fifo watch queues fills the entry queue */
                         bg_fifo_watch.begin (fd, (obj, res) => {
                             try {
                                 bg_fifo_watch.end (res);
-                                message ("Log fifo watch async ended");
+                                debug ("Log fifo watch async ended");
                             } catch (ThreadError e) {
                                 string msg = e.message;
                                 error (@"Thread error: $msg");
@@ -598,7 +598,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                         bg_raw_process.begin ((obj, res) => {
                             try {
                                 bg_raw_process.end (res);
-                                message ("Raw data queue processing async ended");
+                                debug ("Raw data queue processing async ended");
                             } catch (ThreadError e) {
                                 string msg = e.message;
                                 error (@"Thread error: $msg");
@@ -614,7 +614,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         bg_entry_write.begin (() => {
             try {
-                message ("Log entry queue write async ended");
+                debug ("Log entry queue write async ended");
             } catch (ThreadError e) {
                 string msg = e.message;
                 error (@"Thread error: $msg");
@@ -651,14 +651,14 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         SourceFunc callback = open_fifo.callback;
 
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("open_fifo_%s".printf (fname), () => {
-            message ("%s is is waiting for a writer to FIFO %s",this.id, fname);
+            debug ("%s is is waiting for a writer to FIFO %s",this.id, fname);
             if (fd == -1)
                 fd = Posix.open (fname, Posix.O_RDONLY);
             fifos.set (fname, fd);
             if (fd == -1) {
                 message ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
             } else {
-                message ("Sqlite log is opening FIFO %s fd: %d", fname, fd);
+                debug ("Sqlite log is opening FIFO %s fd: %d", fname, fd);
             }
 
             Idle.add ((owned) callback);
@@ -912,7 +912,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public override void log_entry_write (Cld.LogEntry entry) {
         parameter_index = log_stmt.bind_parameter_index ("$TIME");
         if (parameter_index == 0) {
-            GLib.message ("bind parameter returned 0");
+            GLib.debug ("bind parameter returned 0");
         }
         ec = log_stmt.bind_text (parameter_index, entry.time_as_string);
         if (ec != Sqlite.OK) {
@@ -956,7 +956,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         stmt.reset ();
 
         if (size != columns) {
-            message ("Sqlite.Log.get_log_entry (..) :The number log table columns does not match the data size.");
+            debug ("Sqlite.Log.get_log_entry (..) :The number log table columns does not match the data size.");
         }
 
         query = "SELECT * FROM %s WHERE id=$ID;".printf (table_name);
@@ -1241,7 +1241,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 ;
             """.printf (name, start.to_string ().substring (0, 19),
                         stop.to_string ().substring (0, 19));
-            message ("%s", query);
+            debug ("%s", query);
             ec = db.prepare_v2 (query, query.length, out stmt);
             if (ec != Sqlite.OK) {
                 message ("Error: %d: %s\n", db.errcode (), db.errmsg ());

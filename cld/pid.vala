@@ -345,7 +345,7 @@ public class Cld.Pid : AbstractContainer {
 
     public void print_process_values () {
         foreach (var process_value in process_values.values) {
-            message ("PV: %s", process_value.id);
+            debug ("PV: %s", process_value.id);
         }
     }
 
@@ -376,7 +376,7 @@ public class Cld.Pid : AbstractContainer {
             mv.raw_value = (kp * p_err) + (ki * i_err) + (kd * d_err);
         }
 
-        //message ("SP: %.2f, MV: %.2f, PV: %.2f, PVPR: %.2f, PVPPR: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
+        //debug ("SP: %.2f, MV: %.2f, PV: %.2f, PVPR: %.2f, PVPPR: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
         //       sp, mv.scaled_value, pv.current_value, pv.previous_value, pv.past_previous_value, p_err, i_err, d_err);
 
         /* XXX Not sure whether or not to raise an output event here, or simple
@@ -502,7 +502,7 @@ public class Cld.Pid : AbstractContainer {
             next_time.get_current_time ();
 #endif
 
-            message ("PID run called");
+            debug ("PID run called");
 
             while (pid.running) {
                 pid.update ();
@@ -525,7 +525,7 @@ public class Cld.Pid : AbstractContainer {
                 mutex.unlock ();
             }
 
-            message ("PID run thread complete");
+            debug ("PID run thread complete");
 
             return null;
         }
@@ -920,43 +920,43 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
     private void connect_notify () {
         notify["sp"].connect ((s, p) => {
             if (!sp_channel_connected) {
-                message ("Property %s changed for %s", p.get_name (), uri);
+                debug ("Property %s changed for %s", p.get_name (), uri);
                 update_node ();
             }
         });
 
         notify["dt"].connect ((s, p) => {
-            //message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["kp"].connect ((s, p) => {
-            //message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["ki"].connect ((s, p) => {
-            //message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["kd"].connect ((s, p) => {
-            //message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["desc"].connect ((s, p) => {
-            //message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["sp-chref"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["alias"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
     }
@@ -1055,7 +1055,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
 
     public void print_process_values () {
         foreach (var process_value in process_values.values) {
-            message ("PV: %s", process_value.id);
+            debug ("PV: %s", process_value.id);
         }
     }
 
@@ -1156,7 +1156,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
              */
             (mv.channel as AOChannel).raw_value = val;
             /*
-             *message ("SP: %.2f, MVs: %.2f, MVr: %.3f PV: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
+             *debug ("SP: %.2f, MVs: %.2f, MVr: %.3f PV: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
              *   sp, mv.channel.scaled_value, val, current_value, p_err, i_err, d_err);
              */
         }
@@ -1288,7 +1288,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
             next_time.get_current_time ();
 #endif
 
-            message ("PID run called");
+            debug ("PID run called");
 
             while (pid.running) {
                 pid.update ();
@@ -1311,7 +1311,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
                 mutex.unlock ();
             }
 
-            message ("PID run thread complete");
+            debug ("PID run thread complete");
 
             return null;
         }

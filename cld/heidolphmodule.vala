@@ -111,7 +111,7 @@ public class Cld.HeidolphModule : Cld.AbstractModule {
      public bool run () {
         string msg1 = "R" + _speed_sp + "\r\n";
 
-        message ("Heidolph: run ()");
+        debug ("Heidolph: run ()");
         source_id = Timeout.add (timeout_ms, fetch_data_cb);
         port.send_bytes (msg1.to_utf8 (), msg1.length);
         running = true;
@@ -125,7 +125,7 @@ public class Cld.HeidolphModule : Cld.AbstractModule {
     public bool stop () {
         string msg1 = "R0\r\n";
 
-        message ("Heidolph: stop ()");
+        debug ("Heidolph: stop ()");
         port.send_bytes (msg1.to_utf8 (), msg1.length);
         running = false;
 
@@ -138,7 +138,7 @@ public class Cld.HeidolphModule : Cld.AbstractModule {
     public void rheostat () {
         string msg1 = "D\r\n";
 
-        message ("Heidolph : rheostat ()");
+        debug ("Heidolph : rheostat ()");
         port.send_bytes (msg1.to_utf8 (), msg1.length);
     }
 
@@ -172,7 +172,7 @@ public class Cld.HeidolphModule : Cld.AbstractModule {
      */
     private void new_data_cb (SerialPort port, uchar[] data, int size) {
         for (int i = 0; i < size; i++) {
-            //message ("new_data_cb () size: %d", size);
+            //debug ("new_data_cb () size: %d", size);
             unichar c = "%c".printf (data[i]).get_char ();
             string s = "%c".printf (data[i]);
 
@@ -196,18 +196,18 @@ public class Cld.HeidolphModule : Cld.AbstractModule {
                     _speed = r.substring (5, -1);
                     var channel = channels.get ("heidolph00");
                     (channel as VChannel).raw_value = double.parse (_speed);
-                    message ("Speed: %s", speed);
+                    debug ("Speed: %s", speed);
                 } else if (r.has_prefix ("NCM")) {
                     _torque = r.substring (5, -1);
                     var channel = channels.get ("heidolph01");
                     (channel as VChannel).raw_value = double.parse (_torque);
-                    //message ("Torque: %s", torque);
+                    //debug ("Torque: %s", torque);
                 } else if (r.has_prefix ("FLT")) {
                     _error_status = r.substring (5, -1);
-                    //message ("Err: %s", error_status);
+                    //debug ("Err: %s", error_status);
                 } else if (r.has_prefix ("SET")) {
                     _speed_sp = r.substring (5, -1);
-                    message ("_speed_sp: %s", _speed_sp);
+                    debug ("_speed_sp: %s", _speed_sp);
                 }
                 received = "";
             }
@@ -227,11 +227,11 @@ public class Cld.HeidolphModule : Cld.AbstractModule {
      */
     public void add_channel (Cld.Object channel) {
         channels.set (channel.id, channel);
-        message ("HeidolphModule :: add_channel(%s)", channel.id);
+        debug ("HeidolphModule :: add_channel(%s)", channel.id);
     }
 
     public void set_speed (string speed_set) {
-        message ("Heidolph: set_speed ()\n");
+        debug ("Heidolph: set_speed ()\n");
         _speed_sp = speed_set;
     }
 
@@ -242,11 +242,11 @@ public class Cld.HeidolphModule : Cld.AbstractModule {
         loaded = true;
 
         if (!port.open ()) {
-            message ("Could not open port, id: %s", id);
+            warning ("Could not open port, id: %s", id);
             loaded = false;
         } else {
             (port as SerialPort).new_data.connect (new_data_cb);
-            message ("HeidolphModule loaded");
+            debug ("HeidolphModule loaded");
         }
         return loaded;
     }
@@ -267,6 +267,6 @@ public class Cld.HeidolphModule : Cld.AbstractModule {
         source_id = null;
         loaded = false;
 
-        message ("HeidolphModule unloaded");
+        debug ("HeidolphModule unloaded");
     }
 }

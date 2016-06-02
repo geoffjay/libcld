@@ -129,14 +129,14 @@ public class Cld.CsvLog : Cld.AbstractLog {
         }
 
         notify["gfile"].connect ((s,p) => {
-            message ("gfile will change from path: %s file: %s", path, file);
+            debug ("gfile will change from path: %s file: %s", path, file);
             path = gfile.get_parent ().get_path ();
             if (!path.has_suffix ("/")) {
                 path = "%s%s".printf (path, "/");
             }
 
             file = gfile.get_basename ();
-            message ("gfile changed path: %s file: %s", path, file);
+            debug ("gfile changed path: %s file: %s", path, file);
         });
 
     }
@@ -403,7 +403,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
             /* Background channel watch fills the entry queue */
             bg_channel_watch.begin (() => {
                 try {
-                    message ("Channel watch async ended");
+                    debug ("Channel watch async ended");
                 } catch (ThreadError e) {
                     string msg = e.message;
                     error (@"Thread error: $msg");

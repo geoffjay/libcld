@@ -81,7 +81,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      */
     public virtual void remove (Cld.Object object) {
         if (objects.unset (object.id)) {
-            message ("Removed the object: %s from %s", object.id, id);
+            debug ("Removed the object: %s from %s", object.id, id);
             object_removed (object.id);
         }
     }
@@ -305,7 +305,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         }
         if (result.uri != requested_uri) {
             result = null;
-            message ("Object with uri %s does not exist", requested_uri);
+            warning ("Object with uri %s does not exist", requested_uri);
         }
 
         return result;

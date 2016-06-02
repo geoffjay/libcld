@@ -74,7 +74,7 @@ internal class Cld.Builder : GLib.Object {
                 xpath += "/cld:object";
         }
 
-        message ("Adding nodeset to %s for: %s", ctr.id, xpath);
+        debug ("Adding nodeset to %s for: %s", ctr.id, xpath);
 
         /* request the nodeset from the configuration */
         try {
@@ -97,7 +97,7 @@ internal class Cld.Builder : GLib.Object {
                         /* No point adding an object type that isn't recognized */
                         if (object != null) {
                             try {
-                                message ("   > Adding object of type %s with id %s to %s",
+                                debug ("   > Adding object of type %s with id %s to %s",
                                          ((object as GLib.Object).get_type ()).name (),
                                          object.id, ctr.id);
                                 ctr.add (object);
@@ -156,7 +156,7 @@ internal class Cld.Builder : GLib.Object {
                 break;
         }
 
-        message ("Loading object of type %s with id %s", type, object.id);
+        debug ("Loading object of type %s with id %s", type, object.id);
 
         return object;
     }

@@ -149,7 +149,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
      */
     public virtual void connect_data_source () {
         var mux = get_object_from_uri (data_source);
-        message ("Connecting to data source `%s' from `%s'",
+        debug ("Connecting to data source `%s' from `%s'",
                 (mux as Cld.Multiplexer).fname, mux.id);
         fifos.set ((mux as Cld.Multiplexer).fname, -1);
     }
@@ -201,10 +201,10 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                     }
                 //} else if (ret == 0) {
                     //stdout.printf ("%s hit timeout\n", id);
-                    message ("ret: %d", ret);
+                    debug ("ret: %d", ret);
                 } else if ((Posix.FD_ISSET (fd, rdset)) == 1) {
                     ret = (int)Posix.read (fd, buf, bufsz);
-                    //message ("ret: %d", ret);
+                    //debug ("ret: %d", ret);
                     if (ret == -1) {
                         GLib.error ("Posix.errno = %d", Posix.errno);
                     }
@@ -220,7 +220,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                             Posix.memcpy (result, data, sizeof (float));
 
                             //if ((total % 256) == 0) {
-                                //message ("%d: total read by %s: %d",
+                                //debug ("%d: total read by %s: %d",
                                          //Linux.gettid (), uri, total);
                             //}
 
@@ -334,7 +334,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                                         entry.data [j] = (double) datum;
                                         total++;
                                     if ((total % 256) == 0) {
-                                        //message ("%d: total raw dequed: %d  qsize: %d",
+                                        //debug ("%d: total raw dequed: %d  qsize: %d",
                                                        //Linux.gettid (),
                                                        //total,
                                                        //raw_queue.size);

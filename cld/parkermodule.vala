@@ -702,7 +702,7 @@ public class Cld.ParkerModule : AbstractModule {
             loaded = false;
         } else {
             (port as SerialPort).new_data.connect (new_data_cb);
-            message ("ParkerModule loaded");
+            debug ("ParkerModule loaded");
         }
         restore_flash.begin ();
         loaded = (port.open ()) ? true : false;
@@ -722,7 +722,7 @@ public class Cld.ParkerModule : AbstractModule {
      * {@inheritDoc}
      */
     public override void unload () {
-        message ("ParkerModule :: unload ()");
+        debug ("ParkerModule :: unload ()");
         port.close ();
         loaded = false;
     }
@@ -735,7 +735,7 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     public async void jog_plus () {
-        message ("jog_plus ()");
+        debug ("jog_plus ()");
         if (active_command == null) {
             yield write_object (
                                C3Plus_DeviceControl_Controlword_1,
@@ -753,7 +753,7 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     public async void jog_minus () {
-        message ("jog_minus");
+        debug ("jog_minus");
         if (active_command == null) {
             yield write_object (
                                C3Plus_DeviceControl_Controlword_1,
@@ -767,12 +767,12 @@ public class Cld.ParkerModule : AbstractModule {
                                CWB_QUIT |
                                CWB_OPEN_BRAKE
                                );
-            message ("jog_minus: position: %.3f status1: %u", _position, status1);
+            debug ("jog_minus: position: %.3f status1: %u", _position, status1);
         }
     }
 
     public async void jog_stop () {
-        message ("jog_stop");
+        debug ("jog_stop");
         yield write_object (
                            C3Plus_DeviceControl_Controlword_1,
                            CWB_QUIT |
@@ -793,7 +793,7 @@ public class Cld.ParkerModule : AbstractModule {
     [Deprecated (replacement="move_relative", since="0.2.7")]
     public async void step (double step_size, int direction) {
         if (active_command == null) {
-            message ("step_size: %.3f direction: %d position %.3f", step_size, direction, position);
+            debug ("step_size: %.3f direction: %d position %.3f", step_size, direction, position);
             /* Write movement to the set table */
             yield write_object (C3Array_Col01_Row02, step_size * direction);
             yield write_object (C3Array_Col02_Row02, default_velocity);
@@ -842,7 +842,7 @@ public class Cld.ParkerModule : AbstractModule {
                                      double jerk) {
         requested_position = position + distance;
         if (active_command == null) {
-            message ("""
+            debug ("""
                 MoveRel: distance: %.3f, speed: %.3f, accel.: %.3f decel.: %.3f jerk: %.3f
                 """, distance, speed, acceleration, deceleration, jerk);
             /* Write movement to the set table */
@@ -903,7 +903,7 @@ public class Cld.ParkerModule : AbstractModule {
                                      double jerk) {
         requested_position = pos;
         if (active_command == null) {
-            message ("""
+            debug ("""
                 MoveAbs: position: %.3f, speed: %.3f, accel.: %.3f decel.: %.3f jerk: %.3f
                 """, pos, speed, acceleration, deceleration, jerk);
             /* Write movement to the set table */
@@ -957,7 +957,7 @@ public class Cld.ParkerModule : AbstractModule {
     private void new_data_cb (SerialPort port, uchar[] data, int size) {
         for (int i = 0; i < size; i++) {
             unichar c = "%c".printf (data[i]).get_char ();
-//            message ("c: %d", (int)c);
+//            debug ("c: %d", (int)c);
             string s = "%c".printf (data[i]);
 
             /* Ignore LF if last char was CR (CRLF terminator) */
@@ -976,7 +976,7 @@ public class Cld.ParkerModule : AbstractModule {
                     r += "%s\t".printf (token);
                 }
                 r = r.substring (0, r.length - 1);
-                //message ("response: %s   ", r);
+                //debug ("response: %s   ", r);
                 parse_response (r);
             }
         }
@@ -986,7 +986,7 @@ public class Cld.ParkerModule : AbstractModule {
         if (active_command == null) {
             yield clear_error_log ();
             status1 &= ~(SWB1_HOME_IS_KNOWN); //Clear bit.
-            message ("home () CW_HOME: %.4x status1: %.4x", CW_HOME, status1);
+            debug ("home () CW_HOME: %.4x status1: %.4x", CW_HOME, status1);
             /* Arm for adress = 0 (home), activate and toggle start bit */
             yield write_object (
                                C3Plus_DeviceControl_Controlword_1,
@@ -1024,11 +1024,11 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     public async void zero_record () {
-        message ("zero_record ()");
+        debug ("zero_record ()");
         if ((status1 & SWB1_HOME_IS_KNOWN) == SWB1_HOME_IS_KNOWN) {
             yield fetch_actual_position ();
             zero_position = _actual_position;
-            message ("zero_position: %.3f", zero_position);
+            debug ("zero_position: %.3f", zero_position);
             position = 0.000;
             /* Write movement to the set table row 1*/
             yield write_object (C3Array_Col01_Row01, zero_position);
@@ -1040,7 +1040,7 @@ public class Cld.ParkerModule : AbstractModule {
           /* Save move 1 to flash */
             yield write_object (C3_Flash_Write, 1);
         } else {
-            message ("Home is not known. Zero command ignored.");
+            debug ("Home is not known. Zero command ignored.");
         }
     }
 
@@ -1053,7 +1053,7 @@ public class Cld.ParkerModule : AbstractModule {
     public async void zero_move () {
         if (active_command == null) {
             //yield clear_error_log ();
-            //message ("zero_move () distance: %.3f", zero_position);
+            //debug ("zero_move () distance: %.3f", zero_position);
             /* Arm for Adress = 1 */
             yield write_object (
                                C3Plus_DeviceControl_Controlword_1,
@@ -1088,7 +1088,7 @@ public class Cld.ParkerModule : AbstractModule {
                                );
             yield fetch_actual_position ();
             yield write_object (C3Plus_DeviceControl_Controlword_1, 0);
-            //message ("zero_move (): power off");
+            //debug ("zero_move (): power off");
             yield check_status (
                                move_timeout_ms,
                                SWB1_HOME_IS_KNOWN |
@@ -1105,7 +1105,7 @@ public class Cld.ParkerModule : AbstractModule {
     public async void withdraw (double length_mm, double speed_mmps) {
         if (active_command == null) {
             //yield clear_error_log ();
-            //message ("withdraw (): length: %.3f speed: %.3f", length_mm);
+            //debug ("withdraw (): length: %.3f speed: %.3f", length_mm);
             /* Write movement to the set table row 2*/
             yield write_object (C3Array_Col01_Row02, zero_position - length_mm);
             yield write_object (C3Array_Col02_Row02, speed_mmps);
@@ -1147,7 +1147,7 @@ public class Cld.ParkerModule : AbstractModule {
 
         if (active_command == null) {
             //yield clear_error_log ();
-            //message ("inject () distance: %.3f", zero_position);
+            //debug ("inject () distance: %.3f", zero_position);
             /* Write movement to the set table row 2*/
             yield write_object (C3Array_Col01_Row02, zero_position);
             yield write_object (C3Array_Col02_Row02, speed_mmps);
@@ -1184,7 +1184,7 @@ public class Cld.ParkerModule : AbstractModule {
             /* (finished) Stop the timer. */
             tv.get_current_time ();
             time_result = (tv.tv_sec + (tv.tv_usec / 1e6)) - time_result;
-            message ("time_result: %.3f", time_result);
+            debug ("time_result: %.3f", time_result);
 
             yield fetch_actual_position ();
             yield last_error ();
@@ -1208,62 +1208,62 @@ public class Cld.ParkerModule : AbstractModule {
     }
 
     public void parse_response (string response) {
-        //message ("parse_response ():: response: %s active_command: %s", response, active_command);
+        //debug ("parse_response ():: response: %s active_command: %s", response, active_command);
         switch (active_command) {
             case "write_object":
                 if (response == ">") {
                     write_success = true;
                 } else if (response.has_prefix ("!")) {
                     write_success = false;
-                    message ("write_object error: %s", response.substring (1));
+                    debug ("write_object error: %s", response.substring (1));
                 }
                 break;
             case C3Plus_DeviceState_Statusword_1:
                 status1 = int.parse (response);
                 if ((status1 & SWB1_HOME_IS_KNOWN) == SWB1_HOME_IS_KNOWN) {
-                    message ("home found");
+                    debug ("home found");
                     active_command = null;
                 } else if ((status1 & SWB1_HOME_IS_KNOWN) == 0) {
-                    //message ("home not found");
+                    //debug ("home not found");
                 }
                 if ((status1 & SWB1_POS_REACHED) == SWB1_POS_REACHED) {
-                    message ("position reached");
+                    debug ("position reached");
                 }
                 if ((status1 & SWB1_NO_ERROR) == SWB1_NO_ERROR) {
-                    //message ("No Error");
+                    //debug ("No Error");
                     error (0, "No Error");
                 } else {
                     message ("Status Word 1 Error");
                 }
                 if ((status1 & SWB1_CURRENT_ZERO) == SWB1_CURRENT_ZERO) {
-                    //message ("Axis stationary with current at setpoint value");
+                    //debug ("Axis stationary with current at setpoint value");
                 }
                 break;
             case C3_StatusPosition_Actual:
                 actual_position = double.parse (response);
                 position = _actual_position - zero_position;
-                //message ("actual_position: %.3f position (local): %.3f"
+                //debug ("actual_position: %.3f position (local): %.3f"
                 //            , _actual_position, position);
                 break;
             case C3Array_Col01_Row01:
                 /* the zero position is stored here */
                 zero_position = double.parse (response);
-                //message ("zero_positon: %.3f", zero_position);
+                //debug ("zero_positon: %.3f", zero_position);
                 break;
             case C3Plus_StatusTorqueForce_ActualTorque:
                 actual_torque = double.parse (response);
-                //message ("actual_torque: %.3f", _actual_torque);
+                //debug ("actual_torque: %.3f", _actual_torque);
                 break;
             case C3Plus_ErrorHistory_LastError:
-                message ("Error: %s", response);
+                debug ("Error: %s", response);
                 parse_error (0, response);
                 break;
             case C3_ErrorHistory_1:
-                message ("(n-1) Error: %s", response);
+                debug ("(n-1) Error: %s", response);
                 parse_error (1, response);
                 break;
             default:
-                message ("Unable to parse response: %s", response);
+                warning ("Unable to parse response: %s", response);
                 break;
         }
         active_command = null;
@@ -1285,12 +1285,12 @@ public class Cld.ParkerModule : AbstractModule {
 
         GLib.Timeout.add (100, () => {
             if (write_success == true) {
-                //message ("write success");
+                //debug ("write success");
                 write_object.callback ();
 
                 return false;
             } else if (count < 100) {
-                //message (".");
+                //debug (".");
                 count++;
 
                 return true;
@@ -1317,12 +1317,12 @@ public class Cld.ParkerModule : AbstractModule {
 
         GLib. Timeout.add (serial_timeout_ms, () => {
             if (data_received) {
-                //message ("read success");
+                //debug ("read success");
                 read_object.callback ();
 
                 return false;
             } else {
-                //message ("read timeout");
+                //debug ("read timeout");
 
                 return true;
             }
@@ -1346,7 +1346,7 @@ public class Cld.ParkerModule : AbstractModule {
                 } else {
                     message ("check_status: failed status1: %.4x flags: %.4x", status1, flags);
                     if ((status1 & SWB1_NO_ERROR) == 0) {
-                        message ("status word 1 NO_ERROR = 0");
+                        debug ("status word 1 NO_ERROR = 0");
                         break;
                     }
                 }
@@ -1355,7 +1355,7 @@ public class Cld.ParkerModule : AbstractModule {
                  message ("check_status: timed out or error");
             }
 
-            message ("status1: 0x%.4x flags: 0x%.4x", status1, flags);
+            debug ("status1: 0x%.4x flags: 0x%.4x", status1, flags);
             active_command = null;
         }
     }
@@ -1364,7 +1364,7 @@ public class Cld.ParkerModule : AbstractModule {
      * Retrieve the current error (ie. n = 1)
      */
     public async void last_error () {
-        //message ("last_error ()");
+        //debug ("last_error ()");
         yield read_object (C3Plus_ErrorHistory_LastError);
         active_command = null;
     }
@@ -1373,7 +1373,7 @@ public class Cld.ParkerModule : AbstractModule {
      * Retrieve the previous to last error (ie. n = 2)
      */
     public async void previous_error () {
-        //message ("previous_error ()");
+        //debug ("previous_error ()");
         yield read_object (C3_ErrorHistory_1);
         active_command = null;
     }

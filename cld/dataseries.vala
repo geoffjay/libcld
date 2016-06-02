@@ -119,7 +119,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
                         case "length":
                             value = iter->get_content ();
                             length = int.parse (value);
-                            message ("%s length: %d", id, this.length);
+                            debug ("%s length: %d", id, this.length);
                             break;
                         case "chref":
                             value = iter->get_content ();
@@ -128,12 +128,12 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
                         case "taps":
                             value = iter->get_content ();
                             string[] tapstring =  value.split_set (", :/", -1);
-                            message ("tapstring.length: %d", tapstring.length);
+                            debug ("tapstring.length: %d", tapstring.length);
                             taps = new int[tapstring.length];
                             int len = length;
                             for (int i = 0; i < tapstring.length; i++) {
                                 taps[i] = int.parse (tapstring[i]);
-                                message ("taps[%d]: %d", i, taps[i]);
+                                debug ("taps[%d]: %d", i, taps[i]);
                                 Cld.Object object = new VChannel ();
                                 (object as VChannel).id = "vc-%s-%d".printf (this.id, taps[i]);
                                 (object as VChannel).tag = "%s[%d]".printf (this.id, taps[i]);
@@ -178,11 +178,11 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
         (channel as ScalableChannel).new_value.connect ((id, val) => {
             buffer[j] = val;
             /*
-            message ("buffer[0 : %d]: ", buffer.length);
+            debug ("buffer[0 : %d]: ", buffer.length);
             for (int i = 0; i < buffer.length; i++) {
-                message ("%.3f  ", buffer[i]);
+                debug ("%.3f  ", buffer[i]);
             }
-            message ("\n");
+            debug ("\n");
             */
             new_value (this.id, buffer[j]);
             j++;
@@ -237,7 +237,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
         }
 
         if ((i > length) || (i < 0)) {
-            message ("DataSeries.get_nth_value (n) Failed!");
+            debug ("DataSeries.get_nth_value (n) Failed!");
             return false;
         } else {
             val = buffer[i];

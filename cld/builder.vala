@@ -207,7 +207,8 @@ internal class Cld.Builder : GLib.Object {
             object = new Cld.VChannel.from_xml_node (node);
         else if (ctype == "calculation")
             object = new Cld.MathChannel.from_xml_node (node);
-
+        else if (ctype == "raw")
+            object = new Cld.RawChannel.from_xml_node (node);
         return object;
     }
 

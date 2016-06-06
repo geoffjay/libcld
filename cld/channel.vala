@@ -159,3 +159,4 @@ public interface Cld.ScalableChannel : Cld.AbstractChannel, Cld.Channel {
      */
     public abstract void set_object_property (string name, Cld.Object object);
 }
+

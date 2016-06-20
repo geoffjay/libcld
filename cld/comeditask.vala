@@ -743,7 +743,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
         uint maxdata,  data;
         double val;
 
-        foreach (var channel in _channels.values) {
+        foreach (var channel in get_channels ().values) {
 
             if (channel is Cld.AOChannel) {
                 range = (device as Cld.ComediDevice).dev.get_range (

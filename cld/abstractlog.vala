@@ -104,6 +104,8 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     [Description(nick="Number of Channels", blurb="")]
     protected int nchans { get; set; }
 
+    protected GLib.Cond cond;
+
     construct {
         fifos = new Gee.TreeMap<string, int> ();
         raw_queue = new Gee.LinkedList<float?> ();
@@ -112,6 +114,12 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
             file = gfile.get_basename ();
             path = gfile.get_parent ().get_path ();
         });
+
+        notify["active"].connect ((sender, property) => {
+            if (!active)
+                cond.signal ();
+        });
+
     }
 
     /**
@@ -255,7 +263,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
 
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_channel_watch", () => {
             Mutex mutex = new Mutex ();
-            Cond cond = new Cond ();
+            cond = new Cond ();
             int64 end_time = start_time_mono;
 
             while (active) {
@@ -279,7 +287,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                 mutex.lock ();
                 try {
                     end_time = start_time_mono + count++ * (int)(1000 / rate) * TimeSpan.MILLISECOND;
-                    while (cond.wait_until (mutex, end_time))
+                    while ((cond.wait_until (mutex, end_time)) && active)
                         ; /* do nothing */
                 } finally {
                     mutex.unlock ();

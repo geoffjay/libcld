@@ -18,6 +18,9 @@ addons:
       - autoconf
       - autoconf-archive
       - automake
+      - gettext
+      - libtool
+      - intltool
       - libglib2.0-dev
       - libjson-glib-dev
       - libgee-0.8-dev

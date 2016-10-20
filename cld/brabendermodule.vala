@@ -92,7 +92,7 @@ public class Cld.BrabenderModule : AbstractModule {
      * Alternate construction that uses an XML node to populate the settings.
      */
     public BrabenderModule.from_xml_node (Xml.Node *node) {
-        message ("Starting..");
+        debug ("Starting..");
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
@@ -125,9 +125,9 @@ public class Cld.BrabenderModule : AbstractModule {
         (this.port as ModbusPort).write_register (FUNC_ADDR, write_val);
         Posix.usleep(time_us);
         (this.port as ModbusPort).read_registers (STATUS_ADDR, data_in);
-        message ("status: data_in[0]: %.4x, write_val: %.4x", data_in[0], write_val);
+        debug ("status: data_in[0]: %.4x, write_val: %.4x", data_in[0], write_val);
         (this.port as ModbusPort).read_registers (ALARM_ADDR, data_in);
-        message ("alarm: data_in[0]: %.4x, write_val: %.4x", data_in[0], write_val);
+        debug ("alarm: data_in[0]: %.4x, write_val: %.4x", data_in[0], write_val);
 
         return status;
     }
@@ -143,9 +143,9 @@ public class Cld.BrabenderModule : AbstractModule {
         (this.port as ModbusPort).write_register (FUNC_ADDR, write_val);
         Posix.usleep (time_us);
         (this.port as ModbusPort).read_registers (STATUS_ADDR, data_in);
-        //message ("status: data_in[0]: %.4x, write_val: %.4x", data_in[0], write_val);
+        //debug ("status: data_in[0]: %.4x, write_val: %.4x", data_in[0], write_val);
         if (!(((int) data_in[0] & OP1_ENABLED_MASK) == OP1_ENABLED_MASK)) {
-            message ("Brabender OP1 interface is not enabled");
+            warning ("Brabender OP1 interface is not enabled");
             status = false;
         }
 
@@ -164,9 +164,9 @@ public class Cld.BrabenderModule : AbstractModule {
         (this.port as ModbusPort).write_register (FUNC_ADDR, write_val);
         Posix.usleep (time_us);
         (this.port as ModbusPort).read_registers (STATUS_ADDR, data_in);
-        //message ("data_in[0]: %.4x, write_val: %.4x",data_in[0] ,write_val);
+        //debug ("data_in[0]: %.4x, write_val: %.4x",data_in[0] ,write_val);
         if (!((data_in[0] &  STARTED_MASK) == STARTED_MASK)) {
-            message ("Brabender Module start command not responding.");
+            warning ("Brabender Module start command not responding.");
             status = true;
             running = false;
         }
@@ -194,9 +194,9 @@ public class Cld.BrabenderModule : AbstractModule {
         (this.port as ModbusPort).write_register (FUNC_ADDR, write_val);
         Posix.usleep (time_us);
         (this.port as ModbusPort).read_registers (STATUS_ADDR, data_in);
-        // message ("status: data_in[0]: %.4x, write_val: %.4x", data_in[0], write_val);
+        // debug ("status: data_in[0]: %.4x, write_val: %.4x", data_in[0], write_val);
         if (((data_in[0] & STARTED_MASK) == STARTED_MASK)) {
-            message ("Brabender Module stop command not responding.");
+            warning ("Brabender Module stop command not responding.");
             status = false;
         }
         else {
@@ -224,7 +224,7 @@ public class Cld.BrabenderModule : AbstractModule {
             (this.port as ModbusPort).read_registers (DI_AV_READ_ADDR, data);
             (channel as VChannel).raw_value = get_double (data);
 //            (this.port as ModbusPort).read_registers (AUTO_TARE_READ_ADDR, data);
-//            message ("Auto-Tare value [kg]: %.3f", get_double (data));
+//            debug ("Auto-Tare value [kg]: %.3f", get_double (data));
         }
 
         return true;
@@ -270,7 +270,7 @@ public class Cld.BrabenderModule : AbstractModule {
             status = true;
             break;
         default:
-            message ("Unknown Brabender operating mode: %s", mode_string);
+            warning ("Unknown Brabender operating mode: %s", mode_string);
             break;
         }
         if (status == true) {
@@ -278,9 +278,9 @@ public class Cld.BrabenderModule : AbstractModule {
             (this.port as ModbusPort).write_register (MODE_ADDR, mode);
             Posix.usleep (time_us);  // Need to wait beween read and write.
             (this.port as ModbusPort).read_registers (MODE_ADDR, data_in);
-            message ("data_in: (0x%X) mode: (0x%X)", data_in[0], mode);
+            debug ("data_in: (0x%X) mode: (0x%X)", data_in[0], mode);
             if (!((int) data_in[0] == mode)) {
-                                message ("Brabender Module: Unable to verify mode setting.");
+                                warning ("Brabender Module: Unable to verify mode setting.");
                                 status = false;
             }
         }
@@ -303,9 +303,9 @@ public class Cld.BrabenderModule : AbstractModule {
         Posix.usleep (200000);
         (this.port as ModbusPort).read_registers (MF_SP_READ_ADDR, data_in);
         setpoint_in = get_double (data_in);
-        message ("setpoint: %.6f setpoint_in: %.6f", setpoint, setpoint_in);
+        debug ("setpoint: %.6f setpoint_in: %.6f", setpoint, setpoint_in);
         if (fabs (setpoint - setpoint_in) > eps) {
-            message("Brabender Module: Unable to verify mass flow rate setpoint.");
+            warning("Brabender Module: Unable to verify mass flow rate setpoint.");
             status = false;
         }
 
@@ -327,9 +327,9 @@ public class Cld.BrabenderModule : AbstractModule {
         Posix.usleep (200000);
         (this.port as ModbusPort).read_registers (DI_SP_READ_ADDR, data_in);
         setpoint_in = get_double (data_in);
-        message ("setpoint: %.6f setpoint_in: %.6f", setpoint, setpoint_in);
+        debug ("setpoint: %.6f setpoint_in: %.6f", setpoint, setpoint_in);
         if (fabs (setpoint - setpoint_in) > eps) {
-            message("Brabender Module: Unable to verify discharge rate setpoint.");
+            warning("Brabender Module: Unable to verify discharge rate setpoint.");
             status = false;
         }
 
@@ -342,7 +342,7 @@ public class Cld.BrabenderModule : AbstractModule {
     public override bool load () {
         loaded = true;
         if (!port.open ()) {
-            message ("Could not open port, id:%s", id);
+            warning ("Could not open port, id:%s", id);
             loaded = false;
         }
         else {
@@ -350,7 +350,7 @@ public class Cld.BrabenderModule : AbstractModule {
             //enable_op1 ();
             reset_alarm ();
             source_id = Timeout.add (timeout_ms, new_data_cb);
-            message ("BrabenderModule loaded");
+            debug ("BrabenderModule loaded");
         }
         return loaded;
     }
@@ -365,6 +365,6 @@ public class Cld.BrabenderModule : AbstractModule {
             port.close ();
         loaded = false;
         }
-        message ("BrabenderModule unloaded");
+        debug ("BrabenderModule unloaded");
     }
 }

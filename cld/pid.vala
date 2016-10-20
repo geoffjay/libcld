@@ -316,7 +316,6 @@ public class Cld.Pid : AbstractContainer {
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "process_value") {
                         var pv = new ProcessValue.from_xml_node (iter);
-                        pv.parent = this;
                         add (pv);
                     }
                 }
@@ -346,7 +345,7 @@ public class Cld.Pid : AbstractContainer {
 
     public void print_process_values () {
         foreach (var process_value in process_values.values) {
-            message ("PV: %s", process_value.id);
+            debug ("PV: %s", process_value.id);
         }
     }
 
@@ -377,7 +376,7 @@ public class Cld.Pid : AbstractContainer {
             mv.raw_value = (kp * p_err) + (ki * i_err) + (kd * d_err);
         }
 
-        //message ("SP: %.2f, MV: %.2f, PV: %.2f, PVPR: %.2f, PVPPR: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
+        //debug ("SP: %.2f, MV: %.2f, PV: %.2f, PVPR: %.2f, PVPPR: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
         //       sp, mv.scaled_value, pv.current_value, pv.previous_value, pv.past_previous_value, p_err, i_err, d_err);
 
         /* XXX Not sure whether or not to raise an output event here, or simple
@@ -503,7 +502,7 @@ public class Cld.Pid : AbstractContainer {
             next_time.get_current_time ();
 #endif
 
-            message ("PID run called");
+            debug ("PID run called");
 
             while (pid.running) {
                 pid.update ();
@@ -526,7 +525,7 @@ public class Cld.Pid : AbstractContainer {
                 mutex.unlock ();
             }
 
-            message ("PID run thread complete");
+            debug ("PID run thread complete");
 
             return null;
         }
@@ -548,11 +547,13 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
     /**
      * Timestep in milliseconds to use with the thread execution.
      */
+    [Description(nick="Time Step", blurb="(milliseconds)")]
     public int dt { get; set; }
 
     /**
      * Proportional gain: Larger values typically mean faster response.
      */
+    [Description(nick="Kp", blurb="Proportional Gain")]
     public double kp { get; set; }
 
     private double _ki;
@@ -560,6 +561,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
      * Integral gain: Larger values imply that steady state errors are
      * eliminated faster but can trade off with a larger overshoot.
      */
+    [Description(nick="Ki", blurb="Integral Gain")]
     public double ki {
         get { return _ki; }
         set { _ki = (value == 0.0) ? 0.00000 : value; }
@@ -568,6 +570,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
     /**
      * Derivitive gain: Larger values decrease overshoot.
      */
+    [Description(nick="Kd", blurb="Derivitive Gain")]
     public double kd { get; set; }
 
     private double _sp;
@@ -576,6 +579,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
      * Desired value that the PID controller works to achieve through process
      * changes to the measured variable.
      */
+    [Description(nick="Set Point", blurb="The desired output value")]
     public double sp {
         get { return _sp; }
         set {
@@ -587,12 +591,14 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
     /**
      * Set point channel (so_channel) reference string.
      **/
-    public string sp_chref { get; set; }
+    [Description(nick="Set Point Reference", blurb="")]
+    public string sp_chref;
 
     /**
      * A channel that alters the setpoint value (sp) thus a time varying signal
      * can be the set point value.
      **/
+    [Description(nick="Set Point Channel", blurb="The set point is controlled by the scaled value of this")]
     public weak ScalableChannel? sp_channel {
         get {
             var channels = get_children (typeof (Cld.ScalableChannel));
@@ -617,20 +623,24 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
     /**
      * Whether or not the loop is currently running.
      */
-    public bool running { get; set; default = false; }
+    [Description(nick="Running", blurb="")]
+    public bool running = false;
 
     /**
      * A description of the PID control.
      */
+    [Description(nick="Description", blurb="A short description")]
     public string desc { get; set; default = "PID Control"; }
 
     /**
      * The output variable high limit cutoff value ID.
      */
+    [Description(nick="Limit High", blurb="The upper limit of the output variable")]
     public double limit_high { get; set; default = 100; }
     /**
      * The output variable low limit cutoff value ID.
      */
+    [Description(nick="Limit Low", blurb="The lower limit of the output variable")]
     public double limit_low { get; set; default = 0; }
 
 
@@ -665,6 +675,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
      * might be unecessary to store them in a map. Possible future change.
      */
     private Gee.Map<string, Object>? _process_values = null;
+    [Description(nick="Process Values", blurb="")]
     public Gee.Map<string, Object> process_values {
         get {
             if (_process_values.size == 0) {
@@ -680,6 +691,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
      * A DataSeries is used to store the current and two previous values of input.
      */
     private DataSeries? _pv = null;
+    [Description(nick="Process Variable", blurb="")]
     public DataSeries pv {
         get {
             if (_pv == null) {
@@ -697,6 +709,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
     }
 
     private DataSeries? _mv = null;
+    [Description(nick="Manipulated Variable", blurb="")]
     public DataSeries mv {
         get {
             if (_mv == null) {
@@ -892,7 +905,6 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "process_value2") {
                         var pv = new ProcessValue2.from_xml_node (iter);
-                        pv.parent = this;
                         add (pv);
                     }
                 }
@@ -908,43 +920,43 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
     private void connect_notify () {
         notify["sp"].connect ((s, p) => {
             if (!sp_channel_connected) {
-                message ("Property %s changed for %s", p.get_name (), uri);
+                debug ("Property %s changed for %s", p.get_name (), uri);
                 update_node ();
             }
         });
 
         notify["dt"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["kp"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["ki"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["kd"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["desc"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["sp-chref"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["alias"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
     }
@@ -968,7 +980,6 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
                             break;
                         case "kp":
                             iter->set_content (kp.to_string ());
-                            message ("Updating kp to %.3f", kp);
                             break;
                         case "ki":
                             iter->set_content (ki.to_string ());
@@ -1044,7 +1055,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
 
     public void print_process_values () {
         foreach (var process_value in process_values.values) {
-            message ("PV: %s", process_value.id);
+            debug ("PV: %s", process_value.id);
         }
     }
 
@@ -1145,7 +1156,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
              */
             (mv.channel as AOChannel).raw_value = val;
             /*
-             *message ("SP: %.2f, MVs: %.2f, MVr: %.3f PV: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
+             *debug ("SP: %.2f, MVs: %.2f, MVr: %.3f PV: %.2f, Ep: %.2f, Ei: %.2f, Ed: %.2f",
              *   sp, mv.channel.scaled_value, val, current_value, p_err, i_err, d_err);
              */
         }
@@ -1277,7 +1288,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
             next_time.get_current_time ();
 #endif
 
-            message ("PID run called");
+            debug ("PID run called");
 
             while (pid.running) {
                 pid.update ();
@@ -1300,7 +1311,7 @@ public class Cld.Pid2 : Cld.AbstractContainer, Cld.Connector {
                 mutex.unlock ();
             }
 
-            message ("PID run thread complete");
+            debug ("PID run thread complete");
 
             return null;
         }

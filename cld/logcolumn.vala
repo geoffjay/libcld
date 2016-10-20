@@ -24,11 +24,13 @@ public class Cld.Column : Cld.AbstractContainer {
     /**
      * ID reference of the channel associated with this column.
      */
+    [Description(nick="Reference", blurb="")]
     public string chref { get; set; }
 
     /**
      * Referenced channel to use.
      */
+    [Description(nick="Channel", blurb="")]
     public Cld.Channel channel {
         get {
             var channels = get_children (typeof (Cld.Channel));
@@ -48,6 +50,7 @@ public class Cld.Column : Cld.AbstractContainer {
      * Channel value for tracking.
      */
     private double _channel_value;
+    [Description(nick="Value", blurb="")]
     public double channel_value {
         get { return _channel_value; }
         set { _channel_value = value; }

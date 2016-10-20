@@ -22,13 +22,9 @@
 public class Cld.CsvLog : Cld.AbstractLog {
 
     /**
-     * Property backing fields.
-     */
-    private Gee.Map<string, Object> _objects;
-
-    /**
      * Determines whether the file is renamed on open using the format string.
      */
+    [Description(nick="Time Stamp", blurb="")]
     public Log.TimeStampFlag time_stamp { get; set; }
 
     private FileStream file_stream;
@@ -107,12 +103,17 @@ public class Cld.CsvLog : Cld.AbstractLog {
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "column") {
                         var column = new Column.from_xml_node (iter);
-                        column.parent = this;
                         add (column);
                     }
                 }
             }
         }
+
+        if (!path.has_suffix ("/")) {
+            path = "%s%s".printf (path, "/");
+        }
+        gfile = GLib.File.new_for_path (path + file);
+
         connect_signals ();
     }
 
@@ -126,6 +127,18 @@ public class Cld.CsvLog : Cld.AbstractLog {
             update_node ();
             });
         }
+
+        notify["gfile"].connect ((s,p) => {
+            debug ("gfile will change from path: %s file: %s", path, file);
+            path = gfile.get_parent ().get_path ();
+            if (!path.has_suffix ("/")) {
+                path = "%s%s".printf (path, "/");
+            }
+
+            file = gfile.get_basename ();
+            debug ("gfile changed path: %s file: %s", path, file);
+        });
+
     }
 
     private void update_node () {
@@ -166,8 +179,8 @@ public class Cld.CsvLog : Cld.AbstractLog {
     }
 
     ~CsvLog () {
-        if (_objects != null)
-            _objects.clear ();
+        if (get_objects() != null)
+            get_objects().clear ();
     }
 
     /**
@@ -203,24 +216,37 @@ public class Cld.CsvLog : Cld.AbstractLog {
             temp = file;
         }
 
-        /* original implementation checked for the existence of requested
-         * file and posted error message if it is, reimplement that later */
         if (path.has_suffix ("/"))
             filename = "%s%s".printf (path, temp);
         else
             filename = "%s/%s".printf (path, temp);
 
-        /* open the file */
-        debug ("Opening file: %s", filename);
-        file_stream = FileStream.open (filename, "w+");
+        /* Create the file if it doesn't exist already */
+        if (!(Posix.access (filename, Posix.F_OK) == 0)) {
+            FileStream.open (filename, "a+");
+        }
 
-        if (file_stream == null) {
+        if (!(Posix.access (filename, Posix.W_OK) == 0) &&
+           !(Posix.access (filename, Posix.R_OK) == 0)) {
+            throw new Cld.FileError.ACCESS (
+                    "Can't open log file %s", filename
+                );
             is_open = false;
+
+            return is_open;
         } else {
-            is_open = true;
-            /* add the header */
-            file_stream.printf ("Log file: %s created at %s\n\n",
-                                name, start_time.format ("%F %T"));
+            /* open the file */
+            debug ("Opening file: %s", filename);
+            file_stream = FileStream.open (filename, "w+");
+
+            if (file_stream == null) {
+                is_open = false;
+            } else {
+                is_open = true;
+                /* add the header */
+                file_stream.printf ("Log file: %s created at %s\n\n",
+                                    name, start_time.format ("%F %T"));
+            }
         }
 
         return is_open;
@@ -268,23 +294,16 @@ public class Cld.CsvLog : Cld.AbstractLog {
         } else {
             src = file;
         }
-/*
- *        dest = "%s%s-%s.%s".printf (path, dest_name, time.format (date_format), dest_ext);
- *
- *        if (path.has_suffix ("/"))
- *            src = "%s%s".printf (path, src);
- */
+
         if (!path.has_suffix ("/"))
             path = path + "/";
 
-            src = "%s/%s".printf (path, src);
+        src = "%s/%s".printf (path, src);
 
-            if (time_stamp == TimeStampFlag.OPEN)
-                dest = src;
+        if (time_stamp == TimeStampFlag.OPEN)
+            dest = src;
         else
-            /*src = "%s/%s".printf (path, src);*/
             dest = "%s%s-%s.%s".printf (path, dest_name, time.format (date_format), dest_ext);
-
 
         /* rename the file */
         if (FileUtils.rename (src, dest) < 0)
@@ -305,7 +324,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
         string units = "[us]";
         string cals = "Channel Calibrations:\n\n";
 
-        foreach (var object in objects.values) {
+        foreach (var object in get_objects().values) {
             debug ("Found object [%s]", object.id);
             if (object is Column) {
                 var channel = ((object as Column).channel as Channel);
@@ -316,7 +335,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
                     var calibration = (channel as ScalableChannel).calibration;
                     cals += "%s:\ty = ".printf (channel.uri);
 
-                    foreach (var coefficient in (calibration as Container).objects.values) {
+                    foreach (var coefficient in (calibration as Container).get_objects().values) {
                         cals += "%.3f * x^%d + ".printf (
                                 (coefficient as Coefficient).value,
                                 (coefficient as Coefficient).n
@@ -348,7 +367,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
         line = "%lld\t".printf (entry.time_us);
 
         int i = 0;
-        foreach (var object in objects.values) {
+        foreach (var object in get_objects().values) {
             if (object is Cld.Column) {
                 //var datum = entry.data.get ((object as Cld.Column).chref);
                 var datum = entry.data [i];
@@ -371,8 +390,8 @@ public class Cld.CsvLog : Cld.AbstractLog {
         int datachans = 0;
         int rowcnt = 0;
         ulong handler;
-
         file_open ();
+
         write_header ();
 
         /* Count the number of channels */
@@ -384,7 +403,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
             /* Background channel watch fills the entry queue */
             bg_channel_watch.begin (() => {
                 try {
-                    message ("Channel watch async ended");
+                    debug ("Channel watch async ended");
                 } catch (ThreadError e) {
                     string msg = e.message;
                     error (@"Thread error: $msg");
@@ -440,7 +459,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
              **/
 
              /* Count the primary data channels (ie. excluding math channels) */
-            foreach (var column in objects.values) {
+            foreach (var column in get_objects().values) {
                 if (column is Cld.Column) {
                     var channel = (column as Cld.Column).channel;
                     if (!(channel is Cld.MathChannel)) {
@@ -486,7 +505,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
                 int i = 0;
 
-                foreach (var column in objects.values) {
+                foreach (var column in get_objects().values) {
                     if (column is Cld.Column) {
                         entry.data [i++] = (column as Cld.Column).channel_value;
                     }

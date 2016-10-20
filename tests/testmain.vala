@@ -19,15 +19,16 @@
 void main (string[] args) {
 	Test.init (ref args);
 
-    /* Non-instantiable - just here temporarily for reference */
-	//TestSuite.get_root ().add_suite (new ObjectTests ().get_suite ());
+    /* Non-instantiable interface dummy implementations */
+    TestSuite.get_root ().add_suite (new DummyObjectTests ().get_suite ());
+	TestSuite.get_root ().add_suite (new DummyContainerTests ().get_suite ());
+
 	//TestSuite.get_root ().add_suite (new BuildableTests ().get_suite ());
 	//TestSuite.get_root ().add_suite (new ChannelTests ().get_suite ());
 	//TestSuite.get_root ().add_suite (new PortTests ().get_suite ());
 
 	//TestSuite.get_root ().add_suite (new BuilderTests ().get_suite ());
 	//TestSuite.get_root ().add_suite (new ContextTests ().get_suite ());
-	//TestSuite.get_root ().add_suite (new ContainerTests ().get_suite ());
 
 	//TestSuite.get_root ().add_suite (new DeviceTests ().get_suite ());
 	//TestSuite.get_root ().add_suite (new ComediDeviceTests ().get_suite ());

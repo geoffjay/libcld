@@ -21,8 +21,11 @@
  */
 public class Cld.Coefficient : Cld.AbstractObject {
 
+
+    [Description(nick="n", blurb="")]
     public int n { get; set; }
 
+    [Description(nick="Value", blurb="")]
     public double value { get; set; }
 
     public Coefficient () {
@@ -73,12 +76,12 @@ public class Cld.Coefficient : Cld.AbstractObject {
      */
     private void connect_signals () {
         notify["n"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["value"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
     }

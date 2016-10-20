@@ -9,7 +9,7 @@ AC_CONFIG_MACRO_DIR([m4])
 
 m4_define([package_major_version], [0])
 m4_define([package_minor_version], [3])
-m4_define([package_micro_version], [0])
+m4_define([package_micro_version], [3])
 m4_define([package_version], [package_major_version.package_minor_version.package_micro_version])
 
 dnl Make sure the right substitution is done

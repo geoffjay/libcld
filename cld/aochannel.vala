@@ -28,20 +28,22 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Calibration Reference", blurb="The URI of the calibration")]
     public virtual string calref { get; set; }
 
     /**
      * {@inheritDoc}
      */
     private Cld.Calibration _calibration = null;
-    public virtual Cld.Calibration calibration {
+    [Description(nick="Calibration", blurb="The calibration used to generate a scaled value")]
+    public virtual Calibration calibration {
         get {
             if (_calibration == null) {
                 var calibrations = get_children (typeof (Cld.Calibration));
                 foreach (var cal in calibrations.values) {
 
                     /* this should only happen once */
-                    message ("this should only happen once");
+                    debug ("this should only happen once");
                     /*return cal as Cld.Calibration;*/
                     _calibration  = cal as Cld.Calibration;
                 }
@@ -61,11 +63,13 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Range", blurb="The range that the device uses")]
     public virtual int range { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Raw Value", blurb="The non-scaled value")]
     public virtual double raw_value {
         get { return _raw_value; }
         set {
@@ -77,6 +81,7 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Scaled Value", blurb="The value with scaling applied")]
     public virtual double scaled_value {
         get { return _scaled_value; }
         private set {
@@ -88,11 +93,13 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Average Value", blurb="The average of the scaled value")]
     public virtual double avg_value { get; private set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Standard Deviation", blurb="The sample standard deviation of the scaled value")]
     public virtual double ssdev_value { get; private set; }
 
     /**
@@ -103,8 +110,8 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
     /* default constructor */
     public AOChannel () {
         /* set defaults */
-        this.num = 0;
-        this.devref = "dev0";
+        set_num (0);
+        //this.devref = "dev0";
         this.tag = "CH0";
         this.desc = "Output Channel";
 
@@ -119,7 +126,7 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
-            devref = node->get_prop ("ref");
+            //devref = node->get_prop ("ref");
             /* iterate through node children */
             for (Xml.Node *iter = node->children;
                  iter != null;
@@ -134,7 +141,7 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
                             break;
                         case "num":
                             val = iter->get_content ();
-                            num = int.parse (val);
+                            set_num (int.parse (val));
                             break;
                         case "subdevnum":
                             val = iter->get_content ();
@@ -166,37 +173,37 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
      */
     private void connect_signals () {
         notify["tag"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["desc"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["num"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["subdevnum"].connect ((s, p) => {
-            message ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
+            debug ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
             update_node ();
         });
 
         notify["calref"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["range"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["alias"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
     }
@@ -225,7 +232,6 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
                             break;
                         case "subdevnum":
                             iter->set_content (subdevnum.to_string ());
-                            message ("Writing %s to XML node for subdevnum", subdevnum.to_string ());
                             break;
                         case "calref":
                             iter->set_content (calref);
@@ -241,6 +247,22 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    public override void set_object_property (string name, Cld.Object object) {
+        switch (name) {
+            case "calibration":
+                if (object is Cld.Calibration) {
+                    calibration = object as Cld.Calibration;
+                    calref = (object as Cld.Calibration).uri;
+                }
+                break;
+            default:
+                break;
         }
     }
 }

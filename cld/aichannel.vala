@@ -32,12 +32,14 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Calibration Reference", blurb="The URI of the calibration")]
     public virtual string calref { get; set; }
 
     /**
      * {@inheritDoc}
      */
     private Cld.Calibration _calibration = null;
+    [Description(nick="Calibration", blurb="The calibration used to generate a scaled value")]
     public virtual Cld.Calibration calibration {
         get {
             if (_calibration == null) {
@@ -45,7 +47,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
                 foreach (var cal in calibrations.values) {
 
                     /* this should only happen once */
-                    message ("this should only happen once");
+                    debug ("this should only happen once");
                     /*return cal as Cld.Calibration;*/
                     _calibration  = cal as Cld.Calibration;
                 }
@@ -65,11 +67,13 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Range", blurb="The range that the device uses")]
     public virtual int range { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Raw Value", blurb="The non-scaled value")]
     public virtual double raw_value {
         get { return _raw_value[0]; }
         set {
@@ -84,6 +88,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Average Value", blurb="The average of the scaled value")]
     public virtual double avg_value {
         get { return _avg_value[0]; }
         private set {
@@ -96,11 +101,13 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Standard Deviation", blurb="The sample standard deviation of the scaled value")]
     public virtual double ssdev_value { get; private set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Scaled Value", blurb="The value with scaling applied")]
     public virtual double scaled_value {
         get { return _scaled_value[0]; }
         private set {
@@ -147,6 +154,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
      * XXX if value != current the list should be resized to reflect the change
      */
     private int _raw_value_list_size = 1;
+    [Description(nick="Samples", blurb="The number of samples to be averaged")]
     public int raw_value_list_size {
         get { return _raw_value_list_size; }
         set {
@@ -164,8 +172,8 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
      */
     public AIChannel () {
         /* set defaults */
-        this.num = 0;
-        this.devref = "dev0";
+        set_num (0);;
+        //this.devref = "dev0";
         this.tag = "CH0";
         this.desc = "Input Channel";
         connect_signals ();
@@ -181,7 +189,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
-            devref = node->get_prop ("ref");
+            //devref = node->get_prop ("ref");
             /* iterate through node children */
             for (Xml.Node *iter = node->children;
                  iter != null;
@@ -196,7 +204,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
                             break;
                         case "num":
                             val = iter->get_content ();
-                            num = int.parse (val);
+                            set_num (int.parse (val));
                             break;
                         case "subdevnum":
                             val = iter->get_content ();
@@ -232,49 +240,86 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
      */
     private void connect_signals () {
         notify["tag"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
+            debug ("Property %s changed for %s", p.get_name (), uri);
+            try {
+                update_node ();
+            } catch (Cld.Error e) {
+                message ("An XML node has not been set for %s", uri);
+            }
         });
 
         notify["desc"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
+            debug ("Property %s changed for %s", p.get_name (), uri);
+            try {
+                update_node ();
+            } catch (Cld.Error e) {
+                message ("An XML node has not been set for %s", uri);
+            }
         });
 
         notify["num"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
+            debug ("Property %s changed for %s", p.get_name (), uri);
+            try {
+                update_node ();
+            } catch (Cld.Error e) {
+                message ("An XML node has not been set for %s", uri);
+            }
         });
 
         notify["subdevnum"].connect ((s, p) => {
-            message ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
-            update_node ();
+            debug ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
+            try {
+                update_node ();
+            } catch (Cld.Error e) {
+                message ("An XML node has not been set for %s", uri);
+            }
         });
         notify["raw-value-list-size"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
+            debug ("Property %s changed for %s", p.get_name (), uri);
+            try {
+                update_node ();
+            } catch (Cld.Error e) {
+                message ("An XML node has not been set for %s", uri);
+            }
         });
 
         notify["calref"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
+            debug ("Property %s changed for %s", p.get_name (), uri);
+            try {
+                update_node ();
+            } catch (Cld.Error e) {
+                message ("An XML node has not been set for %s", uri);
+            }
         });
 
         notify["range"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
+            debug ("Property %s changed for %s", p.get_name (), uri);
+            try {
+                update_node ();
+            } catch (Cld.Error e) {
+                message ("An XML node has not been set for %s", uri);
+            }
         });
 
         notify["alias"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
-            update_node ();
+            debug ("Property %s changed for %s", p.get_name (), uri);
+            try {
+                update_node ();
+            } catch (Cld.Error e) {
+                message ("An XML node has not been set for %s", uri);
+            }
         });
     }
 
     /**
      * Update the XML Node for this object.
      */
-    private void update_node () {
+    private void update_node () throws Cld.Error {
+        if (node == null) {
+            throw new Cld.Error.NULL_REF ("A node has not been set for %s", id);
+            return;
+        }
+
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             /* iterate through node children */
@@ -377,5 +422,22 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
         for (int i = 0; i < l.length; i++)
             list [i] = l [i];
         ssdev_value = Gsl.Stats.sd (list, 1, list.length);
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    public override void set_object_property (string name, Cld.Object object) {
+        switch (name) {
+            case "calibration":
+                if (object is Cld.Calibration) {
+                    calibration = object as Cld.Calibration;
+                    calref = (object as Cld.Calibration).uri;
+                    //debug ("Calibration for %s changed to %s", uri, calibration.uri);
+                }
+                break;
+            default:
+                break;
+        }
     }
 }

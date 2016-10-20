@@ -25,9 +25,10 @@
 public abstract class Cld.AbstractController : Cld.AbstractContainer, Cld.Controller {
 
     /**
-     * {@inheritDoc}
+     * A list of FIFOs for inter-process data transfer.
+     * The data are paired a pipe name and file descriptor.
      */
-    public virtual Gee.Map<string, int>? fifos { get; set; }
+    internal Gee.Map<string, int>? fifos;
 
     construct {
         fifos = new Gee.TreeMap<string, int> ();

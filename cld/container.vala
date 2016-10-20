@@ -26,7 +26,9 @@ public interface Cld.Container : Cld.Object {
     /**
      * The map collection of the objects that belong to the container.
      */
-    public abstract Gee.Map<string, Cld.Object> objects { get; set; }
+    /*
+     *internal abstract Gee.Map<string, Cld.Object> objects { get; set; }
+     */
 
     /**
      * A list of all of the uri strings to objects in other unowned areas of the
@@ -57,6 +59,13 @@ public interface Cld.Container : Cld.Object {
      * @param object object object to remove from the list
      */
     public abstract void remove (Cld.Object object);
+
+    /**
+     * Get the internal object list
+     *
+     * @return the onternal list of objects
+     */
+    public abstract Gee.Map<string, Cld.Object> get_objects ();
 
     /**
      * Update the internal object list.

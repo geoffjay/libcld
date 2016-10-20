@@ -78,7 +78,7 @@ public class Cld.VelmexModule : AbstractModule {
      */
     private void connect_signals () {
         notify["program"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
     }
@@ -149,7 +149,7 @@ public class Cld.VelmexModule : AbstractModule {
         loaded = (port.open ()) ? true : false;
         port.send_byte ('F');
 
-        message ("VelmexModule :: load ()");
+        debug ("VelmexModule :: load ()");
 
         return loaded;
     }
@@ -163,6 +163,6 @@ public class Cld.VelmexModule : AbstractModule {
 
         loaded = false; // XXX There is currently no way to verify this.
 
-        message ("VelmexModule :: unload ()");
+        debug ("VelmexModule :: unload ()");
     }
 }

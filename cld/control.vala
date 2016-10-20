@@ -32,8 +32,9 @@ public class Cld.ProcessValue : Cld.AbstractContainer {
      * value represents, input is a process measurement, output is a
      * manipulated variable.
      */
-    private int _chtype;
-    public int chtype {
+    private Cld.ProcessValue.Type _chtype;
+    [Description(nick="Channel Type", blurb="")]
+    public Cld.ProcessValue.Type chtype {
         get {
             if (channel is Cld.IChannel)
                 _chtype = Type.INPUT;
@@ -48,6 +49,7 @@ public class Cld.ProcessValue : Cld.AbstractContainer {
     /**
      * Referenced channel to use.
      */
+    [Description(nick="Channel", blurb="")]
     public weak Cld.Channel channel {
         get {
             var channels = get_children (typeof (Cld.Channel));
@@ -115,19 +117,22 @@ public class Cld.ProcessValue2 : Cld.AbstractContainer {
      * value represents, input is a process measurement, output is a
      * manipulated variable.
      */
-    private int _chtype;
-    public int chtype {
+    private Cld.ProcessValue2.Type _chtype;
+    [Description(nick="Channel Type", blurb="")]
+    public Cld.ProcessValue2.Type chtype {
         get { return _chtype; }
     }
 
     /**
      * ID reference of the dataseries associated with this process value.
      */
-    public string dsref { get; set; }
+    [Description(nick="Reference", blurb="")]
+    public string dsref;
 
     /**
      * Referenced dataseries to use.
      */
+    [Description(nick="Data Series", blurb="The referenced dataseries")]
     public weak Cld.DataSeries dataseries {
         get {
             var dschildren = get_children (typeof (Cld.DataSeries));
@@ -226,13 +231,11 @@ public class Cld.Control : Cld.AbstractContainer {
                     switch (type) {
                         case "pid":
                             var pid = new Cld.Pid.from_xml_node (iter);
-                            pid.parent = this;
-                            objects.set (pid.id, pid);
+                            add (pid);
                             break;
                         case "pid-2":
                             var pid = new Cld.Pid2.from_xml_node (iter);
-                            pid.parent = this;
-                            objects.set (pid.id, pid);
+                            add (pid);
                             break;
                         default:
                             break;

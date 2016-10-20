@@ -27,6 +27,7 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
      * {@inheritDoc}
      */
     protected string _id;
+    [Description(nick="ID", blurb="The ID of this object")]
     public virtual string id {
         get { return _id; }
         set { _id = value; }
@@ -36,6 +37,7 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
      * {@inheritDoc}
      */
     protected string _uri;
+    [Description(nick="URI", blurb="The uniform resource identifier of this object")]
     public virtual string uri {
         get {
             if (parent != null) {
@@ -46,31 +48,34 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
 
             return _uri;
         }
-        set { _uri = value; }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected Cld.Object _parent;
-    public virtual Cld.Object parent {
-        get { return _parent; }
-        set { _parent = value; }
     }
 
     /**
      * {@inheritDoc}
      */
     protected string _alias;
+    [Description(nick="Alias", blurb="An alternative identifier for the object")]
     public virtual string alias {
         get { return _alias; }
         set { _alias = value; }
     }
 
     /**
+     * The parent object og this
+     */
+    protected Cld.Container? parent;
+
+    /**
      * The XML Node that corresponds to this.
      */
     public Xml.Node* node;
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual void set_uri (string uri) {
+        _uri = uri;
+    }
 
     /**
      * {@inheritDoc}
@@ -132,7 +137,7 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
 
         /* XXX The following code can produce a lot of unwanted output */
         if (this is Cld.Container) {
-            foreach (var object in (this as Cld.Container).objects.values) {
+            foreach (var object in (this as Cld.Container).get_objects().values) {
                 if (object != null) {
                     result += (object as Cld.Object).to_string_recursive ();
                 }
@@ -161,5 +166,86 @@ public abstract class Cld.AbstractObject : GLib.Object, Cld.Object {
      */
     public virtual void print (FileStream f) {
         f.printf ("%s\n", to_string ());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual string get_nickname () {
+        string name = get_type ().name ();
+        switch (name) {
+            case "CldAIChannel":
+                return "Analog Input";
+            case "CldAOChannel":
+                return "Analog Output";
+            case "CldAcquisitionController":
+                return "Acquisition Controller";
+            case "CldAutomationController":
+                return "Automation Controller";
+            case "CldCalibration":
+                return "Calibration";
+            case "CldCsvLog":
+                return "CSV Log";
+            case "CldDataSeries":
+                return "Data Series";
+            case "CldCoefficient":
+                return "Coefficient";
+            case "CldColumn":
+                return "Log Column";
+            case "CldComediDevice":
+                return "Comedi Device";
+            case "CldComediTask":
+                return "Comedi Task";
+            case "CldDIChannel":
+                return "Digital Input";
+            case "CldDOChannel":
+                return "Digital Output";
+            case "CldSqliteLog":
+                return "SQLite Log";
+            case "CldLogController":
+                return "Log Controller";
+            case "CldMathChannel":
+                return "Math Channel";
+            case "CldMultiplexer":
+                return "Multiplexer";
+            case "CldProcessValue2":
+                return "Process Value";
+            case "CldPid2":
+                return "PID Controller";
+            default:
+                return name;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual void set_object_property (string name, Cld.Object object) {
+        //set_property (name, value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    internal virtual void set_parent (Cld.Container parent) {
+        if (this.parent == null) {
+            this.parent = parent;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual Cld.Object get_parent () {
+
+        return this.parent;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public virtual string get_parent_uri () {
+
+        return parent.uri;
     }
 }

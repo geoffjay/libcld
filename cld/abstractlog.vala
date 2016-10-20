@@ -24,77 +24,102 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Name", blurb="Descriptive name for the log")]
     public virtual string name { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public virtual string path { get; set; }
+    [Description(nick="Path", blurb="")]
+    protected string path;
 
     /**
      * {@inheritDoc}
      */
-    public virtual string file { get; set; }
+    [Description(nick="Filename", blurb="")]
+    protected string file;
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="File", blurb="Data log file")]
+    public virtual GLib.File gfile { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    [Description(nick="Rate", blurb="Log file rate in Hz")]
     public virtual double rate { get; set; }
-
     /**
      * {@inheritDoc}
      */
-    public virtual int dt { get { return (int)(1e3 / rate); } }
-
-    /**
-     * {@inheritDoc}
-     */
+    [Description(nick="Active", blurb="Whether or not the log file is currently active")]
     public virtual bool active { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Open", blurb="Flag to check whether the file is open or not")]
     public virtual bool is_open { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Date Format", blurb="Date/Time format to use when renaming the file or database table")]
     public virtual string date_format { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public virtual Gee.Map<string, int>? fifos { get; set; }
+    [Description(nick="fifos", blurb="A list of FIFO file descriptors")]
+    protected virtual Gee.Map<string, int>? fifos { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Data Source", blurb="Either 'channel' or a path to a multiplexer FIFO")]
     public virtual string data_source { get; set; }
 
     /**
      * A double ended queue for raw data.
      */
+    [Description(nick="Raw Queue", blurb="")]
     protected virtual Gee.Deque<float?> raw_queue { get; set; }
 
     /**
      * DateTime data to use for time stamping log file.
      */
+    [Description(nick="Start Time", blurb="")]
     protected DateTime start_time;
 
     /**
      * A double ended queue for LogEntries.
      */
+    [Description(nick="Entry Queue", blurb="Double ended queue for log entries")]
     protected virtual Gee.Deque<Cld.LogEntry> entry_queue { get; set; }
 
     /**
-     * The total number of channels in this log.
+"     * The total number of channels in this log.
      */
+    [Description(nick="Number of Channels", blurb="")]
     protected int nchans { get; set; }
+
+    protected GLib.Cond cond;
 
     construct {
         fifos = new Gee.TreeMap<string, int> ();
         raw_queue = new Gee.LinkedList<float?> ();
         entry_queue = new Gee.LinkedList<Cld.LogEntry> ();
+        notify["gfile"].connect ((sender, property) => {
+            file = gfile.get_basename ();
+            path = gfile.get_parent ().get_path ();
+        });
+
+        notify["active"].connect ((sender, property) => {
+            if (!active)
+                cond.signal ();
+        });
+
     }
 
     /**
@@ -132,7 +157,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
      */
     public virtual void connect_data_source () {
         var mux = get_object_from_uri (data_source);
-        message ("Connecting to data source `%s' from `%s'",
+        debug ("Connecting to data source `%s' from `%s'",
                 (mux as Cld.Multiplexer).fname, mux.id);
         fifos.set ((mux as Cld.Multiplexer).fname, -1);
     }
@@ -184,10 +209,10 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                     }
                 //} else if (ret == 0) {
                     //stdout.printf ("%s hit timeout\n", id);
-                    message ("ret: %d", ret);
+                    debug ("ret: %d", ret);
                 } else if ((Posix.FD_ISSET (fd, rdset)) == 1) {
                     ret = (int)Posix.read (fd, buf, bufsz);
-                    //message ("ret: %d", ret);
+                    //debug ("ret: %d", ret);
                     if (ret == -1) {
                         GLib.error ("Posix.errno = %d", Posix.errno);
                     }
@@ -203,7 +228,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                             Posix.memcpy (result, data, sizeof (float));
 
                             //if ((total % 256) == 0) {
-                                //message ("%d: total read by %s: %d",
+                                //debug ("%d: total read by %s: %d",
                                          //Linux.gettid (), uri, total);
                             //}
 
@@ -238,7 +263,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
 
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("bg_channel_watch", () => {
             Mutex mutex = new Mutex ();
-            Cond cond = new Cond ();
+            cond = new Cond ();
             int64 end_time = start_time_mono;
 
             while (active) {
@@ -261,9 +286,8 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
 
                 mutex.lock ();
                 try {
-                    /*end_time = start_time_mono + count++ * (1000 / (int)rate) * TimeSpan.MILLISECOND;*/
                     end_time = start_time_mono + count++ * (int)(1000 / rate) * TimeSpan.MILLISECOND;
-                    while (cond.wait_until (mutex, end_time))
+                    while ((cond.wait_until (mutex, end_time)) && active)
                         ; /* do nothing */
                 } finally {
                     mutex.unlock ();
@@ -318,7 +342,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                                         entry.data [j] = (double) datum;
                                         total++;
                                     if ((total % 256) == 0) {
-                                        //message ("%d: total raw dequed: %d  qsize: %d",
+                                        //debug ("%d: total raw dequed: %d  qsize: %d",
                                                        //Linux.gettid (),
                                                        //total,
                                                        //raw_queue.size);

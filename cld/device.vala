@@ -25,12 +25,12 @@ public interface Cld.Device :  Cld.Object {
     /**
      *
      */
-    public abstract int hw_type { get; set; }
+    public abstract Cld.HardwareType hw_type { get; set; }
 
     /**
      *
      */
-    public abstract int driver { get; set; }
+    public abstract Cld.DeviceType driver { get; set; }
 
     /**
      *
@@ -41,11 +41,6 @@ public interface Cld.Device :  Cld.Object {
      *
      */
     public abstract string filename { get; set; }
-
-    /**
-     *
-     */
-    public abstract int unix_fd { get; set; }
 
     /**
      * A function to open the device for read and write operations.

@@ -26,51 +26,67 @@ public abstract class Cld.AbstractChannel : Cld.AbstractContainer, Cld.Channel {
     /**
      * {@inheritDoc}
      */
-    public virtual int num { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public virtual int subdevnum { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public virtual string devref { get; set; }
-
-    /**
-     * {@inheritDoc}
-     */
-    public virtual Cld.Device device {
-        get {
-            var devices = get_children (typeof (Cld.Device));
-            foreach (var dev in devices.values) {
-
-                /* this should only happen once */
-                return dev as Cld.Device;
-            }
-
-            return null;
-        }
-        set {
-            /* remove all first */
-            objects.unset_all (get_children (typeof (Cld.Device)));
-            objects.set (value.id, value);
-        }
+    protected int _num;
+    [Description(nick="Number", blurb="The indexed value of the channel")]
+    public virtual int num {
+        get { return _num; }
     }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Subdevice", blurb="The sudevice used by this channel")]
+    public virtual int subdevnum { get; set; }
+
+    /**
+     * {@inheritDoc}
+     */
+    /*
+     *[Description(nick="Device Reference", blurb="The uri of the device used by this channel")]
+     *public virtual string devref { get; set; }
+     */
+
+    /**
+     * {@inheritDoc}
+     */
+/*
+ *    [Description(nick="Device", blurb="The device used by this channel")]
+ *    public virtual Cld.Device device {
+ *        get {
+ *            var devices = get_children (typeof (Cld.Device));
+ *            foreach (var dev in devices.values) {
+ *
+ *                [> this should only happen once <]
+ *                return dev as Cld.Device;
+ *            }
+ *
+ *            return null;
+ *        }
+ *        set {
+ *            [> remove all first <]
+ *            objects.unset_all (get_children (typeof (Cld.Device)));
+ *            objects.set (value.id, value);
+ *        }
+ *    }
+ */
+
+    /**
+     * {@inheritDoc}
+     */
+
+    [Description(nick="Tag", blurb="The name used to identify this channel")]
     public virtual string tag { get; set; }
 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Description", blurb="A description of the channel")]
     public virtual string desc { get; set; }
 
     /**
      * {@inheritDoc}
      */
-    public virtual DateTime timestamp { get; set; }
+    internal virtual void set_num (int value) {
+        _num = value;
+    }
 }

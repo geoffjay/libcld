@@ -22,23 +22,18 @@
  * Contains common code shared by all container implementations.
  */
 public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container {
+
     /**
-     * Property backing fields.
+     * The map collection of the objects that belong to the container.
      */
-    protected Gee.Map<string, Cld.Object> _objects;
+    protected Gee.Map<string, Cld.Object> objects;
+
     protected Gee.List<Cld.AbstractContainer.Reference>? _ref_list = null;
 
     /**
      * {@inheritDoc}
      */
-    public virtual Gee.Map<string, Cld.Object> objects {
-        get { return (_objects); }
-        set { update_objects (value); }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
+    [Description(nick="Reference List", blurb="A list of references to other Cld objects")]
     public virtual Gee.List<Cld.AbstractContainer.Reference>? ref_list {
         get {
             return _ref_list;
@@ -58,7 +53,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
     }
 
     construct {
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
         _ref_list = new Gee.ArrayList<Cld.AbstractContainer.Reference> ();
     }
 
@@ -77,6 +72,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         }
 
         objects.set (object.id, object);
+        object.set_parent (this as Cld.Container);
         object_added (object.id);
     }
 
@@ -85,7 +81,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      */
     public virtual void remove (Cld.Object object) {
         if (objects.unset (object.id)) {
-            message ("Removed the object: %s from %s", object.id, id);
+            debug ("Removed the object: %s from %s", object.id, id);
             object_removed (object.id);
         }
     }
@@ -99,8 +95,16 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
     /**
      * {@inheritDoc}
      */
+    public virtual Gee.Map<string, Cld.Object> get_objects () {
+
+        return objects;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public virtual void update_objects (Gee.Map<string, Cld.Object> val) {
-        _objects = val;
+        objects = val;
     }
 
     /**
@@ -233,7 +237,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
             string line = "%s[%s: %s]".printf (indent,
                                                object.get_type ().name (),
                                                object.id);
-            string parent = (object.parent == null) ? "" : object.parent.id;
+            string parent = (object.get_parent () == null) ? "" : object.get_parent ().uri;
             stdout.printf ("%-40s parent: %-14s uri: %s\n", line, parent, object.uri);
             if ((object is Cld.Container)) {// && (!(this.uri.contains (object.uri)))) {
                     (object as Cld.Container).print_objects (depth + 1);
@@ -289,7 +293,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         tokens = requested_uri.split ("/");
         for (int i = 0; i < tokens.length; i++) {
             if (tokens [i] != "") {
-                foreach (var object in container.objects.values) {
+                foreach (var object in container.get_objects ().values) {
                     if ((object as Cld.Object).id == tokens [i]) {
                         if (object is Container) {
                             container = object as Container;
@@ -301,7 +305,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         }
         if (result.uri != requested_uri) {
             result = null;
-            message ("Object with uri %s does not exist", requested_uri);
+            warning ("Object with uri %s does not exist", requested_uri);
         }
 
         return result;
@@ -311,7 +315,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
      * {@inheritDoc}
      */
     public virtual void generate_ref_list () {
-        debug ("Generating reference list...");
+       debug ("Generating reference list for %s", uri);
 
         if (objects == null)
             return;
@@ -334,8 +338,8 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
                 } else if (type.is_a (typeof (Cld.Column))) {
                     (object as Cld.Container).add_ref ((object as Cld.Column).chref);
                 } else if (type.is_a (typeof (Cld.ComediTask))) {
-                    (object as Cld.Container).add_ref ((object as Cld.ComediTask).devref);
-                    foreach (var chref in (object as Cld.ComediTask).chrefs) {
+                    (object as Cld.Container).add_ref ((object as Cld.ComediTask).get_devref ());
+                    foreach (var chref in (object as Cld.ComediTask).get_chrefs ()) {
                         (object as Cld.Container).add_ref (chref);
                     }
                 } else if (type.is_a (typeof (Cld.Sensor))) {
@@ -372,7 +376,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
     public virtual void print_ref_list () {
         var list = get_descendant_ref_list ();
         foreach (var entry in list.read_only_view) {
-            stdout.printf ("%-30s %s", (entry
+            stdout.printf ("%-30s %s\n", (entry
                 as Cld.AbstractContainer.Reference).self_uri,
                 (entry as Cld.AbstractContainer.Reference).reference_uri);
         }

@@ -65,8 +65,8 @@ public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
      * Default construction.
      */
     public RawChannel () {
-        this.num = 0;
-        this.devref = "/daqctl0/dev0";
+        set_num (0);
+        //this.devref = "/daqctl0/dev0";
         this.tag = "RAW0";
         this.desc = "Raw Channel";
 
@@ -99,7 +99,7 @@ public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
 
         /* Read in the attributes */
         id = node->get_prop ("id");
-        devref = node->get_prop ("ref");
+        //devref = node->get_prop ("ref");
 
         /* Read in the property/class element nodes */
         for (Xml.Node *iter = node->children; iter != null; iter = iter->next) {
@@ -113,7 +113,7 @@ public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
                         break;
                     case "num":
                         var val = iter->get_content ();
-                        num = int.parse (val);
+                        set_num (int.parse (val));
                         break;
                     case "alias":
                         alias = iter->get_content ();
@@ -131,22 +131,22 @@ public class Cld.RawChannel : Cld.AbstractChannel, Cld.Buildable {
      */
     private void connect_signals () {
         notify["tag"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["desc"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["num"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["alias"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
     }

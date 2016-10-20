@@ -7,6 +7,9 @@
 # Files required by setup/build
 m4/libtool.m4
 m4/lt*.m4
+m4/intltool.m4
+m4/introspection.m4
+m4/pkg.m4
 
 # Files that get generated automatically by automake/autoconf
 aclocal.m4
@@ -23,6 +26,7 @@ Makefile
 Makefile.in
 missing
 stamp-h1
+.version
 
 # Files generated from valac, to add individual ones back use !file.c/.h
 cld/*.c
@@ -67,8 +71,11 @@ examples/polling-acquisition
 examples/pid-mathchannel
 examples/soup-server
 
+po/
+
 # Test programs
 tests/.deps/
 tests/.libs/
 tests/tests
 tests/*.stamp
+tests/tests_vala.stamp-t

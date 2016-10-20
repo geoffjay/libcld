@@ -27,6 +27,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
     /**
      * The number of elements in the series
      */
+    [Description(nick="Length", blurb="The number of elements in the series")]
     public int length { get; set; default = 3; }
 
     /**
@@ -34,9 +35,11 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
      * property will affect the number of points that are used in the calculation
      * of the mean value, for example.
      */
+    [Description(nick="Stride", blurb="The step size from one sample to the next")]
     public int stride { get; set; default = 1; }
 
     private double _mean_value;
+    [Description(nick="Mean", blurb="The average value of the series")]
     public double mean_value {
         get {
             _mean_value = Gsl.Stats.mean (buffer, stride, buffer.length);
@@ -47,6 +50,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
     /**
      * The reference id of the scalable channel that is buffered.
      */
+    [Description(nick="Channel Reference", blurb="The URI of the referenced channel")]
     public string chref { get; set; }
 
     private weak Cld.ScalableChannel? _channel = null;
@@ -54,6 +58,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
     /**
      * The channel that is buffered
      */
+    [Description(nick="Channel", blurb="The referenced channel")]
     public Cld.ScalableChannel channel {
         get {
             if (_channel == null) {
@@ -67,6 +72,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
         set {
             objects.unset_all (get_children (typeof (Cld.ScalableChannel)));
             objects.set (value.id, value);
+            _channel = value;
         }
     }
 
@@ -88,10 +94,9 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
     construct {
         j = 0;
     }
+
     public DataSeries () {
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
-
-
+        objects = new Gee.TreeMap<string, Cld.Object> ();
     }
 
     /**
@@ -102,7 +107,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
     public DataSeries.from_xml_node (Xml.Node *node) {
         string value;
         this.node = node;
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -114,7 +119,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
                         case "length":
                             value = iter->get_content ();
                             length = int.parse (value);
-                            message ("%s length: %d", id, this.length);
+                            debug ("%s length: %d", id, this.length);
                             break;
                         case "chref":
                             value = iter->get_content ();
@@ -123,16 +128,16 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
                         case "taps":
                             value = iter->get_content ();
                             string[] tapstring =  value.split_set (", :/", -1);
-                            message ("tapstring.length: %d", tapstring.length);
+                            debug ("tapstring.length: %d", tapstring.length);
                             taps = new int[tapstring.length];
                             int len = length;
                             for (int i = 0; i < tapstring.length; i++) {
                                 taps[i] = int.parse (tapstring[i]);
-                                message ("taps[%d]: %d", i, taps[i]);
+                                debug ("taps[%d]: %d", i, taps[i]);
                                 Cld.Object object = new VChannel ();
                                 (object as VChannel).id = "vc-%s-%d".printf (this.id, taps[i]);
                                 (object as VChannel).tag = "%s[%d]".printf (this.id, taps[i]);
-                                (object as VChannel).num = taps[i];
+                                (object as VChannel).set_num (taps[i]);
                                 try {
                                     add (object);
                                 } catch (Cld.Error.KEY_EXISTS e) {
@@ -152,6 +157,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
         buffer = new double[length];
         for (int i = 0; i < length; i++) {
             buffer[i] = 0.0;
+
         }
     }
 
@@ -172,11 +178,11 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
         (channel as ScalableChannel).new_value.connect ((id, val) => {
             buffer[j] = val;
             /*
-            message ("buffer[0 : %d]: ", buffer.length);
+            debug ("buffer[0 : %d]: ", buffer.length);
             for (int i = 0; i < buffer.length; i++) {
-                message ("%.3f  ", buffer[i]);
+                debug ("%.3f  ", buffer[i]);
             }
-            message ("\n");
+            debug ("\n");
             */
             new_value (this.id, buffer[j]);
             j++;
@@ -231,7 +237,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
         }
 
         if ((i > length) || (i < 0)) {
-            message ("DataSeries.get_nth_value (n) Failed!");
+            debug ("DataSeries.get_nth_value (n) Failed!");
             return false;
         } else {
             val = buffer[i];
@@ -256,6 +262,22 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
                     }
                 });
             }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public override void set_object_property (string name, Cld.Object object) {
+        switch (name) {
+            case "channel":
+                if (object is Cld.ScalableChannel) {
+                    channel = object as Cld.ScalableChannel;
+                    chref = channel.uri;
+                }
+                break;
+            default:
+                break;
         }
     }
 }

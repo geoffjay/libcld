@@ -24,7 +24,7 @@ public interface Cld.Channel : Cld.Container {
     /**
      * The channel number, which sometimes refers to its hardware pin number.
      */
-    public abstract int num { get; set; }
+    public abstract int num { get; }
 
     /**
      * The subdevice number; an integer reference as used by Comedi devices.
@@ -38,13 +38,15 @@ public interface Cld.Channel : Cld.Container {
      * backwards approach and should be replaced with a Device containing a list
      * of channels.
      */
-    public abstract string devref { get; set; }
+    /*
+     *public abstract string devref { get; set; }
+     */
 
     /**
      * A reference to the device that the channel belongs to, same comments
      * apply here as they did to the devref.
      */
-    public abstract weak Device device { get; set; }
+    //public abstract weak Device device { get; set; }
 
     /**
      * String name of the channel, could be considered to be the channel's
@@ -58,21 +60,16 @@ public interface Cld.Channel : Cld.Container {
     public abstract string desc { get; set; }
 
     /**
-     * A Timestamp to that should be updated when the value or state changes.
-     */
-    public abstract DateTime timestamp { get; set; }
-
-    /**
-     * A name that identifies this. It is used by MathChannel.
-     */
-    public abstract string alias { get; set; }
-
-    /**
      * Raised when the channel has been assigned a new value.
      *
      * FIXME: This should replace non-variant equivalents.
      */
     public abstract signal void __new_value (string id, GLib.Variant value);
+
+    /**
+     * @param value The num value of the channel
+     */
+    public abstract void set_num (int value);
 }
 
 /**
@@ -155,4 +152,10 @@ public interface Cld.ScalableChannel : Cld.AbstractChannel, Cld.Channel {
      * Raised when a new value has been calculated.
      */
     public abstract signal void new_value (string id, double value);
+
+    /**
+     * {@inheritDoc}
+     *
+     */
+    public abstract void set_object_property (string name, Cld.Object object);
 }

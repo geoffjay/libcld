@@ -28,14 +28,20 @@ internal class Cld.Builder : GLib.Object {
 
     private Cld.Container container;
 
-    public Gee.Map<string, Cld.Object> objects {
-        get { return container.objects; }
-    }
+/*
+ *    public Gee.Map<string, Cld.Object> objects {
+ *        get {
+ *            unowned Gee.Map<string, Cld.Object> objs = container.get_objects ();
+ *
+ *            return objs;
+ *            }
+ *    }
+ */
+    public Gee.Map<string, Cld.Object> objects;
 
     construct {
         container = new Cld.RootContainer ();
         container.id = "root";
-        container.parent = null;
     }
 
     public Builder.from_file (string filename) {
@@ -46,6 +52,12 @@ internal class Cld.Builder : GLib.Object {
     public Builder.from_xml_config (Cld.XmlConfig xml) {
         this.xml = xml;
         build_object_map (container, 0);
+    }
+
+    public Gee.Map<string, Cld.Object> get_objects () {
+        objects = container.get_objects ();
+
+        return objects;
     }
 
     /**
@@ -62,7 +74,7 @@ internal class Cld.Builder : GLib.Object {
                 xpath += "/cld:object";
         }
 
-        message ("Adding nodeset to %s for: %s", ctr.id, xpath);
+        debug ("Adding nodeset to %s for: %s", ctr.id, xpath);
 
         /* request the nodeset from the configuration */
         try {
@@ -82,13 +94,10 @@ internal class Cld.Builder : GLib.Object {
                         if (object is Cld.Container)
                             build_object_map (object as Cld.Container, level + 1);
 
-                        /* assign container as parent */
-                        object.parent = ctr;
-
                         /* No point adding an object type that isn't recognized */
                         if (object != null) {
                             try {
-                                message ("   > Adding object of type %s with id %s to %s",
+                                debug ("   > Adding object of type %s with id %s to %s",
                                          ((object as GLib.Object).get_type ()).name (),
                                          object.id, ctr.id);
                                 ctr.add (object);
@@ -147,7 +156,7 @@ internal class Cld.Builder : GLib.Object {
                 break;
         }
 
-        message ("Loading object of type %s with id %s", type, object.id);
+        debug ("Loading object of type %s with id %s", type, object.id);
 
         return object;
     }

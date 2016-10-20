@@ -70,26 +70,34 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     /**
      * Determines whether the file is renamed on open using the format string.
      */
+    [Description(nick="Time Stamp", blurb="")]
     public Log.TimeStampFlag time_stamp { get; set; }
 
     /**
      * File path to backup location.
      */
-    public string backup_path { get; set; }
+    [Description(nick="Backup Path", blurb="")]
+    public string backup_path;
 
     /**
      * Backup file name.
      */
-    public string backup_file { get; set; }
+    [Description(nick="Backup Filename", blurb="")]
+    public string backup_file;
+
+    [Description(nick="Backup File", blurb="Backup database file")]
+    public GLib.File gbackup { get; set; }
 
     /**
      * The interval at which the database will be automatically backed up.
      */
+    [Description(nick="Backup Interval", blurb="(milliseconds)")]
     public int backup_interval_ms { get; set; }
 
     /**
      * The name of the current Log table.
      */
+    [Description(nick="Experiment Name", blurb="Name of the current log table")]
     public string experiment_name {
         get { return _experiment_name; }
     }
@@ -243,12 +251,22 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 } else if (iter->name == "object") {
                     if (iter->get_prop ("type") == "column") {
                         var column = new Column.from_xml_node (iter);
-                        column.parent = this;
                         add (column);
                     }
                 }
             }
         }
+
+        if (!path.has_suffix ("/")) {
+            path = "%s%s".printf (path, "/");
+        }
+        gfile = GLib.File.new_for_path (path + file);
+
+        if (!backup_path.has_suffix ("/")) {
+            backup_path = "%s%s".printf (backup_path, "/");
+        }
+        gbackup = GLib.File.new_for_path (backup_path + backup_file);
+
         connect_signals ();
     }
 
@@ -258,11 +276,30 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         ObjectClass ocl = (ObjectClass)type.class_ref ();
 
         foreach (ParamSpec spec in ocl.list_properties ()) {
-            message ("spec name: %s", spec.get_name ());
             notify[spec.get_name ()].connect ((s, p) => {
             update_node ();
             });
         }
+
+        notify["gfile"].connect ((s,p) => {
+            path = gfile.get_parent ().get_path ();
+            path = gfile.get_parent ().get_path ();
+            if (!path.has_suffix ("/")) {
+                path = "%s%s".printf (path, "/");
+            }
+
+            file = gfile.get_basename ();
+        });
+
+        notify["gbackup"].connect ((s,p) => {
+            backup_path = gbackup.get_parent ().get_path ();
+            backup_path = gbackup.get_parent ().get_path ();
+            if (!backup_path.has_suffix ("/")) {
+                backup_path = "%s%s".printf (backup_path, "/");
+            }
+
+            backup_file = gbackup.get_basename ();
+        });
     }
 
     private void update_node () {
@@ -319,8 +356,8 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * Destructor
      */
     ~SqliteLog () {
-        if (_objects != null) {
-            _objects.clear ();
+        if (objects != null) {
+            objects.clear ();
         }
     }
 
@@ -328,14 +365,17 @@ public class Cld.SqliteLog : Cld.AbstractLog {
      * Open the database file for logging.
      */
     public void database_open () throws Cld.FileError {
-        string db_filename;
-
-        if (!path.has_suffix ("/")) {
-            path = "%s%s".printf (path, "/");
-        }
-
-        db_filename = "%s%s".printf (path, file);
-
+/*
+ *        string db_filename;
+ *
+ *        if (!path.has_suffix ("/")) {
+ *            path = "%s%s".printf (path, "/");
+ *        }
+ *
+ *        db_filename = "%s%s".printf (path, file);
+ *
+ */
+        string db_filename = gfile.get_path ();
         /* Create the file if it doesn't exist already */
         if (!(Posix.access (db_filename, Posix.F_OK) == 0)) {
             FileStream.open (db_filename, "a+");
@@ -419,7 +459,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         DateTime created_time = new DateTime.now_local ();
 
         /* Open the file */
-        message ("filename: %s ", filename);
+        debug ("filename: %s ", filename);
         file_stream = FileStream.open (filename, "w+");
         if (file_stream == null) {
            success = false;
@@ -524,7 +564,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             /* Background channel watch fills the entry queue */
             bg_channel_watch.begin (() => {
                 try {
-                    message ("Channel watch async ended");
+                    debug ("Channel watch async ended");
                 } catch (ThreadError e) {
                     string msg = e.message;
                     error (@"Thread error: $msg");
@@ -542,13 +582,13 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 open_fifo.begin (fname, (obj, res) => {
                     try {
                         fd = open_fifo.end (res);
-                        message ("Got a writer for %s", fname);
+                        debug ("Got a writer for %s", fname);
 
                         /* Background fifo watch queues fills the entry queue */
                         bg_fifo_watch.begin (fd, (obj, res) => {
                             try {
                                 bg_fifo_watch.end (res);
-                                message ("Log fifo watch async ended");
+                                debug ("Log fifo watch async ended");
                             } catch (ThreadError e) {
                                 string msg = e.message;
                                 error (@"Thread error: $msg");
@@ -558,7 +598,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                         bg_raw_process.begin ((obj, res) => {
                             try {
                                 bg_raw_process.end (res);
-                                message ("Raw data queue processing async ended");
+                                debug ("Raw data queue processing async ended");
                             } catch (ThreadError e) {
                                 string msg = e.message;
                                 error (@"Thread error: $msg");
@@ -574,7 +614,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
 
         bg_entry_write.begin (() => {
             try {
-                message ("Log entry queue write async ended");
+                debug ("Log entry queue write async ended");
             } catch (ThreadError e) {
                 string msg = e.message;
                 error (@"Thread error: $msg");
@@ -611,14 +651,14 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         SourceFunc callback = open_fifo.callback;
 
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("open_fifo_%s".printf (fname), () => {
-            message ("%s is is waiting for a writer to FIFO %s",this.id, fname);
+            debug ("%s is is waiting for a writer to FIFO %s",this.id, fname);
             if (fd == -1)
                 fd = Posix.open (fname, Posix.O_RDONLY);
             fifos.set (fname, fd);
             if (fd == -1) {
                 message ("%s Posix.open error: %d: %s",id, Posix.errno, Posix.strerror (Posix.errno));
             } else {
-                message ("Sqlite log is opening FIFO %s fd: %d", fname, fd);
+                debug ("Sqlite log is opening FIFO %s fd: %d", fname, fd);
             }
 
             Idle.add ((owned) callback);
@@ -872,7 +912,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
     public override void log_entry_write (Cld.LogEntry entry) {
         parameter_index = log_stmt.bind_parameter_index ("$TIME");
         if (parameter_index == 0) {
-            GLib.message ("bind parameter returned 0");
+            GLib.debug ("bind parameter returned 0");
         }
         ec = log_stmt.bind_text (parameter_index, entry.time_as_string);
         if (ec != Sqlite.OK) {
@@ -916,7 +956,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         stmt.reset ();
 
         if (size != columns) {
-            message ("Sqlite.Log.get_log_entry (..) :The number log table columns does not match the data size.");
+            debug ("Sqlite.Log.get_log_entry (..) :The number log table columns does not match the data size.");
         }
 
         query = "SELECT * FROM %s WHERE id=$ID;".printf (table_name);
@@ -1201,7 +1241,7 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 ;
             """.printf (name, start.to_string ().substring (0, 19),
                         stop.to_string ().substring (0, 19));
-            message ("%s", query);
+            debug ("%s", query);
             ec = db.prepare_v2 (query, query.length, out stmt);
             if (ec != Sqlite.OK) {
                 message ("Error: %d: %s\n", db.errcode (), db.errmsg ());

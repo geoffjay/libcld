@@ -144,13 +144,13 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
 
     /* default constructor */
     construct {
-        devref = "no devref";
+        //devref = "no devref";
     }
 
     public VChannel () {
         /* set defaults */
-        this.num = 0;
-        this.devref = "dev0";
+        set_num (0);
+        //this.devref = "dev0";
         this.tag = "CH0";
         this.desc = "Output Channel";
     }
@@ -161,7 +161,7 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
-            devref = node->get_prop ("ref");
+            //devref = node->get_prop ("ref");
             /* iterate through node children */
             for (Xml.Node *iter = node->children;
                  iter != null;
@@ -179,13 +179,10 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
                             break;
                         case "num":
                             value = iter->get_content ();
-                            num = int.parse (value);
+                            set_num (int.parse (value));
                             break;
                         case "calref":
                             calref = iter->get_content ();
-                            break;
-                        case "devref":
-                            devref = iter->get_content ();
                             break;
                         default:
                             break;

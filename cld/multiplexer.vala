@@ -29,18 +29,21 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
     /**
      * A list of channel references.
      */
+    [Description(nick="Task References", blurb="A list of channel references")]
     public Gee.List<string>? taskrefs {
         get { return _taskrefs; }
         set { _taskrefs = value; }
     }
 
     /* The name that identifies an interprocess communication pipe or socket. */
+    [Description(nick="Filename", blurb="The path to the inter-process communication pipe or socket")]
     public string fname {
         get { return _fname; }
         set { _fname = value; }
     }
 
     /* The update interval, in milliseconds, of the channel raw value. */
+    [Description(nick="Update Stride", blurb="The number of samples taken between channel value updates")]
     public int update_stride {
         get { return _update_stride; }
         set { _update_stride = value; }
@@ -101,7 +104,7 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
         var tasks = get_object_map (typeof (Cld.ComediTask));
 
         foreach (var task in tasks.values) {
-            n += (task as Cld.ComediTask).channels.size;
+            n += (task as Cld.ComediTask).get_channels ().size;
         }
 
         data_register = new float [n];
@@ -109,7 +112,7 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
 
         int i = 0;
         foreach (var task in tasks.values) {
-            foreach (var channel in (task as Cld.ComediTask).channels.values) {
+            foreach (var channel in (task as Cld.ComediTask).get_channels ().values) {
                 if (channel is Cld.AIChannel) {
                     channel_array [i++] = channel as Cld.AIChannel;
                 }
@@ -208,14 +211,14 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
     private async int open_fifo () {
         SourceFunc callback = open_fifo.callback;
         GLib.Thread<int> thread = new GLib.Thread<int>.try ("open_fifo", () => {
-            GLib.message ("Multiplexer `%s' waiting for a reader to FIFO `%s'",
+            GLib.debug ("Multiplexer `%s' waiting for a reader to FIFO `%s'",
                    id, fname);
             fd = Posix.open (fname, Posix.O_WRONLY);
             if (fd == -1) {
                 critical ("%s Posix.open error: %d: %s",
                           fname, Posix.errno, Posix.strerror (Posix.errno));
             } else {
-                GLib.message ("Acquisition controller opening FIFO `%s' fd: %d",
+                GLib.debug ("Acquisition controller opening FIFO `%s' fd: %d",
                        fname, fd);
             }
 
@@ -264,7 +267,7 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
         foreach (var task in _tasks.values) {
             tasks[i] = task as ComediTask;
             devices[i] = (task as ComediTask).device as Cld.ComediDevice;
-            nchans[i] = (task as ComediTask).channels.size;
+            nchans[i] = (task as ComediTask).get_channels ().size;
             nchan += nchans[i];
             subdevices[i] = (task as ComediTask).subdevice;
             buffersizes[i] = (devices[i] as Cld.ComediDevice).dev.get_buffer_size (subdevices[i]);
@@ -320,7 +323,7 @@ public class Cld.Multiplexer : Cld.AbstractContainer {
                             }
                             /*
                              *if ((total % (nchan * 200)) == 0) {
-                             *    message ("multiplexer: %d %d", Linux.gettid (), total/(nchan * 200));
+                             *    debug ("multiplexer: %d %d", Linux.gettid (), total/(nchan * 200));
                              *}
                              */
                         }

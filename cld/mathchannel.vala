@@ -50,6 +50,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
     /**
      * A list of channel references.
      */
+    [Description(nick="Data References", blurb="A list of channel references")]
     public Gee.List<string>? drefs { get; set; }
 
     /**
@@ -58,6 +59,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
      * where ds00[-10] is the 11th element counter clockwisein the DataSeries
      * circular buffer. "[" and "]" only apply to DataSeries.
      */
+    [Description(nick="Expression", blurb="An algebraic expression")]
     public override string? expression {
         get { return _expression; }
         set {
@@ -141,7 +143,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
 
                 return _calculated_value;
             } else {
-                message ("expression must be null");
+                debug ("expression must be null");
                 raw_value = 0.0;
 
                 return 0.0;
@@ -155,6 +157,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
     /**
      * Calculate value if expression exists or placeholder for dummy channel.
      */
+    [Description(nick="Raw Value", blurb="The non-scaled value")]
     public double raw_value {
         get { return _raw_value; }
         set {
@@ -166,6 +169,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Scaled Value", blurb="The value with scaling applied")]
     public virtual double scaled_value {
         get { return _scaled_value; }
         private set {
@@ -177,12 +181,14 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
     /**
      * {@inheritDoc}
      */
+    [Description(nick="Calibration Reference", blurb="The URI of the calibration")]
     public virtual string calref { get; set; }
 
     /**
      * {@inheritDoc}
      */
     private Cld.Calibration _calibration = null;
+    [Description(nick="Calibration", blurb="The calibration used to generate a scaled value")]
     public virtual Calibration calibration {
         get {
             if (_calibration == null) {
@@ -190,7 +196,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
                 foreach (var cal in calibrations.values) {
 
                     /* this should only happen once */
-                    message ("this should only happen once");
+                    debug ("this should only happen once");
                     /*return cal as Cld.Calibration;*/
                     _calibration  = cal as Cld.Calibration;
                 }
@@ -214,8 +220,8 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
 
     public MathChannel () {
         /* set defaults */
-        this.num = 0;
-        this.devref = "dev0";
+        set_num (0);;
+        //this.devref = "dev0";
         this.tag = "CH0";
         this.desc = "Output Channel";
     }
@@ -227,7 +233,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
-            devref = node->get_prop ("ref");
+            //devref = node->get_prop ("ref");
             /* iterate through node children */
             for (Xml.Node *iter = node->children;
                  iter != null;
@@ -245,7 +251,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
                             break;
                         case "num":
                             value = iter->get_content ();
-                            num = int.parse (value);
+                            set_num (int.parse (value));
                             break;
                         case "calref":
                             calref = iter->get_content ();
@@ -270,37 +276,37 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
      */
     private void connect_notify () {
         notify["tag"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["desc"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["expression"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["num"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["subdevnum"].connect ((s, p) => {
-            message ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
+            //debug ("Property %s changed to %d for %s", p.get_name (), subdevnum,  uri);
             update_node ();
         });
 
         notify["calref"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
 
         notify["alias"].connect ((s, p) => {
-            message ("Property %s changed for %s", p.get_name (), uri);
+            //debug ("Property %s changed for %s", p.get_name (), uri);
             update_node ();
         });
     }
@@ -393,7 +399,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
 //                    }
 //                    if (obj != null) {
 //                        add_object (ref_id, obj);
-//                        message ("Assigning Cld.Object %s to MathChannel %s", name, this.id);
+//                        debug ("Assigning Cld.Object %s to MathChannel %s", name, this.id);
 //                    }
 //                }
 //            }
@@ -417,6 +423,23 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    public override void set_object_property (string name, Cld.Object object) {
+        switch (name) {
+            case "calibration":
+                if (object is Cld.Calibration) {
+                    calibration = object as Cld.Calibration;
+                    calref = (object as Cld.Calibration).uri;
+                    //debug ("Calibration for %s changed to %s", uri, calibration.uri);
+                }
+                break;
+            default:
+                break;
         }
     }
 

@@ -38,7 +38,7 @@ public class Cld.Context : Cld.AbstractContainer {
      */
     public Context.from_config (Cld.XmlConfig xml) {
         var builder = new Cld.Builder.from_xml_config (xml);
-        objects = builder.objects;
+        objects = builder.get_objects ();
 
         debug (to_string_recursive ());
 
@@ -58,7 +58,7 @@ public class Cld.Context : Cld.AbstractContainer {
             var self = get_object_from_uri ((entry as Cld.AbstractContainer.Reference).self_uri);
             var reference = get_object_from_uri ((entry as Cld.AbstractContainer.Reference).reference_uri);
 
-            message ("%-30s %s", (self as Cld.Object).uri,
+            debug ("%-30s %s", (self as Cld.Object).uri,
                                (reference as Cld.Object).uri);
 
             if ((reference != null)) {

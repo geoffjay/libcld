@@ -25,7 +25,7 @@ public class Cld.AutomationController : Cld.AbstractController {
      * Default construction
      */
     construct {
-        _objects = new Gee.TreeMap<string, Cld.Object> ();
+        objects = new Gee.TreeMap<string, Cld.Object> ();
     }
 
     public AutomationController () {}
@@ -45,7 +45,6 @@ public class Cld.AutomationController : Cld.AbstractController {
                     switch (iter->get_prop ("type")) {
                         case "pid":
                             var pid = new Cld.Pid.from_xml_node (iter);
-                            pid.parent = this;
                             try {
                                 add (pid);
                             } catch (Cld.Error.KEY_EXISTS e) {
@@ -54,7 +53,6 @@ public class Cld.AutomationController : Cld.AbstractController {
                             break;
                         case "pid-2":
                             var pid = new Cld.Pid2.from_xml_node (iter);
-                            pid.parent = this;
                             try {
                                 add (pid);
                             } catch (Cld.Error.KEY_EXISTS e) {

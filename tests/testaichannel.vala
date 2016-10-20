@@ -25,7 +25,7 @@ public class AIChannelTests : ChannelTests {
         add_test ("[AIChannel] Test construction from XML node string", test_xml_construct);
         add_test ("[AIChannel] Test backend array for value average property", test_avg_value);
         add_test ("[AIChannel] Test backend array for measured values property", test_raw_value);
-//        add_test ("[AIChannel] Test backend array for scaled value property", test_scaled_value);
+        add_test ("[AIChannel] Test backend array for scaled value property", test_scaled_value);
     }
 
     public override void set_up () {
@@ -67,7 +67,7 @@ public class AIChannelTests : ChannelTests {
         /* Check the Channel exists */
         assert (test_channel != null);
 
-        assert (test_channel.avg_value == 0.0);
+        //assert (test_channel.avg_value == 0.0);
         test_channel.raw_value_list_size = 10;
         test_channel.add_raw_value (1.0);
         test_channel.add_raw_value (2.0);
@@ -100,8 +100,7 @@ public class AIChannelTests : ChannelTests {
         test_channel.add_raw_value (1.0);
         test_channel.add_raw_value (2.0);
         test_channel.add_raw_value (3.0);
-
-        assert (test_channel.scaled_value == 2.0);
+        assert (test_channel.scaled_value == 3.0);
         Coefficient coefficient;
         coefficient = cal.get_coefficient (0);
         coefficient.value = 1.0;
@@ -109,6 +108,10 @@ public class AIChannelTests : ChannelTests {
         coefficient = cal.get_coefficient (1);
         coefficient.value = 2.0;
         cal.set_coefficient (coefficient.id, coefficient);
-        assert (test_channel.scaled_value == 5.0);
+
+        assert (test_channel.scaled_value == 3.0);
+        /* Remember - adding a raw value causes the new scaled value to be calculated */
+        test_channel.add_raw_value (7.0);
+        assert (test_channel.scaled_value == 15.0);
     }
 }

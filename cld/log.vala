@@ -94,22 +94,22 @@ public interface Cld.Log : Cld.Object {
     /**
      * File system path to write the log file or database file to.
      */
-    public abstract string path { get; set; }
+    //protected abstract string path { get; set; }
 
     /**
      * Base file name to use for the log file or database file.
      */
-    public abstract string file { get; set; }
+    //protected abstract string file { get; set; }
+
+    /**
+     * The log file
+     */
+    public abstract GLib.File gfile { get; set; }
 
     /**
      * The log file rate in Hz.
      */
     public abstract double rate { get; set; }
-
-    /**
-     * Time between iterations in milliseconds.
-     */
-    public abstract int dt { get { return (int)(1e3 / rate); } }
 
     /**
      * Whether or not the log file is currently active.
@@ -130,7 +130,7 @@ public interface Cld.Log : Cld.Object {
      * A list of FIFOs for inter-process data transfer.
      * The data are paired a pipe name and file descriptor.
      */
-    public abstract Gee.Map<string, int>? fifos { get; set; }
+    protected abstract Gee.Map<string, int>? fifos { get; set; }
 
     /**
      * The source of the channel value information.

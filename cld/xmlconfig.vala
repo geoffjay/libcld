@@ -115,7 +115,7 @@ public class Cld.XmlConfig : GLib.Object {
 //        foreach (Cld.Object object in objects.values) {
 //            message ("%s", object.uri);
 //            if (object is Cld.Channel) {
-//                message ("Changing %s description to %s",
+//                debug ("Changing %s description to %s",
 //                    object.id, (object as Cld.Channel).desc);
 //
 //                /* update the Channel values of the XML data in memory */
@@ -142,7 +142,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                 * - Map<Coefficient>
 //                 * - units
 //                 */
-//                message ("Changing %s units to %s",
+//                debug ("Changing %s units to %s",
 //                              object.id, (object as Cld.Calibration).units);
 //
 //                /* update the calibration settings of the xml data in memory */
@@ -172,7 +172,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                        var process_values = (control as Cld.Pid).process_values;
 //                        var pv = process_values.get ("pv0");
 //                        var mv = process_values.get ("pv1");
-//                        message ("Control - %s: (PV: %s) & (MV: %s)", control.id, (pv as ProcessValue).chref,
+//                        debug ("Control - %s: (PV: %s) & (MV: %s)", control.id, (pv as ProcessValue).chref,
 //                                                                            (mv as ProcessValue).chref);
 //                        /* update the PID values of the XML data in memory */
 //                        var xpath_base = "//cld/cld:objects/cld:object[@type=\"control\"]/cld:object[@id=\"%s\"]".printf (control.id);
@@ -233,7 +233,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                        var xpath_base = "//cld/cld:objects/cld:object[@type=\"control\"]/cld:object[@id=\"%s\"]".printf (control.id);
 //                        var xpath = "%s/cld:property[@name=\"kp\"]".printf (xpath_base);
 //                        var value = "%.6f".printf ((control as Cld.Pid2).kp);
-//                        message ("Control - %s: (PV: %s) & (MV: %s)", control.id, (pv as ProcessValue2).dsref,
+//                        debug ("Control - %s: (PV: %s) & (MV: %s)", control.id, (pv as ProcessValue2).dsref,
 //                                                                            (mv as ProcessValue2).dsref);
 //                        try {
 //                            edit_node_content (xpath, value);
@@ -289,7 +289,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                /* update the module content of the XML data in memory */
 //                var xpath_base = "//cld/cld:objects/cld:object";
 //                if (object is Cld.VelmexModule) {
-//                    message ("Changing VelmexModule %s program to %s", object.id, (object as Cld.VelmexModule).program);
+//                    debug ("Changing VelmexModule %s program to %s", object.id, (object as Cld.VelmexModule).program);
 //                    var xpath = "%s[@type=\"module\" and @id=\"%s\"]/cld:property[@name=\"program\"]".printf (xpath_base, object.id);
 //                    try {
 //                        edit_node_content (xpath, (object as Cld.VelmexModule).program);
@@ -307,7 +307,7 @@ public class Cld.XmlConfig : GLib.Object {
 //                 * - rate
 //                 */
 //                /* XXX add better debugging */
-//                message ("Changing log file %s", object.id);
+//                debug ("Changing log file %s", object.id);
 //
 //                /* update the AI channel values of the XML data in memory */
 //                var xpath_base = "//cld/cld:objects/cld:object[@type=\"log\" and @id=\"%s\"]".printf (object.id);
@@ -358,7 +358,7 @@ public class Cld.XmlConfig : GLib.Object {
          */
         foreach (var coefficient in coefficients.values) {
             var value = "%.4f".printf ((coefficient as Cld.Coefficient).value);
-            message ("Changing %s value to %s", coefficient.id, value);
+            debug ("Changing %s value to %s", coefficient.id, value);
 
             /* update the AI channel values of the XML data in memory */
             var xpath_base = "//cld/cld:objects/cld:object";

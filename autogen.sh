@@ -1,17 +1,35 @@
-#!/bin/bash
-# autogen.sh
-# - generate all make files, etc.
+#!/bin/sh
+# Run this to generate all the initial makefiles, etc.
 
 srcdir=`dirname $0`
 test -z "$srcdir" && srcdir=.
 
-ORIGDIR=`pwd`
-cd $srcdir
+PKG_NAME="libcld"
 
-# Automake requires that ChangeLog exists.
+(test -f $srcdir/cld/object.vala) || {
+    echo -n "**Error**: Directory "\`$srcdir\'" does not look like the"
+    echo " top-level $PKG_NAME directory"
+    exit 1
+}
+
 touch ChangeLog
+touch INSTALL
 
-REQUIRED_M4MACROS=introspection.m4 \
-    REQUIRED_AUTOMAKE_VERSION=1.11 \
-    gnome-autogen.sh "$@" || exit 1
-cd $ORIGDIR || exit $?
+aclocal --install -I m4 || exit 1
+glib-gettextize --force --copy || exit 1
+intltoolize --force --copy --automake || exit 1
+autoreconf --force --install -Wno-portability || exit 1
+
+if [ "$NOCONFIGURE" = "" ]; then
+    $srcdir/configure "$@" || exit 1
+
+    if [ "$1" = "--help" ]; then
+        exit 0
+    else
+        echo "Now type \`make' to compile" || exit 1
+    fi
+else
+    echo "Skipping configure process."
+fi
+
+set +x

@@ -1,7 +1,0 @@
-This is (clearly) a completely unfinished layout to create a .deb file for
-distribution. Either the Makefile or another script with need to add the
-necessary functionality to put built files into the proper directories and
-generate md5sums, changelog files, copy README files, etc.
-
-For additional instructions see the page:
-http://tldp.org/HOWTO/html_single/Debian-Binary-Package-Building-HOWTO/

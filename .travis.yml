@@ -4,20 +4,19 @@ compiler: gcc
 sudo: required
 dist: trusty
 
-env:
-  global:
-    - MAKE_CMD="make -j2"
+cache:
+  - ccache
+  - pip
 
-script: .ci/script.sh
+env:
+  - VALAC=valac-0.30
+  - VALAC=valac VALAFLAGS=--fatal-warnings
 
 addons:
   apt:
     sources:
       - sourceline: 'ppa:vala-team/ppa'
     packages:
-      - autoconf
-      - autoconf-archive
-      - automake
       - gettext
       - libtool
       - intltool
@@ -33,6 +32,18 @@ addons:
       - libcomedi-dev
       - libgirepository1.0-dev
       - valac-0.30
+      - python3-pip
+
+before_install:
+  - pip3 install meson
+  - wget https://github.com/ninja-build/ninja/releases/download/v1.6.0/ninja-linux.zip
+  - unzip ninja-linux.zip -d ${HOME}/.local/bin
+
+before_script:
+  - meson _build
+  - ninja -C _build -v
+
+script: .ci/script.sh
 
 notifications:
   email:

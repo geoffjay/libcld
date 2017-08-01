@@ -118,18 +118,28 @@ if libdir == '' or includedir == ''
   error('You must set pkglibdir and pkgincludedir when using as a subproject')
 endif
 
-libcld = library(
-  'cld-' + apiversion,
-  libcld_sources,
-
+libcld = library('cld-' + apiversion, libcld_sources,
   link_depends: 'cld.map',
      link_args: [ '-Wl,--version-script,' + join_paths(meson.current_source_dir(), 'cld.map') ],
+   vala_header: 'cld.h',
+     vala_vapi: 'cld-@0@.vapi'.format(apiversion),
+      vala_gir: 'Cld-@0@.gir'.format(apiversion),
   dependencies: libcld_deps,
      soversion: soversion,
        version: libversion,
        install: true,
-   install_dir: libdir,
+   install_dir: [ true, true, true, true ],
 )
+
+#g_ir_compiler = find_program('g-ir-compiler')
+#custom_target('cld typelib',
+      #command: [ g_ir_compiler, '--output', '@OUTPUT@', '@INPUT@' ],
+        #input: join_paths(meson.current_build_dir(), 'Cld-@0@.gir'.format(apiversion)),
+       #output: 'Cld-@0@.typelib'.format(apiversion),
+      #depends: libcld,
+      #install: true,
+  #install_dir: join_paths(get_option('libdir'), 'girepository-1.0')
+#)
 
 libcld_dep = declare_dependency(
               sources: libcld_generated_headers,

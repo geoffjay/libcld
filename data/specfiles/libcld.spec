@@ -5,7 +5,7 @@ Summary:        GObject Configuration Library
 
 Group:          System Environment/Libraries
 License:        LGPLv3+
-URL:            http://github.com/geoffjay/libcld
+URL:            https://github.com/geoffjay/libcld
 Source0:        %{url}/archive/v%{version}.tar.gz
 
 BuildRequires:  pkgconfig(glib-2.0)

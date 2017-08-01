@@ -1,5 +1,5 @@
 project('cld', 'vala', 'c',
-          version: '0.4.1',
+          version: '0.4.2',
           license: 'LGPLv2.1+',
     meson_version: '>= 0.38.1',
   default_options: [ 'warning_level=1', 'buildtype=debugoptimized' ],

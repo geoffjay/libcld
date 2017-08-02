@@ -91,7 +91,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
     [Description(nick="Average Value", blurb="The average of the scaled value")]
     public virtual double avg_value {
         get { return _avg_value[0]; }
-        private set {
+        protected set {
             _avg_value[2] = _avg_value[1];
             _avg_value[1] = _avg_value[0];
             _avg_value[0] = value;
@@ -102,7 +102,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
      * {@inheritDoc}
      */
     [Description(nick="Standard Deviation", blurb="The sample standard deviation of the scaled value")]
-    public virtual double ssdev_value { get; private set; }
+    public virtual double ssdev_value { get; protected set; }
 
     /**
      * {@inheritDoc}
@@ -110,7 +110,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
     [Description(nick="Scaled Value", blurb="The value with scaling applied")]
     public virtual double scaled_value {
         get { return _scaled_value[0]; }
-        private set {
+        protected set {
             _scaled_value[2] = _scaled_value[1];
             _scaled_value[1] = _scaled_value[0];
             _scaled_value[0] = value;

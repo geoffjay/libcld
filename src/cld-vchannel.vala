@@ -110,7 +110,7 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
      */
     public virtual double scaled_value {
         get { return _scaled_value; }
-        private set {
+        protected set {
             _scaled_value = value;
             new_value (id, value);
         }

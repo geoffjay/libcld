@@ -84,7 +84,7 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
     [Description(nick="Scaled Value", blurb="The value with scaling applied")]
     public virtual double scaled_value {
         get { return _scaled_value; }
-        private set {
+        protected set {
             _scaled_value = value;
             new_value (id, value);
         }
@@ -94,13 +94,13 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
      * {@inheritDoc}
      */
     [Description(nick="Average Value", blurb="The average of the scaled value")]
-    public virtual double avg_value { get; private set; }
+    public virtual double avg_value { get; protected set; }
 
     /**
      * {@inheritDoc}
      */
     [Description(nick="Standard Deviation", blurb="The sample standard deviation of the scaled value")]
-    public virtual double ssdev_value { get; private set; }
+    public virtual double ssdev_value { get; protected set; }
 
     /**
      * Wrong spot to store information about control loop, should move it.

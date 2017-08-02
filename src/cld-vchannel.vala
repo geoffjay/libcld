@@ -27,7 +27,7 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
     /* Evaluator fields */
     private Evaluator evaluator = null;
 
-    [Deprecated (since="0.2")]
+    [Version (deprecated = true, deprecated_since = "0.2", replacement = "")]
     private HashTable<string, AIChannel> channels =
         new HashTable<string, AIChannel> (str_hash, str_equal);
     private double[]? channel_vals;
@@ -51,7 +51,7 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
     /**
      * Mathematical expression to be used to evaluate the channel value.
      */
-    [Deprecated (since="0.2")]
+    [Version (deprecated = true, deprecated_since = "0.2", replacement = "")]
     public virtual string? expression {
     /*public string? expression {*/
         get { return _expression; }
@@ -73,7 +73,7 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
         }
     }
 
-    [Deprecated (since="0.2")]
+    [Version (deprecated = true, deprecated_since = "0.2", replacement = "")]
     public double calculated_value {
         get {
             if (_expression != null) {
@@ -110,7 +110,7 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
      */
     public virtual double scaled_value {
         get { return _scaled_value; }
-        private set {
+        protected set {
             _scaled_value = value;
             new_value (id, value);
         }

@@ -19,7 +19,7 @@
 /**
  * Hardware definition class.
  */
-[Deprecated (since="0.2.7")]
+[Version (deprecated = true, deprecated_since = "0.2", replacement = "")]
 public class Cld.Daq : Cld.AbstractContainer {
 
     public double rate { get; set; }

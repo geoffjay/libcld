@@ -10,7 +10,7 @@ cache:
 
 env:
   - VALAC=valac-0.30
-  - VALAC=valac VALAFLAGS=--fatal-warnings
+  #- VALAC=valac-0.30 VALAFLAGS=--fatal-warnings
 
 addons:
   apt:

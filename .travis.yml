@@ -11,6 +11,7 @@ cache:
 env:
   - VALAC=valac-0.30
   - VALAC=valac VALAFLAGS=--fatal-warnings
+  - PKG_CONFIG_PATH=$PKG_CONFIG_PATH:./deps
 
 addons:
   apt:
@@ -35,6 +36,7 @@ addons:
       - python3-pip
 
 before_install:
+  - pip3 install --user cpp-coveralls
   - pip3 install meson
   - wget https://github.com/ninja-build/ninja/releases/download/v1.6.0/ninja-linux.zip
   - unzip ninja-linux.zip -d ${HOME}/.local/bin
@@ -44,6 +46,9 @@ before_script:
   - ninja -C _build -v
 
 script: .ci/script.sh
+
+after_success:
+  - coveralls --exclude tests --gcov-options '\-lp'
 
 notifications:
   email:

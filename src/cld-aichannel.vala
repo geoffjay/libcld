@@ -366,7 +366,7 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
      * XXX: This isn't necessary and gives an incorrect average until the list
      *      fills.
      */
-    [Deprecated (since="0.3")]
+    [Version (deprecated = true, deprecated_since = "0.3", replacement = "")]
     private void preload_raw_value_list () {
         for (int i = 0; i < raw_value_list_size; i++) {
             add_raw_value (0.0);

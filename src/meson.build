@@ -131,15 +131,17 @@ libcld = library('cld-' + apiversion, libcld_sources,
    install_dir: [ true, true, true, true ],
 )
 
-#g_ir_compiler = find_program('g-ir-compiler')
-#custom_target('cld typelib',
-      #command: [ g_ir_compiler, '--output', '@OUTPUT@', '@INPUT@' ],
-        #input: join_paths(meson.current_build_dir(), 'Cld-@0@.gir'.format(apiversion)),
-       #output: 'Cld-@0@.typelib'.format(apiversion),
-      #depends: libcld,
-      #install: true,
-  #install_dir: join_paths(get_option('libdir'), 'girepository-1.0')
-#)
+g_ir_compiler = find_program('g-ir-compiler', required: false)
+if g_ir_compiler.found()
+  custom_target('Cld typelib',
+        command: [ g_ir_compiler, '--shared-library', libcld.full_path(), '--output', '@OUTPUT@', join_paths(meson.current_build_dir(), 'Cld-@0@.gir'.format(apiversion)) ],
+          #input: join_paths(meson.current_build_dir(), 'Cld-@0@.gir'.format(apiversion)),
+         output: 'Cld-@0@.typelib'.format(apiversion),
+        depends: libcld,
+        install: true,
+    install_dir: join_paths(get_option('libdir'), 'girepository-1.0')
+)
+endif
 
 libcld_dep = declare_dependency(
               sources: libcld_generated_headers,

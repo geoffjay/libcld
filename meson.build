@@ -32,10 +32,11 @@ configure_file(
   configuration: config_h,
 )
 
-add_project_arguments(['--target-glib', '2.44'], language: 'vala')
-add_project_arguments(['--thread'], language: 'vala')
-add_project_arguments(['--vapidir', join_paths(meson.current_source_dir(), 'vapi')],
-                      language: 'vala')
+add_project_arguments([
+  '--thread',
+  ['--target-glib', '2.44'],
+  ['--vapidir', join_paths(meson.current_source_dir(), 'vapi')],
+], language: 'vala')
 
 libgio_dep = dependency('gio-2.0')
 libgee_dep = dependency('gee-0.8')
@@ -44,10 +45,13 @@ libjson_glib_dep = dependency('json-glib-1.0')
 libmatheval_dep = dependency('libmatheval')
 libgsl_dep = dependency('gsl')
 libsqlite_dep = dependency('sqlite3')
-libcomedi_dep = dependency('comedi')
 libmodbus_dep = dependency('libmodbus')
 linux_dep = meson.get_compiler('vala').find_library('linux')
 posix_dep = meson.get_compiler('vala').find_library('posix')
+
+libcomedi_vapi = meson.get_compiler('vala').find_library('comedi', dirs: join_paths(meson.current_source_dir(), 'vapi'))
+libcomedi_dep = declare_dependency(dependencies: [libcomedi_vapi])
+add_project_arguments(['-lcomedi'], language: 'c')
 
 add_project_arguments([
   '-DHAVE_CONFIG_H',

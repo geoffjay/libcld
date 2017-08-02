@@ -3,5 +3,5 @@
 set -e
 set -o pipefail
 
-PKG_CONFIG_PATH=./deps/ ./autogen.sh
-make
+mesontest -C build --wrapper valgrind --print-errorlogs -v
+DESTDIR=$(mktemp -d) ninja -C build -v install

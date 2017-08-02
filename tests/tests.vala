@@ -1,6 +1,6 @@
 /**
  * libcld
- * Copyright (c) 2015, Geoff Johnson, All rights reserved.
+ * Copyright (c) 2015-2017, Geoff Johnson, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,8 +16,9 @@
  * License along with this library.
  */
 
-void main (string[] args) {
+public int main (string[] args) {
 	Test.init (ref args);
+    Test.bug_base ("https://github.com/geoffjay/libcld/issues/%s");
 
     /* Non-instantiable interface dummy implementations */
     TestSuite.get_root ().add_suite (new DummyObjectTests ().get_suite ());
@@ -69,5 +70,5 @@ void main (string[] args) {
 	//TestSuite.get_root ().add_suite (new SocketPortTests ().get_suite ());
 	//TestSuite.get_root ().add_suite (new ModbusPortTests ().get_suite ());
 
-	Test.run ();
+	return Test.run ();
 }

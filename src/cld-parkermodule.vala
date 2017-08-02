@@ -790,7 +790,7 @@ public class Cld.ParkerModule : AbstractModule {
     /**
      * This method is application specific.
      */
-    [Deprecated (replacement="move_relative", since="0.2.7")]
+    [Version (deprecated = true, deprecated_since = "0.2.7", replacement = "move_relative")]
     public async void step (double step_size, int direction) {
         if (active_command == null) {
             debug ("step_size: %.3f direction: %d position %.3f", step_size, direction, position);

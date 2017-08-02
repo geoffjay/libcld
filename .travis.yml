@@ -11,7 +11,6 @@ cache:
 env:
   - VALAC=valac-0.30
   - VALAC=valac VALAFLAGS=--fatal-warnings
-  - PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$TRAVIS_BUILD_DIR/libcld/deps
 
 addons:
   apt:

@@ -1,5 +1,5 @@
 project('cld', 'vala', 'c',
-          version: '0.4.3',
+          version: '0.4.4',
           license: 'LGPLv2.1+',
     meson_version: '>= 0.38.1',
   default_options: [ 'warning_level=1', 'buildtype=debugoptimized' ],
@@ -51,7 +51,6 @@ posix_dep = meson.get_compiler('vala').find_library('posix')
 
 libcomedi_vapi = meson.get_compiler('vala').find_library('comedi', dirs: join_paths(meson.current_source_dir(), 'vapi'))
 libcomedi_dep = declare_dependency(dependencies: [libcomedi_vapi])
-add_project_arguments(['-lcomedi'], language: 'c')
 
 add_project_arguments([
   '-DHAVE_CONFIG_H',

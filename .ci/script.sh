@@ -3,5 +3,5 @@
 set -e
 set -o pipefail
 
-mesontest -C build --wrapper valgrind --print-errorlogs -v
-DESTDIR=$(mktemp -d) ninja -C build -v install
+mesontest -C _build --wrapper valgrind --print-errorlogs -v
+DESTDIR=$(mktemp -d) ninja -C _build -v install

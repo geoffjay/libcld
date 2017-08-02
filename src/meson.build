@@ -113,14 +113,13 @@ libcld_sources = [
   'cld-xmlconfig.vala',
 ]
 
-
 if libdir == '' or includedir == ''
   error('You must set pkglibdir and pkgincludedir when using as a subproject')
 endif
 
 libcld = library('cld-' + apiversion, libcld_sources,
   link_depends: 'cld.map',
-     link_args: [ '-Wl,--version-script,' + join_paths(meson.current_source_dir(), 'cld.map') ],
+     link_args: [ '-Wl,--version-script,' + join_paths(meson.current_source_dir(), 'cld.map'), '-lcomedi' ],
    vala_header: 'cld.h',
      vala_vapi: 'cld-@0@.vapi'.format(apiversion),
       vala_gir: 'Cld-@0@.gir'.format(apiversion),

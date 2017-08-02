@@ -10,8 +10,7 @@ cache:
 
 env:
   - VALAC=valac-0.30
-  - VALAC=valac VALAFLAGS=--fatal-warnings
-  - PKG_CONFIG_PATH=$PKG_CONFIG_PATH:./deps
+  #- VALAC=valac-0.30 VALAFLAGS=--fatal-warnings
 
 addons:
   apt:
@@ -33,6 +32,7 @@ addons:
       - libcomedi-dev
       - libgirepository1.0-dev
       - valac-0.30
+      - valgrind
       - python3-pip
 
 before_install:

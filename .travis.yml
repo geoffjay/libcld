@@ -11,7 +11,7 @@ cache:
 env:
   - VALAC=valac-0.30
   - VALAC=valac VALAFLAGS=--fatal-warnings
-  - PKG_CONFIG_PATH=$PKG_CONFIG_PATH:./deps
+  - PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$TRAVIS_BUILD_DIR/libcld/deps
 
 addons:
   apt:
@@ -33,6 +33,7 @@ addons:
       - libcomedi-dev
       - libgirepository1.0-dev
       - valac-0.30
+      - valgrind
       - python3-pip
 
 before_install:

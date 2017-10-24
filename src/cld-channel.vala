@@ -85,13 +85,13 @@ public interface Cld.AChannel : Cld.AbstractChannel, Cld.Channel {
     /**
      *
      */
-    public abstract double avg_value { get; protected set; }
+    public abstract double avg_value { get; set; }
 
     /*
      * The sample standard deviation
      * http://mathworld.wolfram.com/StandardDeviation.html
      */
-    public abstract double ssdev_value { get; protected set; }
+    public abstract double ssdev_value { get; set; }
 
     /**
      * Relates to the measurement range of the hardware.
@@ -146,7 +146,7 @@ public interface Cld.ScalableChannel : Cld.AbstractChannel, Cld.Channel {
     /**
      * The scaled value that is calculated using the calibration.
      */
-    public abstract double scaled_value { get; protected set; }
+    public abstract double scaled_value { get; set; }
 
     /**
      * Raised when a new value has been calculated.

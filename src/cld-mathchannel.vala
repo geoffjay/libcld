@@ -172,7 +172,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
     [Description(nick="Scaled Value", blurb="The value with scaling applied")]
     public virtual double scaled_value {
         get { return _scaled_value; }
-        protected set {
+        set {
             _scaled_value = value;
             new_value (id, value);
         }

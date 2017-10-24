@@ -34,7 +34,7 @@ public interface Cld.Container : Cld.Object {
      * A list of all of the uri strings to objects in other unowned areas of the
      * object tree that will be added from a higher level.
      */
-    public abstract Gee.List<Cld.AbstractContainer.Reference>? ref_list { get; protected set; }
+    public abstract Gee.List<Cld.AbstractContainer.Reference>? ref_list { get; set; }
 
     /**
      * Signals that an object has been added.

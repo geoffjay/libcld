@@ -38,7 +38,7 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
         get {
             return _ref_list;
         }
-        protected set {
+        set {
             if (_ref_list == null)
                 _ref_list = new Gee.ArrayList<Cld.AbstractContainer.Reference> ();
             else

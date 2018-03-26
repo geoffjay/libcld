@@ -1,5 +1,5 @@
 Name:           libcld
-Version:        0.4.5
+Version:        0.4.6
 Release:        1%{?dist}
 Summary:        GObject Configuration Library
 
@@ -74,3 +74,6 @@ export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:./deps
 %changelog
 * Tue Mar 20 2018 - 0.4.5-1
 - initial spec
+
+* Mon Mar 26 2018 - 0.4.6-1
+- update for copr

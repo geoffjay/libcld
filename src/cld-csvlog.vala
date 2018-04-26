@@ -244,7 +244,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
             } else {
                 is_open = true;
                 /* add the header */
-                file_stream.printf ("Log file: %s created at %s\n\n",
+                file_stream.printf ("# Log file: %s created at %s\n",
                                     name, start_time.format ("%F %T"));
             }
         }
@@ -260,7 +260,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
         if (is_open) {
             /* add the footer */
-            file_stream.printf ("\nLog file: %s closed at %s",
+            file_stream.printf ("\n# Log file: %s closed at %s",
                                 name, time.format ("%F %T"));
             /* setting a GLib.FileStream object to null apparently forces a
              * call to stdlib's close () */
@@ -320,9 +320,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
      */
     public void write_header () {
         string tags = "Time";
-        //string units = "[HH:MM:SS.mmm]";
-        string units = "[us]";
-        string cals = "Channel Calibrations:\n\n";
+        string cals = "# Channel Calibrations:\n#\n";
 
         foreach (var object in get_objects().values) {
             debug ("Found object [%s]", object.id);
@@ -333,7 +331,8 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
                 if (channel is ScalableChannel) {
                     var calibration = (channel as ScalableChannel).calibration;
-                    cals += "%s:\ty = ".printf (channel.uri);
+                    cals += "# %s\n".printf (channel.uri);
+                    cals += "#   calibration: y =";
 
                     foreach (var coefficient in (calibration as Container).get_objects().values) {
                         cals += "%.3f * x^%d + ".printf (
@@ -343,8 +342,9 @@ public class Cld.CsvLog : Cld.AbstractLog {
                     }
 
                     cals = cals.substring (0, cals.length - 3);
-                    cals += "\t(%s)\n".printf (channel.desc);
-                    units += "\t[%s]".printf (calibration.units);
+                    cals += "\n#   tag: %s".printf (channel.tag);
+                    cals += "\n#   units: %s".printf (calibration.units);
+                    cals += "\n#   description: %s\n#\n".printf (channel.desc);
                     tags += "\t%s".printf (channel.tag);
                 } else if (channel is DChannel) {
                     tags += "\t%s".printf (channel.tag);
@@ -352,7 +352,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
             }
         }
 
-        var header = "%s\nLogging rate: %.2f Hz\n\n%s\n%s\n".printf (cals, rate, tags, units);
+        var header = "#\n%s# Logging rate: %.2f Hz\n\n#%s\n".printf (cals, rate, tags);
 
         file_print (header);
     }

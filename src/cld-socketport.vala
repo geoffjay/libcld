@@ -155,11 +155,13 @@ public class Cld.SocketPort : AbstractPort {
             addresses = resolver.lookup_by_name (host, null);
             address = addresses.nth_data (0);
             client = new SocketClient ();
-
             connection = client.connect (new InetSocketAddress (address, (uint16)port));
+            if (connection is GLib.TcpConnection) {
+                (connection as GLib.TcpConnection).set_graceful_disconnect (true);
+            }
+
             _connected = true;
 
-            /* XXX should probably be inside try/catch */
             socket = connection.socket;
             fd = socket.fd;
             fd_channel = new GLib.IOChannel.unix_new (fd);
@@ -176,21 +178,12 @@ public class Cld.SocketPort : AbstractPort {
      * {@inheritDoc}
      */
     public override void close () {
-
         if (connected) {
-            GLib.Source.remove (source_id);
-            source_id = null;
-
             try {
-                fd_channel.shutdown (true);
-            } catch (GLib.IOChannelError e) {
-                message ("%s", e.message);
+                connection.close ();
+            } catch (GLib.Error e) {
+                warning ("%s", e.message);
             }
-
-            fd_channel = null;
-            _connected = false;
-            /* XXX not sure if it's even necessary to do a clean close of the socket client */
-            Posix.close (fd);
         }
     }
 

@@ -534,7 +534,7 @@ public class Cld.ComediTask : Cld.AbstractTask {
                     timeout.tv_sec = 0;
                     timeout.tv_nsec = 50000000;
                     Posix.sigset_t sigset = new Posix.sigset_t ();
-                    Posix.sigemptyset (sigset);
+                    Posix.sigemptyset (out sigset);
                     ret = Posix.pselect (device_fd + 1, &rdset, null, null, timeout, sigset);
 
                     if (ret < 0) {

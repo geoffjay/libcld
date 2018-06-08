@@ -199,7 +199,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
                 //timeout.tv_usec = 50000;
                 timeout.tv_nsec = 100000000;
                 Posix.sigset_t sigset = new Posix.sigset_t ();
-                Posix.sigemptyset (sigset);
+                Posix.sigemptyset (out sigset);
                 //ret = Posix.select (fd + 1, &rdset, null, null, timeout);
                 ret = Posix.pselect (fd + 1, &rdset, null, null, timeout, sigset);
 

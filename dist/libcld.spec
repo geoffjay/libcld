@@ -1,5 +1,5 @@
 Name:           libcld
-Version:        0.4.6
+Version:        0.4.7
 Release:        1%{?dist}
 Summary:        GObject Configuration Library
 
@@ -72,6 +72,10 @@ export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:./deps
 %{_datadir}/vala/*
 
 %changelog
+* Mon Jul 23 2018 - 0.4.7-1
+- comment log header
+- support vala-0.38
+
 * Mon Mar 26 2018 - 0.4.6-1
 - update for copr
 

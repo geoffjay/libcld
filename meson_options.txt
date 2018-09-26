@@ -2,6 +2,9 @@
 option('enable_tracing', type: 'boolean', value: false)
 option('enable_profiling', type: 'boolean', value: false)
 
+# Feature exclusions
+option('enable_matheval', type: 'boolean', value: true)
+
 # For subproject usage
 option('package_subdir', type: 'string',
        description: 'Private sub-directory used when built as a subproject')

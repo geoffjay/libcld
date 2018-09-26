@@ -16,29 +16,11 @@
  * License along with this library.
  */
 
-using matheval;
-
 /**
  * Virtual channel to be used to execute expressions or just as a dummy channel
  * with a settable value.
  */
 public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
-
-    /* Evaluator fields */
-    private Evaluator evaluator = null;
-
-    [Version (deprecated = true, deprecated_since = "0.2", replacement = "")]
-    private HashTable<string, AIChannel> channels =
-        new HashTable<string, AIChannel> (str_hash, str_equal);
-    private double[]? channel_vals;
-
-    /**
-     * Names of variables used in expression
-     */
-    public string[]? channel_names {
-        get { return _channel_names; }
-        private set { _channel_names = value; }
-    }
 
     /* Property backing fields. */
     private double _scaled_value = 0.0;
@@ -47,52 +29,6 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
     private double _calculated_value = 0.0;
     private string? _expression = null;
     private string[]? _channel_names = null;
-
-    /**
-     * Mathematical expression to be used to evaluate the channel value.
-     */
-    [Version (deprecated = true, deprecated_since = "0.2", replacement = "")]
-    public virtual string? expression {
-    /*public string? expression {*/
-        get { return _expression; }
-        set {
-            /* check if expression is parseable */
-            if ( null != ( evaluator = Evaluator.create (value))) {
-
-                /* retain reference to signify we have good expression */
-                _expression = value;
-
-                /* generate channel list for this new expression */
-                evaluator.get_variables (out _channel_names);
-                channel_vals = new double[ _channel_names.length ];
-
-            } else {
-                /* nullify reference to signify we do not have experession */
-                _expression = null;
-            }
-        }
-    }
-
-    [Version (deprecated = true, deprecated_since = "0.2", replacement = "")]
-    public double calculated_value {
-        get {
-            if (_expression != null) {
-                /* Resample channels and return value */
-                for (int i = 0; i < _channel_names.length; i++)
-                    channel_vals[ i ] =
-                        channels.lookup (_channel_names[ i ]).raw_value;
-                return evaluator.evaluate ( channel_names, channel_vals );
-            } else {
-                return 0.0;
-            }
-        }
-        private set { _calculated_value = value; }
-    }
-
-    public void add_channel( string name, Object? channel ) {
-        /* Instantiate dummy channels and populate channels HashTable */
-        channels.insert ( name, (channel as AIChannel) ) ;
-    }
 
     /**
      * Calculate value if expression exists or placeholder for dummy channel.
@@ -141,16 +77,9 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
         }
     }
 
-
-    /* default constructor */
-    construct {
-        //devref = "no devref";
-    }
-
     public VChannel () {
         /* set defaults */
         set_num (0);
-        //this.devref = "dev0";
         this.tag = "CH0";
         this.desc = "Output Channel";
     }
@@ -161,7 +90,6 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
             id = node->get_prop ("id");
-            //devref = node->get_prop ("ref");
             /* iterate through node children */
             for (Xml.Node *iter = node->children;
                  iter != null;
@@ -173,9 +101,6 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
                             break;
                         case "desc":
                             desc = iter->get_content ();
-                            break;
-                        case "expression":
-                            expression = iter->get_content ();
                             break;
                         case "num":
                             value = iter->get_content ();
@@ -190,10 +115,5 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
                 }
             }
         }
-    }
-
-    ~VChannel () {
-        if (channels != null)
-            channels.remove_all ();
     }
 }

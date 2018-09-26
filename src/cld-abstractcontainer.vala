@@ -327,11 +327,13 @@ public abstract class Cld.AbstractContainer : Cld.AbstractObject, Cld.Container 
                 Type type = object.get_type ();
 
                 if (type.is_a (typeof (Cld.Channel))) {
+#if USE_MATHEVAL
                     if (type.is_a (typeof (Cld.MathChannel))) {
                         foreach (var dref in (object as Cld.MathChannel).drefs) {
                             (object as Cld.Container).add_ref (dref);
                         }
                     }
+#endif
                     if (type.is_a (typeof (Cld.ScalableChannel))) {
                         (object as Cld.Container).add_ref ((object as Cld.ScalableChannel).calref);
                     }

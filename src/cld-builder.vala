@@ -205,8 +205,10 @@ internal class Cld.Builder : GLib.Object {
             object = new Cld.DOChannel.from_xml_node (node);
         else if (ctype == "virtual")
             object = new Cld.VChannel.from_xml_node (node);
+#if USE_MATHEVAL
         else if (ctype == "calculation")
             object = new Cld.MathChannel.from_xml_node (node);
+#endif
 
         return object;
     }

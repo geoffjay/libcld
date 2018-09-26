@@ -512,7 +512,9 @@ public class Cld.SqliteLog : Cld.AbstractLog {
         string tags = "Time";
         string units = "[YYYY-MM-DD HH:MM:SS.SSSSSS]";
         string cals = "Channel Calibrations:\n\n";
+#if USE_MATHEVAL
         string expressions = "MathChannel Expressions:\n\n";
+#endif
 
         channel_entries = get_channel_entries (id);
         foreach (var channel_entry in channel_entries) {
@@ -524,14 +526,20 @@ public class Cld.SqliteLog : Cld.AbstractLog {
             cals = cals.substring (0, cals.length - 3);
             cals += "\t(%s)\n".printf (channel_entry.desc);
             tags += "\t%s".printf (channel_entry.tag);
+#if USE_MATHEVAL
             if (channel_entry.cld_type == "CldMathChannel") {
                 expressions += "%s:\t %s\n".printf (channel_entry.chan_uri,
                                                     channel_entry.expression);
             }
+#endif
             units += "\t[%s]".printf (channel_entry.units);
         }
-        var header = "%s\n%s\nLogging rate: %.2f Hz\n\n%s\n%s\n".printf (cals,
-                                                            expressions, rate, tags, units);
+
+        var header = "%s\n".printf (cals);
+#if USE_MATHEVAL
+        header += "%s\n".printf (expressions);
+#endif
+        header += "Logging rate: %.2f Hz\n\n%s\n%s\n".printf (rate, tags, units);
 
        file_print (header);
     }
@@ -762,9 +770,11 @@ public class Cld.SqliteLog : Cld.AbstractLog {
                 desc = "%s".printf (channel.desc);
                 tag = "%s".printf (channel.tag);
                 type = "%s".printf (((channel as GLib.Object).get_type ()).name ());
-                if (channel is VChannel) {
-                    expression = "%s".printf ((channel as VChannel).expression);
+#if USE_MATHCHANNEL
+                if (channel is MathChannel) {
+                    expression = "%s".printf ((channel as MathChannel).expression);
                 }
+#endif
                 if (channel is ScalableChannel) {
                     units = "%s".printf ((channel as ScalableChannel).calibration.units);
                     for (int i = 0; i < 4; i++) {

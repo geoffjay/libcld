@@ -42,10 +42,15 @@ libgio_dep = dependency('gio-2.0')
 libgee_dep = dependency('gee-0.8')
 libxml_dep = dependency('libxml-2.0')
 libjson_glib_dep = dependency('json-glib-1.0')
-libmatheval_dep = dependency('libmatheval')
 libgsl_dep = dependency('gsl')
 libsqlite_dep = dependency('sqlite3')
 libmodbus_dep = dependency('libmodbus')
+
+if get_option('enable_matheval')
+  add_project_arguments(['-DUSE_MATHEVAL'], language: 'vala')
+  libmatheval_dep = dependency('libmatheval')
+endif
+
 linux_dep = meson.get_compiler('vala').find_library('linux')
 posix_dep = meson.get_compiler('vala').find_library('posix')
 

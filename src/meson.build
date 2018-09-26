@@ -32,7 +32,6 @@ libcld_deps = [
   libgee_dep,
   libxml_dep,
   libjson_glib_dep,
-  libmatheval_dep,
   libgsl_dep,
   libsqlite_dep,
   libcomedi_dep,
@@ -89,7 +88,6 @@ libcld_sources = [
   'cld-logcolumn.vala',
   'cld-logcontroller.vala',
   'cld-log.vala',
-  'cld-mathchannel.vala',
   'cld-modbusport.vala',
   'cld-module.vala',
   'cld-multiplexer.vala',
@@ -112,6 +110,13 @@ libcld_sources = [
   'cld-velmexmodule.vala',
   'cld-xmlconfig.vala',
 ]
+
+if get_option('enable_matheval')
+  libcld_deps += libmatheval_dep
+  libcld_sources += [
+    'cld-mathchannel.vala',
+  ]
+endif
 
 if libdir == '' or includedir == ''
   error('You must set pkglibdir and pkgincludedir when using as a subproject')

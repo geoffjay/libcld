@@ -462,31 +462,36 @@ public class Cld.CsvLog : Cld.AbstractLog {
             foreach (var column in get_objects().values) {
                 if (column is Cld.Column) {
                     var channel = (column as Cld.Column).channel;
-                    if (!(channel is Cld.MathChannel)) {
-                        datachans++;
-                        /* Increment row counter when a new value occurs */
-                        if (channel is Cld.ScalableChannel) {
-                            handler = (channel as Cld.ScalableChannel).
-                                             new_value.connect ((id, value) => {
-                                rowcnt++;
-                                if (rowcnt == datachans) {
-                                    new_row_available ();
-                                    rowcnt = 0;
-                                }
-                            });
-                            new_value_handlers.set (channel as ScalableChannel, handler);
 
-                        } else if (channel is Cld.DChannel) {
-                            handler = (channel as Cld.DChannel).
-                                             new_value.connect ((id, value) => {
-                                rowcnt++;
-                                if (rowcnt == datachans) {
-                                    new_row_available ();
-                                    rowcnt = 0;
-                                }
-                            });
-                            new_value_handlers.set (channel as Cld.DChannel, handler);
-                        }
+#if USE_MATHEVAL
+                    if (channel is Cld.MathChannel) {
+                        continue;
+                    }
+#endif
+
+                    datachans++;
+                    /* Increment row counter when a new value occurs */
+                    if (channel is Cld.ScalableChannel) {
+                        handler = (channel as Cld.ScalableChannel).
+                                            new_value.connect ((id, value) => {
+                            rowcnt++;
+                            if (rowcnt == datachans) {
+                                new_row_available ();
+                                rowcnt = 0;
+                            }
+                        });
+                        new_value_handlers.set (channel as ScalableChannel, handler);
+
+                    } else if (channel is Cld.DChannel) {
+                        handler = (channel as Cld.DChannel).
+                                            new_value.connect ((id, value) => {
+                            rowcnt++;
+                            if (rowcnt == datachans) {
+                                new_row_available ();
+                                rowcnt = 0;
+                            }
+                        });
+                        new_value_handlers.set (channel as Cld.DChannel, handler);
                     }
                 }
             }

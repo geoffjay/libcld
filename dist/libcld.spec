@@ -1,5 +1,5 @@
 Name:           libcld
-Version:        0.4.8
+Version:        0.4.9
 Release:        1%{?dist}
 Summary:        GObject Configuration Library
 
@@ -72,6 +72,9 @@ export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:./deps
 %{_datadir}/vala/*
 
 %changelog
+* Tue Dec 11 2018 - 0.4.9-1
+- add log status for debugging
+
 * Wed Sep 26 2018 - 0.4.8-1
 - make matheval support optional
 

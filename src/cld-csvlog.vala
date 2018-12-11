@@ -53,6 +53,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
         rate = 10.0;          /* Hz */
         active = false;
         is_open = false;
+        debug (status ());
         time_stamp = TimeStampFlag.OPEN;
         connect_signals ();
     }
@@ -63,6 +64,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
         active = false;
         is_open = false;
+        debug (status ());
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -117,6 +119,12 @@ public class Cld.CsvLog : Cld.AbstractLog {
         connect_signals ();
     }
 
+    public override string status () {
+        return "active: %s is_open: %s file: %s".printf (active.to_string (),
+                                                                is_open.to_string (),
+                                                                file);
+    }
+
     /* Connect the notify signals */
     private void connect_signals () {
         Type type = get_type ();
@@ -137,8 +145,8 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
             file = gfile.get_basename ();
             debug ("gfile changed path: %s file: %s", path, file);
+            debug (status ());
         });
-
     }
 
     private void update_node () {
@@ -232,6 +240,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
                     "Can't open log file %s", filename
                 );
             is_open = false;
+            debug (status ());
 
             return is_open;
         } else {
@@ -241,8 +250,11 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
             if (file_stream == null) {
                 is_open = false;
+                debug (status ());
+
             } else {
                 is_open = true;
+                debug (status ());
                 /* add the header */
                 file_stream.printf ("# Log file: %s created at %s\n",
                                     name, start_time.format ("%F %T"));
@@ -266,6 +278,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
              * call to stdlib's close () */
             file_stream = null;
             is_open = false;
+            debug (status ());
         }
     }
 
@@ -391,7 +404,6 @@ public class Cld.CsvLog : Cld.AbstractLog {
         int rowcnt = 0;
         ulong handler;
         file_open ();
-
         write_header ();
 
         /* Count the number of channels */
@@ -399,6 +411,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
 
         nchans = columns.size;
         active = true;
+        debug (status ());
         if (data_source == "channel" || data_source == null) {
             /* Background channel watch fills the entry queue */
             bg_channel_watch.begin (() => {
@@ -592,6 +605,7 @@ public class Cld.CsvLog : Cld.AbstractLog {
     private bool deactivate_cb () {
         if (entry_queue.size == 0) {
             active = false;
+            debug (status ());
 
             return false;
         } else {

@@ -164,4 +164,9 @@ public interface Cld.Log : Cld.Object {
      * Stop a log that is executing.
      */
     public abstract void stop ();
+
+    /**
+     * @return a message containing the state of key parameters
+     */
+    public abstract string status ();
 }

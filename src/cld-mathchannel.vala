@@ -60,7 +60,7 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
      * circular buffer. "[" and "]" only apply to DataSeries.
      */
     [Description(nick="Expression", blurb="An algebraic expression")]
-    public override string? expression {
+    public string? expression {
         get { return _expression; }
         set {
             lock (variable_names) {

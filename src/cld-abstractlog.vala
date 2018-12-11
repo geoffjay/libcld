@@ -119,7 +119,13 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
             if (!active)
                 cond.signal ();
         });
+    }
 
+    /**
+     * {@inheritdoc}
+     */
+    public virtual string status () {
+        return "active: %s is_open: %s".printf (active.to_string (), is_open.to_string ());
     }
 
     /**

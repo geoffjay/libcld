@@ -1,5 +1,5 @@
 project('cld', 'vala', 'c',
-          version: '0.4.8',
+          version: '0.4.9',
           license: 'LGPLv2.1+',
     meson_version: '>= 0.38.1',
   default_options: [ 'warning_level=1', 'buildtype=debugoptimized' ],
@@ -47,7 +47,7 @@ libsqlite_dep = dependency('sqlite3')
 libmodbus_dep = dependency('libmodbus')
 
 if get_option('enable_matheval')
-  add_project_arguments(['-DUSE_MATHEVAL'], language: 'vala')
+  add_project_arguments(['-D', 'USE_MATHEVAL'], language: 'vala')
   libmatheval_dep = dependency('libmatheval')
 endif
 

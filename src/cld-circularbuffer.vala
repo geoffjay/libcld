@@ -45,7 +45,6 @@ public class Cld.CircularBuffer<G> : GLib.Object {
     public bool full {
         get { return _full; }
         private set { _full = value; }
-        default = false;
     }
 
     /**

@@ -1,0 +1,83 @@
+Source: libcld
+Section: libs
+Priority: optional
+Maintainer: Stephen Roy <sroy1966@gmail.com>
+Build-Depends: debhelper-compat (= 12),
+               meson,
+               bison,
+               cmake,
+               flex,
+               gettext,
+               python3-pip,
+               valac,
+               libgee-0.8-dev,
+               libglib2.0-dev,
+               libgirepository1.0-dev,
+               libxml2-dev,
+               libjson-glib-dev,
+               libgsl-dev,
+               libsqlite3-dev,
+               libmodbus-dev,
+               libmatheval-dev,
+               libcomedi-dev
+Standards-Version: 4.3.0
+Homepage: https://github.com/geoffjay/libcld
+Vcs-Git: https://github.com/geoffjay/libcld.git
+Vcs-Browser: https://github.com/geoffjay/libcld
+
+Package: libcld-1.0-0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         libgee-0.8-2,
+         libglib2.0-0,
+         libgirepository1.0-dev,
+         libjson-glib-1.0-0,
+         libgsl23,
+         libsqlite3-0,
+         libmodbus5,
+         libmatheval1,
+         libcomedi0,
+Description: A library for creating custom data acquisition systems.
+ The end goal is something that allows you to create custom systems
+ that can use either or both polling and asynchronous acquisitions.
+ Data received can be logged using flat CSV files or a database (currently SQLite3 only).
+ This is still a complete work in progress.
+
+Package: libcld-1.0-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         libcld-1.0-0 (= ${binary:Version}),
+         gir1.2-cld-1.0 (= ${binary:Version}),
+         libgee-0.8-dev,
+         libglib2.0-dev,
+         libgirepository1.0-dev,
+         libjson-glib-dev,
+         libgsl-dev,
+         libsqlite3-dev,
+         libmodbus-dev,
+         libmatheval-dev,
+         libcomedi0,
+Description: A library for creating custom data acquisition systems.
+ The end goal is something that allows you to create custom systems
+ that can use either or both polling and asynchronous acquisitions.
+ Data received can be logged using flat CSV files or a database (currently SQLite3 only).
+ This is still a complete work in progress.
+ .
+ The package contains the development files.
+
+Package: gir1.2-cld-1.0
+Section: introspection
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+         ${gir:Depends}
+Description: GObject introspection data for libcld
+ This package contains GObject introspection information.
+ .
+ It can be used by packages using the GIRepository format to generate
+ dynamic bindings.

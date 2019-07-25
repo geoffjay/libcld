@@ -2,3 +2,17 @@
 *.swp
 
 _build/
+debian/.debhelper/
+debian/debhelper-build-stamp
+debian/files
+debian/gir1.2-cld-1.0.debhelper.log
+debian/gir1.2-cld-1.0.substvars
+debian/gir1.2-cld-1.0/
+debian/libcld-1.0-0.debhelper.log
+debian/libcld-1.0-0.substvars
+debian/libcld-1.0-0/
+debian/libcld-1.0-dev.debhelper.log
+debian/libcld-1.0-dev.substvars
+debian/libcld-1.0-dev/
+debian/tmp/
+obj-x86_64-linux-gnu/

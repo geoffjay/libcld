@@ -3,10 +3,7 @@ Section: libs
 Priority: optional
 Maintainer: Stephen Roy <sroy1966@gmail.com>
 Build-Depends: debhelper-compat (= 12),
-<<<<<<< HEAD
                meson,
-=======
->>>>>>> build: add Debian packaging files
                bison,
                cmake,
                flex,

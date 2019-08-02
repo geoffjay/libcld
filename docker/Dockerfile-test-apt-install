@@ -1,15 +1,11 @@
-<<<<<<< HEAD
 # Test the installation and removal of the Debian packages
 
-=======
->>>>>>> build: fix dependency error and test with Docker
 FROM debian:buster
 
 RUN apt-get update
 RUN apt install --no-install-recommends -qq -y curl ca-certificates
 
 RUN curl -v https://packagecloud.io/install/repositories/coanda/public/script.deb.sh | bash
-<<<<<<< HEAD
 
 RUN apt install libcld-1.0-dev -y
 RUN apt remove libcld-1.0-dev -y
@@ -21,7 +17,3 @@ RUN apt remove libcld-1.0-0 -y
 RUN apt remove gir1.2-cld-1.0 -y
 RUN apt install gir1.2-cld-1.0 -y
 RUN apt remove gir1.2-cld-1.0 -y
-=======
-RUN apt install libcld-1.0-dev -y
-
->>>>>>> build: fix dependency error and test with Docker

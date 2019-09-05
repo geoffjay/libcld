@@ -1,3 +1,5 @@
+# Generate a Debian package and upload it to packagecloud
+
 FROM debian:buster
 
 RUN apt-get update -qq && apt-get install --no-install-recommends -qq -y \

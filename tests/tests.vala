@@ -33,7 +33,6 @@ public int main (string[] args) {
 
 	//TestSuite.get_root ().add_suite (new DeviceTests ().get_suite ());
 	//TestSuite.get_root ().add_suite (new ComediDeviceTests ().get_suite ());
-	//TestSuite.get_root ().add_suite (new ModbusDeviceTests ().get_suite ());
 
 	//TestSuite.get_root ().add_suite (new TaskTests ().get_suite ());
 	//TestSuite.get_root ().add_suite (new ComediTaskTests ().get_suite ());
@@ -68,7 +67,6 @@ public int main (string[] args) {
 
 	//TestSuite.get_root ().add_suite (new SerialPortTests ().get_suite ());
 	//TestSuite.get_root ().add_suite (new SocketPortTests ().get_suite ());
-	//TestSuite.get_root ().add_suite (new ModbusPortTests ().get_suite ());
 
 	return Test.run ();
 }

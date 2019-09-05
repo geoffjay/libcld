@@ -72,8 +72,6 @@ public class Cld.LogController : Cld.AbstractController {
         var ltype = node->get_prop ("ltype");
         if (ltype == "csv") {
             object = new CsvLog.from_xml_node (node);
-        } else if (ltype == "sqlite") {
-            object = new SqliteLog.from_xml_node (node);
         }
 
         return object;

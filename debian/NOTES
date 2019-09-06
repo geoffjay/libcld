@@ -1,0 +1,18 @@
+Install Dependencies:
+
+    sudo apt install bison cmake flex python3-pip libgee-0.8-dev libxml2-dev
+    sudo apt install libgsl-dev
+    sudo apt install libsqlite3-dev
+    sudo apt install libmodbus-dev
+    sudo apt install libmatheval
+    sudo apt install libmatheval-dev
+    sudo apt install libcomedi-dev
+
+Install Packages:
+
+  The packages must be installed in order
+
+    sudo apt install ./libcld-1.0-0_1.0-1_amd64.deb
+    sudo apt install ./libcld-1.0-0-dbgsym_1.0-1_amd64.deb 
+    sudo apt install ./gir1.2-cld-1.0_1.0-1_amd64.deb 
+    sudo apt install ./libcld-1.0-dev_1.0-1_amd64.deb

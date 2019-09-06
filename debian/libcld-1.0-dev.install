@@ -1,0 +1,6 @@
+usr/lib/*/lib*.so
+usr/lib/*/pkgconfig/cld-1.0.pc
+usr/include/*
+usr/share/gir-1.0/
+usr/share/vala/
+

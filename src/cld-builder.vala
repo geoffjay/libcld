@@ -143,9 +143,6 @@ internal class Cld.Builder : GLib.Object {
             case "log":
                 object = node_to_log (node);
                 break;
-            case "module":
-                object = node_to_module (node);
-                break;
             case "port":
                 object = node_to_port (node);
                 break;
@@ -183,8 +180,6 @@ internal class Cld.Builder : GLib.Object {
 
         if (ltype == "csv")
             object = new CsvLog.from_xml_node (node);
-        else if (ltype == "sqlite")
-            object = new SqliteLog.from_xml_node (node);
 
         return object;
     }
@@ -213,25 +208,6 @@ internal class Cld.Builder : GLib.Object {
         return object;
     }
 
-    private Cld.Object? node_to_module (Xml.Node *node) {
-        Cld.Object object = null;
-
-        var mtype = node->get_prop ("mtype");
-
-        if (mtype == "velmex")
-            object = new VelmexModule.from_xml_node (node);
-        else if (mtype == "licor")
-            object = new LicorModule.from_xml_node (node);
-        else if  (mtype == "brabender")
-            object = new BrabenderModule.from_xml_node (node);
-        else if (mtype == "parker")
-            object = new ParkerModule.from_xml_node (node);
-        else if  (mtype == "heidolph")
-            object = new HeidolphModule.from_xml_node (node);
-
-        return object;
-    }
-
     private Cld.Object? node_to_port (Xml.Node *node) {
         Cld.Object object = null;
 
@@ -239,8 +215,6 @@ internal class Cld.Builder : GLib.Object {
 
         if (ptype == "serial")
             object = new SerialPort.from_xml_node (node);
-        else if (ptype == "modbus")
-            object = new ModbusPort.from_xml_node (node);
 
         return object;
     }

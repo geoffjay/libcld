@@ -13,10 +13,26 @@ in progress.
 ## Authors
 
 Geoff Johnson <geoff.jay@gmail.com>
+Stephen Roy <sroy1966@gmail.com>
 
 ## Install
 
 ```bash
+# Install dependencies
+dnf install -y git                         \
+               meson                       \
+               ninja-build                 \
+               gnome-common                \
+               intltool                    \
+               gcc                         \
+               vala                        \
+               libgee-devel                \
+               json-glib-devel             \
+               gsl-devel                   \
+               libxml2-devel               \
+               libmatheval-devel           \
+               comedilib-devel
+
 meson _build
 ninja -C _build
 sudo ninja -C _build install

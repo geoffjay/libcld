@@ -27,8 +27,6 @@ RUN apt-get install --no-install-recommends -qq -y \
     libxml2-dev \
     libjson-glib-dev \
     libgsl-dev \
-    libsqlite3-dev \
-    libmodbus-dev \
     libmatheval-dev \
     libcomedi-dev
 

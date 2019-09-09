@@ -17,6 +17,7 @@ Stephen Roy <sroy1966@gmail.com>
 
 ## Install
 
+### Fedora 29
 ```bash
 # Install dependencies
 dnf install -y git                         \
@@ -36,4 +37,25 @@ dnf install -y git                         \
 meson _build
 ninja -C _build
 sudo ninja -C _build install
+```
+
+### Debian 10
+
+```bash
+# from packagecloud
+
+apt-get update
+apt install --no-install-recommends -qq -y curl ca-certificates
+curl -v https://packagecloud.io/install/repositories/coanda/public/script.deb.sh | bash
+
+# devel
+apt install libcld-1.0-dev -y
+
+# library
+RUN apt install libcld-1.0-0 -y
+```
+
+```bash
+# from source
+
 ```

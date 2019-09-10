@@ -1,9 +1,9 @@
-# Test install libcld on Fedora 29
+# Test install libcld on Fedora 30
 #
-# docker build --tag=libcld-fedora29 .
+# docker build --tag=libcld-fedora30 .
 #
 
-FROM fedora:29
+FROM fedora:30
 
 # Install dependencies
 RUN dnf install -y git                         \

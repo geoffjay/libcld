@@ -108,6 +108,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
         string value;
         this.node = node;
         objects = new Gee.TreeMap<string, Cld.Object> ();
+        Cld.Object object;
 
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -134,7 +135,7 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
                             for (int i = 0; i < tapstring.length; i++) {
                                 taps[i] = int.parse (tapstring[i]);
                                 debug ("taps[%d]: %d", i, taps[i]);
-                                Cld.Object object = new VChannel ();
+                                object = new VChannel ();
                                 (object as VChannel).id = "vc-%s-%d".printf (this.id, taps[i]);
                                 (object as VChannel).tag = "%s[%d]".printf (this.id, taps[i]);
                                 (object as VChannel).set_num (taps[i]);

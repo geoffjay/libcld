@@ -17,45 +17,66 @@ Stephen Roy <sroy1966@gmail.com>
 
 ## Install
 
-### Fedora 29
+### Fedora 30 from source
 ```bash
 # Install dependencies
-dnf install -y git                         \
-               meson                       \
-               ninja-build                 \
-               gnome-common                \
-               intltool                    \
-               gcc                         \
-               vala                        \
-               libgee-devel                \
-               json-glib-devel             \
-               gsl-devel                   \
-               libxml2-devel               \
-               libmatheval-devel           \
-               comedilib-devel
+sudo dnf install -y git                         \
+                    meson                       \
+                    ninja-build                 \
+                    gnome-common                \
+                    intltool                    \
+                    gcc                         \
+                    vala                        \
+                    libgee-devel                \
+                    json-glib-devel             \
+                    gsl-devel                   \
+                    libxml2-devel               \
+                    libmatheval-devel           \
+                    comedilib-devel
 
+git clone git@github.com:geoffjay/libcld.git
+cd libcld
 meson _build
 ninja -C _build
 sudo ninja -C _build install
 ```
 
 ### Debian 10
+```bash
+# Install dependencies
+sudo apt install  -y git        \
+                     meson      \
+                     gcc        \
+                     valac
+                     libgee-0.8-dev \
+                     libglib2.0-dev \
+                     libgirepository1.0-dev \
+                     libxml2-dev \
+                     libjson-glib-dev \
+                     libgsl-dev \
+                     libmatheval-dev \
+                     libcomedi-dev
+
+git clone git@github.com:geoffjay/libcld.git
+cd libcld
+meson _build
+sudo ninja -C _build install
+```
+
+### Debian 10 (packagecloud)
+
+Alternatively, it can be installed as a Debian package which is hosted on packagecloud.
 
 ```bash
-# from packagecloud
+# set the packagecloud token environment variable
 
-apt-get update
-apt install --no-install-recommends -qq -y curl ca-certificates
-curl -v https://packagecloud.io/install/repositories/coanda/public/script.deb.sh | bash
+sudo apt update
+sudo apt install --no-install-recommends -qq -y curl ca-certificates
+curl -s https://packagecloud.io/install/repositories/coanda/public/script.deb.sh | sudo bash
 
 # devel
 apt install libcld-1.0-dev -y
 
 # library
 RUN apt install libcld-1.0-0 -y
-```
-
-```bash
-# from source
-
 ```

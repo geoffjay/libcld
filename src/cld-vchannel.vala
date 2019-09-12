@@ -116,4 +116,11 @@ public class Cld.VChannel : Cld.AbstractChannel, Cld.ScalableChannel {
             }
         }
     }
+
+    /**
+     * {@inheritDoc}
+     **/
+    public override void set_object_property (string name, Cld.Object object) {
+        base.set_object_property (name, object);
+    }
 }

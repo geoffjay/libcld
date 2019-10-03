@@ -337,6 +337,26 @@ public class Cld.SerialPort : AbstractPort {
     /**
      * Alternate construction that uses an XML node to populate the settings.
      */
+
+    /**
+     * Alternate construction that uses an XML node to set the object up.
+     *
+     * Example XML code:
+     * {{{
+     * <cld:object id="ser0" type="port" ptype="serial">
+     *   <cld:property name="device">/dev/ttyUSB0</cld:property>
+     *   <cld:property name="baudrate">19200</cld:property>
+     *   <cld:property name="databits">8</cld:property>
+     *   <cld:property name="stopbits">1</cld:property>
+     *   <cld:property name="parity">None</cld:property>
+     *   <cld:property name="handshake">None</cld:property>
+     *   <cld:property name="accessmode">Read and Write</cld:property>
+     *   <cld:property name="echo">false</cld:property>
+     * </cld:object>
+     * }}}
+     * @param node {@link Xml.Node}
+     * @see XmlConfig
+     */
     public SerialPort.from_xml_node (Xml.Node *node) {
         string val;
         this.node = node;

@@ -226,6 +226,23 @@ public class Cld.MathChannel : Cld.VChannel, Cld.Connector, Cld.ScalableChannel 
         this.desc = "Output Channel";
     }
 
+    /**
+     * Alternate construction that uses an XML node to set the object up.
+     *
+     * Example XML code:
+     * {{{
+     * <cld:object id="mc00" type="channel" ctype="calculation">
+     *   <cld:property name="tag">MC00</cld:property>
+     *   <cld:property name="desc">Math Channel</cld:property>
+     *   <cld:property name="expression"> AI00 * 10 + AI01 * 20 </cld:property>
+     *   <cld:property name="calref">/math-cal00</cld:property>
+     *   <cld:property name="dref">/daqctl0/dev0/ai00</cld:property>
+     *   <cld:property name="dref">/daqctl0/dev0/ai01</cld:property>
+     * </cld:object>
+     * }}}
+     * @param node an {@link Xml.Node}
+     * @see XmlConfig
+     */
     public MathChannel.from_xml_node (Xml.Node *node) {
         string value;
 

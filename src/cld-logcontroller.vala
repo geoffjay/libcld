@@ -36,7 +36,19 @@ public class Cld.LogController : Cld.AbstractController {
     }
 
     /**
-     * Construction using an xml node
+     * Alternate construction that uses an XML node to set the object up.
+     *
+     * Example XML code:
+     * {{{
+     * <cld:object id="logctl0" type="controller" ctype="log">
+     *
+     *   ... Cld.Log(s)
+     *
+     * </cld:object>
+     * }}}
+     * @param node an {link Xml.Node}
+     * @see Log
+     * @see XmlConfig
      */
     public LogController.from_xml_node (Xml.Node *node) {
         string val;

@@ -44,6 +44,18 @@ public class Cld.AcquisitionController : Cld.AbstractController {
 
     /**
      * Construction using an xml node
+     *
+     * Example XML code:
+     * {{{
+     *  <cld:object id="daqctl0" type="controller" ctype="acquisition">
+     *
+     *      ... Cld.Device(s)
+     *
+     *  </cld:object>
+     * }}}
+     *
+     * @param node an {@link Xml.Node}
+     * @see Device
      */
     public Cld.AcquisitionController.from_xml_node (Xml.Node *node) {
         string value;
@@ -94,11 +106,11 @@ public class Cld.AcquisitionController : Cld.AbstractController {
      * Launches acquisition by passing control onto internal multiplexers.
      *
      * FIXME: This should correctly launch all associated devices, tasks, and
-     *        multiplexers regardless of task type so that the user application
-     *        doesn't have to manually.
+     * multiplexers regardless of task type so that the user application
+     * doesn't have to manually.
      *
      * FIXME: There should be an associated stop method to close devices and
-     *        perform any acquisition halt that's needed.
+     * perform any acquisition halt that's needed.
      */
     public void run () {
         foreach (var multiplexer in multiplexers.values) {

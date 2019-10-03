@@ -100,9 +100,17 @@ public class Cld.DataSeries : Cld.AbstractContainer, Cld.Connector {
     }
 
     /**
-     * Construction using an xml node.
+     * Alternate construction that uses an XML node to set the object up.
      *
-     * @param node XML tree node containing configuration for a DataSeries object.
+     * Example XML code:
+     * {{{
+     * <cld:object id="ds00" type="dataseries">
+     *   <cld:property name="length">10</cld:property>
+     *   <cld:property name="chref">/daqctl0/dev0/ai02</cld:property>
+     * </cld:object>
+     * }}}
+     * @param node an {@link Xml.Node}
+     * @see XmlConfig
      */
     public DataSeries.from_xml_node (Xml.Node *node) {
         string value;

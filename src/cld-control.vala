@@ -180,6 +180,16 @@ public class Cld.ProcessValue2 : Cld.AbstractContainer {
         this.dataseries = dataseries;
     }
 
+    /**
+     * Alternate construction that uses an XML node to set the object up.
+     *
+     * Example XML code:
+     * {{{
+     *   <cld:object id="pv0" type="process_value2" dsref="/ds00" direction="input"/>
+     * }}}
+     * @param node and {@link Xml.Node}
+     * @see Cld.Control
+     */
     public ProcessValue2.from_xml_node (Xml.Node *node) {
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {
@@ -210,6 +220,25 @@ public class Cld.Control : Cld.AbstractContainer {
         objects = new Gee.TreeMap<string, Cld.Object> ();
     }
 
+    /**
+     * Alternate construction that uses an XML node to set the object up.
+     *
+     * Example XML code:
+     * {{{
+     * <cld:object id="FD1P1" type="pid-2">
+     *   <cld:property name="desc">PID00</cld:property>
+     *   <cld:property name="dt">100</cld:property>
+     *   <cld:property name="sp">46.5</cld:property>
+     *   <cld:property name="kp">0</cld:property>
+     *   <cld:property name="ki">0.10000000000000001</cld:property>
+     *   <cld:property name="kd">0</cld:property>
+     *   <cld:object id="pv0" type="process_value2" dsref="/ds00" direction="input"/>
+     *   <cld:object id="pv1" type="process_value2" dsref="/ds01" direction="output"/>
+     * </cld:object>
+     * }}}
+     * @param node and {@link Xml.Node}
+     * @see ProcessValue2
+     */
     public Control.from_xml_node (Xml.Node *node) {
         objects = new Gee.TreeMap<string, Cld.Object> ();
 

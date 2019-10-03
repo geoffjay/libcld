@@ -40,6 +40,17 @@ public class Cld.Coefficient : Cld.AbstractObject {
         this.value = value;
     }
 
+    /**
+     * Alternate construction that uses an XML node to set the object up.
+     *
+     * Example XML code:
+     * {{{
+     * <cld:object id="cft0" type="coefficient">
+     *   <cld:property name="n">0</cld:property>
+     *   <cld:property name="value">0.000</cld:property>
+     * </cld:object>
+     * }}}
+     */
     public Coefficient.from_xml_node (Xml.Node *node) {
         string val;
         this.node = node;

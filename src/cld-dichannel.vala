@@ -47,6 +47,21 @@ public class Cld.DIChannel : Cld.AbstractChannel, Cld.DChannel, Cld.IChannel {
         state = false;
     }
 
+    /**
+     * Alternate construction that uses an XML node to set the object up.
+     *
+     * Example XML code:
+     * {{{
+     * <cld:object id="di00" type="channel" ref="/daqctl0/dev0" ctype="digital" direction="input">
+     *   <cld:property name="tag">DI00</cld:property>
+     *   <cld:property name="desc">Digital Input 0</cld:property>
+     *   <cld:property name="num">0</cld:property>
+     *   <cld:property name="subdevnum">3</cld:property>
+     * </cld:object>
+     * }}}
+     * @param node an {@link Xml.Node}
+     * @see Cld.Device
+     */
     public DIChannel.from_xml_node (Xml.Node *node) {
         string value;
 

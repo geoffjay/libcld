@@ -172,7 +172,38 @@ public class Cld.ComediTask : Cld.AbstractTask {
     }
 
     /**
-     * Construction using an XML node.
+     * Alternate construction that uses an XML node to set the object up.
+     *
+     * Example XML code:
+     * {{{
+     * <cld:object id="tk0" type="task" ttype="comedi">
+          <cld:property name="exec-type">polling</cld:property>
+          <cld:property name="devref">/daqctl0/dev0</cld:property>
+          <cld:property name="subdevice">0</cld:property>
+          <cld:property name="direction">read</cld:property>
+          <cld:property name="interval-ms">100</cld:property>
+          <cld:property name="data-source">channel</cld:property>
+          <cld:property name="chref">/daqctl0/dev0/ai00</cld:property>
+          <cld:property name="chref">/daqctl0/dev0/ai01</cld:property>
+          <cld:property name="chref">/daqctl0/dev0/ai02</cld:property>
+          <cld:property name="chref">/daqctl0/dev0/ai03</cld:property>
+          <cld:property name="chref">/daqctl0/dev0/ai04</cld:property>
+          <cld:property name="chref">/daqctl0/dev0/ai05</cld:property>
+          <cld:property name="chref">/daqctl0/dev0/ai06</cld:property>
+          <cld:property name="chref">/daqctl0/dev0/ai07</cld:property>
+          <cld:property name="chref">/daqctl0/dev0/ai08</cld:property>
+          <cld:property name="chref">/daqctl0/dev0/ai09</cld:property>
+          <cld:property name="chref">/daqctl0/dev0/ai10</cld:property>
+          <cld:property name="chref">/daqctl0/dev0/ai11</cld:property>
+          <cld:property name="chref">/daqctl0/dev0/ai12</cld:property>
+          <cld:property name="chref">/daqctl0/dev0/ai13</cld:property>
+          <cld:property name="chref">/daqctl0/dev0/ai14</cld:property>
+          <cld:property name="chref">/daqctl0/dev0/ai15</cld:property>
+        </cld:object>
+     * }}}
+     * @param node an {@link Xml.Node}
+     * @see Cld.Device
+     * @see Cld.ComediDevice
      */
     public ComediTask.from_xml_node (Xml.Node *node) {
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
@@ -824,9 +855,9 @@ public class Cld.ComediTask : Cld.AbstractTask {
 
 /**
  * FIXME: ComediTask possibly shouldn't be the base class and additional
- *        interfaces/abstract classes should be created for polling and
- *        streaming task types. For now this is more of a place holder to
- *        split the functionality of the one class.
+ * interfaces/abstract classes should be created for polling and
+ * streaming task types. For now this is more of a place holder to
+ * split the functionality of the one class.
  */
 public class Cld.ComediPollingTask : Cld.ComediTask {
 
@@ -982,9 +1013,9 @@ public class Cld.ComediPollingTask : Cld.ComediTask {
 
 /**
  * FIXME: ComediTask possibly shouldn't be the base class and additional
- *        interfaces/abstract classes should be created for polling and
- *        streaming task types. For now this is more of a place holder to
- *        split the functionality of the one class.
+ * interfaces/abstract classes should be created for polling and
+ * streaming task types. For now this is more of a place holder to
+ * split the functionality of the one class.
  */
 public class Cld.ComediStreamingTask : Cld.ComediTask {
 

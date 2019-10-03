@@ -64,6 +64,16 @@ public class Cld.Column : Cld.AbstractContainer {
         chref = "ch0";
     }
 
+    /**
+     * Alternate construction that uses an XML node to set the object up.
+     *
+     * Example XML code:
+     * {{{
+     * <cld:object id="col00" type="column" chref="/daqctl0/dev0/ai00"/>
+     * }}}
+     * @param node {@link Xml.Node}
+     * @see Log
+     */
     public Column.from_xml_node (Xml.Node *node) {
         if (node->type == Xml.ElementType.ELEMENT_NODE &&
             node->type != Xml.ElementType.COMMENT_NODE) {

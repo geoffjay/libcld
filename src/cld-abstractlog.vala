@@ -122,7 +122,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     }
 
     /**
-     * {@inheritdoc}
+     * xxx
      */
     public virtual string status () {
         return "active: %s is_open: %s".printf (active.to_string (), is_open.to_string ());
@@ -139,7 +139,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     public abstract void stop ();
 
     /**
-     * {@inheritDoc}
+     * xxx
      */
     public virtual void connect_signals () {
         foreach (var column in objects.values) {
@@ -159,7 +159,7 @@ public abstract class Cld.AbstractLog : Cld.AbstractContainer, Cld.Log {
     }
 
     /**
-     * {@inheritDoc}
+     * xxx
      */
     public virtual void connect_data_source () {
         var mux = get_object_from_uri (data_source);

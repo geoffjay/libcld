@@ -47,6 +47,21 @@ public class Cld.DOChannel : Cld.AbstractChannel, Cld.DChannel, Cld.OChannel {
         state = false;
     }
 
+    /**
+     * Alternate construction that uses an XML node to set the object up.
+     *
+     * Example XML code:
+     * {{{
+     * <cld:object id="do00" type="channel" ref="/daqctl0/dev0" ctype="digital" direction="output">
+     *   <cld:property name="tag">DO00</cld:property>
+     *   <cld:property name="desc">Digital Output 0</cld:property>
+     *   <cld:property name="num">0</cld:property>
+     *   <cld:property name="subdevnum">3</cld:property>
+     * </cld:object>
+     * }}}
+     * @param node and {@link Xml.Node}
+     * @see Device
+     */
     public DOChannel.from_xml_node (Xml.Node *node) {
         string value;
 

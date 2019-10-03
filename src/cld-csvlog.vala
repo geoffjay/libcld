@@ -58,6 +58,41 @@ public class Cld.CsvLog : Cld.AbstractLog {
         connect_signals ();
     }
 
+    /**
+     * Alternate construction that uses an XML node to set the object up.
+     *
+     * Example XML code:
+     * {{{
+     * <cld:object id="log0" type="log" ltype="csv">
+     *   <cld:property name="title">Data Log</cld:property>
+     *   <cld:property name="path">/srv/data/dactl/</cld:property>
+     *   <cld:property name="file">log-iolfsum.csv</cld:property>
+     *   <cld:property name="format">%F-%T</cld:property>
+     *   <cld:property name="rate">10</cld:property>
+     *   <cld:property name="time-stamp">open</cld:property>
+     *   <cld:property name="data-source">channel</cld:property>
+     *   <cld:object id="col00" type="column" chref="/daqctl0/dev0/ai00"/>
+     *   <cld:object id="col01" type="column" chref="/daqctl0/dev0/ai01"/>
+     *   <cld:object id="col02" type="column" chref="/daqctl0/dev0/ai02"/>
+     *   <cld:object id="col03" type="column" chref="/daqctl0/dev0/ai03"/>
+     *   <cld:object id="col04" type="column" chref="/daqctl0/dev0/ai04"/>
+     *   <cld:object id="col05" type="column" chref="/daqctl0/dev0/ai05"/>
+     *   <cld:object id="col06" type="column" chref="/daqctl0/dev0/ai06"/>
+     *   <cld:object id="col07" type="column" chref="/daqctl0/dev0/ai07"/>
+     *   <cld:object id="col08" type="column" chref="/daqctl0/dev0/ai08"/>
+     *   <cld:object id="col09" type="column" chref="/daqctl0/dev0/ai09"/>
+     *   <cld:object id="col10" type="column" chref="/daqctl0/dev0/ai10"/>
+     *   <cld:object id="col11" type="column" chref="/daqctl0/dev0/ai11"/>
+     *   <cld:object id="col12" type="column" chref="/daqctl0/dev0/ai12"/>
+     *   <cld:object id="col13" type="column" chref="/daqctl0/dev0/ai13"/>
+     *   <cld:object id="col14" type="column" chref="/daqctl0/dev0/ai14"/>
+     *   <cld:object id="col15" type="column" chref="/daqctl0/dev0/ai15"/>
+     * </cld:object>
+     * }}}
+     * @param node an {@link Xml.Node}
+     * @see Cld.Column
+     * @see Cld.TimeStampFlag
+     */
     public CsvLog.from_xml_node (Xml.Node *node) {
         string value;
         this.node = node;

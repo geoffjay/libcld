@@ -119,6 +119,24 @@ public class Cld.AOChannel : Cld.AbstractChannel, Cld.AChannel, Cld.OChannel, Cl
         connect_signals ();
     }
 
+    /**
+     * Alternate construction that uses an XML node to set the object up.
+     *
+     * Example XML code:
+     * {{{
+     * <cld:object id="ao00" type="channel" ref="/daqctl0/dev0" ctype="analog" direction="output">
+     *   <cld:property name="tag">AO00</cld:property>
+     *   <cld:property name="desc">Analog Output 0</cld:property>
+     *   <cld:property name="num">0</cld:property>
+     *   <cld:property name="subdevnum">0</cld:property>
+     *   <cld:property name="range">0</cld:property>
+     *   <cld:property name="alias">OUT00</cld:property>
+     *   <cld:property name="calref">/cal00</cld:property>
+     * </cld:object>
+     * }}}
+     * @param node an {@link Xml.Node}
+     * @see Device
+     */
     public AOChannel.from_xml_node (Xml.Node *node) {
         string val;
 

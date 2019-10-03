@@ -181,6 +181,22 @@ public class Cld.AIChannel : Cld.AbstractChannel, Cld.AChannel, Cld.IChannel,
 
     /**
      * Alternate construction that uses an XML node to set the object up.
+     *
+     * Example XML code:
+     * {{{
+     * <cld:object id="ai00" type="channel" ref="/daqctl0/dev0" ctype="analog" direction="input">
+     *   <cld:property name="tag">PT01</cld:property>
+     *   <cld:property name="alias">PT01</cld:property>
+     *   <cld:property name="desc">Nozzle in Pres</cld:property>
+     *   <cld:property name="num">0</cld:property>
+     *   <cld:property name="subdevnum">0</cld:property>
+     *   <cld:property name="calref">/cal00</cld:property>
+     *   <cld:property name="range">4</cld:property>
+     *   <cld:property name="naverage">1</cld:property>
+     * </cld:object>
+     * }}}
+     * @param node an {@link Xml.Node}
+     * @see Cld.Device
      */
     public AIChannel.from_xml_node (Xml.Node *node) {
         string val;

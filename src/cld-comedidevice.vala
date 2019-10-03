@@ -44,7 +44,23 @@ public class Cld.ComediDevice : Cld.AbstractDevice {
     }
 
     /**
-     * Construction using an xml node
+     * Alternate construction that uses an XML node to set the object up.
+     *
+     * Example XML code:
+     * {{{
+     * <cld:object id="dev0" type="device" driver="comedi">
+     *   <cld:property name="hardware">PCI-1713</cld:property>
+     *   <cld:property name="type">input</cld:property>
+     *   <cld:property name="filename">/dev/comedi0</cld:property>
+     *
+     *   ...Cld.ComediTask(s)
+     *   ...Cld.Channel(s)
+     *
+     * </cld:object>
+     * }}}
+     *
+     * @see ComediTask
+     * @see Channel
      */
     public ComediDevice.from_xml_node (Xml.Node *node) {
         objects = new Gee.TreeMap<string, Cld.Object> ();

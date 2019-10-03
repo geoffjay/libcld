@@ -69,6 +69,21 @@ public class Cld.Calibration : Cld.AbstractContainer {
         connect_signals ();
     }
 
+    /**
+     * Alternate construction that uses an XML node to set the object up.
+     *
+     * Example XML code:
+     * {{{
+     * <cld:object id="cal00" type="calibration">
+     *   <cld:property name="units">Volts</cld:property>
+     *
+     *   ... Cld.Coefficient(s)
+     *
+     * </cld:object>
+     * }}}
+     * @param node an {@link Xml.Node}
+     * @see Cld.Coefficient
+     */
     public Calibration.from_xml_node (Xml.Node *node) {
         objects = new Gee.TreeMap<string, Cld.Object> ();
         this.node = node;

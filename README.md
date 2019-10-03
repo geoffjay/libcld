@@ -15,6 +15,23 @@ in progress.
 Geoff Johnson <geoff.jay@gmail.com>
 Stephen Roy <sroy1966@gmail.com>
 
+## Valadoc
+
+```bash
+valadoc --directory=cld-1.0           \
+        --verbose --pkg gee-0.8       \
+        --pkg libxml-2.0              \
+        --pkg glib-2.0                \
+        --pkg gio-2.0                 \
+        --pkg comedi                  \
+        --pkg gsl                     \
+        --pkg linux                   \
+        --pkg posix                   \
+        --pkg json-glib-1.0           \
+        --pkg libmatheval             \
+        --vapidir=./vapi src/*.vala
+```
+
 ## Install
 
 ### Fedora 30 from source

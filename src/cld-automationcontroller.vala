@@ -32,6 +32,15 @@ public class Cld.AutomationController : Cld.AbstractController {
 
     /**
      * Construction using an xml node
+     *
+     * Example XML code:
+     * {{{
+     * <cld:object id="atmctl0" type="controller" ctype="automation">
+     *
+     *   ... Cld.Pid2(s)
+     *
+     * </cld:object>
+     * }}}
      */
     public AutomationController.from_xml_node (Xml.Node *node) {
         string value;
